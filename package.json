@@ -1,0 +1,31 @@
+{
+  "name": "metasolids",
+  "version": "1.0.0",
+  "description": "Metasolid meshing algorithms",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build:release": "npm run build:clean && npm run build:tsc:release",
+    "build:debug": "npm run build:clean && npm run build:tsc:debug",
+    "build:clean": "rm -rf dist",
+    "build:tsc:release": "tsc -p tsconfig.json",
+    "build:tsc:debug": "tsc -p tsconfig.dbg.json"
+  },
+  "keywords": [
+    "dual-contour",
+    "marching-cubes",
+    "surface-nets",
+    "metasolids",
+    "isosurface",
+    "textures"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "playcanvas-extended": "^1.60.0-dev"
+  }
+}
