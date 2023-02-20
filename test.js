@@ -32,10 +32,7 @@ processors.process(processing, context)
 
 plot([
     {
-        values: [
-            [1, 2, 3],
-            [4, 5, 6]
-        ],
+        z: processing.sampling.voxels[0].map(yz => yz.map(z => z.presence)),
         type: 'heatmap'
     }
 ])
