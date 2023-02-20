@@ -1,6 +1,7 @@
-import { Processor } from "../processor";
-import { extract, leavesByValue, mapTreeByLeavesValue, onlyOne, pathsToValue } from "../utils";
-import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point";
+import { Processor } from "../processor/processor.js";
+import { onlyOne } from "../utils/only-one.js";
+import { extract, leavesByValue, mapTreeByLeavesValue, pathsToValue } from "../utils/tree.js";
+import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
 
 export const MultiObjectsTemplate_Leaf = Symbol("object")
 export interface MultiObjectsTemplate {
@@ -366,6 +367,9 @@ export class MultiObjectsInfluencesNormalizingProcessor<
             MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups>
     >
     implements Processor<Result, Context> {
+    init(context: Context): void {
+        throw new Error("Method not implemented.");
+    }
     get dependencies(): Function[] {
         return []
     }
@@ -541,6 +545,9 @@ export class MultiObjectsCombiningProcessor<
          */
         public influenceGroup?: InfluenceGroup,
     ) { }
+
+    init(context: Context): void {
+    }
 
     process(result: Result, context: Context): void {
         const influenceValues = influences(result, context, this.influenceGroup).objects.value as MultiObjectsInfluences<Objects>

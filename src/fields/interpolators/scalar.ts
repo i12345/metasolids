@@ -1,7 +1,7 @@
 import { Curve, CURVE_SPLINE } from "playcanvas-extended";
-import { applyCurveConfig, CurveConfig, CurveType, defaultCurveConfig } from "../curve";
-import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation";
-import { FieldPoint } from "../point";
+import { applyCurveConfig, CurveConfig, CurveType, defaultCurveConfig } from "../curve.js";
+import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 export class ScalarInterpolationType implements FieldInterpolationType<number> {
     constructor(

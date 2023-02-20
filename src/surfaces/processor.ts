@@ -1,8 +1,8 @@
-import { FieldsPoint } from "../fields";
-import { MeshingAlgorithm, VolumeSample } from "../meshing";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor";
-import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor } from "../volumes";
-import { Surface, SurfaceSample } from "./surface";
+import { MeshingAlgorithm } from "../meshing/meshing-algorithm.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js";
+import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
+import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor } from "../volumes/processor.js";
+import { Surface, SurfaceSample } from "./surface.js";
 
 export interface SurfaceProcessingContext<
         SampleContextTemplate = any
@@ -11,7 +11,7 @@ export interface SurfaceProcessingContext<
 }
 
 export interface SurfaceProcessor<
-        Sample extends VolumeSample = VolumeSample,
+        Sample extends SurfaceSample = SurfaceSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
@@ -21,7 +21,7 @@ export interface SurfaceProcessor<
     Processor<SurfaceT, SurfaceProcessingContextT> { }
 
 export type SurfaceSampleProcessingContext<
-        Sample extends VolumeSample = VolumeSample,
+        Sample extends SurfaceSample = SurfaceSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
@@ -35,7 +35,7 @@ export type SurfaceSampleProcessingContext<
         >
 
 export interface SurfaceSampleProcessor<
-        Sample extends VolumeSample = VolumeSample,
+        Sample extends SurfaceSample = SurfaceSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
@@ -55,7 +55,7 @@ export interface SurfaceSampleProcessor<
     > { }
     
 export class SurfaceSampleParallelizer<
-        Sample extends VolumeSample = VolumeSample,
+        Sample extends SurfaceSample = SurfaceSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
@@ -73,11 +73,30 @@ export class SurfaceSampleParallelizer<
                 SurfaceProcessingContextT
             >
         > {
+    init(
+            context: SurfaceProcessingContextT,
+            sampleProcessor: ParallelizedProcessor<SurfaceT, SurfaceProcessingContextT, Sample, SurfaceSampleProcessingContext<Sample, SampleContextTemplate, SurfaceT, SurfaceProcessingContextT>>
+        ): void {
+        type SampleContext = SurfaceSampleProcessingContext<
+            Sample,
+            SampleContextTemplate,
+            SurfaceT,
+            SurfaceProcessingContextT
+        >
+        
+        const parallelizedContext: SampleContext = {
+            ...context.sample,
+            [ParallelizedContextParallelInfo]: { item: undefined, context }
+        }
+    
+        sampleProcessor.init(parallelizedContext)
+    }
+
     parallelize(
-        surface: SurfaceT,
-        context: SurfaceProcessingContextT,
-        sampleProcessor: ParallelizedProcessor<SurfaceT, SurfaceProcessingContextT, Sample, SurfaceSampleProcessingContext<Sample, SampleContextTemplate, SurfaceT, SurfaceProcessingContextT>>
-    ): void {
+            surface: SurfaceT,
+            context: SurfaceProcessingContextT,
+            sampleProcessor: ParallelizedProcessor<SurfaceT, SurfaceProcessingContextT, Sample, SurfaceSampleProcessingContext<Sample, SampleContextTemplate, SurfaceT, SurfaceProcessingContextT>>
+        ): void {
         type SampleContext = SurfaceSampleProcessingContext<
             Sample,
             SampleContextTemplate,
@@ -90,7 +109,7 @@ export class SurfaceSampleParallelizer<
             [ParallelizedContextParallelInfo]: { item: surface, context }
         }
 
-        for (const sample of surface.mesh.vertecies_samples)
+        for (const sample of surface.samples)
             sampleProcessor.process(sample, parallelizedContext)
     }
 }
@@ -105,7 +124,7 @@ export interface VolumeSurfacesProcessing<
 }
 
 export interface VolumeSurfacesProcessingContext<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceProcessingContextT extends
@@ -113,7 +132,7 @@ export interface VolumeSurfacesProcessingContext<
             SurfaceProcessingContext<SampleContextTemplate>,
     > extends
     VolumeProcessingContext<
-        Parameters,
+        Location,
         Sample,
         SampleContextTemplate
     > {
@@ -121,7 +140,7 @@ export interface VolumeSurfacesProcessingContext<
 }
 
 export type VolumeSurfaceProcessingContext<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceProcessingContextT extends
@@ -132,13 +151,13 @@ export type VolumeSurfaceProcessingContext<
             VolumeSurfacesProcessing<Sample>,
         VolumeProcessingContextT extends
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
             > =
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
@@ -151,7 +170,7 @@ export type VolumeSurfaceProcessingContext<
         >
 
 export interface VolumeSurfaceProcessor<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
@@ -163,13 +182,13 @@ export interface VolumeSurfaceProcessor<
             VolumeSurfacesProcessing<Sample, SurfaceT>,
         VolumeProcessingContextT extends
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
             > =
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
@@ -180,7 +199,7 @@ export interface VolumeSurfaceProcessor<
         VolumeProcessingContextT,
         SurfaceT,
         VolumeSurfaceProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContextT,
@@ -190,7 +209,7 @@ export interface VolumeSurfaceProcessor<
     > { }
 
 export class VolumeSurfacesParallelizer<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
@@ -202,13 +221,13 @@ export class VolumeSurfacesParallelizer<
             VolumeSurfacesProcessing<Sample, SurfaceT>,
         VolumeProcessingContextT extends
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
             > =
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
@@ -219,7 +238,7 @@ export class VolumeSurfacesParallelizer<
         VolumeProcessingContextT,
         SurfaceT,
         VolumeSurfaceProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContextT,
@@ -227,15 +246,14 @@ export class VolumeSurfacesParallelizer<
             VolumeProcessingContextT
         >
     > {
-    parallelize(
-            item: VolumeProcessingT,
+    init(
             context: VolumeProcessingContextT,
-            itemProcessor: ParallelizedProcessor<
+            parallelizedItemProcessor: ParallelizedProcessor<
                 VolumeProcessingT,
                 VolumeProcessingContextT,
                 SurfaceT,
                 VolumeSurfaceProcessingContext<
-                    Parameters,
+                    Location,
                     Sample,
                     SampleContextTemplate,
                     SurfaceProcessingContextT,
@@ -245,7 +263,41 @@ export class VolumeSurfacesParallelizer<
             >
         ): void {
         type SampleContext = VolumeSurfaceProcessingContext<
-            Parameters,
+            Location,
+            Sample,
+            SampleContextTemplate,
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingContextT
+        >
+        
+        const parallelizedContext: SampleContext = {
+            ...context.surfaces,
+            [ParallelizedContextParallelInfo]: { item: undefined, context }
+        }
+
+        parallelizedItemProcessor.init(parallelizedContext)
+    }
+
+    parallelize(
+            item: VolumeProcessingT,
+            context: VolumeProcessingContextT,
+            itemProcessor: ParallelizedProcessor<
+                VolumeProcessingT,
+                VolumeProcessingContextT,
+                SurfaceT,
+                VolumeSurfaceProcessingContext<
+                    Location,
+                    Sample,
+                    SampleContextTemplate,
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingContextT
+                >
+            >
+        ): void {
+        type SampleContext = VolumeSurfaceProcessingContext<
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContextT,
@@ -264,17 +316,17 @@ export class VolumeSurfacesParallelizer<
 }
 
 export class VolumeSurfaceMeshingProcessor<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
     > implements
     VolumeProcessor<
-        Parameters,
+        Location,
         Sample,
         SampleContextTemplate,
         VolumeSurfacesProcessing<Sample>,
         VolumeSurfacesProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate
         >
@@ -282,18 +334,27 @@ export class VolumeSurfaceMeshingProcessor<
     dependencies: Function[];
 
     constructor(public mesher: MeshingAlgorithm) { }
+    init(context: VolumeSurfacesProcessingContext<
+            Location,
+            Sample,
+            SampleContextTemplate,
+            SurfaceProcessingContext<SampleContextTemplate>
+        >): void {
+        //TODO: choose mesher from context
+    }
 
     process(
         volume: VolumeSurfacesProcessing<Sample, Surface<Sample>>,
         context: VolumeSurfacesProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContext<SampleContextTemplate>
         >
     ): void {
         const mesh = this.mesher.mesh(volume.sampling)
+        const samples = undefined //TODO
         //TODO: examine real data to see how multiple island surfaces would be processed
-        volume.surfaces.push({ mesh })
+        volume.surfaces.push({ mesh, samples })
     }
 }

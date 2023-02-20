@@ -1,10 +1,10 @@
-import { Vec2, Vec3 } from "playcanvas-extended";
-import { FieldsPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../processor";
-import { Surface, SurfaceProcessingContext } from "../../surfaces";
-import { VolumeSample } from "../../volumes";
-import { SolidProcessingContext, VolumeSolidProcessingContext, VolumeSolidProcessor, VolumeSolidsProcessing, VolumeSolidsProcessingContext } from "../processor";
-import { Solid } from "../solid";
+import { Vec2 } from "playcanvas-extended";
+import { Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../processor/index.js";
+import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js";
+import { VolumeLocation, VolumeSample } from "../../volumes/index.js";
+import { SolidProcessingContext, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../processor.js";
+import { Solid } from "../solid.js";
 
 export interface SolidWithEnclosingVolume<
         Sample extends VolumeSample = VolumeSample,
@@ -16,7 +16,7 @@ export interface SolidWithEnclosingVolume<
 }
 
 export class SolidWithEnclosingVolumeProcessor<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
@@ -28,13 +28,21 @@ export class SolidWithEnclosingVolumeProcessor<
             SolidWithEnclosingVolume<Sample, SurfaceT>
     > implements
     VolumeSolidProcessor<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceT,
             SurfaceProcessingContextT,
             SolidT
         > {
+    init(context: VolumeSolidProcessingContext<
+            Location,
+            Sample,
+            SampleContextTemplate,
+            SurfaceProcessingContextT
+        >): void {
+    }
+
     get dependencies(): Function[] {
         return []
     }
@@ -42,7 +50,7 @@ export class SolidWithEnclosingVolumeProcessor<
     process(
             solid: SolidT,
             context: VolumeSolidProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
@@ -239,10 +247,54 @@ export class SolidEnclosingVolumeSampleParallelizer<
             SolidProcessingContextT
         >
     > {
+    init(
+            context: SolidProcessingContextT,
+            parallelizedItemProcessor: ParallelizedProcessor<
+                SolidT,
+                SolidProcessingContextT,
+                Sample,
+                SolidEnclosingVolumeSampleProcessingContext<
+                    Sample,
+                    SampleContextTemplate,
+                    SurfaceT,
+                    SurfaceProcessingContextT,
+                    SolidT,
+                    SolidProcessingContextT
+                >
+        >): void {
+        type SampleContext = SolidEnclosingVolumeSampleProcessingContext<
+            Sample,
+            SampleContextTemplate,
+            SurfaceT,
+            SurfaceProcessingContextT,
+            SolidT,
+            SolidProcessingContextT
+        >
+        
+        const parallelizedContext: SampleContext = {
+            ...context.sample,
+            [ParallelizedContextParallelInfo]: { item: undefined, context }
+        }
+
+        parallelizedItemProcessor.init(parallelizedContext)
+    }
+    
     parallelize(
             solid: SolidT,
             context: SolidProcessingContextT,
-            sampleProcessor: ParallelizedProcessor<SolidT, SolidProcessingContextT, Sample, SolidEnclosingVolumeSampleProcessingContext<Sample, SampleContextTemplate, SurfaceT, SurfaceProcessingContextT, SolidT, SolidProcessingContextT>>
+            sampleProcessor: ParallelizedProcessor<
+                SolidT,
+                SolidProcessingContextT,
+                Sample,
+                SolidEnclosingVolumeSampleProcessingContext<
+                    Sample,
+                    SampleContextTemplate,
+                    SurfaceT,
+                    SurfaceProcessingContextT,
+                    SolidT,
+                    SolidProcessingContextT
+                >
+            >
         ): void {
         type SampleContext = SolidEnclosingVolumeSampleProcessingContext<
             Sample,

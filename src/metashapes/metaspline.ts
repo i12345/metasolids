@@ -1,9 +1,10 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
-import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField } from "../fields";
-import { PiOver2, TwoPi } from "../utils";
-import { TextureLocation, TextureSamplingContext } from "../textures";
-import { MultiObjectsVolume, TransformVolume } from "../volumes/volumes";
-import { MetaShape, MetaShapeLocation, MetaShapeLocationExtraFields, MetaShapeParametersIn, MetaShapeSample, MetaShapeSampleExtraFields, MetaShapeSamplingContext, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape";
+import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField } from "../fields/index.js";
+import { PiOver2, TwoPi } from "../utils/pi.js";
+import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
+import { MultiObjectsVolume } from "../volumes/volumes/multi-objects.js";
+import { TransformVolume } from "../volumes/volumes/transform.js";
+import { MetaShape, MetaShapeLocation, MetaShapeLocationExtraFields, MetaShapeParametersIn, MetaShapeSample, MetaShapeSampleExtraFields, MetaShapeSamplingContext, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 
 export type MetaSplineSegmentFigureLocation<Location extends MetaShapeLocation> =
     MetaShapeLocationExtraFields<Location> & { theta: number, phi: number }
@@ -250,7 +251,7 @@ export class MetaSplineSegment<
             [SampleDomainLocationField]: FieldsField.merge<MetaSplineSegmentFigureLocation<Location>>(
                 (context[SampleDomainLocationField] as FieldsField<Location>).omit({
                     p: FieldsPoint_Omit_Leaf
-                } as FieldsPointMapped<Location, typeof FieldsPoint_Omit_Leaf>) as FieldsField<MetaSplineSegmentFigureLocation<Location>>,
+                } as FieldsPointMapped<Location, typeof FieldsPoint_Omit_Leaf>) as any as FieldsField<MetaSplineSegmentFigureLocation<Location>>,
                 new FieldsField<MetaSplineSegmentFigureLocation<Location>>({
                     phi: new ScalarField(),
                     theta: new ScalarField(),
@@ -304,7 +305,7 @@ export class MetaSplineSegment<
             }
         }
         else if (context[EncapsulatingDomainSamplingContextParentDomain] instanceof TransformVolume) {
-            const volume = context[EncapsulatingDomainSamplingContextParentDomain] as TransformVolume
+            const volume = context[EncapsulatingDomainSamplingContextParentDomain] as any as TransformVolume
 
             return this.init_spline_find_parent_segment(
                 context[EncapsulatingDomainSamplingContextParentContext] as any,

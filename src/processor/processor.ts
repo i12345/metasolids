@@ -1,4 +1,4 @@
-import { ContextWorker } from "./context-worker"
+import { ContextWorker } from "./context-worker.js"
 
 export interface Processor<
         Item,

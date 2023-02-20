@@ -1,7 +1,7 @@
 import { CurveSet, Color } from "playcanvas-extended";
-import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve";
-import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation";
-import { FieldPoint } from "../point";
+import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve.js";
+import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 //TODO: implement HSL curve interpolation
 

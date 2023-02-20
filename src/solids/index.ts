@@ -1,2 +1,2 @@
-export * from './solid'
-export * from './processors'
+export * from './solid.js'
+export * from './processors/index.js'

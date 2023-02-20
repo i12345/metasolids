@@ -1,5 +1,5 @@
-import { Color, Vec2 } from "playcanvas-extended";
-import { FieldPoint, FieldsPoint, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedGrouped, MultiObjectsTemplate, SampleDomain, SamplingContext } from "../fields";
+import { Vec2 } from "playcanvas-extended";
+import { FieldPoint, FieldsPoint, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedGrouped, MultiObjectsTemplate, SampleDomain, SamplingContext } from "../fields/index.js";
 
 export type TextureUV = Vec2
 

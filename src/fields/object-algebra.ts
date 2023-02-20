@@ -1,4 +1,4 @@
-import { ExtraFields, FieldsPoint } from "./point"
+import { ExtraFields, FieldsPoint } from "./point.js"
 
 export function change<Final, Start, Subtract>(
         start: Start,

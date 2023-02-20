@@ -1,6 +1,6 @@
-import { SampleDomain, SamplingContext } from "../domain";
-import { FieldPoint, field_point_modulo } from "../point";
-import { TransformingSampleDomain } from "./transforming";
+import { SampleDomain, SamplingContext } from "../domain.js";
+import { FieldPoint, field_point_modulo } from "../point.js";
+import { TransformingSampleDomain } from "./transforming.js";
 
 export class RepeatingSampleDomain<
         Location extends FieldPoint = FieldPoint,

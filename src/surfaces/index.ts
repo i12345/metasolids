@@ -1,3 +1,3 @@
-export * from './surface'
-export * from './processor'
-export * from './processors'
+export * from './surface.js'
+export * from './processor.js'
+export * from './processors/index.js'

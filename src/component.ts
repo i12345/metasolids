@@ -1,7 +1,7 @@
 // import { Mat4, Vec3 } from "playcanvas-extended";
-// import { FieldInterpolator } from "./fields/interpolator";
-// import { Figure } from "./figures";
-// import { Volume } from "./volume";
+// import { FieldInterpolator } from "./fields/interpolator.js";
+// import { Figure } from "./figures.js";
+// import { Volume } from "./volume.js";
 
 // export class MetaShape2<
 //         Location extends MetaShapeLocation,

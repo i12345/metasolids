@@ -1,6 +1,6 @@
-import { FieldPoint } from '../point'
-import { SampleDomain, SamplingContext } from '../domain'
-import { Field } from '../field'
+import { FieldPoint } from '../point.js'
+import { SampleDomain, SamplingContext } from '../domain.js'
+import { Field } from '../field.js'
 
 export class ConstantSampleDomain<
         Location extends FieldPoint,

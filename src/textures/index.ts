@@ -1,2 +1,2 @@
-export * from './texture'
-export * from './vertex-interpolating'
+export * from './texture.js'
+export * from './textures/index.js'

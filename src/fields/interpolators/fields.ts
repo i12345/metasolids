@@ -1,6 +1,6 @@
-import { extract } from "../../utils"
-import { FieldInterpolationType, makeInterpolator, FieldInterpolator } from "../interpolation"
-import { FieldsPoint, FieldsPointMapped, FieldPoint, fields_point_map } from "../point"
+import { extract } from "../../utils/tree.js"
+import { FieldInterpolationType, makeInterpolator, FieldInterpolator } from "../interpolation.js"
+import { FieldsPoint, FieldsPointMapped, FieldPoint, fields_point_map } from "../point.js"
 
 export class FieldsInterpolationType<Point extends FieldsPoint = FieldsPoint>
     implements FieldInterpolationType<Point> {

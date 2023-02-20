@@ -1,9 +1,9 @@
-import { FieldPoint, FieldsPoint, fields_point_add_inplace, fields_point_add_weighted, field_point_divide, field_point_multiply } from "../../fields"
-import { Surface, SurfaceProcessingContext } from "../../surfaces"
-import { leavesByValue, leavesByValues, makeExtractor, mapTreeByLeavesValues, TreeByValue, TreeByValueMapped } from "../../utils"
-import { VolumeSample } from "../../volumes"
-import { SolidProcessingContext, SolidProcessingContext, SolidProcessor } from "../processor"
-import { SolidEnclosingVolumeSampleProcessingContext, SolidEnclosingVolumeSampleProcessor, SolidWithEnclosingVolume, SolidWithEnclosingVolumeProcessor } from "./enclosing-volume"
+import { FieldPoint, FieldsPoint, fields_point_add_inplace, field_point_divide, field_point_multiply } from "../../fields/point.js"
+import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js"
+import { makeExtractor, mapTreeByLeavesValues, TreeByValue, TreeByValueMapped } from "../../utils/tree.js"
+import { VolumeSample } from "../../volumes/index.js"
+import { SolidProcessingContext, SolidProcessor } from "../processor.js"
+import { SolidWithEnclosingVolume, SolidWithEnclosingVolumeProcessor } from "./enclosing-volume.js"
 
 export const PhysicalPropertiesTemplate_Leaf_Intensive = Symbol('physical-property:intensive')
 export const PhysicalPropertiesTemplate_Leaf_Extensive = Symbol('physical-property:extensive')
@@ -87,6 +87,9 @@ export class SolidWithPhysicalPropertiesProcessor<
     constructor(
             public physicalPropertiesTemplate: PhysicalPropertiesTemplateT
         ) { }
+    init(context: SolidProcessingContextT): void {
+    }
+
     process(solid: SolidT): void {
         mapTreeByLeavesValues(
             solid,

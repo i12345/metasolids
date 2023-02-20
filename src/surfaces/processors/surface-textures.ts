@@ -1,9 +1,9 @@
-import { Field, FieldPoint, FieldPointCombiner, groupKindObjectsGrouped, groupKinds, mapObjects, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsInfluences, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, objectValues } from "../../fields";
-import { Processor } from "../../processor";
-import { Texture, TextureLocation, TextureSample, VertexInterpolatingTexture } from "../../textures";
-import { extract, intract, onlyOne } from "../../utils";
-import { SurfaceProcessingContext } from "../processor";
-import { Surface, SurfaceSample } from "../surface";
+import { FieldPoint, groupKindObjectsGrouped, groupKinds, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsInfluences, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../fields/index.js";
+import { Processor } from "../../processor/processor.js";
+import { ObjectsCombiningTexture, Texture, TextureLocation, TextureSample, VertexInterpolatingTexture } from "../../textures/index.js";
+import { onlyOne } from "../../utils/only-one.js";
+import { SurfaceProcessingContext } from "../processor.js";
+import { Surface, SurfaceSample } from "../surface.js";
 
 export const SurfaceTexturesGroupKindKey = Symbol('ground-kind:surface-textures')
 export interface SurfaceTexturesGroupKinds
@@ -303,6 +303,8 @@ export class SurfaceWithInterpolatingValueTexturesProcessor<
         public interpolatingGroups?: InterpolatingGroups,
         public textureLocationGroup?: TextureLocationGroup
     ) { }
+    init(context: SurfaceProcessingContextT): void {
+    }
 
     process(surface: SurfaceT, context: SurfaceProcessingContextT): void {
         const { group: textureLocationGroup } =
@@ -312,9 +314,8 @@ export class SurfaceWithInterpolatingValueTexturesProcessor<
                     this.textureLocationGroup
                 ))
         
-        const UVs =
-            surface.mesh.vertecies_samples
-                .map(sample => textureLocationGroup.get<TextureLocation>(sample).uv)
+        const UVs = surface.samples.map(sample =>
+            textureLocationGroup.get<TextureLocation>(sample).uv)
 
         const interpolatingGroups =
             groupKinds(
@@ -324,86 +325,10 @@ export class SurfaceWithInterpolatingValueTexturesProcessor<
                 )
 
         for (const { group: interpolatingGroup } of interpolatingGroups) {
-            const values = surface.mesh.vertecies_samples.map(sample => interpolatingGroup.get<InterpolatingValue>(sample))
+            const values = surface.samples.map(sample => interpolatingGroup.get<InterpolatingValue>(sample))
             const texture = new VertexInterpolatingTexture(values, UVs, surface.mesh.triangles)
             interpolatingGroup.set(surface, texture)
         }
-    }
-}
-
-// this will be moved to the textures folder
-
-export type ObjectsInfluencesTextureSample<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-    > =
-    MultiObjectsMapped<Objects, number>
-
-export type ObjectsTextureLocationsTextureSample<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        TextureLocationT extends TextureLocation = TextureLocation
-    > =
-    MultiObjectsMapped<Objects, TextureLocationT>
-
-export class ObjectsCombiningTexture<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        TextureLocationT extends TextureLocation = TextureLocation,
-        SampledTextureLocationT extends TextureLocation = TextureLocation,
-        TextureSampleT extends TextureSample = TextureSample,
-        ValueTextureT extends
-            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT>
-    > implements
-    Texture<TextureLocationT, TextureSampleT> {
-    field: Field<TextureSampleT>;
-
-    constructor(
-        public template: Objects,
-        public influences: Texture<TextureLocationT, ObjectsInfluencesTextureSample<Objects>>,
-        public locations: Texture<TextureLocationT, ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>>,
-        public values: MultiObjectsMapped<Objects, ValueTextureT>
-    ) { }
-
-    init(): void {
-        this.locations.init()
-        this.influences.init()
-        for (const { get } of objectValues(this.template)) {
-            const value = get<ValueTextureT>(this.values)
-            if (value) value.init()
-        }
-    }
-
-    sample(location: TextureLocationT): TextureSampleT {
-        const influences = this.influences.sample(location)
-        const locations = this.locations.sample(location)
-        const values = {} as MultiObjectsMapped<Objects, TextureSampleT>
-        
-        mapObjects(
-            this.values,
-            this.template,
-            (values, key, fullpath) => {
-                const influence = extract<number>(influences, fullpath)
-                if (influence > 0) {
-                    const sample_location = extract<SampledTextureLocationT>(locations, fullpath)
-                    const value_texture = values[key] as ValueTextureT
-                    if (sample_location && value_texture) {
-                        const value_location = {
-                            ...location,
-                            ...sample_location,
-                        }
-                        const value = value_texture.sample(value_location)
-                        intract(values, fullpath, value)
-                    }
-                }
-            }
-        )
-
-        const combiner = FieldPointCombiner.instance as FieldPointCombiner<TextureSampleT, Objects>
-
-        return combiner.combine(
-            this.template,
-            values,
-            influences
-        )
     }
 }
 
@@ -631,6 +556,17 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
         public surfaceTextureLocationGroup?: SurfaceTextureLocationGroup,
     ) {}
 
+    init(context: SurfaceProcessingContextWithSurfaceAndObjectsTextures<
+            Objects,
+            InfluenceGroup,
+            ObjectsInfluencesGrouped,
+            SurfaceTextureLocationGroup,
+            ValueTextureGroups,
+            ObjectsValueTexturesGrouped,
+            SurfaceSampleProcessingContextT
+        >): void {
+    }
+
     process(
             surface: SurfaceWithSurfaceAndObjectsTextures<
                     Objects,
@@ -659,7 +595,8 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             this.surfaceTextureLocationGroup
         )).group
         
-        const surfaceTextureLocations = surface.mesh.vertecies_samples.map(sample => surfaceTexturelocationGroup.get<SurfaceTextureLocationT>(sample))
+        const surfaceTextureLocations = surface.samples.map(sample =>
+            surfaceTexturelocationGroup.get<SurfaceTextureLocationT>(sample))
         const UVs = surfaceTextureLocations.map(location => location.uv)
 
         const influencesGroup = onlyOne(groupKinds(
@@ -667,7 +604,8 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             MultiObjectsInfluencesGroupKindsTemplate,
             this.influenceGroup
         )).group
-        const influenceValues = surface.mesh.vertecies_samples.map(sample => influencesGroup.get<MultiObjectsInfluences<Objects>>(sample))
+        const influenceValues = surface.samples.map(sample =>
+            influencesGroup.get<MultiObjectsInfluences<Objects>>(sample))
         const influences_texture = new VertexInterpolatingTexture(influenceValues, UVs, surface.mesh.triangles)
 
         const valueTextureGroups = groupKindObjectsGrouped(
@@ -678,7 +616,8 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             )
 
         for (const { group, objects: { value, template } } of valueTextureGroups) {
-            const locations = surface.mesh.vertecies_samples.map(sample => group.get<MultiObjectsMapped<Objects, ValueTextureLocationT>>(sample))
+            const locations = surface.samples.map(sample =>
+                group.get<MultiObjectsMapped<Objects, ValueTextureLocationT>>(sample))
             const locations_texture = new VertexInterpolatingTexture(locations, UVs, surface.mesh.triangles)
 
             const combined = new ObjectsCombiningTexture(

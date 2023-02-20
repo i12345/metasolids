@@ -1,5 +1,5 @@
-import { VolumeSample } from "../volumes";
-import { Surface } from "../surfaces";
+import { VolumeSample } from "../volumes/index.js";
+import { Surface } from "../surfaces/index.js";
 
 export interface Solid<
         Sample extends VolumeSample = VolumeSample,

@@ -1,5 +1,5 @@
-import { ContextWorker } from "../context-worker";
-import { Processor } from "../processor";
+import { ContextWorker } from "../context-worker.js";
+import { Processor } from "../processor.js";
 
 export const ParallelizedContextParallelInfo = Symbol("parallel")
 

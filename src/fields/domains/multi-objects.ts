@@ -1,12 +1,12 @@
-import { extract, GeneratorType } from "../../utils"
-import { SampleDomain, SamplingContext } from "../domain"
-import { Field } from "../field"
-import { FieldsField } from "../fields"
-import { makeInterpolator } from "../interpolation"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues } from "../multi-objects-fields-point"
+import { extract, GeneratorType } from "../../utils/index.js"
+import { SampleDomain, SamplingContext } from "../domain.js"
+import { Field } from "../field.js"
+import { FieldsField } from "../fields/fields.js"
+import { makeInterpolator } from "../interpolation.js"
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues } from "../multi-objects-fields-point.js"
 
-import { FieldPoint, FieldsPoint, fields_point_map, field_point_add_inplace } from "../point"
-import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating"
+import { FieldPoint, FieldsPoint, fields_point_map, field_point_add_inplace } from "../point.js"
+import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
 
 export const MultiObjectsSamplingContextParent = Symbol("parent")
 
@@ -238,7 +238,7 @@ export class MultiObjectsSampleDomain<
                 child_field_container[group.path.at(-1)] = { [key]: child_field }
             }
 
-            fields.push(child_fields as FieldsField<Sample>)
+            fields.push(child_fields as any as FieldsField<Sample>)
         }
 
         this.field = FieldsField.merge(...fields)

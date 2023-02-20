@@ -1,13 +1,6 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "module": "ES2020",
-        "moduleResolution": "Node",
-        "outDir": "dist",
-        "rootDir": "src",
-        "declaration": true,
-        "target": "ES6",
-        "lib": ["ES6", "DOM"],
         "sourceMap": true
     }
 }

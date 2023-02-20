@@ -1,6 +1,18 @@
 import { BoundingBox, Vec3 } from "playcanvas-extended";
-import { ExtraFields, FieldsPoint } from "../fields";
-import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "./volume";
+import { ExtraFields } from "../fields/index.js";
+import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "./volume.js";
+
+export interface VolumeSamplingRequest<
+        Location extends VolumeLocation = VolumeLocation,
+        Sample extends VolumeSample = VolumeSample,
+        Context extends
+            VolumeSamplingContext<Location> =
+            VolumeSamplingContext<Location>
+    > {
+    volume: Volume<Location, Sample, Context>
+    context: Context
+    extraLocationParameters?: ExtraFields<Location, VolumeLocation>
+}
 
 export interface VolumeSamplingResult<
         Sample extends VolumeSample = VolumeSample
@@ -23,18 +35,25 @@ export interface VolumeSamplingResult<
     voxels: Sample[][][]
 }
 
-export class VolumeSampler {
-    constructor(
-        /**
-         * marginal units surrounding estimated bounding box
-         */
-        public margin: number = 5,
+export interface VolumeSamplerSettings {
+    /**
+     * marginal units surrounding estimated bounding box
+     */
+    margin: number
 
-        /**
-         * samples per unit length
-         */
-        public resolution: number
-    ) { }
+    /**
+     * samples per unit length
+     */
+    resolution: number
+}
+
+export const defaultVolumeSamplerSettings: VolumeSamplerSettings = {
+    margin: 1,
+    resolution: 16
+}
+
+export class VolumeSampler {
+    constructor(public settings: VolumeSamplerSettings = defaultVolumeSamplerSettings) { }
 
     sample<
             Location extends VolumeLocation = VolumeLocation,
@@ -42,21 +61,26 @@ export class VolumeSampler {
             Context extends
                 VolumeSamplingContext<Location> =
                 VolumeSamplingContext<Location>
-        >(
-            volume: Volume<Location, Sample, Context>,
-            context: Context,
-            extraLocationParameters?: ExtraFields<Location, VolumeLocation>
-        ): VolumeSamplingResult<Sample> {
+        >({
+            volume,
+            context,
+            extraLocationParameters
+        }: VolumeSamplingRequest<
+            Location,
+            Sample,
+            Context
+        >): VolumeSamplingResult<Sample> {
         volume.init(context)
+
         const box = volume.boundingBox
-        const margin = new Vec3(this.margin, this.margin, this.margin)
+        const margin = new Vec3(this.settings.margin, this.settings.margin, this.settings.margin)
         const offset = new Vec3().sub2(box.getMin(), margin)
         const chunkSize = new Vec3().sub2(box.getMax(), box.getMin()).add(margin.mulScalar(2))
         
         const boundingBox = new BoundingBox()
         boundingBox.setMinMax(offset, new Vec3().add2(offset, chunkSize))
 
-        const size = chunkSize.clone().mulScalar(this.resolution).ceil()
+        const size = chunkSize.clone().mulScalar(this.settings.resolution).ceil()
 
         const voxels = new Array(size.x)
 

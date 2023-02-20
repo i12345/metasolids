@@ -1,6 +1,6 @@
-import { ContextWorker } from "../processor"
-import { Field } from "./field"
-import { FieldPoint } from "./point"
+import { ContextWorker } from "../processor/context-worker.js"
+import { Field } from "./field.js"
+import { FieldPoint } from "./point.js"
 
 export const SampleDomainLocationField = Symbol('location')
 

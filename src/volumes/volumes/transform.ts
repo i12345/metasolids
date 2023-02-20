@@ -1,6 +1,6 @@
 import { Mat4, BoundingBox } from 'playcanvas-extended'
-import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume'
-import { TransformingDefaultInnerSamplingContext, TransformingSampleDomain } from '../../fields'
+import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume.js'
+import { TransformingDefaultInnerSamplingContext, TransformingSampleDomain } from '../../fields/domains/transforming.js'
 
 export class TransformVolume<
         Location extends VolumeLocation = VolumeLocation,

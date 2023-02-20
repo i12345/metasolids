@@ -1,7 +1,7 @@
-import { SampleDomain, SamplingContext } from "../domain"
-import { Field } from "../field"
-import { FieldsField } from "../fields"
-import { FieldPoint, FieldsPoint, field_point_add_inplace } from "../point"
+import { SampleDomain, SamplingContext } from "../domain.js"
+import { Field } from "../field.js"
+import { FieldsField } from "../fields/fields.js"
+import { FieldPoint, FieldsPoint, field_point_add_inplace } from "../point.js"
 
 export class CompositeSampleDomain<
         Location extends FieldPoint = FieldPoint,

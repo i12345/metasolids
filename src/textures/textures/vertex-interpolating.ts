@@ -1,6 +1,6 @@
 import { Vec2 } from "playcanvas-extended";
-import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../fields";
-import { Texture, TextureLocation } from "./texture";
+import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
+import { Texture, TextureLocation } from "../texture.js";
 
 export class VertexInterpolatingTexture
     <VertexSample extends FieldPoint = FieldPoint>

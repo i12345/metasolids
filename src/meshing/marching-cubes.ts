@@ -1,15 +1,15 @@
 // Based off marching cubes implementation by theSoenke
 // https://github.com/theSoenke/ProceduralTerrain/blob/master/Assets/ProceduralTerrain/Core/Scripts/Voxel/Meshing/MarchingCubes.cs
 
-import { MeshingAlgorithm } from "./meshing-algorithm";
-import { Tables } from "./tables";
-import { MeshData } from "./types";
-import { Volume } from "../volumes/volume";
+import { MeshingAlgorithm } from "./meshing-algorithm.js";
+import { Tables } from "./tables.js";
+import { MeshData } from "./types.js";
 import { Vec3 } from "playcanvas-extended";
+import { VolumeSamplingResult } from "../volumes/sampling.js";
 
 export class MarchingCubesAlgorithm implements MeshingAlgorithm {
-    mesh(volume: Volume, offset: Vec3, chunkSize: Vec3): MeshData {
-        const impl = new MarchingCubes(volume, offset, chunkSize)
+    mesh(volume: VolumeSamplingResult): MeshData {
+        const impl = new MarchingCubes(volume)
         return impl.GenerateMesh()
     }
 }
@@ -18,10 +18,7 @@ class MarchingCubes
 {
     private static readonly Target = 0; // The value that represents the surface of mesh
 
-    constructor(
-        public volume: Volume,
-        public offset: Vec3,
-        public chunkSize: Vec3) {
+    constructor(public volume: VolumeSamplingResult) {
     }
 
     public GenerateMesh(): MeshData
@@ -30,11 +27,11 @@ class MarchingCubes
         let triangles: number[] = []
         let voxels = this.CalculateDensities();
 
-        for (let x = 0; x < this.chunkSize.x - 1; x++)
+        for (let x = 0; x < this.volume.size.x - 1; x++)
         {
-            for (let y = 0; y < this.chunkSize.y - 1; y++)
+            for (let y = 0; y < this.volume.size.y - 1; y++)
             {
-                for (let z = 0; z < this.chunkSize.z - 1; z++)
+                for (let z = 0; z < this.volume.size.z - 1; z++)
                 {
                     let cube: number[] = MarchingCubes.CreateCube(x, y, z, voxels);
                     this.MarchCube(new Vec3(x, y, z), cube, vertices, triangles);
@@ -54,24 +51,7 @@ class MarchingCubes
      */
     private CalculateDensities(): number[][][]
     {
-        let voxels = new Array(this.chunkSize.x)
-
-        for (let x = 0; x < this.chunkSize.x; x++)
-        {
-            voxels[x] = new Array(this.chunkSize.y)
-            for (let y = 0; y < this.chunkSize.y; y++)
-            {
-                voxels[x][y] = new Array(this.chunkSize.z)
-                for (let z = 0; z < this.chunkSize.z; z++)
-                {
-                    const pos = new Vec3(x, y, z)
-                    const density = this.volume.getDensity(pos.add(this.offset));
-                    voxels[x][y][z] = density;
-                }
-            }
-        }
-
-        return voxels;
+        return this.volume.voxels.map(sample_yz => sample_yz.map(sample_z => sample_z.map(sample => sample.presence)))
     }
 
     /**

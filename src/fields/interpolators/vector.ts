@@ -1,7 +1,7 @@
 import { CurveSet } from "playcanvas-extended";
-import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve";
-import { FieldInterpolationType, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation";
-import { FieldPoint, Vector } from "../point";
+import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve.js";
+import { FieldInterpolationType, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation.js";
+import { FieldPoint, Vector } from "../point.js";
 
 export class VectorInterpolationType implements FieldInterpolationType<Vector> {
     constructor(

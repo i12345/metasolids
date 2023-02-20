@@ -5,7 +5,7 @@
  * @param t the time to search for a keypoint less than or equal to
  * @returns the index of a keypoint that is at or immediately before the search time
  */
-export function keypoint_index(t: number, keypoints: [number, any][]): number {
+export function keypoint_index<T = any>(t: number, keypoints: [number, T][]): number {
     let low = 0,
         high = keypoints.length - 1
     

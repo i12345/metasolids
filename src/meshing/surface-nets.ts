@@ -1,16 +1,16 @@
-import { MeshingAlgorithm } from "./meshing-algorithm";
-import { MeshData } from "./types";
-import { Volume } from "../volumes/volume";
+import { MeshingAlgorithm } from "./meshing-algorithm.js";
+import { MeshData } from "./types.js";
 import { Vec3 } from "playcanvas-extended";
+import { VolumeSamplingResult } from "../volumes/sampling.js";
 
 export class SurfaceNetsMeshingAlgorithm implements MeshingAlgorithm {
-  mesh(volume: Volume, offset: Vec3, chunkSize: Vec3): MeshData {
-    const dims: [number, number, number] = [chunkSize.x, chunkSize.y, chunkSize.z]
+  mesh(volume: VolumeSamplingResult): MeshData {
+    const dims: [number, number, number] = [volume.size.x, volume.size.y, volume.size.z]
     const data = new Float64Array(dims[0] * dims[1] * dims[2])
     for (let x = 0; x < dims[0]; x++)
       for (let y = 0; y < dims[1]; y++)
         for (let z = 0; z < dims[2]; z++)
-          data[z + ((x + (y * dims[0])) * dims[1])] = volume.getDensity(new Vec3(x, y, z).add(offset))
+          data[z + ((x + (y * dims[0])) * dims[1])] = volume.voxels[x][y][z].presence
     
     const { faces, vertices: verts } = SurfaceNets(data, dims)
     const triangles = new Array(faces.length * 6)

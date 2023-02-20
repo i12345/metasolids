@@ -1,8 +1,8 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { FieldsField } from "../fields";
-import { Pi, TwoPi } from "../utils";
-import { TextureLocation, TextureSamplingContext } from "../textures";
-import { MetaShape, MetaShapeLocation, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeTextureLocation, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape";
+import { FieldsField } from "../fields/fields/fields.js";
+import { Pi, TwoPi } from "../utils/pi.js";
+import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
+import { MetaShape, MetaShapeLocation, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeTextureLocation, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 
 export class MetaSphere<
         TxLocation extends TextureLocation = TextureLocation,

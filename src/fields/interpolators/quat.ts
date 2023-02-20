@@ -1,8 +1,7 @@
-import { CurveSet, CURVE_LINEAR, CURVE_SMOOTHSTEP, CURVE_SPLINE, CURVE_STEP, Quat, Vec3 } from "playcanvas-extended";
-import { keypoint_index } from "../../utils";
-import { CurveType } from "../curve";
-import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation";
-import { FieldPoint } from "../point";
+import { Quat } from "playcanvas-extended";
+import { keypoint_index } from "../../utils/keypoints_index.js";
+import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 export class QuatInterpolationType implements FieldInterpolationType<Quat> {
     [makeInterpolator]<Location extends FieldPoint>(
@@ -16,7 +15,7 @@ export class QuatInterpolationType implements FieldInterpolationType<Quat> {
         
         return location => {
             const t = location as number
-            const i = keypoint_index(t, keypoints)
+            const i = keypoint_index(t, keypoints as [number, Quat][])
             if (keypoints[i][0] === t)
                 return keypoints[i][1]
             else if (i >= 0 && i + 1 < keypoints.length)

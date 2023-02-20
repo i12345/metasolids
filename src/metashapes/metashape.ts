@@ -1,10 +1,10 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, ExtraFields, Field, FieldPoint, FieldPointPrimite, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field } from "../fields";
-import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../fields/domain";
-import { Figure, FigureLocation, FigureSample } from "../figures";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../textures";
-import { extract } from "../utils";
-import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volumes/volume";
+import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field } from "../fields/index.js";
+import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../fields/domain.js";
+import { Figure, FigureLocation, FigureSample } from "../figures/figure.js";
+import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../textures/texture.js";
+import { extract } from "../utils/tree.js";
+import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volumes/volume.js";
 
 export interface MetaShapeLocation extends VolumeLocation {
 }

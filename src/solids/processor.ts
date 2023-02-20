@@ -1,8 +1,9 @@
-import { FieldsPoint } from "../fields"
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor"
-import { Surface, SurfaceProcessingContext, SurfaceProcessor, SurfaceSample, VolumeSurfaceProcessingContext, VolumeSurfaceProcessor, VolumeSurfacesProcessing, VolumeSurfacesProcessingContext } from "../surfaces"
-import { VolumeProcessing, VolumeProcessingContext, VolumeSample } from "../volumes"
-import { Solid } from "./solid"
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js"
+import { Surface } from "../surfaces/surface.js"
+import { SurfaceProcessingContext, SurfaceProcessor, VolumeSurfaceProcessingContext, VolumeSurfaceProcessor, VolumeSurfacesProcessing, VolumeSurfacesProcessingContext } from "../surfaces/processor.js"
+import { VolumeLocation, VolumeSample } from "../volumes/volume.js"
+import { VolumeProcessing, VolumeProcessingContext } from "../volumes/processor.js"
+import { Solid } from "./solid.js"
 
 export interface SolidProcessingContext<
         SampleContextTemplate = any,
@@ -63,6 +64,10 @@ export class SolidSurfaceProcessor<
             SurfaceT,
             SurfaceProcessingContextT
         >) { }
+    
+    init(context: SolidProcessingContextT): void {
+        this.processor.init(context.surface)
+    }
 
     process(item: SolidT, context: SolidProcessingContextT): void {
         this.processor.process(item.surface, context.surface)
@@ -79,7 +84,7 @@ export interface VolumeSolidsProcessing<
 }
 
 export interface VolumeSolidsProcessingContext<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceProcessingContextT extends
@@ -96,7 +101,7 @@ export interface VolumeSolidsProcessingContext<
             >
     > extends
     VolumeProcessingContext<
-        Parameters,
+        Location,
         Sample,
         SampleContextTemplate
     > {
@@ -104,7 +109,7 @@ export interface VolumeSolidsProcessingContext<
 }
 
 export type VolumeSolidProcessingContext<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceProcessingContextT extends
@@ -124,14 +129,14 @@ export type VolumeSolidProcessingContext<
             VolumeSolidsProcessing<Sample>,
         VolumeProcessingContextT extends
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
@@ -145,7 +150,7 @@ export type VolumeSolidProcessingContext<
         >
 
 export interface VolumeSolidProcessor<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
@@ -167,14 +172,14 @@ export interface VolumeSolidProcessor<
             VolumeSolidsProcessing<Sample, SurfaceT, SolidT>,
         VolumeProcessingContextT extends
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
@@ -186,7 +191,7 @@ export interface VolumeSolidProcessor<
         VolumeProcessingContextT,
         SolidT,
         VolumeSolidProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContextT,
@@ -197,7 +202,7 @@ export interface VolumeSolidProcessor<
     > { }
 
 export class VolumeSolidsParallelizer<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
@@ -219,14 +224,14 @@ export class VolumeSolidsParallelizer<
             VolumeSolidsProcessing<Sample, SurfaceT, SolidT>,
         VolumeProcessingContextT extends
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
@@ -238,7 +243,7 @@ export class VolumeSolidsParallelizer<
         VolumeProcessingContextT,
         SolidT,
         VolumeSolidProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContextT,
@@ -247,15 +252,14 @@ export class VolumeSolidsParallelizer<
             VolumeProcessingContextT
         >
     > {
-    parallelize(
-            item: VolumeProcessingT,
+    init(
             context: VolumeProcessingContextT,
             itemProcessor: ParallelizedProcessor<
                 VolumeProcessingT,
                 VolumeProcessingContextT,
                 SolidT,
                 VolumeSolidProcessingContext<
-                    Parameters,
+                    Location,
                     Sample,
                     SampleContextTemplate,
                     SurfaceProcessingContextT,
@@ -266,7 +270,42 @@ export class VolumeSolidsParallelizer<
             >
         ): void {
         type SampleContext = VolumeSolidProcessingContext<
-            Parameters,
+            Location,
+            Sample,
+            SampleContextTemplate,
+            SurfaceProcessingContextT,
+            SolidProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingContextT
+        >
+        
+        const parallelizedContext: SampleContext = {
+            ...context.solids,
+            [ParallelizedContextParallelInfo]: { item: undefined, context }
+        }
+
+        itemProcessor.init(parallelizedContext)
+    }
+    parallelize(
+            item: VolumeProcessingT,
+            context: VolumeProcessingContextT,
+            itemProcessor: ParallelizedProcessor<
+                VolumeProcessingT,
+                VolumeProcessingContextT,
+                SolidT,
+                VolumeSolidProcessingContext<
+                    Location,
+                    Sample,
+                    SampleContextTemplate,
+                    SurfaceProcessingContextT,
+                    SolidProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingContextT
+                >
+            >
+        ): void {
+        type SampleContext = VolumeSolidProcessingContext<
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContextT,
@@ -286,7 +325,7 @@ export class VolumeSolidsParallelizer<
 }
 
 export class VolumeSurfacesSolidifyingProcessor<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
@@ -301,26 +340,26 @@ export class VolumeSurfacesSolidifyingProcessor<
             VolumeSurfacesProcessing<Sample, SurfaceT> & VolumeSolidsProcessing<Sample, SurfaceT>,
         VolumeProcessingContextT extends
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
             > &
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
             VolumeSurfacesProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT
             > &
             VolumeSolidsProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 SurfaceProcessingContextT,
@@ -328,7 +367,7 @@ export class VolumeSurfacesSolidifyingProcessor<
             >
     > implements
     VolumeSurfaceProcessor<
-        Parameters,
+        Location,
         Sample,
         SampleContextTemplate,
         SurfaceT,
@@ -337,10 +376,21 @@ export class VolumeSurfacesSolidifyingProcessor<
         VolumeProcessingContextT
     > {
     dependencies: Function[]
+    
+    init(context: VolumeSurfaceProcessingContext<
+            Location,
+            Sample,
+            SampleContextTemplate,
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingContextT
+        >): void {
+    }
+
     process(
         surface: SurfaceT,
         context: VolumeSurfaceProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             SurfaceProcessingContextT,

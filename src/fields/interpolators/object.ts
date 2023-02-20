@@ -1,6 +1,6 @@
-import { clone, Cloneable } from "../../utils";
-import { InterpolationManager, InterpolationType, Interpolator, makeInterpolator } from "../interpolation";
-import { FieldPoint } from "../point";
+import { clone, Cloneable } from "../../utils/cloneable.js";
+import { InterpolationManager, InterpolationType, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 export class ObjectInterpolationType<T extends object & Cloneable> implements InterpolationType<T> {
     [makeInterpolator]<Location extends FieldPoint>(

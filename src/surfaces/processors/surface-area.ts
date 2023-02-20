@@ -1,7 +1,7 @@
 import { Vec3 } from "playcanvas-extended"
-import { VolumeSample } from "../../volumes"
-import { SurfaceProcessingContext, SurfaceProcessor } from "../processor"
-import { Surface } from "../surface"
+import { VolumeSample } from "../../volumes/volume.js"
+import { SurfaceProcessingContext, SurfaceProcessor } from "../processor.js"
+import { Surface } from "../surface.js"
 
 export interface SurfaceWithSurfaceArea<
         Sample extends VolumeSample = VolumeSample
@@ -28,6 +28,9 @@ export class SurfaceWithSurfaceAreaProcessor<
         return []
     }
 
+    init(): void {
+    }
+    
     process(surface: SurfaceWithSurfaceArea<Sample>): void {
         let surfaceArea = 0
 

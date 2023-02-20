@@ -1,9 +1,9 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, extraFields, Field, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, SampleDomainLocationField, SamplingContext, SignField, Vec2Field } from "../fields";
-import { FigureSample } from "../figures";
-import { TextureLocation, TextureSamplingContext } from "../textures";
-import { Sign } from "../utils";
-import { MetaShape, MetaShapeFigure, MetaShapeFigureLocation, MetaShapeFigureSample, MetaShapeLocation, MetaShapeParametersIn, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape";
+import { change, extraFields, Field, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, SampleDomainLocationField, SamplingContext, SignField, Vec2Field } from "../fields/index.js";
+import { FigureSample } from "../figures/figure.js";
+import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
+import { Sign } from "../utils/sign.js";
+import { MetaShape, MetaShapeFigure, MetaShapeFigureLocation, MetaShapeFigureSample, MetaShapeLocation, MetaShapeParametersIn, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 
 export interface MetaPlaneFigureParametersIn extends FieldsPoint {
     /**

@@ -1,6 +1,6 @@
-import { FieldPoint, MultiObjectsGrouped, MultiObjectsGroupsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesProcessingResult, MultiObjectsProcessingResult, MultiObjectsTemplate } from "../fields";
-import { ParallelizedContext } from "../processor";
-import { VolumeSample } from "./volume";
+import { FieldPoint, MultiObjectsGrouped, MultiObjectsGroupsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesProcessingResult, MultiObjectsProcessingResult, MultiObjectsTemplate } from "../fields/index.js";
+import { ParallelizedContext } from "../processor/index.js";
+import { VolumeSample } from "./volume.js";
 
 export type MultiObjectsVolumeSample<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

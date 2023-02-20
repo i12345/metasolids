@@ -1,4 +1,4 @@
-import { FieldPoint } from "./point"
+import { FieldPoint } from "./point.js"
 
 export type Interpolator<
         Location extends FieldPoint,

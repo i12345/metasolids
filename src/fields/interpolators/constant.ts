@@ -1,6 +1,6 @@
-import { keypoint_index } from "../../utils";
-import { InterpolationType, Interpolator, makeInterpolator } from "../interpolation";
-import { FieldPoint } from "../point";
+import { keypoint_index } from "../../utils/keypoints_index.js";
+import { InterpolationType, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 export class ConstantInterpolationType<T> implements InterpolationType<T> {
     [makeInterpolator]<Location extends FieldPoint>(keypoints: [Location, T][]): Interpolator<Location, T> {

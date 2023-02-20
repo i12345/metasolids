@@ -1,5 +1,5 @@
-import { SampleDomain, SamplingContext } from "../domain";
-import { FieldPoint } from "../point";
+import { SampleDomain, SamplingContext } from "../domain.js";
+import { FieldPoint } from "../point.js";
 
 export const EncapsulatingDomainSamplingContextParentDomain = Symbol('encapsulating-domain:parent:domain')
 export const EncapsulatingDomainSamplingContextParentContext = Symbol('encapsulating-domain:parent:context')

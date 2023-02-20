@@ -1,8 +1,8 @@
-import { SampleDomain, SamplingContext } from "../domain";
-import { Field } from "../field";
-import { FieldsField } from "../fields";
-import { FieldInterpolationType, InterpolationManager, InterpolationType, Interpolator, makeInterpolator } from "../interpolation";
-import { FieldPoint } from "../point";
+import { SampleDomain, SamplingContext } from "../domain.js";
+import { Field } from "../field.js";
+import { FieldsField } from "../fields/fields.js";
+import { FieldInterpolationType, InterpolationManager, InterpolationType, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 export class SampleDomainInterpolationType implements InterpolationType<SampleDomain<FieldPoint, FieldPoint>> {
     [makeInterpolator]<Location extends FieldPoint>(

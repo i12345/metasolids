@@ -1,8 +1,11 @@
-import { Processor } from "../processor/processor";
-import { VolumeSample } from "./volume";
-import { VolumeSamplingContext, VolumeSamplingResult } from "./sampling";
-import { FieldsPoint } from "../fields";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processor";
+import { Processor } from "../processor/processor.js";
+import { defaultVolumeLocationField, VolumeLocation, VolumeSample, VolumeSamplingContext } from "./volume.js";
+import { VolumeSampler, VolumeSamplerSettings, VolumeSamplingRequest, VolumeSamplingResult } from "./sampling.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processor/index.js";
+import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_isPrimitive, SampleDomainLocationField } from "../fields/index.js";
+
+//TODO: make VolumeSamplingProcessor and corresponding processing context
+// also, search for other "TODO"'s and implement them
 
 export interface VolumeProcessing<
         Sample extends VolumeSample = VolumeSample
@@ -11,38 +14,97 @@ export interface VolumeProcessing<
 }
 
 export interface VolumeProcessingContext<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any
+        SampleContextTemplate = any,
     > {
-    sampling: VolumeSamplingContext<Parameters, Sample>
+    sampling: Omit<VolumeSamplingRequest<Location, Sample>, "context">
+    
     samples: SampleContextTemplate
 }
 
 export interface VolumeProcessor<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         VolumeProcessingT extends
             VolumeProcessing<Sample> =
             VolumeProcessing<Sample>,
         VolumeProcessingContextT extends
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate> =
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate>,
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate> =
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate>,
     > extends
     Processor<VolumeProcessingT, VolumeProcessingContextT> {
 }
 
+export const VolumeSamplingProcessing_SamplerSettings = Symbol("sampler-settings")
+export interface VolumeSamplingProcessing<
+        Sample extends VolumeSample = VolumeSample,
+    > extends
+    VolumeProcessing<Sample> {
+    [VolumeSamplingProcessing_SamplerSettings]: VolumeSamplerSettings
+}
+
+export interface VolumeSamplingProcessingContext<
+        Location extends VolumeLocation = VolumeLocation,
+        Sample extends VolumeSample = VolumeSample,
+        SampleContextTemplate = any
+    > extends
+    VolumeProcessingContext<
+        Location,
+        Sample,
+        SampleContextTemplate
+    >,
+    VolumeSamplingContext<Location> {
+}
+
+export class VolumeSamplingProcessor<
+        Location extends VolumeLocation = VolumeLocation,
+        Sample extends VolumeSample = VolumeSample,
+        SampleContextTemplate = any,
+        VolumeProcessingT extends
+            VolumeSamplingProcessing<Sample> =
+            VolumeSamplingProcessing<Sample>,
+        VolumeProcessingContextT extends
+            VolumeSamplingProcessingContext<Location, Sample, SampleContextTemplate> =
+            VolumeSamplingProcessingContext<Location, Sample, SampleContextTemplate>,
+    > implements
+    VolumeProcessor<
+            Location,
+            Sample,
+            SampleContextTemplate,
+            VolumeProcessingT,
+            VolumeProcessingContextT
+        > {
+    dependencies: Function[];
+
+    init(context: VolumeProcessingContextT): void {
+    }
+    
+    process(item: VolumeProcessingT, context: VolumeProcessingContextT): void {
+        context[SampleDomainLocationField] = FieldsField.merge<Location>(
+            defaultVolumeLocationField as FieldsField<Location>,
+            new FieldsField(fields_point_map(
+                context.sampling.extraLocationParameters as any as FieldsPointMapped<FieldsPoint, FieldPoint>,
+                field_point_isPrimitive,
+                value => defaultField(value)
+            )) as FieldsField<Location>
+        )
+
+        item.sampling = new VolumeSampler(item[VolumeSamplingProcessing_SamplerSettings]).sample({ context, ...(context.sampling) })
+    }
+}
+
 export type VolumeSampleProcessingContext<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         VolumeProcessingT extends
             VolumeProcessing<Sample> =
             VolumeProcessing<Sample>,
         VolumeProcessingContextT extends
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate> =
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate>,
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate> =
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate>,
     > =
     SampleContextTemplate &
     ParallelizedContext<
@@ -51,22 +113,22 @@ export type VolumeSampleProcessingContext<
         >
 
 export interface VolumeSampleProcessor<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         VolumeProcessingT extends
             VolumeProcessing<Sample> =
             VolumeProcessing<Sample>,
         VolumeProcessingContextT extends
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate> =
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate>,
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate> =
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate>,
     >
     extends ParallelizedProcessor<
         VolumeProcessingT,
         VolumeProcessingContextT,
         Sample,
         VolumeSampleProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             VolumeProcessingT,
@@ -76,23 +138,23 @@ export interface VolumeSampleProcessor<
 }
 
 export class VolumeSampleParallelizer<
-        Parameters extends FieldsPoint = FieldsPoint,
+        Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
         VolumeProcessingT extends VolumeProcessing<Sample> = VolumeProcessing<Sample>,
         VolumeProcessingContextT extends
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate> =
-            VolumeProcessingContext<Parameters, Sample, SampleContextTemplate>,
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate> =
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate>,
         SampleProcessor extends
-            VolumeSampleProcessor<Parameters, Sample, SampleContextTemplate, VolumeProcessingT, VolumeProcessingContextT> =
-            VolumeSampleProcessor<Parameters, Sample, SampleContextTemplate, VolumeProcessingT, VolumeProcessingContextT>,
+            VolumeSampleProcessor<Location, Sample, SampleContextTemplate, VolumeProcessingT, VolumeProcessingContextT> =
+            VolumeSampleProcessor<Location, Sample, SampleContextTemplate, VolumeProcessingT, VolumeProcessingContextT>,
     > implements
     Parallelizer<
             VolumeProcessingT,
             VolumeProcessingContextT,
             Sample,
             VolumeSampleProcessingContext<
-                Parameters,
+                Location,
                 Sample,
                 SampleContextTemplate,
                 VolumeProcessingT,
@@ -100,13 +162,33 @@ export class VolumeSampleParallelizer<
             >,
             SampleProcessor
         > {
+    init(
+            context: VolumeProcessingContextT,
+            parallelizedItemProcessor: SampleProcessor
+        ): void {
+        type SampleContext = VolumeSampleProcessingContext<
+            Location,
+            Sample,
+            SampleContextTemplate,
+            VolumeProcessingT,
+            VolumeProcessingContextT
+        >
+
+        const parallelizedContext: SampleContext = {
+            ...context.samples,
+            [ParallelizedContextParallelInfo]: { item: undefined, context }
+        }
+        
+        parallelizedItemProcessor.init(parallelizedContext)
+    }
+
     parallelize(
             item: VolumeProcessingT,
             context: VolumeProcessingContextT,
             itemProcessor: SampleProcessor
         ): void {
         type SampleContext = VolumeSampleProcessingContext<
-            Parameters,
+            Location,
             Sample,
             SampleContextTemplate,
             VolumeProcessingT,

@@ -1,7 +1,8 @@
-import { Field } from "../field";
-import { FieldsInterpolationType } from "../interpolators";
-import { FieldInterpolationType, makeInterpolator } from "../interpolation";
-import { FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point";
+import { Field } from "../field.js";
+import { FieldsInterpolationType } from "../interpolators/fields.js";
+import { FieldInterpolationType, makeInterpolator } from "../interpolation.js";
+import { FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
+import { extract, mapTreeByLeavesValue } from "../../utils/tree.js";
 
 export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     implements Field<Point> {
@@ -25,10 +26,40 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
      * @param fields the fields to merge. Earlier fields have higher priority
      */
     static merge<Point extends FieldsPoint = FieldsPoint>(...fields: FieldsField<Point>[]): FieldsField<Point> {
+        let result = {}
+
+        function mergeIn(subfields: Field | FieldsPointMapped<FieldsPoint, Field>, subresult: any) {
+            if (subfields[makeInterpolator]) {
+                if (subfields instanceof FieldsField)
+                    subfields = mergeIn(subfields.fields, subresult)
+                
+                return subfields
+            }
+            else { // subfields is FieldsPointMapped<FieldsPoint, Field>
+                for (const key of Reflect.ownKeys(subfields))
+                    subresult[key] = mergeIn(subfields[key], subresult[key] ??= {})
+            
+                return subresult
+            }
+        }
+
+        for (const { fields: subfields } of fields)
+            mergeIn(subfields, result)
         
+        return new FieldsField(result as FieldsPointMapped<Point, Field>)
     }
 
-    omit<Subtract extends FieldsPoint = FieldsPoint>(fields: FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>): FieldsField<FieldsPointOmitted<Point, Subtract>> {
-        
+    omit<Subtract extends FieldsPoint = FieldsPoint>(
+            subtract: FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>
+        ): FieldsField<FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>> {
+        return new FieldsField(fields_point_map(
+            this.fields,
+            leaf =>
+                leaf.interpolationType !== undefined &&
+                leaf.interpolationType[makeInterpolator] !== undefined,
+            (field, path) =>
+                extract(subtract, path) !== FieldsPoint_Omit_Leaf ?
+                    field : undefined
+        ) as any as FieldsPointMapped<FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>, Field>)
     }
 }

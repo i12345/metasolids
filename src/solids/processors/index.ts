@@ -1,2 +1,2 @@
-export * from './enclosing-volume'
-export * from './physical-properties'
+export * from './enclosing-volume.js'
+export * from './physical-properties.js'

@@ -1,7 +1,7 @@
-import { FieldPoint } from '../point'
-import { SampleDomain, SampleDomainLocationField, SamplingContext } from '../domain'
-import { Field } from '../field'
-import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from './encapsulating'
+import { FieldPoint } from '../point.js'
+import { SampleDomain, SampleDomainLocationField, SamplingContext } from '../domain.js'
+import { Field } from '../field.js'
+import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from './encapsulating.js'
 
 export type TransformingDefaultInnerSamplingContext<
         OuterLocation extends FieldPoint = FieldPoint,

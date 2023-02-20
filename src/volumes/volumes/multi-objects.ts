@@ -1,6 +1,6 @@
 import { BoundingBox } from 'playcanvas-extended'
-import { FieldPoint, MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsSampleDomain, MultiObjectsLeafContext, MultiObjectsSample, MultiObjectsContext, Field, FieldsPoint, MultiObjectsGroupedObjectValues, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsOmitted } from '../../fields'
-import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume'
+import { FieldPoint, MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsSampleDomain, MultiObjectsLeafContext, MultiObjectsSample, MultiObjectsContext } from '../../fields/index.js'
+import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume.js'
 
 /// @ts-ignore
 export class MultiObjectsVolume<

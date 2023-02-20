@@ -1,6 +1,6 @@
 import { CurveSet, Mat3, Mat4, Quat, Vec3 } from "playcanvas-extended";
-import { FieldInterpolationType, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation";
-import { FieldPoint } from "../point";
+import { FieldInterpolationType, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 export class Mat3InterpolationType implements FieldInterpolationType<Mat3> {
     [makeInterpolator]<Location extends FieldPoint>(keypoints: [Location, Mat3][]): FieldInterpolator<Location, Mat3> {

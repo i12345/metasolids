@@ -1,2 +1,2 @@
-export * from './transform'
-export * from './multi-objects'
+export * from './transform.js'
+export * from './multi-objects.js'

@@ -1,6 +1,5 @@
 import { BoundingBox, Vec2 } from "playcanvas-extended"
-import { FieldsPoint } from "../fields"
-import { SampleDomain } from "../fields/domain"
+import { FieldsPoint, SampleDomain } from "../fields/index.js"
 
 export interface FigureLocation extends FieldsPoint {
     /**

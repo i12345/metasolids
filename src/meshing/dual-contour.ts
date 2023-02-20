@@ -3,15 +3,15 @@
 // [1] https://github.com/voxelbased/core/blob/main/Assets/Voxelbased/Core/Voxel/Meshing/DualContouring/DualContouringUniform.cs
 // [2] https://github.com/theSoenke/ProceduralTerrain/blob/master/Assets/ProceduralTerrain/Core/Scripts/Voxel/Meshing/DualControuringUniform.cs
 
-import { MeshingAlgorithm } from "./meshing-algorithm"
-import { Tables } from "./tables"
-import { HermiteData, MeshData, Row, Vertex, Voxel } from "./types"
-import { Volume } from "../volumes/volume"
+import { MeshingAlgorithm } from "./meshing-algorithm.js"
+import { Tables } from "./tables.js"
+import { HermiteData, MeshData, Row, Vertex, Voxel } from "./types.js"
 import { Vec3 } from "playcanvas-extended"
+import { VolumeSamplingResult } from "../volumes/sampling.js"
 
 export class DualContouringUniformAlgorithm implements MeshingAlgorithm {
-    mesh(volume: Volume, offset: Vec3, chunkSize: Vec3): MeshData {
-        const impl = new DualContouringUniform(volume, offset, chunkSize)
+    mesh(volume: VolumeSamplingResult): MeshData {
+        const impl = new DualContouringUniform(volume)
         return impl.GenerateMesh()
     }
 }
@@ -29,32 +29,27 @@ export class DualContouringUniform {
     private readonly vertices: Vec3[] = []
     private readonly normals: Vec3[] = []
     private readonly triangles: number[] = []
-    private voxelSize = 1.0
+    private sizePlus3: Vec3
 
-    constructor(
-        public volume: Volume,
-        public offset: Vec3,
-        public chunkSize: Vec3) {
+    constructor(public volume: VolumeSamplingResult) {
+        this.sizePlus3 = new Vec3(3, 3, 3).add(volume.size)
     }
 
     public GenerateMesh(): MeshData {
-        Row.sizeX = this.chunkSize.x + 3
-        Row.sizeZ = this.chunkSize.z + 3
-        let verticesCount = 0
-
-        let vRow = new Vec3(0, -1, 0)
-
         // initialize rows
         for (let i = 0; i < 3; i++) {
-            this.rows[i] = new Row()
+            let vRow = new Vec3(0, -1, 0)
+            vRow.y = (i - 1)
+
+            this.rows[i] = new Row(vRow, this.sizePlus3)
             this.rows[i].pos = vRow
             this.CalculatePoints(this.rows[i])
-            vRow.y = i * this.voxelSize
         }
 
-        for (let y = 3; y <= this.chunkSize.y + 2; y++) {
+        for (let y = 3; y <= this.volume.size.y + 2; y++) {
+            let vRow = new Vec3(0, -1, 0)
+            vRow.y = y
             this.rows[2].pos = vRow
-            vRow.y = y * this.voxelSize
 
             this.CalculatePoints(this.rows[2])
             this.CalculateCubes(this.rows[1])
@@ -76,18 +71,16 @@ export class DualContouringUniform {
      * Calculate points in row and generate cubes
      */
     private CalculatePoints(row: Row): void {
-        for (let x = 0; x < Row.sizeX; x++) {
-            for (let z = 0; z < Row.sizeZ; z++) {
-                //Vector3 pos = new Vector3(row.pos.x + x - 1, row.pos.y, row.pos.z + z - 1)
-                let pos = new Vec3((row.pos[0] + x - 1) * this.voxelSize, row.pos[1], (row.pos[2] + z - 1) * this.voxelSize)
-                pos.add(this.offset)
-                let density = this.volume.getDensity(pos)
+        for (let x = 0; x < this.sizePlus3.x; x++) {
+            for (let z = 0; z < this.sizePlus3.z; z++) {
+                const pos = new Vec3(row.pos.x + x - 1, row.pos.y, row.pos.z + z - 1)
+                let density = this.volume.voxels[pos.x][pos.y][pos.z].presence
 
-                row.points[x * Row.sizeX + z] = {
+                row.points[(x * this.sizePlus3.x) + z] = {
                     pos,
                     density
                 }
-                row.vertices[x * Row.sizeX + z] = {
+                row.vertices[(x * this.sizePlus3.x) + z] = {
                     index: 0,
                 } as Vertex
             }
@@ -101,8 +94,8 @@ export class DualContouringUniform {
     private CalculateCubes(row: Row): void {
         let corners: Voxel[] = new Array(8)
 
-        for (let x = 0; x < Row.sizeX - 1; x++) {
-            for (let z = 0; z < Row.sizeZ - 1; z++) {
+        for (let x = 0; x < this.sizePlus3.x - 1; x++) {
+            for (let z = 0; z < this.sizePlus3.z - 1; z++) {
                 let cubeIndex = 0
 
                 // Find intersection point with surface for each edge
@@ -110,14 +103,14 @@ export class DualContouringUniform {
                     let pointX = x + Tables.VertexOffset[i][0]
                     let pointZ = z + Tables.VertexOffset[i][2]
 
-                    corners[i] = this.rows[Tables.VertexOffset[i][1]].points[pointX * Row.sizeX + pointZ]
+                    corners[i] = this.rows[Tables.VertexOffset[i][1]].points[(pointX * this.sizePlus3.x) + pointZ]
 
                     if (corners[i].density < 0) {
                         cubeIndex |= 1 << i
                     }
                 }
 
-                let vertex: Vertex = row.vertices[x * Row.sizeX + z]
+                let vertex: Vertex = row.vertices[(x * this.sizePlus3.x) + z]
                 vertex.edgeFlags = Tables.EdgeTable[cubeIndex]
 
                 // No intersection if cube is complety outside surface
@@ -142,7 +135,7 @@ export class DualContouringUniform {
             let n1 = Tables.EdgeConnection[i][0]
             let n2 = Tables.EdgeConnection[i][1]
 
-            if ((vertex.edgeFlags & (1 << i)) == 0) {
+            if ((vertex.edgeFlags & (1 << i)) === 0) {
                 continue
             }
 
@@ -173,15 +166,15 @@ export class DualContouringUniform {
 
         vertex.pos = DualContouringUniform.SchmitzVertexFromHermiteData(data, 0.001)
         vertex.normal = this.GetNormal(vertex.pos)
-        vertex.pos.sub(this.offset)
+        // vertex.pos.sub(this.offset)
     }
 
     /**
      * Generate triangles for row
      */
     private GenerateQuads(): void {
-        for (let x = 1; x < this.chunkSize.x + 1; x++) {
-            for (let z = 1; z < this.chunkSize.z + 1; z++) {
+        for (let x = 1; x < this.volume.size.x + 1; x++) {
+            for (let z = 1; z < this.volume.size.z + 1; z++) {
                 let tmpVertices: Vertex[] = new Array(4)
                 tmpVertices[0] = this.GetVertexPointer(x, z, 0, 0, 0)
 
@@ -248,7 +241,7 @@ export class DualContouringUniform {
         const pointX = x + xi
         const pointZ = z + zi
 
-        return this.rows[yi].vertices[pointX * Row.sizeX + pointZ]
+        return this.rows[yi].vertices[(pointX * this.sizePlus3.x) + pointZ]
     }
 
     /**
@@ -257,13 +250,7 @@ export class DualContouringUniform {
      */
     private GetNormal({x, y, z}: Vec3): Vec3
     {
-        const grad = new Vec3(
-            this.volume.getDensity(new Vec3(x - this.chunkSize.x, y, z)) - this.volume.getDensity(new Vec3(x + this.chunkSize.x, y, z)),
-            this.volume.getDensity(new Vec3(x, y - this.chunkSize.y, z)) - this.volume.getDensity(new Vec3(x, y + this.chunkSize.y, z)),
-            this.volume.getDensity(new Vec3(x, y, z - this.chunkSize.z)) - this.volume.getDensity(new Vec3(x, y, z + this.chunkSize.z))
-        )
-
-        return grad.mulScalar(-1).normalize()
+        return this.volume.voxels[x][y][z].gradient.clone().mulScalar(-1).normalize()
     }
 
     /**
@@ -348,7 +335,7 @@ export class DualContouringUniform {
         while (true)
         {
             xm = (xa + xb) * 0.5
-            const d = this.volume.getDensity(new Vec3(xm, y, z))
+            const d = this.volume.voxels[xm][y][z].presence
 
             if (Math.abs(d) < this.ToleranceDensity)
             {
@@ -402,7 +389,7 @@ export class DualContouringUniform {
         while (true)
         {
             ym = (ya + yb) * 0.5
-            const d = this.volume.getDensity(new Vec3(x, ym, z))
+            const d = this.volume.voxels[x][ym][z].presence
 
             if (Math.abs(d) < this.ToleranceDensity)
             {
@@ -456,7 +443,7 @@ export class DualContouringUniform {
         while (true)
         {
             zm = (za + zb) * 0.5
-            const d = this.volume.getDensity(new Vec3(x, y, zm))
+            const d = this.volume.voxels[x][y][zm].presence
 
             if (Math.abs(d) < this.ToleranceDensity)
             {

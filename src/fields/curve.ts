@@ -1,6 +1,6 @@
 import { Curve, CURVE_LINEAR, CURVE_SMOOTHSTEP, CURVE_SPLINE, CURVE_STEP, Vec3 } from "playcanvas-extended";
-// import { InterpolableFieldsPoint } from "./fields-sample";
-// import { FieldPoint } from "./point";
+// import { InterpolableFieldsPoint } from "./fields-sample.js";
+// import { FieldPoint } from "./point.js";
 
 export type CurveType =
     typeof CURVE_LINEAR | 

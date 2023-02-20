@@ -1,1 +1,1 @@
-export * from './surface-area'
+export * from './surface-area.js'

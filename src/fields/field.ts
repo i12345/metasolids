@@ -1,5 +1,5 @@
-import { FieldInterpolationType } from "./interpolation";
-import { FieldPoint } from "./point";
+import { FieldInterpolationType } from "./interpolation.js";
+import { FieldPoint } from "./point.js";
 
 export interface Field<Point extends FieldPoint = FieldPoint> {
     interpolationType: FieldInterpolationType<Point>

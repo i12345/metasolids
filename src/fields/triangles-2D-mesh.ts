@@ -1,5 +1,5 @@
 import { Vec2 } from "playcanvas-extended"
-import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point"
+import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
 
 export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> {
     private v0:  Point[]
