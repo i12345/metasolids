@@ -34,7 +34,7 @@ export class InterpolationManager implements InterpolationType<any> {
         return undefined
     }
     
-    private static interpolationTypes: InterpolationType<any>[]
+    private static interpolationTypes: InterpolationType<any>[] = []
 
     static register(type: InterpolationType<any>): void {
         this.interpolationTypes.push(type)
