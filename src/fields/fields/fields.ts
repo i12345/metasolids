@@ -29,7 +29,9 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
         let result = {}
 
         function mergeIn(subfields: Field | FieldsPointMapped<FieldsPoint, Field>, subresult: any) {
-            if (subfields[makeInterpolator]) {
+            if (!subfields)
+                return undefined
+            else if (subfields[makeInterpolator]) {
                 if (subfields instanceof FieldsField)
                     subfields = mergeIn(subfields.fields, subresult)
                 
@@ -37,14 +39,16 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
             }
             else { // subfields is FieldsPointMapped<FieldsPoint, Field>
                 for (const key of Reflect.ownKeys(subfields))
-                    subresult[key] = mergeIn(subfields[key], subresult[key] ??= {})
-            
+                    if (!(subresult[key] = mergeIn(subfields[key], subresult[key] ??= {})))
+                        delete subresult[key]
+
                 return subresult
             }
         }
 
-        for (const { fields: subfields } of fields)
-            mergeIn(subfields, result)
+        for (const field of fields)
+            if (field)
+                mergeIn(field.fields, result)
         
         return new FieldsField(result as FieldsPointMapped<Point, Field>)
     }

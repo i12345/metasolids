@@ -128,7 +128,7 @@ export class MetaPlane<
                 const uv = new Vec2(x, y).divScalar(resolution)
                 const p = uv.mul(xy_size).add(xy_min)
                 
-                const texture_sample = texture.sample({ uv } as MetaShapeTxLocation<Location, TxLocation>, context[MetaShapeSamplingContext_Texture].context)
+                const texture_sample = texture?.sample({ uv } as MetaShapeTxLocation<Location, TxLocation>, context[MetaShapeSamplingContext_Texture].context)
 
                 const figure_samples = Object.fromEntries([-1, 0, 1].map(side => [side,
                     this.figure.sample({ p, side } as MetaPlaneFigureLocation<Location>, context[MetaPlaneSamplingContext_Figure])]))

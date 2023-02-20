@@ -220,13 +220,26 @@ export class MetaShapeVolume<
         MetaShapeVolumeSample<TxSample, InnerSample>,
         VolumeContext
     > {
-    texture: Texture<MetaShapeTxLocation<Location>, TxSample, TextureContext>
-
     get boundingBox(): BoundingBox {
         return this.shape.boundingBox
     }
 
-    constructor(public shape: MetaShape<TxLocation, TxSample, Location, InnerSample, TextureContext, VolumeContext, Context>) {
+    constructor(
+            public shape: MetaShape<
+                    TxLocation,
+                    TxSample,
+                    Location,
+                    InnerSample,
+                    TextureContext,
+                    VolumeContext,
+                    Context
+                >,
+            public texture?: Texture<
+                    MetaShapeTxLocation<Location>,
+                    TxSample,
+                    TextureContext
+                >
+        ) {
         super(shape)
     }
 
@@ -241,7 +254,7 @@ export class MetaShapeVolume<
                 } as FieldsPointMapped<MetaShapeTxLocation<Location, TxLocation>, Field>)
             )
         } as any as TextureContext
-        this.texture.init(context[MetaShapeSamplingContext_Texture])
+        this.texture?.init(context[MetaShapeSamplingContext_Texture])
 
         super.init(context)
 
@@ -251,7 +264,7 @@ export class MetaShapeVolume<
                 this.inner.field as any as FieldsField<MetaShapeTxLocation<Location, TxLocation>>
             )
         } as any as TextureContext
-        this.texture.init(context[MetaShapeSamplingContext_Texture])
+        this.texture?.init(context[MetaShapeSamplingContext_Texture])
     }
 
     protected override init_transfer_context(innerContext: Context, outerContext: VolumeContext): void {
@@ -271,7 +284,7 @@ export class MetaShapeVolume<
                 falloff: FieldsPoint_Omit_Leaf,
                 unit: FieldsPoint_Omit_Leaf,
             } as FieldsPointMapped<InnerSample, typeof FieldsPoint_Omit_Leaf>)) as FieldsField<MetaShapeVolumeSample<TxSample, InnerSample>>,
-            ((this.texture.field as FieldsField<TxSample>).omit({
+            ((this.texture?.field as FieldsField<TxSample>)?.omit({
                 falloff: FieldsPoint_Omit_Leaf,
                 unit: FieldsPoint_Omit_Leaf,
             } as FieldsPointMapped<InnerSample, typeof FieldsPoint_Omit_Leaf>)) as FieldsField<MetaShapeVolumeSample<TxSample, InnerSample>>
@@ -297,13 +310,16 @@ export class MetaShapeVolume<
             context: { outer: VolumeContext, inner: Context }
         ): MetaShapeVolumeSample<TxSample, InnerSample> {
         const texture_location_field = (context.inner[MetaShapeSamplingContext_Texture][SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>)
-        const texture_location = fields_point_map<MetaShapeTxLocation<Location, TxLocation>, Field, FieldPoint>(
-            texture_location_field.fields,
-            leaf =>
-                leaf.interpolationType !== undefined &&
-                leaf.interpolationType[makeInterpolator] !== undefined,
-            (_, path) => extract(location, path) ?? extract(sample, path)
-        ) as any as MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>>
+        const texture_location =
+            this.texture ?
+                fields_point_map<MetaShapeTxLocation<Location, TxLocation>, Field, FieldPoint>(
+                    texture_location_field.fields,
+                    leaf =>
+                        leaf.interpolationType !== undefined &&
+                        leaf.interpolationType[makeInterpolator] !== undefined,
+                    (_, path) => extract(location, path) ?? extract(sample, path)
+                ) as any as MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>> :
+                undefined
         const texture_sample = this.texture?.sample(texture_location, context.outer[MetaShapeSamplingContext_Texture])
         
         const parameters = MetaShapeVolume.combineParameters(sample, texture_sample)

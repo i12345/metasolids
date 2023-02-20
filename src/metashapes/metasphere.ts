@@ -65,7 +65,7 @@ export class MetaSphere<
                 point.z = Math.sin(phi)
 
                 const texture_location = { uv, gradient: point } as MetaShapeTxLocation<Location, TxLocation> & Sample
-                const texture_sample = texture.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
+                const texture_sample = texture?.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
                 const radius = MetaShapeVolume.boundingLength(MetaShapeVolume.combineParameters(texture_sample))
                 point.mulScalar(radius)
                 

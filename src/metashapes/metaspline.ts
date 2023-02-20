@@ -4,7 +4,7 @@ import { PiOver2, TwoPi } from "../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
 import { MultiObjectsVolume } from "../volumes/volumes/multi-objects.js";
 import { TransformVolume } from "../volumes/volumes/transform.js";
-import { MetaShape, MetaShapeLocation, MetaShapeLocationExtraFields, MetaShapeParametersIn, MetaShapeSample, MetaShapeSampleExtraFields, MetaShapeSamplingContext, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
+import { MetaShape, MetaShapeLocation, MetaShapeLocationExtraFields, MetaShapeParametersIn, MetaShapeSample, MetaShapeSampleExtraFields, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 
 export type MetaSplineSegmentFigureLocation<Location extends MetaShapeLocation> =
     MetaShapeLocationExtraFields<Location> & { theta: number, phi: number }
@@ -366,6 +366,8 @@ export class MetaSplineSegment<
         const segment_first = this.spline_segment_index === 1
         const segment_last = this.spline_segment_index === this.spline.segments.length - 1
 
+        const texture = context[MetaShapeSamplingContext_Texture].item
+
         const t0 = this.spline.segments[this.spline_segment_index - 1].t
 
         const resolution = {
@@ -383,20 +385,27 @@ export class MetaSplineSegment<
         let vert_i = -1
 
         const sample_theta = (t: number, m: Mat4, phi = 0) => {
+            const m_offset = m.getTranslation()
             const z_offset = phi === 0 ? Vec3.ZERO : m.getZ().mulScalar(Math.sin(phi))
             const cos_phi = Math.cos(phi)
 
             for (let theta_i = 0; theta_i < resolution.theta; theta_i++) {
                 const theta = theta_i * TwoPi / resolution.theta
+                const uv = this.uv(t, theta, phi)
 
                 const v = new Vec3().add2(
                     m.getX().mulScalar(cos_phi * Math.cos(theta)),
                     m.getY().mulScalar(cos_phi * Math.sin(theta))
                 ).add(z_offset)
 
+                const texture_location = { uv, gradient: v } as MetaShapeTxLocation<Location, TxLocation> & Sample
+                const texture_sample = texture?.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
+
                 const figure_sample = this.spline.figureSample(t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
-                const radius = MetaShapeVolume.boundingLength(MetaShapeVolume.combineParameters(figure_sample))
+
+                const radius = MetaShapeVolume.boundingLength(MetaShapeVolume.combineParameters(texture_sample, figure_sample))
                 v.mulScalar(radius)
+                v.add(m_offset)
 
                 verts[++vert_i] = v.x
                 verts[++vert_i] = v.y
@@ -451,7 +460,7 @@ export class MetaSplineSegment<
         
         const { t, r, theta, phi, v } = plane_sample
         const figure_sample = this.spline.figureSample(t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
-        const uv = new Vec2(t + (phi / PiOver2), (theta / TwoPi) + 0.5)
+        const uv = this.uv(t, theta, phi)
         
         const shape_sample = {
             ...figure_sample,
@@ -461,5 +470,9 @@ export class MetaSplineSegment<
         } as Sample
 
         return shape_sample
+    }
+
+    private uv(t: number, theta: number, phi: number): Vec2 {
+        return new Vec2(t + (phi / PiOver2), (theta / TwoPi) + 0.5)
     }
 }
