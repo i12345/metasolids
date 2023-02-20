@@ -4,9 +4,6 @@ import { VolumeSampler, VolumeSamplerSettings, VolumeSamplingRequest, VolumeSamp
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processor/index.js";
 import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_isPrimitive, SampleDomainLocationField } from "../fields/index.js";
 
-//TODO: make VolumeSamplingProcessor and corresponding processing context
-// also, search for other "TODO"'s and implement them
-
 export interface VolumeProcessing<
         Sample extends VolumeSample = VolumeSample
     > {
@@ -76,7 +73,7 @@ export class VolumeSamplingProcessor<
             VolumeProcessingT,
             VolumeProcessingContextT
         > {
-    dependencies: Function[];
+    dependencies: Function[] = []
 
     init(context: VolumeProcessingContextT): void {
     }
@@ -85,7 +82,7 @@ export class VolumeSamplingProcessor<
         context[SampleDomainLocationField] = FieldsField.merge<Location>(
             defaultVolumeLocationField as FieldsField<Location>,
             new FieldsField(fields_point_map(
-                context.sampling.extraLocationParameters as any as FieldsPointMapped<FieldsPoint, FieldPoint>,
+                (context.sampling.extraLocationParameters ?? {}) as any as FieldsPointMapped<FieldsPoint, FieldPoint>,
                 field_point_isPrimitive,
                 value => defaultField(value)
             )) as FieldsField<Location>
