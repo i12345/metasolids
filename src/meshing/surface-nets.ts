@@ -10,7 +10,8 @@ export class SurfaceNetsMeshingAlgorithm implements MeshingAlgorithm {
     for (let x = 0; x < dims[0]; x++)
       for (let y = 0; y < dims[1]; y++)
         for (let z = 0; z < dims[2]; z++)
-          data[z + ((x + (y * dims[0])) * dims[1])] = volume.voxels[x][y][z].presence - surfaceLevel
+          // data[(((x * dims[1]) + y) * dims[2]) + z] = volume.voxels[x][y][z].presence - surfaceLevel
+          data[(((z * dims[1]) + y) * dims[0]) + x] = volume.voxels[x][y][z].presence - surfaceLevel
     
     const { faces, vertices: verts } = SurfaceNets(data, dims)
     const triangles = new Array(faces.length * 6)
@@ -238,7 +239,7 @@ var SurfaceNets = (function() {
       }
       
       //All done!  Return the result
-      return { vertices: vertices, faces: faces };
+      return { vertices, faces };
     };
     })();
     

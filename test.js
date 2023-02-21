@@ -58,8 +58,8 @@ const context = {
         volume
     },
     [surfaces.VolumeSurfaceMeshingProcessing_Settings]: {
-        algorithm: new meshing.MarchingCubesAlgorithm()
-        // algorithm: new meshing.SurfaceNetsMeshingAlgorithm()
+        // algorithm: new meshing.MarchingCubesAlgorithm()
+        algorithm: new meshing.SurfaceNetsMeshingAlgorithm()
         // algorithm: new meshing.DualContouringUniformAlgorithm()
     }
 }
@@ -74,23 +74,23 @@ const mesh = context[surfaces.VolumeSurfaceMeshingProcessing_Settings].algorithm
 
 // https://plotly.com/javascript/3d-mesh/
 plot([
-    {
-        z: processing.sampling.voxels[Math.floor(processing.sampling.size.x / 2)].map(yz => yz.map(z => z.presence)),
-        type: 'heatmap'
-    },
-    {
-        type: 'scatter3d',
-        x: mesh.vertices.map(v => v.x),
-        y: mesh.vertices.map(v => v.y),
-        z: mesh.vertices.map(v => v.z),
-    }
     // {
-    //     type: 'mesh3d',
+    //     z: processing.sampling.voxels[1 /*Math.floor(processing.sampling.size.x / 2)*/].map(yz => yz.map(z => z.presence)),
+    //     type: 'heatmap'
+    // },
+    // {
+    //     type: 'scatter3d',
     //     x: mesh.vertices.map(v => v.x),
     //     y: mesh.vertices.map(v => v.y),
     //     z: mesh.vertices.map(v => v.z),
-    //     i: new Array(mesh.triangles.length / 3).fill(0).map((_, i) => mesh.triangles[(3 * i) + 0]),
-    //     j: new Array(mesh.triangles.length / 3).fill(0).map((_, i) => mesh.triangles[(3 * i) + 1]),
-    //     k: new Array(mesh.triangles.length / 3).fill(0).map((_, i) => mesh.triangles[(3 * i) + 2]),
     // }
+    {
+        type: 'mesh3d',
+        x: mesh.vertices.map(v => v.x),
+        y: mesh.vertices.map(v => v.y),
+        z: mesh.vertices.map(v => v.z),
+        i: new Array(mesh.triangles.length / 3).fill(0).map((_, i) => mesh.triangles[(3 * i) + 0]),
+        j: new Array(mesh.triangles.length / 3).fill(0).map((_, i) => mesh.triangles[(3 * i) + 1]),
+        k: new Array(mesh.triangles.length / 3).fill(0).map((_, i) => mesh.triangles[(3 * i) + 2]),
+    }
 ])
