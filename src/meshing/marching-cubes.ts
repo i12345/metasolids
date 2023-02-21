@@ -1,5 +1,6 @@
-// Based off marching cubes implementation by theSoenke
-// https://github.com/theSoenke/ProceduralTerrain/blob/master/Assets/ProceduralTerrain/Core/Scripts/Voxel/Meshing/MarchingCubes.cs
+// Based off marching cubes implementation by [1] adapted by [2]
+// [1] https://github.com/theSoenke/ProceduralTerrain/blob/master/Assets/ProceduralTerrain/Core/Scripts/Voxel/Meshing/MarchingCubes.cs
+// [2] https://github.com/voxelbased/core/blob/main/Assets/Voxelbased/Core/Voxel/Meshing/MarchingCubes/MarchingCubes.cs
 
 import { MeshingAlgorithm, MeshingSettings } from "./meshing-algorithm.js";
 import { Tables } from "./tables.js";
@@ -125,14 +126,14 @@ class MarchingCubes
         for (let i = 0; i < 12; i++)
         {
             // When intersection for this edge exists
-            if ((edgeFlags & (1 << i)) != 0)
+            if ((edgeFlags & (1 << i)) !== 0)
             {
-                let offset = this.GetOffset(cube[Tables.EdgeConnection[i][0]], cube[Tables.EdgeConnection[i][1]]);
+                const offset = this.GetOffset(cube[Tables.EdgeConnection[i][0]], cube[Tables.EdgeConnection[i][1]]);
 
                 edgeVertex[i] = new Vec3(
-                    pos.x + (Tables.VertexOffset[Tables.EdgeConnection[i][0]][0] + offset * Tables.EdgeDirection[i][0]),
-                    pos.y + (Tables.VertexOffset[Tables.EdgeConnection[i][0]][1] + offset * Tables.EdgeDirection[i][1]),
-                    pos.z + (Tables.VertexOffset[Tables.EdgeConnection[i][0]][2] + offset * Tables.EdgeDirection[i][2])
+                    pos.x + (Tables.VertexOffset[Tables.EdgeConnection[i][0]][0] + (offset * Tables.EdgeDirection[i][0])),
+                    pos.y + (Tables.VertexOffset[Tables.EdgeConnection[i][0]][1] + (offset * Tables.EdgeDirection[i][1])),
+                    pos.z + (Tables.VertexOffset[Tables.EdgeConnection[i][0]][2] + (offset * Tables.EdgeDirection[i][2]))
                 )
             }
         }
@@ -150,7 +151,7 @@ class MarchingCubes
 
             for (let j = 0; j < 3; j++)
             {
-                let vert = Tables.TriTable[cubeIndex][3 * i + j];
+                let vert = Tables.TriTable[cubeIndex][(3 * i) + j];
                 indexList.push(idx + Tables.WindingOrder[j]);
                 vertList.push(edgeVertex[vert]);
             }
