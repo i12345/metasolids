@@ -1,24 +1,25 @@
 // Based off marching cubes implementation by theSoenke
 // https://github.com/theSoenke/ProceduralTerrain/blob/master/Assets/ProceduralTerrain/Core/Scripts/Voxel/Meshing/MarchingCubes.cs
 
-import { MeshingAlgorithm } from "./meshing-algorithm.js";
+import { MeshingAlgorithm, MeshingSettings } from "./meshing-algorithm.js";
 import { Tables } from "./tables.js";
 import { MeshData } from "./types.js";
 import { Vec3 } from "playcanvas-extended";
 import { VolumeSamplingResult } from "../volumes/sampling.js";
 
 export class MarchingCubesAlgorithm implements MeshingAlgorithm {
-    mesh(volume: VolumeSamplingResult): MeshData {
-        const impl = new MarchingCubes(volume)
+    mesh(volume: VolumeSamplingResult, { surfaceLevel }: MeshingSettings): MeshData {
+        const impl = new MarchingCubes(volume, surfaceLevel)
         return impl.GenerateMesh()
     }
 }
 
 class MarchingCubes
 {
-    private static readonly Target = 0; // The value that represents the surface of mesh
-
-    constructor(public volume: VolumeSamplingResult) {
+    constructor(
+        public volume: VolumeSamplingResult,
+        public surfaceLevel: number
+    ) {
     }
 
     public GenerateMesh(): MeshData
@@ -38,11 +39,22 @@ class MarchingCubes
                 }
             }
         }
+
+        this.transformVerticesToLocalSpace(vertices)
         
         return {
-            vertices: vertices,
-            triangles: triangles
-        };
+            vertices,
+            triangles
+        }
+    }
+
+    private transformVerticesToLocalSpace(vertices: Vec3[]) {
+        const box_min = this.volume.boundingBox.getMin()
+        const box_size = this.volume.boundingBox.halfExtents.clone().mulScalar(2)
+        const voxels_size = this.volume.size
+
+        for (const vert of vertices)
+            vert.mul(box_size).div(voxels_size).add(box_min)
     }
 
     /**
@@ -72,7 +84,7 @@ class MarchingCubes
     /**
      * Find the point of intersection of the surface between points with values v1 and v2
      */
-    private static GetOffset(v1: number, v2: number): number
+    private GetOffset(v1: number, v2: number): number
     {
         const delta = v2 - v1;
 
@@ -80,7 +92,7 @@ class MarchingCubes
         {
             return 0.5;
         }
-        return (MarchingCubes.Target - v1) / delta;
+        return (this.surfaceLevel - v1) / delta;
     }
 
     /**
@@ -94,7 +106,7 @@ class MarchingCubes
         // Find vertices inside the surface
         for (let i = 0; i < 8; i++)
         {
-            if (cube[i] <= MarchingCubes.Target)
+            if (cube[i] <= this.surfaceLevel)
             {
                 cubeIndex |= 1 << i;
             }
@@ -115,7 +127,7 @@ class MarchingCubes
             // When intersection for this edge exists
             if ((edgeFlags & (1 << i)) != 0)
             {
-                let offset = MarchingCubes.GetOffset(cube[Tables.EdgeConnection[i][0]], cube[Tables.EdgeConnection[i][1]]);
+                let offset = this.GetOffset(cube[Tables.EdgeConnection[i][0]], cube[Tables.EdgeConnection[i][1]]);
 
                 edgeVertex[i] = new Vec3(
                     pos.x + (Tables.VertexOffset[Tables.EdgeConnection[i][0]][0] + offset * Tables.EdgeDirection[i][0]),

@@ -1,8 +1,9 @@
-import { MeshingAlgorithm } from "../meshing/meshing-algorithm.js";
+import { MeshingAlgorithm, MeshingSettings } from "../meshing/meshing-algorithm.js";
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js";
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
-import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor } from "../volumes/processor.js";
+import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingProcessor } from "../volumes/processor.js";
 import { Surface, SurfaceSample } from "./surface.js";
+import { Vec3 } from "playcanvas-extended";
 
 export interface SurfaceProcessingContext<
         SampleContextTemplate = any
@@ -315,6 +316,29 @@ export class VolumeSurfacesParallelizer<
     }
 }
 
+export const VolumeSurfaceMeshingProcessing_Settings = Symbol("surface-meshing:settings")
+
+export interface VolumeSurfaceMeshingProcessing<
+        Sample extends VolumeSample
+    > extends VolumeSurfacesProcessing<Sample> {
+    [VolumeSurfaceMeshingProcessing_Settings]: MeshingSettings
+}
+
+export interface VolumeSurfaceMeshingProcessingContext<
+        Location extends VolumeLocation = VolumeLocation,
+        Sample extends VolumeSample = VolumeSample,
+        SampleContextTemplate = any,
+    > extends
+    VolumeSurfacesProcessingContext<
+        Location,
+        Sample,
+        SampleContextTemplate
+    > {
+    [VolumeSurfaceMeshingProcessing_Settings]: {
+        algorithm: MeshingAlgorithm
+    }
+}
+
 export class VolumeSurfaceMeshingProcessor<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
@@ -324,37 +348,48 @@ export class VolumeSurfaceMeshingProcessor<
         Location,
         Sample,
         SampleContextTemplate,
-        VolumeSurfacesProcessing<Sample>,
-        VolumeSurfacesProcessingContext<
+        VolumeSurfaceMeshingProcessing<Sample>,
+        VolumeSurfaceMeshingProcessingContext<Location, Sample, SampleContextTemplate>
+    > {
+    dependencies = [VolumeSamplingProcessor]
+
+    constructor() { }
+
+    init(): void {
+    }
+
+    process(
+        volume: VolumeSurfaceMeshingProcessing<Sample>,
+        context: VolumeSurfaceMeshingProcessingContext<
             Location,
             Sample,
             SampleContextTemplate
         >
-    > {
-    dependencies: Function[];
-
-    constructor(public mesher: MeshingAlgorithm) { }
-    init(context: VolumeSurfacesProcessingContext<
-            Location,
-            Sample,
-            SampleContextTemplate,
-            SurfaceProcessingContext<SampleContextTemplate>
-        >): void {
-        //TODO: choose mesher from context
-    }
-
-    process(
-        volume: VolumeSurfacesProcessing<Sample, Surface<Sample>>,
-        context: VolumeSurfacesProcessingContext<
-            Location,
-            Sample,
-            SampleContextTemplate,
-            SurfaceProcessingContext<SampleContextTemplate>
-        >
     ): void {
-        const mesh = this.mesher.mesh(volume.sampling)
-        const samples = undefined //TODO
-        //TODO: examine real data to see how multiple island surfaces would be processed
-        volume.surfaces.push({ mesh, samples })
+        const algorithm = context[VolumeSurfaceMeshingProcessing_Settings].algorithm
+        const mesh = algorithm.mesh(
+            volume.sampling,
+            volume[VolumeSurfaceMeshingProcessing_Settings]
+        )
+
+        const box_min = volume.sampling.boundingBox.getMin()
+        const box_size = volume.sampling.boundingBox.halfExtents.clone().mulScalar(2)
+        const voxels = volume.sampling.voxels
+        const voxels_size = volume.sampling.size
+
+        function interpolateSample(p: Vec3) {
+            const voxel_p = p.clone().sub(box_min).mul(voxels_size).div(box_size)
+            const voxel_000 = voxel_p.clone().floor()
+            // if (((voxel_p.x - voxel_000.x) +
+            //     (voxel_p.x - voxel_000.x) +
+            //     (voxel_p.x - voxel_000.x)) < 0.01)
+
+            //TODO: implement interpolation
+
+            return voxels[voxel_000.x][voxel_000.y][voxel_000.z]
+        }
+
+        const samples = mesh.vertices.map(v => interpolateSample(v))
+        volume.surfaces = [{ mesh, samples }]
     }
 }

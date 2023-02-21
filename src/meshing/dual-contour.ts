@@ -3,15 +3,15 @@
 // [1] https://github.com/voxelbased/core/blob/main/Assets/Voxelbased/Core/Voxel/Meshing/DualContouring/DualContouringUniform.cs
 // [2] https://github.com/theSoenke/ProceduralTerrain/blob/master/Assets/ProceduralTerrain/Core/Scripts/Voxel/Meshing/DualControuringUniform.cs
 
-import { MeshingAlgorithm } from "./meshing-algorithm.js"
+import { MeshingAlgorithm, MeshingSettings } from "./meshing-algorithm.js"
 import { Tables } from "./tables.js"
 import { HermiteData, MeshData, Row, Vertex, Voxel } from "./types.js"
 import { Vec3 } from "playcanvas-extended"
 import { VolumeSamplingResult } from "../volumes/sampling.js"
 
 export class DualContouringUniformAlgorithm implements MeshingAlgorithm {
-    mesh(volume: VolumeSamplingResult): MeshData {
-        const impl = new DualContouringUniform(volume)
+    mesh(volume: VolumeSamplingResult, { surfaceLevel }: MeshingSettings): MeshData {
+        const impl = new DualContouringUniform(volume, surfaceLevel)
         return impl.GenerateMesh()
     }
 }
@@ -31,7 +31,10 @@ export class DualContouringUniform {
     private readonly triangles: number[] = []
     private sizePlus3: Vec3
 
-    constructor(public volume: VolumeSamplingResult) {
+    constructor(
+        public volume: VolumeSamplingResult,
+        public surfaceLevel: number
+    ) {
         this.sizePlus3 = new Vec3(3, 3, 3).add(volume.size)
     }
 
@@ -61,10 +64,21 @@ export class DualContouringUniform {
             this.rows[2] = tmp
         }
 
+        this.transformVerticesToLocalSpace()
+
         return {
             vertices: this.vertices,
             triangles: this.triangles
         }
+    }
+
+    private transformVerticesToLocalSpace() {
+        const box_min = this.volume.boundingBox.getMin()
+        const box_size = this.volume.boundingBox.halfExtents.clone().mulScalar(2)
+        const voxels_size = this.volume.size
+
+        for (const vert of this.vertices)
+            vert.mul(box_size).div(voxels_size).add(box_min)
     }
 
     /**
@@ -74,7 +88,10 @@ export class DualContouringUniform {
         for (let x = 0; x < this.sizePlus3.x; x++) {
             for (let z = 0; z < this.sizePlus3.z; z++) {
                 const pos = new Vec3(row.pos.x + x - 1, row.pos.y, row.pos.z + z - 1)
-                let density = this.volume.voxels[pos.x][pos.y][pos.z].presence
+                if (pos.x < 0) pos.x = 0; else if (pos.x >= this.volume.size.x) pos.x = this.volume.size.x - 1
+                if (pos.y < 0) pos.y = 0; else if (pos.y >= this.volume.size.y) pos.y = this.volume.size.y - 1
+                if (pos.z < 0) pos.z = 0; else if (pos.z >= this.volume.size.z) pos.z = this.volume.size.z - 1
+                let density = this.volume.voxels[pos.x][pos.y][pos.z].presence - this.surfaceLevel
 
                 row.points[(x * this.sizePlus3.x) + z] = {
                     pos,
@@ -248,9 +265,17 @@ export class DualContouringUniform {
      * Calculate normal for point
      * @returns Normal
      */
-    private GetNormal({x, y, z}: Vec3): Vec3
-    {
-        return this.volume.voxels[x][y][z].gradient.clone().mulScalar(-1).normalize()
+    private GetNormal({ x, y, z }: Vec3): Vec3 {
+        x = Math.floor(x); if (x < 1) x = 1; else if (x >= this.volume.size.x - 1) x = this.volume.size.x - 2
+        y = Math.floor(y); if (y < 1) y = 1; else if (y >= this.volume.size.y - 1) y = this.volume.size.y - 2
+        z = Math.floor(z); if (z < 1) z = 1; else if (z >= this.volume.size.z - 1) z = this.volume.size.z - 2
+        // return this.volume.voxels[x][y][z].gradient.clone().mulScalar(-1).normalize()
+        const voxels = this.volume.voxels
+        return new Vec3(
+            voxels[x - 1][y][z].presence - voxels[x + 1][y][z].presence,
+            voxels[x][y - 1][z].presence - voxels[x][y + 1][z].presence,
+            voxels[x][y][z - 1].presence - voxels[x][y][z + 1].presence
+        ).mulScalar(-1).normalize()
     }
 
     /**
@@ -335,7 +360,7 @@ export class DualContouringUniform {
         while (true)
         {
             xm = (xa + xb) * 0.5
-            const d = this.volume.voxels[xm][y][z].presence
+            const d = this.volume.voxels[xm][y][z].presence - this.surfaceLevel
 
             if (Math.abs(d) < this.ToleranceDensity)
             {
@@ -389,7 +414,7 @@ export class DualContouringUniform {
         while (true)
         {
             ym = (ya + yb) * 0.5
-            const d = this.volume.voxels[x][ym][z].presence
+            const d = this.volume.voxels[x][ym][z].presence - this.surfaceLevel
 
             if (Math.abs(d) < this.ToleranceDensity)
             {
@@ -443,7 +468,7 @@ export class DualContouringUniform {
         while (true)
         {
             zm = (za + zb) * 0.5
-            const d = this.volume.voxels[x][y][zm].presence
+            const d = this.volume.voxels[x][y][zm].presence - this.surfaceLevel
 
             if (Math.abs(d) < this.ToleranceDensity)
             {

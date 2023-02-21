@@ -375,7 +375,7 @@ export class VolumeSurfacesSolidifyingProcessor<
         VolumeProcessingT,
         VolumeProcessingContextT
     > {
-    dependencies: Function[]
+    dependencies: Function[] = []
     
     init(context: VolumeSurfaceProcessingContext<
             Location,

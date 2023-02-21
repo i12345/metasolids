@@ -1,16 +1,16 @@
-import { MeshingAlgorithm } from "./meshing-algorithm.js";
+import { MeshingAlgorithm, MeshingSettings } from "./meshing-algorithm.js";
 import { MeshData } from "./types.js";
 import { Vec3 } from "playcanvas-extended";
 import { VolumeSamplingResult } from "../volumes/sampling.js";
 
 export class SurfaceNetsMeshingAlgorithm implements MeshingAlgorithm {
-  mesh(volume: VolumeSamplingResult): MeshData {
+  mesh(volume: VolumeSamplingResult, { surfaceLevel }: MeshingSettings): MeshData {
     const dims: [number, number, number] = [volume.size.x, volume.size.y, volume.size.z]
     const data = new Float64Array(dims[0] * dims[1] * dims[2])
     for (let x = 0; x < dims[0]; x++)
       for (let y = 0; y < dims[1]; y++)
         for (let z = 0; z < dims[2]; z++)
-          data[z + ((x + (y * dims[0])) * dims[1])] = volume.voxels[x][y][z].presence
+          data[z + ((x + (y * dims[0])) * dims[1])] = volume.voxels[x][y][z].presence - surfaceLevel
     
     const { faces, vertices: verts } = SurfaceNets(data, dims)
     const triangles = new Array(faces.length * 6)
@@ -27,6 +27,17 @@ export class SurfaceNetsMeshingAlgorithm implements MeshingAlgorithm {
 
     const vertices = verts.map(vert => new Vec3(vert))
 
+    function transformVerticesToLocalSpace() {
+      const box_min = volume.boundingBox.getMin()
+      const box_size = volume.boundingBox.halfExtents.clone().mulScalar(2)
+      const voxels_size = volume.size
+
+      for (const vert of vertices)
+          vert.mul(box_size).div(voxels_size).add(box_min)
+    }
+
+    transformVerticesToLocalSpace()
+  
     return { vertices, triangles }
   }
 }
