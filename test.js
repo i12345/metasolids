@@ -1,35 +1,7 @@
-import { fields, volumes, metashapes, ProcessorGraph, surfaces, meshing } from './dist/index.js'
+import { volumes, metashapes, ProcessorGraph, surfaces, meshing } from './dist/index.js'
 import { plot } from 'nodeplotlib'
-import { BoundingBox, Vec3 } from 'playcanvas-extended'
 
 const volume = new metashapes.MetaShapeVolume(new metashapes.MetaSphere())
-
-/**
- * @implements {volumes.Volume}
- */
-class SolidBoxVolume {
-    boundingBox = new BoundingBox(Vec3.ZERO, Vec3.ONE)
-
-    init() { }
-
-    /**
-     * @param {{p: Vec3}} location
-     */
-    sample({ p }) {
-        const presence = (
-            (Math.abs(p.x) < 0.5 ? 1 : 0) +
-            (Math.abs(p.y) < 0.2 ? 1 : 0) +
-            (Math.abs(p.z) < 0.3 ? 1 : 0)
-        ) / 3
-
-        return { presence }
-    }
-}
-
-/**
- * @type {volumes.Volume}
- */
-// const volume = new SolidBoxVolume()
 
 const processors = new ProcessorGraph([
     new volumes.VolumeSamplingProcessor(),
@@ -42,7 +14,7 @@ const processors = new ProcessorGraph([
 const processing = {
     [volumes.VolumeSamplingProcessing_SamplerSettings]: {
         margin: 2,
-        resolution: 4
+        resolution: 8
     },
     [surfaces.VolumeSurfaceMeshingProcessing_Settings]: {
         surfaceLevel: 0.5
