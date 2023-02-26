@@ -11,40 +11,38 @@ const processors = new ProcessorGraph([
 /**
  * @type {volumes.VolumeSamplingProcessing & surfaces.VolumeSurfaceMeshingProcessing}
  */
-const processing = {
-    [volumes.VolumeSamplingProcessing_SamplerSettings]: {
-        margin: 2,
-        resolution: 8
-    },
-    [surfaces.VolumeSurfaceMeshingProcessing_Settings]: {
-        surfaceLevel: 0.5
-    }
-}
+const processing = {}
 
 /**
  * @type {volumes.VolumeProcessingContext & surfaces.VolumeSurfaceMeshingProcessingContext}
  */
 const context = {
     samples: {},
-    sampling: {
-        volume
+    [volumes.VolumeSamplingKey]: {
+        volume,
+        settings: {
+            margin: 2,
+            resolution: 8
+        }
     },
-    [surfaces.VolumeSurfaceMeshingProcessing_Settings]: {
+    [surfaces.VolumeSurfaceMeshingKey]: {
         // algorithm: new meshing.MarchingCubesAlgorithm()
-        algorithm: new meshing.SurfaceNetsMeshingAlgorithm()
-        // algorithm: new meshing.DualContouringUniformAlgorithm()
-    }
+        // algorithm: new meshing.DualContouringUniformAlgorithm(),
+        algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
+        settings: {
+            surfaceLevel: 0.5
+        }
+    },
 }
 
 processors.init(context)
 processors.process(processing, context)
 
-const mesh = context[surfaces.VolumeSurfaceMeshingProcessing_Settings].algorithm.mesh(
-    processing.sampling,
-    processing[surfaces.VolumeSurfaceMeshingProcessing_Settings]
+const mesh = context[surfaces.VolumeSurfaceMeshingKey].algorithm.mesh(
+    processing[volumes.VolumeSamplingKey],
+    context[surfaces.VolumeSurfaceMeshingKey].settings
 )
 
-// https://plotly.com/javascript/3d-mesh/
 plot([
     // {
     //     z: processing.sampling.voxels[1 /*Math.floor(processing.sampling.size.x / 2)*/].map(yz => yz.map(z => z.presence)),
@@ -56,6 +54,8 @@ plot([
     //     y: mesh.vertices.map(v => v.y),
     //     z: mesh.vertices.map(v => v.z),
     // }
+
+    // https://plotly.com/javascript/3d-mesh/
     {
         type: 'mesh3d',
         x: mesh.vertices.map(v => v.x),
