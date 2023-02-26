@@ -203,6 +203,7 @@ export class MetaSplineSegment<
         >
     > {
     field: Field<Sample>
+    //TODO: let there be multiple figures with different times for a single SplineSegment
     figure: MetaSplineSegmentFigure<Location, Sample>
     
     private spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[]
