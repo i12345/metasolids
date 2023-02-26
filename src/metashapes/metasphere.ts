@@ -52,7 +52,7 @@ export class MetaSphere<
         const resolution = 32
         const verts = new Float32Array(2 * resolution * resolution * 3)
         for (let u = 0; u < 2 * resolution; u++) {
-            const theta = TwoPi * ((u / 2) - 0.5)
+            const theta = TwoPi * ((u / (2 * resolution)) - 0.5)
             const cos_theta = Math.cos(theta)
             const sin_theta = Math.sin(theta)
 
