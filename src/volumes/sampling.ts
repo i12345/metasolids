@@ -12,6 +12,7 @@ export interface VolumeSamplingRequest<
     volume: Volume<Location, Sample, Context>
     context: Context
     extraLocationParameters?: ExtraFields<Location, VolumeLocation>
+    settings: VolumeSamplerSettings
 }
 
 export interface VolumeSamplingResult<
@@ -49,13 +50,11 @@ export interface VolumeSamplerSettings {
 
 export const defaultVolumeSamplerSettings: VolumeSamplerSettings = {
     margin: 1,
-    resolution: 16
+    resolution: 8
 }
 
 export class VolumeSampler {
-    constructor(public settings: VolumeSamplerSettings = defaultVolumeSamplerSettings) { }
-
-    sample<
+    static sample<
             Location extends VolumeLocation = VolumeLocation,
             Sample extends VolumeSample = VolumeSample,
             Context extends
@@ -64,7 +63,8 @@ export class VolumeSampler {
         >({
             volume,
             context,
-            extraLocationParameters
+            extraLocationParameters,
+            settings
         }: VolumeSamplingRequest<
             Location,
             Sample,
@@ -73,14 +73,14 @@ export class VolumeSampler {
         volume.init(context)
 
         const box = volume.boundingBox
-        const margin = new Vec3(this.settings.margin, this.settings.margin, this.settings.margin)
+        const margin = new Vec3(settings.margin, settings.margin, settings.margin)
         const offset = new Vec3().sub2(box.getMin(), margin)
         const chunkSize = new Vec3().sub2(box.getMax(), box.getMin()).add(margin.mulScalar(2))
         
         const boundingBox = new BoundingBox()
         boundingBox.setMinMax(offset, new Vec3().add2(offset, chunkSize))
 
-        const size = chunkSize.clone().mulScalar(this.settings.resolution).ceil()
+        const size = chunkSize.clone().mulScalar(settings.resolution).ceil()
 
         const voxels = new Array(size.x)
 

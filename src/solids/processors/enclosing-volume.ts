@@ -2,7 +2,7 @@ import { Vec2 } from "playcanvas-extended";
 import { Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../processor/index.js";
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js";
-import { VolumeLocation, VolumeSample } from "../../volumes/index.js";
+import { VolumeLocation, VolumeSample, VolumeSamplingKey } from "../../volumes/index.js";
 import { SolidProcessingContext, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../processor.js";
 import { Solid } from "../solid.js";
 
@@ -72,7 +72,7 @@ export class SolidWithEnclosingVolumeProcessor<
         const triangles_mesh = Triangles2DMesh.build(xy, mesh.triangles)
         const triangles_meshCollider = new Triangles2DMeshCollider(triangles_mesh)
 
-        const sampling = context[ParallelizedContextParallelInfo].item.sampling
+        const sampling = context[ParallelizedContextParallelInfo].item[VolumeSamplingKey]
 
         const local_space_offset_3d = sampling.boundingBox.getMin()
         const local_space_offset = new Vec2(

@@ -1,23 +1,26 @@
 import { Processor } from "../processor/processor.js";
 import { defaultVolumeLocationField, VolumeLocation, VolumeSample, VolumeSamplingContext } from "./volume.js";
-import { VolumeSampler, VolumeSamplerSettings, VolumeSamplingRequest, VolumeSamplingResult } from "./sampling.js";
+import { VolumeSampler, VolumeSamplingRequest, VolumeSamplingResult } from "./sampling.js";
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processor/index.js";
 import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_isPrimitive, SampleDomainLocationField } from "../fields/index.js";
+
+export const VolumeSampleKey = Symbol('volume.sample')
+export const VolumeSamplingKey = Symbol("volume-sampling")
 
 export interface VolumeProcessing<
         Sample extends VolumeSample = VolumeSample
     > {
-    sampling: VolumeSamplingResult<Sample>
+    [VolumeSamplingKey]: VolumeSamplingResult<Sample>
 }
 
 export interface VolumeProcessingContext<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
-    > {
-    sampling: Omit<VolumeSamplingRequest<Location, Sample>, "context">
-    
-    samples: SampleContextTemplate
+    > extends
+    VolumeSamplingContext<Location> {
+    [VolumeSamplingKey]: Omit<VolumeSamplingRequest<Location, Sample>, "context">
+    [VolumeSampleKey]: SampleContextTemplate
 }
 
 export interface VolumeProcessor<
@@ -34,61 +37,37 @@ export interface VolumeProcessor<
     Processor<VolumeProcessingT, VolumeProcessingContextT> {
 }
 
-export const VolumeSamplingProcessing_SamplerSettings = Symbol("sampler-settings")
-export interface VolumeSamplingProcessing<
-        Sample extends VolumeSample = VolumeSample,
-    > extends
-    VolumeProcessing<Sample> {
-    [VolumeSamplingProcessing_SamplerSettings]: VolumeSamplerSettings
-}
-
-export interface VolumeSamplingProcessingContext<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any
-    > extends
-    VolumeProcessingContext<
-        Location,
-        Sample,
-        SampleContextTemplate
-    >,
-    VolumeSamplingContext<Location> {
-}
-
 export class VolumeSamplingProcessor<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
-        VolumeProcessingT extends
-            VolumeSamplingProcessing<Sample> =
-            VolumeSamplingProcessing<Sample>,
-        VolumeProcessingContextT extends
-            VolumeSamplingProcessingContext<Location, Sample, SampleContextTemplate> =
-            VolumeSamplingProcessingContext<Location, Sample, SampleContextTemplate>,
+        SampleContextTemplate = any
     > implements
     VolumeProcessor<
             Location,
             Sample,
             SampleContextTemplate,
-            VolumeProcessingT,
-            VolumeProcessingContextT
+            VolumeProcessing<Sample>,
+            VolumeProcessingContext<Location, Sample, SampleContextTemplate>
         > {
     dependencies: Function[] = []
 
-    init(context: VolumeProcessingContextT): void {
+    init(): void {
     }
     
-    process(item: VolumeProcessingT, context: VolumeProcessingContextT): void {
+    process(
+            item: VolumeProcessing<Sample>,
+            context: VolumeProcessingContext<Location, Sample, SampleContextTemplate>
+        ): void {
         context[SampleDomainLocationField] = FieldsField.merge<Location>(
             defaultVolumeLocationField as FieldsField<Location>,
             new FieldsField(fields_point_map(
-                (context.sampling.extraLocationParameters ?? {}) as any as FieldsPointMapped<FieldsPoint, FieldPoint>,
+                (context[VolumeSamplingKey].extraLocationParameters ?? {}) as any as FieldsPointMapped<FieldsPoint, FieldPoint>,
                 field_point_isPrimitive,
                 value => defaultField(value)
             )) as FieldsField<Location>
         )
 
-        item.sampling = new VolumeSampler(item[VolumeSamplingProcessing_SamplerSettings]).sample({ context, ...(context.sampling) })
+        item[VolumeSamplingKey] = VolumeSampler.sample({ context, ...context[VolumeSamplingKey] })
     }
 }
 
@@ -172,7 +151,7 @@ export class VolumeSampleParallelizer<
         >
 
         const parallelizedContext: SampleContext = {
-            ...context.samples,
+            ...context[VolumeSampleKey],
             [ParallelizedContextParallelInfo]: { item: undefined, context }
         }
         
@@ -193,15 +172,17 @@ export class VolumeSampleParallelizer<
         >
 
         const parallelizedContext: SampleContext = {
-            ...context.samples,
+            ...context[VolumeSampleKey],
             [ParallelizedContextParallelInfo]: { item, context }
         }
 
-        for (let x = item.sampling.size.x - 1; x >= 0; x--)
-            for (let y = item.sampling.size.y - 1; y >= 0; y--)
-                for (let z = item.sampling.size.z - 1; z >= 0; z--)
+        const sampling = item[VolumeSamplingKey]
+
+        for (let x = sampling.size.x - 1; x >= 0; x--)
+            for (let y = sampling.size.y - 1; y >= 0; y--)
+                for (let z = sampling.size.z - 1; z >= 0; z--)
                     itemProcessor.process(
-                            item.sampling.voxels[x][y][z],
+                            sampling.voxels[x][y][z],
                             parallelizedContext
                         )
     }

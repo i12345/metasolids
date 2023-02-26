@@ -74,13 +74,14 @@ export class SolidSurfaceProcessor<
     }
 }
 
+export const VolumeSolidsKey = Symbol('volume.solids')
 export interface VolumeSolidsProcessing<
         Sample extends VolumeSample = VolumeSample,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SolidT extends Solid<Sample, SurfaceT> = Solid<Sample, SurfaceT>
     > extends
     VolumeProcessing<Sample> {
-    solids: SolidT[]
+    [VolumeSolidsKey]: SolidT[]
 }
 
 export interface VolumeSolidsProcessingContext<
@@ -105,7 +106,7 @@ export interface VolumeSolidsProcessingContext<
         Sample,
         SampleContextTemplate
     > {
-    solids: SolidProcessingContextT
+    [VolumeSolidsKey]: SolidProcessingContextT
 }
 
 export type VolumeSolidProcessingContext<
@@ -280,7 +281,7 @@ export class VolumeSolidsParallelizer<
         >
         
         const parallelizedContext: SampleContext = {
-            ...context.solids,
+            ...context[VolumeSolidsKey],
             [ParallelizedContextParallelInfo]: { item: undefined, context }
         }
 
@@ -315,11 +316,11 @@ export class VolumeSolidsParallelizer<
         >
         
         const parallelizedContext: SampleContext = {
-            ...context.solids,
+            ...context[VolumeSolidsKey],
             [ParallelizedContextParallelInfo]: { item, context }
         }
 
-        for (const solid of item.solids)
+        for (const solid of item[VolumeSolidsKey])
             itemProcessor.process(solid, parallelizedContext)
     }
 }
@@ -399,6 +400,6 @@ export class VolumeSurfacesSolidifyingProcessor<
         >
     ): void {
         const volumeProcessing = context[ParallelizedContextParallelInfo].item
-        volumeProcessing.solids.push({ surface })
+        volumeProcessing[VolumeSolidsKey].push({ surface })
     }
 }

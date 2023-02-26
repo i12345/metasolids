@@ -1,7 +1,7 @@
 import { MeshingAlgorithm, MeshingSettings } from "../meshing/meshing-algorithm.js";
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js";
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
-import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingProcessor } from "../volumes/processor.js";
+import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingKey, VolumeSamplingProcessor } from "../volumes/processor.js";
 import { Surface, SurfaceSample } from "./surface.js";
 import { Vec3 } from "playcanvas-extended";
 
@@ -116,12 +116,13 @@ export class SurfaceSampleParallelizer<
 }
 
 
+export const VolumeSurfacesKey = Symbol('volume.surfaces')
 export interface VolumeSurfacesProcessing<
         Sample extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<Sample> = Surface<Sample>
     > extends
     VolumeProcessing<Sample> {
-    surfaces: SurfaceT[]
+    [VolumeSurfacesKey]: SurfaceT[]
 }
 
 export interface VolumeSurfacesProcessingContext<
@@ -137,7 +138,7 @@ export interface VolumeSurfacesProcessingContext<
         Sample,
         SampleContextTemplate
     > {
-    surfaces: SurfaceProcessingContextT
+    [VolumeSurfacesKey]: SurfaceProcessingContextT
 }
 
 export type VolumeSurfaceProcessingContext<
@@ -273,7 +274,7 @@ export class VolumeSurfacesParallelizer<
         >
         
         const parallelizedContext: SampleContext = {
-            ...context.surfaces,
+            ...context[VolumeSurfacesKey],
             [ParallelizedContextParallelInfo]: { item: undefined, context }
         }
 
@@ -307,21 +308,20 @@ export class VolumeSurfacesParallelizer<
         >
         
         const parallelizedContext: SampleContext = {
-            ...context.surfaces,
+            ...context[VolumeSurfacesKey],
             [ParallelizedContextParallelInfo]: { item, context }
         }
 
-        for (const solid of item.surfaces)
+        for (const solid of item[VolumeSurfacesKey])
             itemProcessor.process(solid, parallelizedContext)
     }
 }
 
-export const VolumeSurfaceMeshingProcessing_Settings = Symbol("surface-meshing:settings")
+export const VolumeSurfaceMeshingKey = Symbol("volume.surface-meshing")
 
 export interface VolumeSurfaceMeshingProcessing<
-        Sample extends VolumeSample
+        Sample extends VolumeSample = VolumeSample
     > extends VolumeSurfacesProcessing<Sample> {
-    [VolumeSurfaceMeshingProcessing_Settings]: MeshingSettings
 }
 
 export interface VolumeSurfaceMeshingProcessingContext<
@@ -334,8 +334,9 @@ export interface VolumeSurfaceMeshingProcessingContext<
         Sample,
         SampleContextTemplate
     > {
-    [VolumeSurfaceMeshingProcessing_Settings]: {
-        algorithm: MeshingAlgorithm
+    [VolumeSurfaceMeshingKey]: {
+        algorithm: MeshingAlgorithm,
+        settings: MeshingSettings
     }
 }
 
@@ -366,16 +367,17 @@ export class VolumeSurfaceMeshingProcessor<
             SampleContextTemplate
         >
     ): void {
-        const algorithm = context[VolumeSurfaceMeshingProcessing_Settings].algorithm
+        const sampling = volume[VolumeSamplingKey]
+        const algorithm = context[VolumeSurfaceMeshingKey].algorithm
         const mesh = algorithm.mesh(
-            volume.sampling,
-            volume[VolumeSurfaceMeshingProcessing_Settings]
+            sampling,
+            context[VolumeSurfaceMeshingKey].settings
         )
 
-        const box_min = volume.sampling.boundingBox.getMin()
-        const box_size = volume.sampling.boundingBox.halfExtents.clone().mulScalar(2)
-        const voxels = volume.sampling.voxels
-        const voxels_size = volume.sampling.size
+        const box_min = sampling.boundingBox.getMin()
+        const box_size = sampling.boundingBox.halfExtents.clone().mulScalar(2)
+        const voxels = sampling.voxels
+        const voxels_size = sampling.size
 
         function interpolateSample(p: Vec3) {
             const voxel_p = p.clone().sub(box_min).mul(voxels_size).div(box_size)
@@ -390,6 +392,6 @@ export class VolumeSurfaceMeshingProcessor<
         }
 
         const samples = mesh.vertices.map(v => interpolateSample(v))
-        volume.surfaces = [{ mesh, samples }]
+        volume[VolumeSurfacesKey] = [{ mesh, samples }]
     }
 }
