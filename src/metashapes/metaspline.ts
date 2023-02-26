@@ -285,7 +285,7 @@ export class MetaSplineSegment<
             }
             else {
                 const metashape_spline_segment_volume = Reflect.ownKeys(parent.children)
-                    .map(key => parent.children[key])
+                    .map(key => parent.children[key] as any)
                     .find(child => child instanceof MetaShapeVolume && child.inner instanceof MetaSplineSegment)
                 
                 if (metashape_spline_segment_volume) {
