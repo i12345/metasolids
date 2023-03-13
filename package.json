@@ -10,6 +10,7 @@
     "import": "./dist/index.js"
   },
   "scripts": {
+    "build": "npm run build:release",
     "build:release": "npm run build:clean && npm run build:tsc:release",
     "build:debug": "npm run build:clean && npm run build:tsc:debug",
     "build:clean": "rm -rf dist",

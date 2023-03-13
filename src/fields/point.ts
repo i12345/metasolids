@@ -14,12 +14,27 @@ export interface FieldsPoint {
     [field: PropertyKey]: FieldPoint
 }
 
+export type FieldPointNumbers<Point extends FieldPoint> =
+    Point extends number ? number :
+    Point extends Vec2 ? { x: number, y: number } :
+    Point extends Vec3 ? { x: number, y: number, z: number } :
+    Point extends Vec4 ? { x: number, y: number, z: number, w: number } :
+    Point extends Quat ? { x: number, y: number, z: number, w: number } :
+    Point extends Mat3 ? { data: number[] } :
+    Point extends Mat4 ? { data: number[] } :
+    Point extends Color ? { r: number, g: number, b: number, a: number } :
+    Point extends Vector ? number[] :
+    Point extends FieldsPoint ? { [K in keyof Point]: FieldPointNumbers<Point[K]> } :
+    never
+
+export type FieldPointMapped<Point extends FieldPoint, T> =
+    Point extends FieldPointPrimitive ? T :
+        Point extends FieldsPoint ?
+            FieldsPointMapped<Point, T> :
+            never
+
 export type FieldsPointMapped<Point extends FieldsPoint, T> = {
-    [K in keyof Point]:
-        Point[K] extends FieldPointPrimitive ? T :
-            Point[K] extends FieldsPoint ?
-                FieldsPointMapped<Point[K], T> :
-                never
+    [K in keyof Point]: FieldPointMapped<Point[K], T>
 }
 
 export const FieldsPoint_Omit_Leaf = Symbol('omit')
@@ -95,6 +110,31 @@ export function field_point_isPrimitive(p: FieldPoint): boolean {
 
     return false
 }
+
+export const field_point_map =
+    <Point extends FieldPoint, T, R>(
+        point: FieldPointMapped<Point, T>,
+        leafDeterminer: (value: T) => boolean,
+        action: (value: T, path: PropertyKey[]) => R,
+        path: PropertyKey[] = []
+    ): FieldPointMapped<Point, R> =>
+        leafDeterminer(point as T) ?
+            action(point as T, []) :
+            Object.fromEntries(
+                Reflect.ownKeys(point as FieldsPointMapped<FieldsPoint, T>)
+                    .map(key => {
+                        const value = point[key]
+                        const newpath = [...path, key]
+                        if (leafDeterminer(value as T))
+                            return [key, action(value as T, newpath)]
+                        else return [key, fields_point_map(
+                            value as FieldsPointMapped<FieldsPoint, T>,
+                            leafDeterminer,
+                            action,
+                            newpath
+                        )]
+                    })
+            )
 
 export const fields_point_map =
     <Point extends FieldsPoint, T, R>(
@@ -633,6 +673,60 @@ export function field_point_modulo<Point extends FieldPoint>(a: Point, b: Point)
     }
 }
 
+export function field_point_equal<Point extends FieldPoint>(a: Point, b: Point): boolean {
+    if (a instanceof Vec3) {
+        const b_vec = b as Vec3
+        return a.equals(b_vec)
+    }
+    else if (a instanceof Mat4) {
+        const b_mat = b as Mat4
+        return a.equals(b_mat)
+    }
+    else if (typeof a === 'number')
+        return a === (b as number)
+    else if (a instanceof Vec2) {
+        const b_vec = b as Vec2
+        return a.equals(b_vec)
+    }
+    else if (a instanceof Vec4) {
+        const b_vec = b as Vec4
+        return a.equals(b_vec)
+    }
+    else if (a instanceof Quat) {
+        const b_quat = b as Quat
+        return a.equals(b_quat)
+    }
+    else if (a instanceof Mat3) {
+        const b_mat = b as Mat3
+        return a.equals(b_mat)
+    }
+    else if (a instanceof Color) {
+        const b_color = b as Color
+        return a.equals(b_color)
+    }
+    else if (a instanceof Int8Array ||
+        a instanceof Uint8Array ||
+        a instanceof Uint8ClampedArray ||
+        a instanceof Int16Array ||
+        a instanceof Uint16Array ||
+        a instanceof Int32Array ||
+        a instanceof Uint32Array ||
+        a instanceof Float32Array ||
+        a instanceof Float64Array ||
+        a instanceof Array) {
+        const b_vec = b as ArrayLike<number>
+        if (a.length !== b_vec.length)
+            return false
+        for (let i = 0; i < a.length; i++)
+            if (a[i] !== b_vec[i])
+                return false
+        return true
+    }
+    else {
+        return fields_point_equal(a as FieldsPoint, b as FieldsPoint)
+    }
+}
+
 export function fields_point_clone<Point extends FieldsPoint>(a: Point): Point {
     let c = {}
 
@@ -749,6 +843,22 @@ export function fields_point_modulo<Point extends FieldsPoint>(a: Point, b: Poin
         c[key] = field_point_modulo(a[key], b[key])
     
     return c as Point
+}
+
+
+export function fields_point_equal<Point extends FieldsPoint>(a: Point, b: Point): boolean {
+    const keys_a = Reflect.ownKeys(a)
+    const keys_b = Reflect.ownKeys(b)
+    
+    if (keys_a.length !== keys_b.length ||
+        keys_a.some(key => !keys_b.includes(key)))
+        return false
+
+    for (const key of keys_a)
+        if (!field_point_equal(a[key], b[key]))
+            return false
+    
+    return true
 }
 
 // /**

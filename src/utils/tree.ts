@@ -42,7 +42,7 @@ export type TreeByValueMapped_recursive<
 
 export const extract = <
         T
-    >(tree: object, path: PropertyKey[]) =>
+    >(tree: any, path: PropertyKey[]) =>
         path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
 
 export const intract = <T>
@@ -54,7 +54,7 @@ export const intract = <T>
 
 export const makeExtractor =
     (path: PropertyKey[]) =>
-    <T>(tree: object, makeEmptyObjects = false) =>
+    <T>(tree: any, makeEmptyObjects = false) =>
         makeEmptyObjects ?
             path.reduce((obj, key) => obj ? (obj[key] ??= {}) : undefined, tree) as T :
             path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
