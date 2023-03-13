@@ -2,9 +2,13 @@
   "name": "metasolids",
   "version": "1.0.0",
   "description": "Metasolid meshing algorithms",
+  "types": "types/index.d.ts",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "type": "module",
+  "exports": {
+    "types": "./types/index.d.ts",
+    "import": "./dist/index.js"
+  },
   "scripts": {
     "build:release": "npm run build:clean && npm run build:tsc:release",
     "build:debug": "npm run build:clean && npm run build:tsc:debug",
@@ -29,6 +33,6 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "playcanvas-extended": "^1.60.0-dev"
+    "playcanvas-extended": "^1.62.7-dev"
   }
 }
