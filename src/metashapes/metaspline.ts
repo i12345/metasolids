@@ -6,15 +6,15 @@ import { MultiObjectsVolume } from "../volumes/volumes/multi-objects.js";
 import { TransformVolume } from "../volumes/volumes/transform.js";
 import { MetaShape, MetaShapeLocation, MetaShapeLocationExtraFields, MetaShapeParametersIn, MetaShapeSample, MetaShapeSampleExtraFields, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 
-export type MetaSplineSegmentFigureLocation<Location extends MetaShapeLocation> =
+export type MetaSplineSegmentFigureLocation<Location extends MetaShapeLocation = MetaShapeLocation> =
     MetaShapeLocationExtraFields<Location> & { theta: number, phi: number }
 
-export type MetaSplineSegmentFigureSample<Sample extends MetaShapeSample> =
+export type MetaSplineSegmentFigureSample<Sample extends MetaShapeSample = MetaShapeSample> =
     MetaShapeSampleExtraFields<Sample> & FieldsPointOptional<MetaShapeParametersIn>
 
 export type MetaSplineSegmentFigure<
-        Location extends MetaShapeLocation,
-        Sample extends MetaShapeSample
+        Location extends MetaShapeLocation = MetaShapeLocation,
+        Sample extends MetaShapeSample = MetaShapeSample
     > =
     SampleDomain<
         MetaSplineSegmentFigureLocation<Location>,
