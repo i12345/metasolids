@@ -1,6 +1,6 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField } from "../fields/index.js";
-import { PiOver2, TwoPi } from "../utils/pi.js";
+import { Pi, PiOver2, TwoPi } from "../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
 import { MultiObjectsVolume } from "../volumes/volumes/multi-objects.js";
 import { TransformVolume } from "../volumes/volumes/transform.js";
@@ -254,8 +254,8 @@ export class MetaSplineSegment<
                     p: FieldsPoint_Omit_Leaf
                 } as FieldsPointMapped<Location, typeof FieldsPoint_Omit_Leaf>) as any as FieldsField<MetaSplineSegmentFigureLocation<Location>>,
                 new FieldsField<MetaSplineSegmentFigureLocation<Location>>({
-                    phi: new ScalarField(),
-                    theta: new ScalarField(),
+                    phi: new ScalarField([-PiOver2, PiOver2]),
+                    theta: new ScalarField([-Pi, Pi]),
                 } as FieldsPointMapped<MetaSplineSegmentFigureLocation<Location>, Field>)
             )
         }

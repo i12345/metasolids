@@ -345,29 +345,25 @@ export class MetaShapeVolume<
         }
     }
 
+    private static defaultFields_parametersIn = new FieldsField({
+        falloff: {
+            bias: new ScalarField(),
+            rate: new ScalarField(),
+        },
+        unit: {
+            height: new ScalarField([0, Infinity]),
+            length: new ScalarField([0, Infinity]),
+        }
+    } as any as FieldsPointMapped<MetaShapeParametersIn, Field>)
+
     static readonly defaultFields = {
-        parametersIn: new FieldsField({
-            falloff: {
-                bias: new ScalarField(),
-                rate: new ScalarField(),
-            },
-            unit: {
-                height: new ScalarField(),
-                length: new ScalarField(),
-            }
-        } as any as FieldsPointMapped<MetaShapeParametersIn, Field>),
+        parametersIn: this.defaultFields_parametersIn,
 
         sample: new FieldsField({
-            falloff: {
-                bias: new ScalarField(),
-                rate: new ScalarField(),
-            },
-            unit: {
-                height: new ScalarField(),
-                length: new ScalarField(),
-            },
+            falloff: this.defaultFields_parametersIn.fields.falloff,
+            unit: this.defaultFields_parametersIn.fields.unit,
             
-            distance: new ScalarField(),
+            distance: new ScalarField([0, Infinity]),
             gradient: new Vec3Field(),
             uv: new Vec2Field(),
         } as any as FieldsPointMapped<MetaShapeSample, Field>),
