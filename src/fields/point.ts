@@ -5,7 +5,7 @@ export type Vector = Array<number>
     | Int8Array | Int16Array | Int32Array
     | Float32Array | Float64Array
 
-export type FieldPointPrimite = number
+export type FieldPointPrimitive = number
     | Vec2 | Vec3 | Vec4 | Quat | Mat3 | Mat4
     | Color
     | Vector
@@ -16,7 +16,7 @@ export interface FieldsPoint {
 
 export type FieldsPointMapped<Point extends FieldsPoint, T> = {
     [K in keyof Point]:
-        Point[K] extends FieldPointPrimite ? T :
+        Point[K] extends FieldPointPrimitive ? T :
             Point[K] extends FieldsPoint ?
                 FieldsPointMapped<Point[K], T> :
                 never
@@ -37,7 +37,7 @@ export type FieldsPointOmitted<
 
 export type FieldsPointOptional<Point extends FieldsPoint> = {
     [K in keyof Point]?:
-        Point[K] extends FieldPointPrimite ? Point[K] :
+        Point[K] extends FieldPointPrimitive ? Point[K] :
         (Point[K] extends FieldsPoint ?
             FieldsPointOptional<Point[K]> : never)
 }
@@ -56,7 +56,7 @@ export type FieldsPointOptional<Point extends FieldsPoint> = {
 // let point_opt: FieldsPointOptional<typeof point>
 // point_opt.c.z.zz // Quat?
 
-export type FieldPoint = FieldPointPrimite | FieldsPoint
+export type FieldPoint = FieldPointPrimitive | FieldsPoint
 
 export type ExtraFields<
         Type extends FieldsPoint,
