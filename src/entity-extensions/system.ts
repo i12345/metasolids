@@ -1,5 +1,6 @@
 import { AppBase, ComponentSystem, Entity } from "playcanvas-extended"
 import { MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate } from "../fields/multi-objects-fields-point.js"
+import { solids, surfaces, volumes } from "../index.js"
 import { VolumeProcessor } from "../volumes/processor.js"
 import { VolumeComponent } from "./component.js"
 import { VolumeComponentData } from "./data.js"
@@ -9,7 +10,11 @@ export class VolumeComponentSystem extends ComponentSystem {
     ComponentType: typeof VolumeComponent
     DataType: typeof VolumeComponentData
     
-    processors: VolumeProcessor[] = []
+    processors: VolumeProcessor[] = [
+        new volumes.VolumeSamplingProcessor(),
+        new surfaces.VolumeSurfaceMeshingProcessor(),
+        // new solids.SolidWithEnclosingVolumeProcessor(),
+    ]
     multiObj: {
         groupKinds: MultiObjectsGroupsKindsTemplate,
         groups: MultiObjectsGroupsTemplate

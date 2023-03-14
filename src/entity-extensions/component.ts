@@ -1,6 +1,6 @@
-import { Component, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
+import { calculateNormals, Component, createCone, createCylinder, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
 import { FieldsPoint } from "../fields/point.js";
-import { fields, ProcessorGraph, solids, surfaces, volumes } from "../index.js";
+import { fields, meshing, ProcessorGraph, solids, surfaces, volumes } from "../index.js";
 import { Volume } from "../volumes/volume.js";
 import { VolumeComponentSystem } from "./system.js";
 
@@ -42,16 +42,15 @@ export class VolumeComponent extends Component {
             const component = entity?.findComponent('volume') as VolumeComponent
             
             const children = [
-                ['main', component?.volume],
+                ['$$main', component?.volume],
                 ...node.children
-                    .map(child => [child.name, compositeVolume(child)])
-                    .filter(([, volume]) => volume !== undefined)
-            ]
+                    .map(child => [child.name, new volumes.TransformVolume(compositeVolume(child), child.getLocalTransform())])
+            ].filter(([, volume]) => volume !== undefined)
 
             if (children.length === 0)
                 return undefined
             else if (children.length === 1 && component?.volume !== undefined)
-                return new volumes.TransformVolume(component.volume, node.getLocalTransform())
+                return children[0][1]
             else {
                 return new volumes.MultiObjectsVolume(
                     Object.fromEntries(children),
@@ -61,29 +60,49 @@ export class VolumeComponent extends Component {
             }
         }
 
-        const context: volumes.VolumeProcessingContext = {
+        const context: volumes.VolumeProcessingContext & surfaces.VolumeSurfaceMeshingProcessingContext = {
+            [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField,
             [volumes.VolumeSampleKey]: {},
             [volumes.VolumeSamplingKey]: {
                 volume: compositeVolume(this.entity),
                 extraLocationParameters: this.extraLocationParameters,
                 settings: volumes.defaultVolumeSamplerSettings,
             },
-            [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField
+            [surfaces.VolumeSurfacesKey]: {
+                sample: {}
+            },
+            [surfaces.VolumeSurfaceMeshingKey]: {
+                algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
+                settings: {
+                    surfaceLevel: 1
+                }
+            }
         }
 
-        const processing = {} as surfaces.VolumeSurfaceMeshingProcessing
+        const processing = {
+        } as surfaces.VolumeSurfaceMeshingProcessing & volumes.VolumeProcessing
 
         const graph = new ProcessorGraph(system.processors)
         graph.init(context)
         graph.process(processing, context)
 
         const surface = processing[surfaces.VolumeSurfacesKey][0]
-        const mesh = new Mesh()
+        
+        const mesh = new Mesh(this.system.app.graphicsDevice)
         
         const positions = new Float32Array(surface.mesh.vertices.length * 3)
-        const indices = new Uint32Array(surface.mesh.triangles.length * 3)
+        const indices = new Uint32Array(surface.mesh.triangles)
+
+        for (let position_i = 0; position_i < surface.mesh.vertices.length; position_i++) {
+            const position = surface.mesh.vertices[position_i]
+            positions[(position_i * 3) + 0] = position.x
+            positions[(position_i * 3) + 1] = position.y
+            positions[(position_i * 3) + 2] = position.z
+        }
+
         mesh.setPositions(positions)
         mesh.setIndices(indices)
+        mesh.setNormals(calculateNormals(positions as unknown as number[], indices as unknown as number[]))
         mesh.update(PRIMITIVE_TRIANGLES)
         
         const material = new StandardMaterial()
@@ -91,7 +110,7 @@ export class VolumeComponent extends Component {
         material.update()
 
         this.entity.addComponent('render', {
-            meshInstances: [new MeshInstance(mesh, material)]
+            meshInstances: [new MeshInstance(mesh, material, this.entity)]
         })
     }
 

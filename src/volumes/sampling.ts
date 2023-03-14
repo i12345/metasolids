@@ -50,7 +50,7 @@ export interface VolumeSamplerSettings {
 
 export const defaultVolumeSamplerSettings: VolumeSamplerSettings = {
     margin: 1,
-    resolution: 8
+    resolution: 5
 }
 
 export class VolumeSampler {
