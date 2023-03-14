@@ -18,11 +18,11 @@ export class SurfaceNetsMeshingAlgorithm implements MeshingAlgorithm {
     for (let i = 0; i < faces.length; i++){
       const face = faces[i]
       // TODO: choose best cut
-      triangles[(i * 6) + 0] = face[0]
-      triangles[(i * 6) + 1] = face[1]
+      triangles[(i * 6) + 0] = face[1]
+      triangles[(i * 6) + 1] = face[0]
       triangles[(i * 6) + 2] = face[2]
-      triangles[(i * 6) + 3] = face[2]
-      triangles[(i * 6) + 4] = face[3]
+      triangles[(i * 6) + 3] = face[3]
+      triangles[(i * 6) + 4] = face[2]
       triangles[(i * 6) + 5] = face[0]
     }
 
