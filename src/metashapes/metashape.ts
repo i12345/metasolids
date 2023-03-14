@@ -221,7 +221,7 @@ export class MetaShapeVolume<
         VolumeContext
     > {
     get boundingBox(): BoundingBox {
-        return this.shape.boundingBox
+        return this.shape?.boundingBox
     }
 
     constructor(
