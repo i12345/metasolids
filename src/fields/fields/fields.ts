@@ -31,7 +31,7 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
         function mergeIn(subfields: Field | FieldsPointMapped<FieldsPoint, Field>, subresult: any) {
             if (!subfields)
                 return undefined
-            else if (subfields[makeInterpolator]) {
+            else if (subfields.interpolationType) {
                 if (subfields instanceof FieldsField)
                     subfields = mergeIn(subfields.fields, subresult)
                 
