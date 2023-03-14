@@ -6,7 +6,7 @@
         "rootDir": "src",
         "declaration": true,
         "declarationMap": true,
-        "declarationDir": "types",
+        "declarationDir": "dist/types",
         "target": "ES6",
         "lib": ["ES6", "DOM"]
     },

@@ -2,11 +2,11 @@
   "name": "metasolids",
   "version": "1.0.0",
   "description": "Metasolid meshing algorithms",
-  "types": "types/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "main": "dist/index.js",
   "type": "module",
   "exports": {
-    "types": "./types/index.d.ts",
+    "types": "./dist/types/index.d.ts",
     "import": "./dist/index.js"
   },
   "scripts": {
