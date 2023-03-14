@@ -1,5 +1,5 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field } from "../fields/index.js";
+import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field } from "../fields/index.js";
 import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../fields/domain.js";
 import { Figure, FigureLocation, FigureSample } from "../figures/figure.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../textures/texture.js";
@@ -309,7 +309,7 @@ export class MetaShapeVolume<
             location: { outer: Location },
             context: { outer: VolumeContext, inner: Context }
         ): MetaShapeVolumeSample<TxSample, InnerSample> {
-        const texture_location_field = (context.inner[MetaShapeSamplingContext_Texture][SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>)
+        const texture_location_field = (context.inner[MetaShapeSamplingContext_Texture].context[SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>)
         const texture_location =
             this.texture ?
                 fields_point_map<MetaShapeTxLocation<Location, TxLocation>, Field, FieldPoint>(
@@ -370,7 +370,7 @@ export class MetaShapeVolume<
     }
 
     static combineParameters(a?: FieldsPointOptional<MetaShapeParametersIn>, b?: FieldsPointOptional<MetaShapeParametersIn>): MetaShapeParametersIn {
-        const parameters = MetaShapeVolume.defaultParameters
+        const parameters = field_point_clone(MetaShapeVolume.defaultParameters)
 
         parameters.unit.height += a?.unit?.height ?? 0
         parameters.unit.length *= a?.unit?.height ?? 1

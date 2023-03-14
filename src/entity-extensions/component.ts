@@ -1,4 +1,4 @@
-import { calculateNormals, Component, createCone, createCylinder, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
+import { calculateNormals, Component, createCone, createCylinder, CULLFACE_FRONT, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
 import { FieldsPoint } from "../fields/point.js";
 import { fields, meshing, ProcessorGraph, solids, surfaces, volumes } from "../index.js";
 import { Volume } from "../volumes/volume.js";
@@ -10,6 +10,8 @@ export class VolumeComponent extends Component {
     volume: Volume
     makeRoot: boolean = false
     extraLocationParameters?: FieldsPoint
+    samplingSettings = { ...volumes.defaultVolumeSamplerSettings }
+    meshingSettings = { ...meshing.defaultMeshingSettings }
 
     get root() {
         return this.findRoot().entity
@@ -66,16 +68,14 @@ export class VolumeComponent extends Component {
             [volumes.VolumeSamplingKey]: {
                 volume: compositeVolume(this.entity),
                 extraLocationParameters: this.extraLocationParameters,
-                settings: volumes.defaultVolumeSamplerSettings,
+                settings: this.samplingSettings,
             },
             [surfaces.VolumeSurfacesKey]: {
                 sample: {}
             },
             [surfaces.VolumeSurfaceMeshingKey]: {
                 algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
-                settings: {
-                    surfaceLevel: 1
-                }
+                settings: this.meshingSettings,
             }
         }
 
@@ -88,6 +88,9 @@ export class VolumeComponent extends Component {
 
         const surface = processing[surfaces.VolumeSurfacesKey][0]
         
+        if (surface.mesh.triangles.length === 0)
+            return
+
         const mesh = new Mesh(this.system.app.graphicsDevice)
         
         const positions = new Float32Array(surface.mesh.vertices.length * 3)
