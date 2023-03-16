@@ -1,4 +1,5 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
+import { mat4_from_mat3, trs } from "../utils/matrix.js";
 
 export type Vector = Array<number>
     | Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array
@@ -124,6 +125,23 @@ export function field_point_isPrimitive(p: FieldPoint): boolean {
     return false
 }
 
+export function field_point_path(
+        point: FieldPoint,
+        predicate: (point: FieldPoint) => boolean
+    ): PropertyKey[] | undefined {
+    if (predicate(point))
+        return []
+    else if (typeof point === 'object') {
+        for (const key of Reflect.ownKeys(point)) {
+            const path_key = field_point_path(point[key], predicate)
+            if (path_key !== undefined)
+                return [key, ...path_key]
+        }
+    }
+
+    return undefined
+}
+
 export const field_point_map =
     <Point extends FieldPoint, T, R>(
         point: FieldPointMapped<Point, T>,
@@ -171,6 +189,44 @@ export const fields_point_map =
                     )]
                 })
         )
+
+export function field_point_identity<Point extends FieldPoint>(p: Point): Point {
+    if (p instanceof Vec3)
+        return new Vec3() as Point
+    else if (p instanceof Mat4)
+        return new Mat4().setIdentity() as Point
+    else if (typeof p === 'number')
+        return 0 as Point
+    else if (p instanceof Vec2)
+        return new Vec2() as Point
+    else if (p instanceof Vec4)
+        return new Vec4() as Point
+    else if (p instanceof Quat)
+        return new Quat() as Point
+    else if (p instanceof Mat3)
+        return new Mat3().setIdentity() as Point
+    else if (p instanceof Color)
+        return new Color() as Point
+    else if (p instanceof Uint8Array)
+        return new Uint8Array(p.length) as Point
+    else if (p instanceof Uint8ClampedArray)
+        return new Uint8ClampedArray(p.length) as Point
+    else if (p instanceof Int8Array)
+        return new Int8Array(p.length) as Point
+    else if (p instanceof Uint16Array)
+        return new Uint16Array(p.length) as Point
+    else if (p instanceof Int16Array)
+        return new Int16Array(p.length) as Point
+    else if (p instanceof Uint32Array)
+        return new Uint32Array(p.length) as Point
+    else if (p instanceof Int32Array)
+        return new Int32Array(p.length) as Point
+    else if (p instanceof Float32Array)
+        return new Float32Array(p.length) as Point
+    else if (p instanceof Float64Array || p instanceof Array)
+        return new Float64Array(p.length) as Point
+    else return fields_point_identity(p as FieldsPoint) as Point
+}
 
 export function field_point_clone<Point extends FieldPoint>(p: Point): Point {
     if (p instanceof Vec3)
@@ -243,25 +299,17 @@ export function field_point_add<Point extends FieldPoint>(a: Point, b: Point): P
     if (a instanceof Vec3)
         return new Vec3().add2(a, b as Vec3) as Point
     else if (a instanceof Mat4)
-        return new Mat4().add2(a, b as Mat4) as Point
+        return new Mat4().mul2(a, b as Mat4) as Point
     else if (typeof a === 'number')
         return a + (b as number) as Point
     else if (a instanceof Vec2)
         return new Vec2().add2(a, b as Vec2) as Point
     else if (a instanceof Vec4)
         return new Vec4().add2(a, b as Vec4) as Point
-    else if (a instanceof Quat) {
-        const b_quat = b as Quat
-        return new Quat(a.x + b_quat.x, a.y + b_quat.y, a.z + b_quat.z, a.w + b_quat.w) as Point
-    }
-    else if (a instanceof Mat3) {
-        const b_mat = b as Mat3
-        const c = new Mat3()
-        for (let i = 8; i >= 0; i--)
-            c.data[i] = a.data[i] + b_mat.data[i]
-        
-        return c as Point
-    }
+    else if (a instanceof Quat)
+        return new Quat().mul2(a, b as Quat) as Point
+    else if (a instanceof Mat3)
+        return new Mat3().setFromMat4(field_point_add(mat4_from_mat3(a), mat4_from_mat3(b as Mat3))) as Point
     else if (a instanceof Color) {
         const b_color = b as Color
         
@@ -298,27 +346,21 @@ export function field_point_add_inplace<Point extends FieldPoint>(a: Point, b: P
     if (a instanceof Vec3)
         return a.add(b as Vec3) as Point
     else if (a instanceof Mat4)
-        return a.add(b as Mat4) as Point
+        return a.mul(b as Mat4) as Point
     else if (typeof a === 'number')
         return a + (b as number) as Point
     else if (a instanceof Vec2)
         return a.add(b as Vec2) as Point
     else if (a instanceof Vec4)
         return a.add(b as Vec4) as Point
-    else if (a instanceof Quat) {
-        const b_quat = b as Quat
-        a.x += b_quat.x
-        a.y += b_quat.y
-        a.z += b_quat.z
-        a.w += b_quat.w
-        return a as Point
-    }
+    else if (a instanceof Quat)
+        return a.mul(b as Quat) as Point
     else if (a instanceof Mat3) {
-        const b_mat = b as Mat3
-        for (let i = 8; i >= 0; i--)
-            a.data[i] += b_mat.data[i]
+        const a_mat4 = mat4_from_mat3(a)
+        const b_mat4 = mat4_from_mat3(b as Mat3)
+        field_point_add_inplace(a_mat4, b_mat4)
         
-        return a as Point
+        return a.setFromMat4(a_mat4) as Point
     }
     else if (a instanceof Color) {
         const b_color = b as Color
@@ -362,10 +404,13 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
     if (a instanceof Vec3)
         return a.add((b as Vec3).clone().mulScalar(weight)) as Point
     else if (a instanceof Mat4) {
-        const b_mat = b as Mat4
-        for (let i = 15; i >= 0; i--)
-            a.data[i] += b_mat.data[i] * weight
+        const trs_a = trs(a)
+        const trs_b = trs(b as Mat4)
         
+        field_point_add_inplace_weighted(trs_a, trs_b, weight)
+
+        a.setTRS(trs_a.t, trs_a.r, trs_a.s)
+
         return a as Point
     }
     else if (typeof a === 'number')
@@ -374,20 +419,14 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
         return a.add((b as Vec2).clone().mulScalar(weight)) as Point
     else if (a instanceof Vec4)
         return a.add((b as Vec4).clone().mulScalar(weight)) as Point
-    else if (a instanceof Quat) {
-        const b_quat = b as Quat
-        a.x += b_quat.x * weight
-        a.y += b_quat.y * weight
-        a.z += b_quat.z * weight
-        a.w += b_quat.w * weight
-        return a as Point
-    }
+    else if (a instanceof Quat)
+        return a.slerp(a, b as Quat, weight) as Point
     else if (a instanceof Mat3) {
-        const b_mat = b as Mat3
-        for (let i = 8; i >= 0; i--)
-            a.data[i] += b_mat.data[i] * weight
+        const a_mat4 = mat4_from_mat3(a)
+        const b_mat4 = mat4_from_mat3(b as Mat3)
+        field_point_add_inplace_weighted(a_mat4, b_mat4, weight)
         
-        return a as Point
+        return a.setFromMat4(a_mat4) as Point
     }
     else if (a instanceof Color) {
         const b_color = b as Color
@@ -738,6 +777,15 @@ export function field_point_equal<Point extends FieldPoint>(a: Point, b: Point):
     else {
         return fields_point_equal(a as FieldsPoint, b as FieldsPoint)
     }
+}
+
+export function fields_point_identity<Point extends FieldsPoint>(a: Point): Point {
+    let c = {}
+
+    for (const key of Reflect.ownKeys(a))
+        c[key] = field_point_identity(a[key])
+    
+    return c as Point
 }
 
 export function fields_point_clone<Point extends FieldsPoint>(a: Point): Point {
