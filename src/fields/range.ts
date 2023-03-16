@@ -146,8 +146,8 @@ export function field_point_range_compute<Point extends FieldPoint = FieldPoint>
             mat4_min.setTRS(Vec3.ZERO, obj.range.r[0], obj.range.s[0])
             mat4_max.setTRS(Vec3.ZERO, obj.range.r[1], obj.range.s[1])
 
-            mat3_from_mat4(mat4_min, min)
-            mat3_from_mat4(mat4_max, max)
+            min.setFromMat4(mat4_min)
+            max.setFromMat4(mat4_max)
         }
         else if (point instanceof Color) {
             type Type = Color
