@@ -46,6 +46,7 @@ export class VolumeComponent extends Component {
             const children = [
                 ['$$main', component?.volume],
                 ...node.children
+                    .filter(child => !child.name.startsWith("$$"))
                     .map(child => [child.name, new volumes.TransformVolume(compositeVolume(child), child.getLocalTransform())])
             ].filter(([, volume]) => volume !== undefined)
 
@@ -120,7 +121,7 @@ export class VolumeComponent extends Component {
     private removeVolume() {
         const root = this.findRoot()
         if (root !== this) {
-            root.renderVolume()
+            root.removeVolume()
             return
         }
 
