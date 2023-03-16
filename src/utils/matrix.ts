@@ -1,0 +1,43 @@
+import { Mat3, Mat4, Quat } from "playcanvas-extended";
+
+export function trs(m: Mat4) {
+    return {
+        t: m.getTranslation(),
+        r: new Quat().setFromMat4(m),
+        s: m.getScale()
+    }
+}
+
+export function mat4_from_mat3(src: Mat3, dst = new Mat4()) {
+    dst.data[0] = src.data[0]
+    dst.data[1] = src.data[1]
+    dst.data[2] = src.data[2]
+
+    dst.data[4] = src.data[3]
+    dst.data[5] = src.data[4]
+    dst.data[6] = src.data[5]
+
+    dst.data[8] = src.data[6]
+    dst.data[9] = src.data[7]
+    dst.data[10] = src.data[8]
+
+    dst.data[15] = 1
+
+    return dst
+}
+
+export function mat3_from_mat4(src: Mat4, dst = new Mat3()) {
+    dst.data[0] = src.data[0]
+    dst.data[1] = src.data[1]
+    dst.data[2] = src.data[2]
+
+    dst.data[3] = src.data[4]
+    dst.data[4] = src.data[5]
+    dst.data[5] = src.data[6]
+
+    dst.data[6] = src.data[8]
+    dst.data[7] = src.data[9]
+    dst.data[8] = src.data[10]
+
+    return dst
+}

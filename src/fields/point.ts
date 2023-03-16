@@ -79,6 +79,19 @@ export type ExtraFields<
     > =
     Omit<Type, keyof Base>
 
+export function field_point_is(p: FieldPoint): boolean {
+    if (field_point_isPrimitive(p))
+        return true
+    else if (typeof p === 'object') {
+        for (const key of Reflect.ownKeys(p))
+            if (!field_point_is(p[key]))
+                return false
+        
+        return true
+    }
+    else return false
+}
+
 export function field_point_isPrimitive(p: FieldPoint): boolean {
     if (p instanceof Vec3)
         return true

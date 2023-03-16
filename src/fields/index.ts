@@ -1,5 +1,8 @@
 export * from './point.js'
 
+export * from './range.js'
+export * from './merge_mapped.js'
+
 export * from './interpolation.js'
 export * from './interpolators/index.js'
 
