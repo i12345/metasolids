@@ -117,40 +117,52 @@ export class Triangles2DMeshCollider {
 }
 
 export class Triangles2DMesh {
-    xy01_length: Float64Array
-    xy02_length: Float64Array
-
     private constructor(
-        public vertices: Vec2[],
-        public triangles: number[],
-        public v0: Vec2[],
-        public xy01: Vec2[],
-        public xy02: Vec2[],
-        public bounds: { origin: Vec2, size: Vec2 }
+        public readonly vertices: Vec2[],
+        public readonly triangles: ArrayLike<number>,
+        public readonly v0: Float64Array,
+        public readonly tri_vec_inv: Float64Array,
+        public readonly bounds: { readonly origin: Vec2, readonly size: Vec2 }
     ) {
-        this.xy01_length = new Float64Array(this.xy01.length)
-        this.xy02_length = new Float64Array(this.xy02.length)
-
-        for (let i = 0; i < this.xy01.length; i++)
-            this.xy01_length[i] = this.xy01[i].length()
-        for (let i = 0; i < this.xy02.length; i++)
-            this.xy02_length[i] = this.xy02[i].length()
     }
 
-    static build(vertices: Vec2[], triangles: number[]) {
+    static build(vertices: Vec2[], triangles: ArrayLike<number>) {
         const n = triangles.length / 3
-        const v0 = new Array(n)
-        const xy01 = new Array(n)
-        const xy02 = new Array(n)
+
+        /**
+         * Each two elements means a triangle origin (x, y)
+         */
+        const v0 = new Float64Array(2 * n)
+
+        /**
+         * Each four elements means a matrix T^-1, where
+         * 
+         * T = [xy01.x  xy02.x; xy01.y  xy02.y]
+         * T (u v) = (x y [relative to v0])
+         * 
+         * T^-1 = (1 / ((xy01.x)(xy02.y) - (xy02.x)(xy01.y))) *
+         * [xy02.y  -xy02.x;  -xy01.y  xy01.x]
+         */
+        const tri_vec_inv = new Float64Array(4 * n)
 
         for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
             const v0_i = vertices[triangles[i + 0]]
             const v1_i = vertices[triangles[i + 1]]
             const v2_i = vertices[triangles[i + 2]]
 
-            v0[tri] = v0_i
-            xy01[tri] = new Vec2().sub2(v1_i, v0_i)
-            xy02[tri] = new Vec2().sub2(v2_i, v0_i)
+            v0[(2 * tri) + 0] = v0_i.x
+            v0[(2 * tri) + 1] = v0_i.y
+
+            const xy01_x = v1_i.x - v0_i.x
+            const xy01_y = v1_i.y - v0_i.y
+            const xy02_x = v2_i.x - v0_i.x
+            const xy02_y = v2_i.y - v0_i.y
+
+            const det = (xy01_x * xy02_y) - (xy02_x * xy01_y)
+            tri_vec_inv[(4 * tri) + 0] =  xy02_y / det
+            tri_vec_inv[(4 * tri) + 1] = -xy02_x / det
+            tri_vec_inv[(4 * tri) + 2] = -xy01_y / det
+            tri_vec_inv[(4 * tri) + 3] =  xy01_x / det
         }
 
         const verts_min_x = Math.min(...vertices.map(v => v.x))
@@ -161,7 +173,7 @@ export class Triangles2DMesh {
         const origin = new Vec2(verts_min_x, verts_min_y)
         const size = new Vec2(verts_max_x, verts_max_y).sub(origin)
 
-        return new Triangles2DMesh(vertices, triangles, v0, xy01, xy02, { origin, size })
+        return new Triangles2DMesh(vertices, triangles, v0, tri_vec_inv, { origin, size })
     }
 }
 
@@ -193,17 +205,22 @@ class Triangles2DMeshQuad {
     }
 
     collide(point: Vec2, collisionHandler: (tri: number, w1: number, w2: number) => void) {
-        for(let tri of this.filtered_triangles) {
-            const v0 = this.mesh.v0[tri]
-            const xy01 = this.mesh.xy01[tri]
-            const xy02 = this.mesh.xy02[tri]
+        const { v0, tri_vec_inv } = this.mesh
 
-            const w = new Vec2().sub2(point, v0)
-            const w2d = new Vec2(w.x, w.y)
-            
-            // w projected onto xy01 and xy02
-            const w1 = xy01.dot(w2d) / this.mesh.xy01_length[tri]
-            const w2 = xy02.dot(w2d) / this.mesh.xy02_length[tri]
+        for (let tri of this.filtered_triangles) {
+            const v0_x = v0[(2 * tri) + 0]
+            const v0_y = v0[(2 * tri) + 1]
+
+            const x = point.x - v0_x
+            const y = point.y - v0_y
+
+            const tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
+            const tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
+            const tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
+            const tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+
+            const w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+            const w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
             if (w1 < 0 || w2 < 0 || w1 + w2 > 1)
                 continue
