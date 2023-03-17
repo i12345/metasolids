@@ -11,5 +11,7 @@ export * from './color.js'
 export * from './vector.js'
 export * from './fields.js'
 
+export * from './convex-polygon.js'
+
 export * from './sample-domain.js'
 export * from './object.js'
