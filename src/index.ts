@@ -1,7 +1,6 @@
 export * from './processor/index.js'
 export * as fields from './fields/index.js'
 export * as textures from './textures/index.js'
-export * as figures from './figures/index.js'
 export * as meshing from './meshing/index.js'
 export * as volumes from './volumes/index.js'
 export * as metashapes from './metashapes/index.js'

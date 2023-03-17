@@ -5,6 +5,8 @@ import { TextureLocation, TextureSamplingContext } from "../textures/texture.js"
 import { MultiObjectsVolume } from "../volumes/volumes/multi-objects.js";
 import { TransformVolume } from "../volumes/volumes/transform.js";
 import { MetaShape, MetaShapeLocation, MetaShapeLocationExtraFields, MetaShapeParametersIn, MetaShapeSample, MetaShapeSampleExtraFields, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
+import { VolumeSurfaceMeshingKey, VolumeSurfaceMeshingProcessingContext } from "../surfaces/processor.js";
+import { defaultMeshingSettings } from "../meshing/meshing-algorithm.js";
 
 export type MetaSplineSegmentFigureLocation<Location extends MetaShapeLocation = MetaShapeLocation> =
     MetaShapeLocationExtraFields<Location> & { theta: number, phi: number }
@@ -369,6 +371,8 @@ export class MetaSplineSegment<
 
         const texture = context[MetaShapeSamplingContext_Texture].item
 
+        const meshingSettings = (context[MetaShapeSamplingContext_Volume] as unknown as VolumeSurfaceMeshingProcessingContext)[VolumeSurfaceMeshingKey].settings ?? defaultMeshingSettings
+
         const t0 = this.spline.segments[this.spline_segment_index - 1].t
 
         const resolution = {
@@ -377,13 +381,10 @@ export class MetaSplineSegment<
             phi: 4
         }
 
-        const verts = new Float32Array(
-            resolution.theta * (
-                (1 + Math.floor(resolution.t * this.t_offset)) + 
-                (resolution.phi * ((segment_first ? 1 : 0) + (segment_last ? 1 : 0)))
-            )
-        )
-        let vert_i = -1
+        const boundingBox = {
+            max: new Vec3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY),
+            min: new Vec3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
+        }
 
         const sample_theta = (t: number, m: Mat4, phi = 0) => {
             const m_offset = m.getTranslation()
@@ -403,14 +404,18 @@ export class MetaSplineSegment<
                 const texture_sample = texture?.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
 
                 const figure_sample = this.spline.figureSample(t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
+                
+                const parameters = MetaShapeVolume.combineParameters(texture_sample, figure_sample)
+                const parameters_valid = MetaShapeVolume.parametersValid(parameters)
 
-                const radius = MetaShapeVolume.boundingLength(MetaShapeVolume.combineParameters(texture_sample, figure_sample))
-                v.mulScalar(radius)
-                v.add(m_offset)
+                if (parameters_valid) {
+                    const radius = MetaShapeVolume.boundingLength(parameters, meshingSettings)
+                    v.mulScalar(radius)
+                    v.add(m_offset)
 
-                verts[++vert_i] = v.x
-                verts[++vert_i] = v.y
-                verts[++vert_i] = v.z
+                    boundingBox.max.max(v)
+                    boundingBox.min.min(v)
+                }
             }
         }
 
@@ -437,8 +442,10 @@ export class MetaSplineSegment<
                 sample_theta(t, m, phi_i * PiOver2 / resolution.phi)
         }
 
-        this.boundingBox = new BoundingBox()
-        this.boundingBox.compute(verts, vert_i / 3)
+        this.boundingBox = new BoundingBox(
+            new Vec3().add2(boundingBox.max, boundingBox.min).divScalar(2),
+            new Vec3().sub2(boundingBox.max, boundingBox.min).divScalar(2)
+        )
     }
 
     sample(

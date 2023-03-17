@@ -2,7 +2,9 @@ import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
 import { FieldsField } from "../fields/fields/fields.js";
 import { Pi, TwoPi } from "../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
-import { MetaShape, MetaShapeLocation, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeTextureLocation, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
+import { MetaShape, MetaShapeLocation, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTextureLocation, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
+import { defaultMeshingSettings } from "../meshing/meshing-algorithm.js";
+import { VolumeSurfaceMeshingKey, VolumeSurfaceMeshingProcessingContext } from "../surfaces/processor.js";
 
 export class MetaSphere<
         TxLocation extends TextureLocation = TextureLocation,
@@ -48,9 +50,15 @@ export class MetaSphere<
 
     init(context: Context): void {
         const texture = context[MetaShapeSamplingContext_Texture].item
+        const meshingSettings = (context[MetaShapeSamplingContext_Volume] as unknown as VolumeSurfaceMeshingProcessingContext)[VolumeSurfaceMeshingKey].settings ?? defaultMeshingSettings
 
         const resolution = 32
-        const verts = new Float32Array(2 * resolution * resolution * 3)
+        
+        const boundingBox = {
+            max: new Vec3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY),
+            min: new Vec3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
+        }
+
         for (let u = 0; u < 2 * resolution; u++) {
             const theta = TwoPi * ((u / (2 * resolution)) - 0.5)
             const cos_theta = Math.cos(theta)
@@ -66,16 +74,23 @@ export class MetaSphere<
 
                 const texture_location = { uv, gradient: point } as MetaShapeTxLocation<Location, TxLocation> & Sample
                 const texture_sample = texture?.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
-                const radius = MetaShapeVolume.boundingLength(MetaShapeVolume.combineParameters(texture_sample))
-                point.mulScalar(radius)
                 
-                verts[(((u * resolution) + v) * 3) + 0] = point.x
-                verts[(((u * resolution) + v) * 3) + 1] = point.y
-                verts[(((u * resolution) + v) * 3) + 2] = point.z
+                const parameters = MetaShapeVolume.combineParameters(texture_sample)
+                const parameters_valid = MetaShapeVolume.parametersValid(parameters)
+
+                if (parameters_valid) {
+                    const radius = MetaShapeVolume.boundingLength(parameters, meshingSettings)
+                    point.mulScalar(radius)
+                    
+                    boundingBox.max.max(point)
+                    boundingBox.min.min(point)
+                }
             }
         }
 
-        this.boundingBox = new BoundingBox()
-        this.boundingBox.compute(verts)
+        this.boundingBox = new BoundingBox(
+            new Vec3().add2(boundingBox.max, boundingBox.min).divScalar(2),
+            new Vec3().sub2(boundingBox.max, boundingBox.min).divScalar(2)
+        )
     }
 }

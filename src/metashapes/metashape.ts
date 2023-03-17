@@ -1,10 +1,10 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
 import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field } from "../fields/index.js";
 import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../fields/domain.js";
-import { Figure, FigureLocation, FigureSample } from "../figures/figure.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../textures/texture.js";
 import { extract } from "../utils/tree.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volumes/volume.js";
+import { MeshingSettings } from "../meshing/meshing-algorithm.js";
 
 export interface MetaShapeLocation extends VolumeLocation {
 }
@@ -87,29 +87,6 @@ export type MetaShapeVolumeSample<
 
 export type MetaShapeSampleExtraFields<Sample extends MetaShapeSample = MetaShapeSample> =
     Omit<Sample, keyof MetaShapeSample>
-
-export type MetaShapeFigureLocation<
-        Location extends MetaShapeLocation = MetaShapeLocation,
-        ParametersIn extends FieldsPoint = FieldsPoint
-    > =
-    MetaShapeLocationExtraFields<Location> & ParametersIn & FigureLocation
-
-export type MetaShapeFigureSample<
-        Sample extends MetaShapeSample = MetaShapeSample,
-        ParametersOut extends FieldsPoint = FieldsPoint
-    > =
-    MetaShapeSampleExtraFields<Sample> & ParametersOut & FigureSample
-
-export type MetaShapeFigure<
-        Location extends MetaShapeLocation = MetaShapeLocation,
-        Sample extends MetaShapeSample = MetaShapeSample,
-        ParametersIn extends FieldsPoint = FieldsPoint,
-        ParametersOut extends FieldsPoint = FieldsPoint
-    > =
-    Figure<
-        MetaShapeFigureLocation<Location, ParametersIn>,
-        MetaShapeFigureSample<Sample, ParametersOut>
-    >
 
 export type MetaShapeTextureLocation<
         Location extends MetaShapeLocation = MetaShapeLocation,
@@ -321,11 +298,12 @@ export class MetaShapeVolume<
                 ) as any as MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>> :
                 undefined
         const texture_sample = this.texture?.sample(texture_location, context.outer[MetaShapeSamplingContext_Texture])
-        
+
         const parameters = MetaShapeVolume.combineParameters(sample, texture_sample)
+        const is_valid = MetaShapeVolume.parametersValid(parameters)
         
         const surface_distance = (sample.distance - parameters.unit.height) / parameters.unit.length
-        const presence = Math.min(1, Math.exp((surface_distance + parameters.falloff.bias) * -parameters.falloff.rate))
+        const presence = !is_valid ? 0 : Math.min(1, Math.exp((surface_distance + parameters.falloff.bias) * -parameters.falloff.rate))
 
         return change<MetaShapeVolumeSample<TxSample, InnerSample>, InnerSample & TxSample, MetaShapeParametersIn>({
             ...texture_sample,
@@ -385,9 +363,21 @@ export class MetaShapeVolume<
         return parameters
     }
 
-    static boundingLength(parameters: MetaShapeParametersIn): number {
-        const presence_threshhold = 0.1
+    static parametersValid(parameters: MetaShapeParametersIn) {
+        return !(
+            isNaN(parameters.unit.height) ||
+            isNaN(parameters.unit.length) ||
+            isNaN(parameters.falloff.bias) ||
+            isNaN(parameters.falloff.rate))
+    }
 
+    static boundingLength(
+            parameters: MetaShapeParametersIn,
+            meshingSettings: MeshingSettings
+        ): number {
+        if (!MetaShapeVolume.parametersValid(parameters))
+            return 0
+        
         /**
          * w = (x - h) / l
          * y = e^((w + b) * r)
@@ -402,6 +392,6 @@ export class MetaShapeVolume<
          * (((ln(y) / r) - b) * l) + h = x
          */
 
-        return (((Math.log(presence_threshhold) / parameters.falloff.rate) - parameters.falloff.bias) * parameters.unit.length) + parameters.unit.height
+        return (((Math.log(meshingSettings.surfaceLevel) / parameters.falloff.rate) - parameters.falloff.bias) * parameters.unit.length) + parameters.unit.height
     }
 }

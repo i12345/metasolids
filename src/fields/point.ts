@@ -228,6 +228,44 @@ export function field_point_identity<Point extends FieldPoint>(p: Point): Point 
     else return fields_point_identity(p as FieldsPoint) as Point
 }
 
+export function field_point_invalid<Point extends FieldPoint>(p: Point): Point {
+    if (p instanceof Vec3)
+        return new Vec3(NaN, NaN, NaN) as Point
+    else if (p instanceof Mat4)
+        return new Mat4().set([NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN]) as Point
+    else if (typeof p === 'number')
+        return NaN as Point
+    else if (p instanceof Vec2)
+        return new Vec2(NaN, NaN) as Point
+    else if (p instanceof Vec4)
+        return new Vec4(NaN, NaN, NaN, NaN) as Point
+    else if (p instanceof Quat)
+        return new Quat(NaN, NaN, NaN, NaN) as Point
+    else if (p instanceof Mat3)
+        return new Mat3().set([NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN]) as Point
+    else if (p instanceof Color)
+        return new Color(NaN, NaN, NaN, NaN) as Point
+    else if (p instanceof Uint8Array)
+        return new Uint8Array(p.length).fill(0xFF) as Point
+    else if (p instanceof Uint8ClampedArray)
+        return new Uint8ClampedArray(p.length).fill(0xFF) as Point
+    else if (p instanceof Int8Array)
+        return new Int8Array(p.length).fill(-1) as Point
+    else if (p instanceof Uint16Array)
+        return new Uint16Array(p.length).fill(0xFFFF) as Point
+    else if (p instanceof Int16Array)
+        return new Int16Array(p.length).fill(-1) as Point
+    else if (p instanceof Uint32Array)
+        return new Uint32Array(p.length).fill(0xFFFFFFFF) as Point
+    else if (p instanceof Int32Array)
+        return new Int32Array(p.length).fill(-1) as Point
+    else if (p instanceof Float32Array)
+        return new Float32Array(p.length).fill(NaN) as Point
+    else if (p instanceof Float64Array || p instanceof Array)
+        return new Float64Array(p.length).fill(NaN) as Point
+    else return fields_point_invalid(p as FieldsPoint) as Point
+}
+
 export function field_point_clone<Point extends FieldPoint>(p: Point): Point {
     if (p instanceof Vec3)
         return p.clone() as Point
@@ -784,6 +822,15 @@ export function fields_point_identity<Point extends FieldsPoint>(a: Point): Poin
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_identity(a[key])
+    
+    return c as Point
+}
+
+export function fields_point_invalid<Point extends FieldsPoint>(a: Point): Point {
+    let c = {}
+
+    for (const key of Reflect.ownKeys(a))
+        c[key] = field_point_invalid(a[key])
     
     return c as Point
 }
