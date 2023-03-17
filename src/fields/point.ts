@@ -846,7 +846,7 @@ export function fields_point_add_inplace<
             accumulator_fields[field_key] = fields_point_add_inplace<any>(
                 accumulator_fields,
                 field_key,
-                addend_fields[key]
+                addend_fields[field_key]
             )
         
         return accumulator_fields as Point
@@ -871,7 +871,7 @@ export function fields_point_add_inplace_weighted<
             accumulator_fields[field_key] = fields_point_add_inplace_weighted<any>(
                 accumulator_fields,
                 field_key,
-                addend_fields[key],
+                addend_fields[field_key],
                 weight
             )
         

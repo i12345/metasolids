@@ -1,11 +1,83 @@
-import { volumes, metashapes, ProcessorGraph, surfaces, meshing } from './dist/index.js'
+import { Vec2 } from 'playcanvas-extended'
+import { fields, volumes, metashapes, ProcessorGraph, surfaces, meshing } from './dist/index.js'
 import { plot } from 'nodeplotlib'
 
-const volume = new metashapes.MetaShapeVolume(new metashapes.MetaSphere())
+const shape = new metashapes.MetaSphere()
+const texture = new fields.KeypointsSampleDomain(
+    [
+        [
+            {
+                uv: new Vec2(0, 0)
+            },
+            {
+                unit: {
+                    height: 0.2,
+                    length: 1,
+                },
+                falloff: {
+                    bias: 0,
+                    rate: 1
+                }
+            }
+        ],
+
+        [
+            {
+                uv: new Vec2(1, 0)
+            },
+            {
+                unit: {
+                    height: 0.1,
+                    length: 1,
+                },
+                falloff: {
+                    bias: 0,
+                    rate: 1
+                }
+            }
+        ],
+
+        [
+            {
+                uv: new Vec2(1, 0.7)
+            },
+            {
+                unit: {
+                    height: 0.15,
+                    length: 1,
+                },
+                falloff: {
+                    bias: 0,
+                    rate: 1
+                }
+            }
+        ],
+
+        [
+            {
+                uv: new Vec2(0, 0.8)
+            },
+            {
+                unit: {
+                    height: 0.2,
+                    length: 1,
+                },
+                falloff: {
+                    bias: 0,
+                    rate: 1
+                }
+            }
+        ]
+    ],
+    metashapes.MetaShapeVolume.defaultFields.parametersIn,
+    new fields.ConvexPolygonInterpolationType()
+)
+
+const volume = new metashapes.MetaShapeVolume(shape, texture)
 
 const processors = new ProcessorGraph([
     new volumes.VolumeSamplingProcessor(),
-    // new surfaces.VolumeSurfaceMeshingProcessor(),
+    new surfaces.VolumeSurfaceMeshingProcessor(),
 ])
 
 /**
@@ -21,8 +93,8 @@ const context = {
     [volumes.VolumeSamplingKey]: {
         volume,
         settings: {
-            margin: 2,
-            resolution: 8
+            margin: 1,
+            resolution: 3
         }
     },
     [surfaces.VolumeSurfaceMeshingKey]: {
