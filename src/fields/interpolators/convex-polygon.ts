@@ -34,7 +34,8 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
 
         const q_q_prev = q.map((q_i, i) => new Vec2().sub2(q[(i - 1 + q.length) % q.length], q_i))
         const q_q_next = q.map((q_i, i) => new Vec2().sub2(q[(i + 1) % q.length], q_i))
-        
+        const q_q_next_length_sq = q_q_next.map(vector => vector.lengthSq())
+
         const samples = keypoints.map(([_, sample]) => sample)
 
         return (location: Location) => {
@@ -42,11 +43,29 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
 
             let weightSum = 0
             const weights = new Float64Array(q.length)
+            const p_line = new Vec2()
             for (let i = 0; i < q.length; i++) {
                 const q_i = q[i]
                 const q_prev = q[(i - 1 + q.length) % q.length]
                 const q_next = q[(i + 1) % q.length]
                 const p_q_dist_sq = ((p.x - q_i.x) ** 2) + ((p.y - q_i.y) ** 2)
+
+                p_line.sub2(p, q_i)
+                const p_line_t = p_line.dot(q_next) / q_q_next_length_sq[i]
+                p_line.copy(q_q_next[i]).mulScalar(p_line_t)
+
+                const rejection_sq = p_line.sub(p).lengthSq()
+                if (rejection_sq < 1e-6) {
+                    for (let j = 0; j < weights.length; j++)
+                        weights[j] = 0
+                    
+                    weights[i] = 1 - p_line_t
+                    weights[(i + 1) % weights.length] = p_line_t
+                    weightSum = 1
+
+                    break
+                }
+
                 weights[i] = (cotangent(p, q_i, q_prev, q_q_prev[i]) + cotangent(p, q_i, q_next, q_q_next[i])) / p_q_dist_sq
                 weightSum += weights[i]
             }
