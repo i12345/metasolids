@@ -11,7 +11,7 @@ const texture = new fields.KeypointsSampleDomain(
             },
             {
                 unit: {
-                    height: 0.2,
+                    height: 0.3,
                     length: 1,
                 },
                 falloff: {
@@ -39,11 +39,11 @@ const texture = new fields.KeypointsSampleDomain(
 
         [
             {
-                uv: new Vec2(1, 0.7)
+                uv: new Vec2(1, 1)
             },
             {
                 unit: {
-                    height: 0.15,
+                    height: 0.02,
                     length: 1,
                 },
                 falloff: {
@@ -55,7 +55,7 @@ const texture = new fields.KeypointsSampleDomain(
 
         [
             {
-                uv: new Vec2(0, 0.8)
+                uv: new Vec2(0, 1)
             },
             {
                 unit: {
@@ -109,6 +109,26 @@ const context = {
 
 processors.init(context)
 processors.process(processing, context)
+
+const uvs = [
+    new Vec2(0, 0),
+    new Vec2(0.5, 0),
+    new Vec2(1, 0),
+    new Vec2(2, 0),
+    new Vec2(2, 1),
+    // new Vec2(0.5, 0),
+    // new Vec2(1, 0),
+    // new Vec2(0.5, 0.1),
+    // new Vec2(0.5, 0.2),
+    // new Vec2(0.5, 0.3),
+    // new Vec2(0.5, 0.4),
+    // new Vec2(0.5, 0.5),
+]
+
+for (const uv of uvs) {
+    console.log(uv)
+    console.log(texture.sample({ uv }, context[metashapes.MetaShapeSamplingContext_Texture]))
+}
 
 const mesh = context[surfaces.VolumeSurfaceMeshingKey].algorithm.mesh(
     processing[volumes.VolumeSamplingKey],

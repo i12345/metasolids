@@ -1,4 +1,4 @@
-import { FieldPoint, field_point_add_inplace_weighted, field_point_identity, field_point_path } from "../point.js";
+import { FieldPoint, field_point_add_inplace_weighted, field_point_clone, field_point_identity, field_point_invalid, field_point_path } from "../point.js";
 import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { Vec2 } from "playcanvas-extended";
 import { makeExtractor } from "../../utils/tree.js";
@@ -32,46 +32,70 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
 
         if(!isConvexPolygon(q)) return undefined
 
-        const q_q_prev = q.map((q_i, i) => new Vec2().sub2(q[(i - 1 + q.length) % q.length], q_i))
-        const q_q_next = q.map((q_i, i) => new Vec2().sub2(q[(i + 1) % q.length], q_i))
+        const n = q.length
+
+        const q_q_prev = q.map((q_i, i) => new Vec2().sub2(q[(i - 1 + n) % n], q_i))
+        const q_q_next = q.map((q_i, i) => new Vec2().sub2(q[(i + 1) % n], q_i))
         const q_q_next_length_sq = q_q_next.map(vector => vector.lengthSq())
 
         const samples = keypoints.map(([_, sample]) => sample)
 
+        const triangles = new Uint16Array(3 * (n - 2))
+        for (let i = 2; i < n; i++) {
+            triangles[(3 * (i - 2)) + 0] = 0
+            triangles[(3 * (i - 2)) + 1] = i - 1
+            triangles[(3 * (i - 2)) + 2] = i
+        }
+
+        const collider = new Triangles2DMeshCollider(Triangles2DMesh.build(q, triangles), 1)
+        const invalid = field_point_invalid(samples[0])
+
         return (location: Location) => {
             const p = extractor(location)
 
+            let inside = false
+            collider.collide(p, () => inside = true)
+
+            if (!inside)
+                return invalid
+
             let weightSum = 0
-            const weights = new Float64Array(q.length)
+            const weights = new Float64Array(n)
+            
             const p_line = new Vec2()
-            for (let i = 0; i < q.length; i++) {
+            for (let i = 0; i < n; i++) {
                 const q_i = q[i]
-                const q_prev = q[(i - 1 + q.length) % q.length]
-                const q_next = q[(i + 1) % q.length]
-                const p_q_dist_sq = ((p.x - q_i.x) ** 2) + ((p.y - q_i.y) ** 2)
+                const q_q_next_i = q_q_next[(i + 1) % n]
 
                 p_line.sub2(p, q_i)
-                const p_line_t = p_line.dot(q_next) / q_q_next_length_sq[i]
-                p_line.copy(q_q_next[i]).mulScalar(p_line_t)
+                const p_line_t = p_line.dot(q_q_next_i) / q_q_next_length_sq[i]
+                if (p_line_t >= 0 && p_line_t <= 1) {
+                    p_line.copy(q_q_next_i).mulScalar(p_line_t)
 
-                const rejection_sq = p_line.sub(p).lengthSq()
-                if (rejection_sq < 1e-6) {
-                    for (let j = 0; j < weights.length; j++)
-                        weights[j] = 0
-                    
-                    weights[i] = 1 - p_line_t
-                    weights[(i + 1) % weights.length] = p_line_t
-                    weightSum = 1
-
-                    break
+                    const rejection_sq = p_line.sub(p).lengthSq()
+                    if (rejection_sq < 1e-6) {
+                        let result = field_point_clone(samples[i])
+                        result = field_point_add_inplace_weighted(result, samples[(i + 1) % n], p_line_t)
+                        return result
+                    }
                 }
+            }
 
-                weights[i] = (cotangent(p, q_i, q_prev, q_q_prev[i]) + cotangent(p, q_i, q_next, q_q_next[i])) / p_q_dist_sq
-                weightSum += weights[i]
+            for (let i = 0; i < n; i++) {
+                const q_i = q[i]
+                const q_prev = q[(i - 1 + n) % n]
+                const q_next = q[(i + 1) % n]
+                const p_q_dist_sq = ((p.x - q_i.x) ** 2) + ((p.y - q_i.y) ** 2)
+
+                const weight = (cotangent(p, q_i, q_prev, q_q_prev[i]) + cotangent(p, q_i, q_next, q_q_next[i])) / p_q_dist_sq
+                if (!isFinite(weight))
+                    return invalid
+                weights[i] = weight
+                weightSum += weight
             }
 
             let result = field_point_identity(samples[0])
-            for (let i = 0; i < weights.length; i++) {
+            for (let i = 0; i < n; i++) {
                 result = field_point_add_inplace_weighted(
                     result,
                     samples[i],
