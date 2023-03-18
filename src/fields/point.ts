@@ -83,7 +83,7 @@ export type ExtraFields<
 export function field_point_is(p: FieldPoint): boolean {
     if (field_point_isPrimitive(p))
         return true
-    else if (typeof p === 'object') {
+    else if (typeof p === 'object' && p !== null) {
         for (const key of Reflect.ownKeys(p))
             if (!field_point_is(p[key]))
                 return false
