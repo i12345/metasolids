@@ -3,8 +3,8 @@ import { SampleDomain, SamplingContext } from '../domain.js'
 import { Field } from '../field.js'
 
 export class ConstantSampleDomain<
-        Location extends FieldPoint,
-        Sample extends FieldPoint,
+        Location extends FieldPoint = FieldPoint,
+        Sample extends FieldPoint = FieldPoint,
         Context extends SamplingContext<Location> = SamplingContext<Location>,
     > implements
     SampleDomain<Location, Sample, Context> {
