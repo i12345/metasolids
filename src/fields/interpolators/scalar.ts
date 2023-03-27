@@ -1,6 +1,6 @@
 import { Curve, CURVE_SPLINE } from "playcanvas-extended";
 import { applyCurveConfig, CurveConfig, CurveType, defaultCurveConfig } from "../curve.js";
-import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 
 export class ScalarInterpolationType implements FieldInterpolationType<number> {
@@ -9,15 +9,20 @@ export class ScalarInterpolationType implements FieldInterpolationType<number> {
     ) { }
 
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: [Location, number][]
+            keypoints: FieldInterpolationKeypoint<Location, number>[]
         ): Interpolator<Location, number> {
-        if (!keypoints.every(([t, keypoint]) => typeof keypoint === 'number'))
+        if (!keypoints.every(({ value }) => typeof value === 'number'))
             return undefined
         
-        if (typeof keypoints[0][0] !== 'number')
+        if (typeof keypoints[0].location !== 'number')
             throw new Error('not implemented')
         
-        const curve = new Curve(keypoints.flat() as number[])
+        const data = new Float64Array(keypoints.length * 2)
+        for (let i = 0; i < keypoints.length; i++) {
+            data[(2 * i) + 0] = keypoints[i].location as number
+            data[(2 * i) + 1] = keypoints[i].value
+        }
+        const curve = new Curve(data as unknown as number[])
         applyCurveConfig(curve, this.curveConfig)
 
         return location => curve.value(location as number)

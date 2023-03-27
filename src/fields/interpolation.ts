@@ -1,5 +1,19 @@
 import { FieldPoint } from "./point.js"
 
+export interface InterpolationKeypoint<
+        Location extends FieldPoint = FieldPoint,
+        Value = any
+    > {
+    location: Location
+    value: Value
+}
+
+export interface FieldInterpolationKeypoint<
+        Location extends FieldPoint = FieldPoint,
+        Value extends FieldPoint = FieldPoint
+    > extends
+    InterpolationKeypoint<Location, Value> { }
+
 export type Interpolator<
         Location extends FieldPoint,
         Point
@@ -9,21 +23,24 @@ export const makeInterpolator = Symbol('makeInterpolator')
 
 export interface InterpolationType<Point> {
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: [Location, Point][]
+            keypoints: InterpolationKeypoint<Location, Point>[]
         ): Interpolator<Location, Point>
 }
 
-export type FieldInterpolator<
+export interface FieldInterpolator<
         Location extends FieldPoint = FieldPoint,
-        Point extends FieldPoint = FieldPoint
-    > = Interpolator<Location, Point>
+        Value extends FieldPoint = FieldPoint
+    > extends
+    Interpolator<Location, Value> { }
 
-export interface FieldInterpolationType<Point extends FieldPoint = FieldPoint>
-    extends InterpolationType<Point> { }
+export interface FieldInterpolationType<
+        Value extends FieldPoint = FieldPoint
+    > extends
+    InterpolationType<Value> { }
 
 export class InterpolationManager implements InterpolationType<any> {
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: [Location, any][]
+            keypoints: InterpolationKeypoint<Location, any>[]
         ): Interpolator<Location, any> {
         for (const interpolationType of InterpolationManager.interpolationTypes) {
             const interpolator = interpolationType[makeInterpolator](keypoints)
@@ -40,7 +57,9 @@ export class InterpolationManager implements InterpolationType<any> {
         this.interpolationTypes.push(type)
     }
 
-    static [makeInterpolator]<Location extends FieldPoint>(keypoints: [Location, any][]): Interpolator<Location, any> {
+    static [makeInterpolator]<Location extends FieldPoint>(
+            keypoints: InterpolationKeypoint<Location, any>[]
+        ): Interpolator<Location, any> {
         return this.instance[makeInterpolator](keypoints)
     }
 

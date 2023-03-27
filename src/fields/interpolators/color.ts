@@ -1,6 +1,6 @@
 import { CurveSet, Color } from "playcanvas-extended";
 import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve.js";
-import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 
 //TODO: implement HSL curve interpolation
@@ -12,19 +12,19 @@ export class ColorRGBAClampedCurveInterpolationType implements FieldInterpolatio
     
 
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: [Location, Color][]
+            keypoints: FieldInterpolationKeypoint<Location, Color>[]
         ): Interpolator<Location, Color> {
-        if (!(keypoints[0][1] instanceof Color))
+        if (!(keypoints[0].value instanceof Color))
             return undefined
         
-        if (typeof keypoints[0][0] !== 'number')
+        if (typeof keypoints[0].location !== 'number')
             throw new Error('not implemented')
         
         const curves = new CurveSet([
-            keypoints.flatMap(([t, color]) => [t, color.r]),
-            keypoints.flatMap(([t, color]) => [t, color.g]),
-            keypoints.flatMap(([t, color]) => [t, color.b]),
-            keypoints.flatMap(([t, color]) => [t, color.a])
+            keypoints.flatMap(({ location: t, value: color }) => [t, color.r]),
+            keypoints.flatMap(({ location: t, value: color }) => [t, color.g]),
+            keypoints.flatMap(({ location: t, value: color }) => [t, color.b]),
+            keypoints.flatMap(({ location: t, value: color }) => [t, color.a])
         ])
 
         curves.type = this.curveConfig.type

@@ -1,6 +1,6 @@
 import { CurveSet, Vec2 } from "playcanvas-extended";
 import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve.js";
-import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 
 export class Vec2InterpolationType implements FieldInterpolationType<Vec2> {
@@ -10,17 +10,17 @@ export class Vec2InterpolationType implements FieldInterpolationType<Vec2> {
     
 
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: [Location, Vec2][]
+            keypoints: FieldInterpolationKeypoint<Location, Vec2>[]
         ): Interpolator<Location, Vec2> {
-        if (!(keypoints[0][1] instanceof Vec2))
+        if (!(keypoints[0].value instanceof Vec2))
             return undefined
         
-        if (typeof keypoints[0][0] !== 'number')
+        if (typeof keypoints[0].location !== 'number')
             throw new Error('not implemented')
         
         const curves = new CurveSet([
-            keypoints.flatMap(([t, p]) => [t, p.x]),
-            keypoints.flatMap(([t, p]) => [t, p.y])
+            keypoints.flatMap(({ location: t, value: p }) => [t, p.x]),
+            keypoints.flatMap(({ location: t, value: p }) => [t, p.y])
         ])
 
         curves.type = this.curveConfig.type

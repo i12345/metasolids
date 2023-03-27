@@ -62,8 +62,8 @@ class MetaSpline<
     private figure_interpolator: Interpolator<number, MetaSplineSegmentFigure<Location, Sample>>
 
     constructor(public segments: MetaSplineSegment<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[]) {
-        this.transform_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => [segment.t, segment.transform_relative_root] as [number, Mat4]))
-        this.figure_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => [segment.t, segment.figure] as [number, MetaSplineSegmentFigure<Location, Sample>]))
+        this.transform_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.transform_relative_root })))
+        this.figure_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.figure })))
     }
 
     planeAt(t: number): Mat4 {

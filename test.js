@@ -5,11 +5,11 @@ import { plot } from 'nodeplotlib'
 const shape = new metashapes.MetaSphere()
 const texture = new fields.KeypointsSampleDomain(
     [
-        [
-            {
+        {
+            location: {
                 uv: new Vec2(0, 0)
             },
-            {
+            value: {
                 unit: {
                     height: 0.3,
                     length: 1,
@@ -19,13 +19,13 @@ const texture = new fields.KeypointsSampleDomain(
                     rate: 1
                 }
             }
-        ],
+        },
 
-        [
-            {
+        {
+            location: {
                 uv: new Vec2(1, 0)
             },
-            {
+            value: {
                 unit: {
                     height: 0.1,
                     length: 1,
@@ -35,13 +35,13 @@ const texture = new fields.KeypointsSampleDomain(
                     rate: 1
                 }
             }
-        ],
+        },
 
-        [
-            {
+        {
+            location: {
                 uv: new Vec2(1, 1)
             },
-            {
+            value: {
                 unit: {
                     height: 0.02,
                     length: 1,
@@ -51,13 +51,13 @@ const texture = new fields.KeypointsSampleDomain(
                     rate: 1
                 }
             }
-        ],
+        },
 
-        [
-            {
+        {
+            location: {
                 uv: new Vec2(0, 1)
             },
-            {
+            value: {
                 unit: {
                     height: 0.2,
                     length: 1,
@@ -67,7 +67,7 @@ const texture = new fields.KeypointsSampleDomain(
                     rate: 1
                 }
             }
-        ]
+        }
     ],
     metashapes.MetaShapeVolume.defaultFields.parametersIn,
     new fields.ConvexPolygonInterpolationType()

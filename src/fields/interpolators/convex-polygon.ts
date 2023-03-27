@@ -1,5 +1,5 @@
 import { FieldPoint, field_point_add_inplace_weighted, field_point_clone, field_point_identity, field_point_invalid, field_point_path } from "../point.js";
-import { FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
+import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { Vec2 } from "playcanvas-extended";
 import { makeExtractor } from "../../utils/tree.js";
 import { Triangles2DMesh, Triangles2DMeshCollider } from "../triangles-2D-mesh.js";
@@ -23,12 +23,12 @@ function cotangent(a: Vec2, b: Vec2, c: Vec2, bc: Vec2) {
 
 export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoint>
     implements FieldInterpolationType<Point> {
-    [makeInterpolator]<Location extends FieldPoint>(keypoints: [Location, Point][]): Interpolator<Location, Point> {
-        const path_vec2 = field_point_path(keypoints[0][0], location => location instanceof Vec2)
+    [makeInterpolator]<Location extends FieldPoint>(keypoints: FieldInterpolationKeypoint<Location, Point>[]): Interpolator<Location, Point> {
+        const path_vec2 = field_point_path(keypoints[0].location, location => location instanceof Vec2)
         if(!path_vec2) return undefined
 
         const extractor = makeExtractor<Vec2>(path_vec2)
-        const q = keypoints.map(([location]) => extractor(location))
+        const q = keypoints.map(({ location }) => extractor(location))
 
         if(!isConvexPolygon(q)) return undefined
 
@@ -38,7 +38,7 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
         const q_q_next = q.map((q_i, i) => new Vec2().sub2(q[(i + 1) % n], q_i))
         const q_q_next_length_sq = q_q_next.map(vector => vector.lengthSq())
 
-        const samples = keypoints.map(([_, sample]) => sample)
+        const samples = keypoints.map(({ value }) => value)
 
         const triangles = new Uint16Array(3 * (n - 2))
         for (let i = 2; i < n; i++) {
