@@ -35,8 +35,8 @@ export class MetaSphere<
     
     sample(location: Location, context: Context): Sample {
         const theta = Math.atan2(location.p.y, location.p.x)
-        const phi = Math.atan2(location.p.z, new Vec2(location.p.x, location.p.y).length())
-        const uv = new Vec2((theta / TwoPi) + 0.5, (phi / Pi) + 0.5)
+        const phi = Math.atan2(new Vec2(location.p.x, location.p.y).length(), location.p.z)
+        const uv = new Vec2((theta / TwoPi) + 0.5, (phi / Pi))
 
         const distance = location.p.length()
         const gradient = location.p.clone().divScalar(distance)
@@ -66,11 +66,11 @@ export class MetaSphere<
 
             for (let v = 0; v < resolution; v++) {
                 const uv = new Vec2(u / 2, v).divScalar(resolution)
-                const phi = Pi * (uv.y - 0.5)
+                const phi = Pi * uv.y
 
                 const point = new Vec3(cos_theta, sin_theta)
-                point.mulScalar(Math.cos(phi))
-                point.z = Math.sin(phi)
+                point.mulScalar(Math.sin(phi))
+                point.z = Math.cos(phi)
 
                 const texture_location = { uv, gradient: point } as MetaShapeTxLocation<Location, TxLocation> & Sample
                 const texture_sample = texture?.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
