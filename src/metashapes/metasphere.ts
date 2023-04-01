@@ -36,7 +36,7 @@ export class MetaSphere<
     sample(location: Location, context: Context): Sample {
         const theta = Math.atan2(location.p.y, location.p.x)
         const phi = Math.atan2(new Vec2(location.p.x, location.p.y).length(), location.p.z)
-        const uv = new Vec2((theta / TwoPi) + 0.5, (phi / Pi))
+        const uv = new Vec2(((theta / TwoPi) + 1) % 1, (phi / Pi))
 
         const distance = location.p.length()
         const gradient = location.p.clone().divScalar(distance)
@@ -60,7 +60,7 @@ export class MetaSphere<
         }
 
         for (let u = 0; u < 2 * resolution; u++) {
-            const theta = TwoPi * ((u / (2 * resolution)) - 0.5)
+            const theta = TwoPi * (u / (2 * resolution))
             const cos_theta = Math.cos(theta)
             const sin_theta = Math.sin(theta)
 
