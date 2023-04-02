@@ -10,23 +10,37 @@ export class SurfaceNetsMeshingAlgorithm implements MeshingAlgorithm {
     for (let x = 0; x < dims[0]; x++)
       for (let y = 0; y < dims[1]; y++)
         for (let z = 0; z < dims[2]; z++)
-          // data[(((x * dims[1]) + y) * dims[2]) + z] = volume.voxels[x][y][z].presence - surfaceLevel
           data[(((z * dims[1]) + y) * dims[0]) + x] = volume.voxels[x][y][z].presence - surfaceLevel
     
     const { faces, vertices: verts } = SurfaceNets(data, dims)
-    const triangles = new Array(faces.length * 6)
+    
+    const triangles = new Array<number>(faces.length * 6)
+    const vertices = verts.map(vert => new Vec3(vert))
+
+    const diagonal_tmp = new Vec3()
+
     for (let i = 0; i < faces.length; i++){
       const face = faces[i]
-      // TODO: choose best cut
-      triangles[(i * 6) + 0] = face[1]
-      triangles[(i * 6) + 1] = face[0]
-      triangles[(i * 6) + 2] = face[2]
-      triangles[(i * 6) + 3] = face[3]
-      triangles[(i * 6) + 4] = face[2]
-      triangles[(i * 6) + 5] = face[0]
-    }
+      
+      const diagonal_0_2 = diagonal_tmp.sub2(vertices[face[0]], vertices[face[2]]).lengthSq()
+      const diagonal_1_3 = diagonal_tmp.sub2(vertices[face[1]], vertices[face[3]]).lengthSq()
 
-    const vertices = verts.map(vert => new Vec3(vert))
+      if (diagonal_0_2 < diagonal_1_3) {
+        triangles[(i * 6) + 0] = face[1]
+        triangles[(i * 6) + 1] = face[0]
+        triangles[(i * 6) + 2] = face[2]
+        triangles[(i * 6) + 3] = face[3]
+        triangles[(i * 6) + 4] = face[2]
+        triangles[(i * 6) + 5] = face[0]
+      } else {
+        triangles[(i * 6) + 0] = face[1]
+        triangles[(i * 6) + 1] = face[0]
+        triangles[(i * 6) + 2] = face[3]
+        triangles[(i * 6) + 3] = face[3]
+        triangles[(i * 6) + 4] = face[2]
+        triangles[(i * 6) + 5] = face[1]
+      }
+    }
 
     function transformVerticesToLocalSpace() {
       const box_min = volume.boundingBox.getMin()
