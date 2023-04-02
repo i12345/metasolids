@@ -404,4 +404,21 @@ export class MetaShapeVolume<
 
         return (((Math.log(meshingSettings.surfaceLevel) / -parameters.falloff.rate) - parameters.falloff.bias) * parameters.unit.length) + parameters.unit.height
     }
+
+    static idealSurfaceLevel(parameters: MetaShapeParametersIn): number {
+        /**
+         * What value of surfaceLevel is needed so that distance = unit.length + unit.height
+         * using the equation from the previous method?
+         * 
+         * distance = (((ln(surfaceLevel) / -falloff.rate) - falloff.bias) * unit.length) + unit.height
+         * unit.length + unit.height = (((ln(surfaceLevel) / -falloff.rate) - falloff.bias) * unit.length) + unit.height
+         * unit.length = ((ln(surfaceLevel) / -falloff.rate) - falloff.bias) * unit.length
+         * 1 = (ln(surfaceLevel) / -falloff.rate) - falloff.bias
+         * 1 + falloff.bias = ln(surfaceLevel) / -falloff.rate
+         * (-falloff.rate)(1 + falloff.bias) = ln(surfaceLevel)
+         * surfaceLevel = exp((-falloff.rate)(1 + falloff.bias))
+         */
+
+        return Math.exp((-parameters.falloff.rate) * (1 + parameters.falloff.bias))
+    }
 }
