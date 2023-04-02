@@ -259,10 +259,177 @@ export function field_point_range_compute<Point extends FieldPoint = FieldPoint>
     return result.range as FieldPointRange<Point>
 }
 
-export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>(
-        superset: FieldPointRange<Point>,
-        subset: FieldPointRange<Point>
+export function field_point_range_equal<Point extends FieldPoint = FieldPoint>(
+        a: FieldPointRange<Point>,
+        b: FieldPointRange<Point>
     ): boolean {
+    function ensure_valid([min, max]: [Vec3, Vec3]) {
+        if (min.x > max.x) min.x = max.x
+        if (min.y > max.y) min.y = max.y
+        if (min.z > max.z) min.z = max.z
+    }
+
+    function round_scale(v: Vec3) {
+        const diff = (
+            Math.abs(v.x - 1) +
+            Math.abs(v.y - 1) +
+            Math.abs(v.z - 1)
+        )
+
+        if (diff > 0 && diff < 0.001)
+            v.x = v.y = v.z = 1
+    }
+
+    if (a instanceof Array) {
+        const a_max = a[1]
+
+        if (a_max instanceof Vec3) {
+            type Type = Vec3
+
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+            
+            return a_min.equals(b_min) && a_max.equals(b_max)
+        }
+        else if (a_max instanceof Mat4) {
+            type Type = Mat4
+
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+            
+            type fields = { t: Vec3, r: Quat, s: Vec3 }
+
+            const a_fields: FieldsPointRange<fields> = {
+                t: [a_min.getTranslation(), a_max.getTranslation()],
+                r: [new Quat().setFromMat4(a_min), new Quat().setFromMat4(a_max)],
+                s: [a_min.getScale(), a_max.getScale()]
+            }
+
+            const b_fields: FieldsPointRange<fields> = {
+                t: [b_min.getTranslation(), b_max.getTranslation()],
+                r: [new Quat().setFromMat4(b_min), new Quat().setFromMat4(b_max)],
+                s: [b_min.getScale(), b_max.getScale()]
+            }
+
+            ensure_valid(a_fields.s)
+            ensure_valid(b_fields.s)
+
+            round_scale(a_fields.s[0])
+            round_scale(a_fields.s[1])
+            round_scale(b_fields.s[0])
+            round_scale(b_fields.s[1])
+
+            return field_point_range_equal(a_fields, b_fields)
+        }
+        else if (typeof a_max === 'number') {
+            type Type = number
+
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+            
+            return (b_min === a_min && b_max === a_max)
+        }
+        else if (a_max instanceof Vec2) {
+            type Type = Vec2
+            
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+
+            return a_min.equals(b_min) && a_max.equals(b_max)
+        }
+        else if (a_max instanceof Vec4) {
+            type Type = Vec4
+            
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+
+            return a_min.equals(b_min) && a_max.equals(b_max)
+        }
+        else if (a_max instanceof Quat) {
+            type Type = Quat
+            
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+
+            return field_point_range_equal(
+                [a_min.getEulerAngles().round(), a_max.getEulerAngles().round()],
+                [b_min.getEulerAngles().round(), b_max.getEulerAngles().round()]
+            )
+        }
+        else if (a_max instanceof Mat3) {
+            type Type = Mat3
+
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+            
+            const [a_min_mat4, a_max_mat4] = [new Mat4(), new Mat4()]
+            const [b_min_mat4, b_max_mat4] = [new Mat4(), new Mat4()]
+
+            mat4_from_mat3(a_min, a_min_mat4)
+            mat4_from_mat3(a_max, a_max_mat4)
+
+            mat4_from_mat3(b_min, b_min_mat4)
+            mat4_from_mat3(b_max, b_max_mat4)
+
+            return field_point_range_equal(
+                [a_min_mat4, a_max_mat4],
+                [b_min_mat4, b_max_mat4]
+            )
+        }
+        else if (a_max instanceof Color) {
+            type Type = Color
+            
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+
+            return a_min.equals(b_min) && a_max.equals(b_max)
+        }
+        else if (a_max instanceof Int8Array ||
+            a_max instanceof Uint8Array ||
+            a_max instanceof Uint8ClampedArray ||
+            a_max instanceof Int16Array ||
+            a_max instanceof Uint16Array ||
+            a_max instanceof Int32Array ||
+            a_max instanceof Uint32Array ||
+            a_max instanceof Float32Array ||
+            a_max instanceof Float64Array ||
+            a_max instanceof Array) {
+            type Type = ArrayLike<number>
+            
+            const [a_min, a_max] = a as [Type, Type]
+            const [b_min, b_max] = b as [Type, Type]
+
+            const n = a_min.length
+            if (n !== a_max.length ||
+                n !== b_min.length ||
+                n !== b_max.length)
+                return false
+
+            for (let i = n - 1; i >= 0; i--) {
+                const [a_value_min, a_value_max] = [a_min[i], a_max[i]]
+                const [b_value_min, b_value_max] = [b_min[i], b_max[i]]
+
+                if (a_value_min !== b_value_min ||
+                    a_value_max !== b_value_max)
+                    return false
+            }
+
+            return true
+        }
+    }
+    else {
+        for (const key of Reflect.ownKeys(b))
+            if (!field_point_range_equal((a as any)[key], (b as any)[key]))
+                return false
+        
+        return true
+    }
+}
+
+export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>(
+    superset: FieldPointRange<Point>,
+    subset: FieldPointRange<Point>
+): boolean {
     function ensure_valid([min, max]: [Vec3, Vec3]) {
         if (min.x > max.x) min.x = max.x
         if (min.y > max.y) min.y = max.y
@@ -288,7 +455,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
 
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
-            
+        
             return (
                 (subset_min.x >= superset_min.x && subset_max.x <= superset_max.x) &&
                 (subset_min.y >= superset_min.y && subset_max.y <= superset_max.y) &&
@@ -300,7 +467,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
 
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
-            
+        
             type fields = { t: Vec3, r: Quat, s: Vec3 }
 
             const superset_fields: FieldsPointRange<fields> = {
@@ -330,15 +497,15 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
 
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
-            
+        
             return (subset_min >= superset_min && subset_max <= superset_max)
         }
         else if (subset_max instanceof Vec2) {
             type Type = Vec2
-            
+        
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
-            
+        
             return (
                 (subset_min.x >= superset_min.x && subset_max.x <= superset_max.x) &&
                 (subset_min.y >= superset_min.y && subset_max.y <= superset_max.y)
@@ -346,10 +513,10 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
         }
         else if (subset_max instanceof Vec4) {
             type Type = Vec4
-            
+        
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
-            
+        
             return (
                 (subset_min.x >= superset_min.x && subset_max.x <= superset_max.x) &&
                 (subset_min.y >= superset_min.y && subset_max.y <= superset_max.y) &&
@@ -359,7 +526,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
         }
         else if (subset_max instanceof Quat) {
             type Type = Quat
-            
+        
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
 
@@ -373,7 +540,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
 
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
-            
+        
             const [superset_min_mat4, superset_max_mat4] = [new Mat4(), new Mat4()]
             const [subset_min_mat4, subset_max_mat4] = [new Mat4(), new Mat4()]
 
@@ -390,10 +557,10 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
         }
         else if (subset_max instanceof Color) {
             type Type = Color
-            
+        
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
-            
+        
             return (
                 (subset_min.r >= superset_min.r && subset_max.r <= superset_max.r) &&
                 (subset_min.g >= superset_min.g && subset_max.g <= superset_max.g) &&
@@ -412,7 +579,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
             subset_max instanceof Float64Array ||
             subset_max instanceof Array) {
             type Type = ArrayLike<number>
-            
+        
             const [superset_min, superset_max] = superset as [Type, Type]
             const [subset_min, subset_max] = subset as [Type, Type]
 
@@ -422,7 +589,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
 
                 if ((subset_value_min ?? subset_value_max) < (superset_value_min ?? superset_value_max))
                     return false
-                
+            
                 if ((subset_value_max ?? subset_value_min) > (superset_value_max ?? superset_value_min))
                     return false
             }
@@ -434,7 +601,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
         for (const key of Reflect.ownKeys(subset))
             if (!field_point_range_subsets((superset as any)[key], (subset as any)[key]))
                 return false
-        
+    
         return true
     }
 }
