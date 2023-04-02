@@ -30,6 +30,9 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
         const extractor = makeExtractor<Vec2>(path_vec2)
         const q = keypoints.map(({ location }) => extractor(location))
 
+        const order = findPolygonOrder(q)
+        reorder(q, order)
+
         if(!isConvexPolygon(q)) return undefined
 
         const n = q.length
@@ -38,7 +41,7 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
         const q_q_next = q.map((q_i, i) => new Vec2().sub2(q[(i + 1) % n], q_i))
         const q_q_next_length_sq = q_q_next.map(vector => vector.lengthSq())
 
-        const samples = keypoints.map(({ value }) => value)
+        const samples = order.map(i => keypoints[i].value)
 
         const triangles = new Uint16Array(3 * (n - 2))
         for (let i = 2; i < n; i++) {
@@ -110,6 +113,28 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
     static {
         InterpolationManager.register(new this())
     }
+}
+
+function findPolygonOrder(polygon: Vec2[]) {
+    const mean = new Vec2()
+    for (const p of polygon)
+        mean.add(p)
+    mean.divScalar(polygon.length)
+
+    const i_theta = polygon.map((p, i) => {
+        const dx = p.x - mean.x
+        const dy = p.y - mean.y
+        return { i, theta: Math.atan2(dy, dx) }
+    })
+
+    i_theta.sort((a, b) => a.theta - b.theta)
+    return i_theta.map(({ i }) => i)
+}
+
+function reorder<T>(arr: T[], order: number[]): void {
+    const items = [...arr]
+    for (const i in order)
+        arr[order[i]] = items[i]
 }
 
 function isConvexPolygon(polygon: Vec2[]): boolean {
