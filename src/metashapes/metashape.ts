@@ -348,15 +348,24 @@ export class MetaShapeVolume<
     }
 
     static combineParameters(a?: FieldsPointOptional<MetaShapeParametersIn>, b?: FieldsPointOptional<MetaShapeParametersIn>): MetaShapeParametersIn {
-        const parameters = field_point_clone(MetaShapeVolume.defaultParameters)
+        const parameters: MetaShapeParametersIn = {
+            unit: {
+                height: 0,
+                length: 1
+            },
+            falloff: {
+                bias: 0,
+                rate: 1
+            }
+        }
 
         parameters.unit.height += a?.unit?.height ?? 0
-        parameters.unit.length *= a?.unit?.height ?? 1
+        parameters.unit.length *= a?.unit?.length ?? 1
         parameters.falloff.bias += a?.falloff?.bias ?? 0
         parameters.falloff.rate *= a?.falloff?.rate ?? 1
 
         parameters.unit.height += b?.unit?.height ?? 0
-        parameters.unit.length *= b?.unit?.height ?? 1
+        parameters.unit.length *= b?.unit?.length ?? 1
         parameters.falloff.bias += b?.falloff?.bias ?? 0
         parameters.falloff.rate *= b?.falloff?.rate ?? 1
 
@@ -379,19 +388,20 @@ export class MetaShapeVolume<
             return 0
         
         /**
-         * w = (x - h) / l
-         * y = e^((w + b) * r)
-         * y = e^((((x - h) / l) + b) * r)
+         * Solving for distance given the other known values
          * 
-         * To solve for x given y,
+         * exp((surface_distance + parameters.falloff.bias) * -parameters.falloff.rate) = surfaceLevel
+         * (surface_distance + parameters.falloff.bias) * -parameters.falloff.rate = ln(surfaceLevel)
+         * surface_distance + parameters.falloff.bias = ln(surfaceLevel) / -parameters.falloff.rate
+         * surface_distance = (ln(surfaceLevel) / -parameters.falloff.rate) - parameters.falloff.bias
          * 
-         * ln(y) = (((x - h) / l) + b) * r
-         * ln(y) / r = ((x - h) / l) + b
-         * (ln(y) / r) - b = (x - h) / l
-         * ((ln(y) / r) - b) * l = x - h
-         * (((ln(y) / r) - b) * l) + h = x
+         * surface_distance = (distance - parameters.unit.height) / parameters.unit.length
+         * surface_distance * parameters.unit.length = distance - parameters.unit.height
+         * (surface_distance * parameters.unit.length) + parameters.unit.height = distance
+         * 
+         * distance = (((ln(surfaceLevel) / -parameters.falloff.rate) - parameters.falloff.bias) * parameters.unit.length) + parameters.unit.height
          */
 
-        return (((Math.log(meshingSettings.surfaceLevel) / parameters.falloff.rate) - parameters.falloff.bias) * parameters.unit.length) + parameters.unit.height
+        return (((Math.log(meshingSettings.surfaceLevel) / -parameters.falloff.rate) - parameters.falloff.bias) * parameters.unit.length) + parameters.unit.height
     }
 }

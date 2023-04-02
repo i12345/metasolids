@@ -2,9 +2,10 @@ import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
 import { FieldsField } from "../fields/fields/fields.js";
 import { Pi, TwoPi } from "../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
-import { MetaShape, MetaShapeLocation, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTextureLocation, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
+import { MetaShape, MetaShapeLocation, MetaShapeParametersIn, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTextureLocation, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 import { defaultMeshingSettings } from "../meshing/meshing-algorithm.js";
 import { VolumeSurfaceMeshingKey, VolumeSurfaceMeshingProcessingContext } from "../surfaces/processor.js";
+import { FieldsPointOptional } from "../fields/point.js";
 
 export class MetaSphere<
         TxLocation extends TextureLocation = TextureLocation,
@@ -75,7 +76,7 @@ export class MetaSphere<
                 const texture_location = { uv, gradient: point } as MetaShapeTxLocation<Location, TxLocation> & Sample
                 const texture_sample = texture?.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
                 
-                const parameters = MetaShapeVolume.combineParameters(texture_sample)
+                const parameters = MetaShapeVolume.combineParameters((texture_sample ?? MetaShapeVolume.defaultParameters) as FieldsPointOptional<MetaShapeParametersIn>)
                 const parameters_valid = MetaShapeVolume.parametersValid(parameters)
 
                 if (parameters_valid) {

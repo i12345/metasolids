@@ -405,7 +405,10 @@ export class MetaSplineSegment<
 
                 const figure_sample = this.spline.figureSample(t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
                 
-                const parameters = MetaShapeVolume.combineParameters(texture_sample, figure_sample)
+                const parameters = MetaShapeVolume.combineParameters(
+                    (texture_sample ?? MetaShapeVolume.defaultParameters) as FieldsPointOptional<MetaShapeParametersIn>,
+                    (figure_sample ?? MetaShapeVolume.defaultParameters) as FieldsPointOptional<MetaShapeParametersIn>
+                )
                 const parameters_valid = MetaShapeVolume.parametersValid(parameters)
 
                 if (parameters_valid) {

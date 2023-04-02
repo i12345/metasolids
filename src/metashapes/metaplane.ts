@@ -1,10 +1,10 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { Field, FieldsField, FieldsPointMapped, SignField } from "../fields/index.js";
+import { Field, FieldsField, FieldsPointMapped, FieldsPointOptional, SignField } from "../fields/index.js";
 import { defaultMeshingSettings } from "../meshing/meshing-algorithm.js";
 import { VolumeSurfaceMeshingKey, VolumeSurfaceMeshingProcessingContext } from "../surfaces/processor.js";
 import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
 import { Sign } from "../utils/sign.js";
-import { MetaShape, MetaShapeLocation, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
+import { MetaShape, MetaShapeLocation, MetaShapeParametersIn, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 
 export type MetaPlaneSample = MetaShapeSample & {
     side: Sign
@@ -72,7 +72,7 @@ export class MetaPlane<
                 const p = uv.mul(xy_size).add(xy_offset)
                 
                 const texture_sample = texture?.sample({ uv } as MetaShapeTxLocation<Location, TxLocation>, context[MetaShapeSamplingContext_Texture].context)
-                const parameters = MetaShapeVolume.combineParameters(texture_sample)
+                const parameters = MetaShapeVolume.combineParameters((texture_sample ?? MetaShapeVolume.defaultParameters) as FieldsPointOptional<MetaShapeParametersIn>)
                 const parameters_valid = MetaShapeVolume.parametersValid(parameters)
 
                 if (parameters_valid) {
