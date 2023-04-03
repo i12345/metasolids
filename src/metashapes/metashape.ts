@@ -201,8 +201,24 @@ export class MetaShapeVolume<
         return this.shape?.boundingBox
     }
 
+    get shape() {
+        return this.inner as MetaShape<
+            TxLocation,
+            TxSample,
+            Location,
+            InnerSample,
+            TextureContext,
+            VolumeContext,
+            Context
+        >
+    }
+
+    set shape(shape) {
+        this.inner = shape
+    }
+
     constructor(
-            public shape: MetaShape<
+            shape: MetaShape<
                     TxLocation,
                     TxSample,
                     Location,
