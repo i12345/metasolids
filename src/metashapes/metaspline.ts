@@ -1,5 +1,5 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
-import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField } from "../fields/index.js";
+import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField, FieldsPoint } from "../fields/index.js";
 import { Pi, PiOver2, TwoPi } from "../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
 import { MultiObjectsVolume } from "../volumes/volumes/multi-objects.js";
@@ -205,8 +205,13 @@ export class MetaSplineSegment<
         >
     > {
     field: Field<Sample>
+    
     //TODO: let there be multiple figures with different times for a single SplineSegment
-    figure: MetaSplineSegmentFigure<Location, Sample>
+    constructor(
+        public figure: MetaSplineSegmentFigure<Location, Sample>,
+        public t_offset: number = 1
+    ) {
+    }
     
     private spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[]
     private spline: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>
@@ -216,7 +221,6 @@ export class MetaSplineSegment<
     transform_relative_root_inv: Mat4
 
     t: number = 0
-    t_offset: number = 1
     t_iterations: number
 
     boundingBox: BoundingBox
