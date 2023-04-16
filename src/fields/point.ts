@@ -42,7 +42,7 @@ export const FieldsPoint_Omit_Leaf = Symbol('omit')
 export type FieldsPointOmitted<
         Point extends FieldsPoint,
         Subtract extends FieldsPointMapped<FieldsPoint, typeof FieldsPoint_Omit_Leaf>
-    > = {
+    > = FieldsPoint & {
     [K in keyof Point]:
         Subtract[K] extends typeof FieldsPoint_Omit_Leaf ? never :
         Subtract[K] extends FieldsPointMapped<FieldsPoint, typeof FieldsPoint_Omit_Leaf> ?
@@ -51,7 +51,7 @@ export type FieldsPointOmitted<
         Point[K]
 }
 
-export type FieldsPointOptional<Point extends FieldsPoint> = {
+export type FieldsPointOptional<Point extends FieldsPoint> = FieldsPoint & {
     [K in keyof Point]?:
         Point[K] extends FieldPointPrimitive ? Point[K] :
         (Point[K] extends FieldsPoint ?
@@ -69,8 +69,37 @@ export type FieldsPointOptional<Point extends FieldsPoint> = {
 //         }
 //     }
 // }
-// let point_opt: FieldsPointOptional<typeof point>
+// let point_opt: FieldsPointOptional<typeof point> = {
+//     a: 2,
+//     c: {
+//         z: {
+//         }
+//     }
+// }
 // point_opt.c.z.zz // Quat?
+
+// // Types are preferred to interfaces because
+// // types will cast to a FieldsPoint
+
+// interface MyInterface {
+//     u: number
+//     v: number
+//     location: Vec3 
+// }
+
+// type MyType = {
+//     u: number
+//     v: number
+//     location: Vec3 
+// }
+
+// let x: FieldsPoint
+// let a: MyInterface
+// let b: MyType
+// let c: { u: number, v: number, location: Vec3 }
+// x = a // doesn't work
+// x = b // works
+// x = c // works
 
 export type FieldPoint = FieldPointPrimitive | FieldsPoint
 
@@ -80,36 +109,37 @@ export type ExtraFields<
     > =
     Omit<Type, keyof Base>
 
-export function field_point_is(p: FieldPoint): boolean {
-    if (field_point_isPrimitive(p))
-        return true
+export function field_point_is<Point = any>(p: Point): Point extends FieldPoint ? true : false {
+    if (field_point_isPrimitive(p as FieldPoint))
+        return true as (Point extends FieldPoint ? true : false)
     else if (typeof p === 'object' && p !== null) {
         for (const key of Reflect.ownKeys(p))
             if (!field_point_is(p[key]))
-                return false
+                return false as (Point extends FieldPoint ? true : false)
         
-        return true
+        return true as (Point extends FieldPoint ? true : false);
     }
-    else return false
+    
+    return false as (Point extends FieldPoint ? true : false)
 }
 
-export function field_point_isPrimitive(p: FieldPoint): boolean {
+export function field_point_isPrimitive<Point extends FieldPoint = FieldPoint>(p: Point): Point extends FieldPointPrimitive ? true : false {
     if (p instanceof Vec3)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Mat4)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (typeof p === 'number')
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Vec2)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Vec4)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Quat)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Mat3)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Color)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Int8Array ||
         p instanceof Uint8Array ||
         p instanceof Uint8ClampedArray ||
@@ -120,9 +150,9 @@ export function field_point_isPrimitive(p: FieldPoint): boolean {
         p instanceof Float32Array ||
         p instanceof Float64Array ||
         p instanceof Array)
-        return true
+        return true as (Point extends FieldPointPrimitive ? true : false)
 
-    return false
+    return false as (Point extends FieldPointPrimitive ? true : false)
 }
 
 export function field_point_path(

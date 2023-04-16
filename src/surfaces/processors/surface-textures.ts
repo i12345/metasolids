@@ -125,9 +125,9 @@ export type SurfaceProcessingContextWithObjectsTextures<
 
 // this type might not be needed except when actually calculating the location
 // to sample a texture at and by some textures that use this information
-export interface SurfaceTextureLocation<
+export type SurfaceTextureLocation<
         SurfaceSampleT extends SurfaceSample = SurfaceSample
-    > extends TextureLocation {
+    > = TextureLocation & {
     surface: SurfaceSampleT
 }
 

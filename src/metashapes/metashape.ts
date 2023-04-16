@@ -12,7 +12,7 @@ export interface MetaShapeLocation extends VolumeLocation {
 export type MetaShapeLocationExtraFields<Location extends MetaShapeLocation = MetaShapeLocation> =
     ExtraFields<Location, VolumeLocation>
 
-export interface MetaShapeParametersIn extends FieldsPoint {
+export type MetaShapeParametersIn = {
     unit: {
         /**
          * The unit length for distance in local space. This may vary at different
@@ -47,7 +47,7 @@ export interface MetaShapeParametersIn extends FieldsPoint {
     }
 }
 
-export type MetaShapeSample = FieldsPoint & FieldsPointOptional<MetaShapeParametersIn> & {
+export type MetaShapeSample = FieldsPointOptional<MetaShapeParametersIn> & {
     /**
      * The closest distance to the shape in normalized distance units
      * (they might not be uniform through the local vector space)
@@ -75,7 +75,10 @@ export type MetaShapeTxLocation<
         Location extends VolumeLocation = VolumeLocation,
         TxLocation extends TextureLocation = TextureLocation
     > =
-    MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>>
+    MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>
+
+//TODO: refactor commonly recurring FieldsPoint & Omit<TxLocation, keyof TextureLocation>
+// what is the meaning of TxLocation?
 
 export type MetaShapeTxSample = FieldsPoint & FieldsPointOptional<MetaShapeParametersIn>
 
@@ -154,8 +157,8 @@ export interface MetaShape<
         Location extends MetaShapeLocation = MetaShapeLocation,
         Sample extends MetaShapeSample = MetaShapeSample,
         TextureContext extends
-            TextureSamplingContext<MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>>> =
-            TextureSamplingContext<MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>>>,
+            TextureSamplingContext<MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>> =
+            TextureSamplingContext<MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>>,
         VolumeContext extends
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext> =
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext>,
@@ -311,7 +314,7 @@ export class MetaShapeVolume<
                         leaf.interpolationType !== undefined &&
                         leaf.interpolationType[makeInterpolator] !== undefined,
                     (_, path) => extract(location, path) ?? extract(sample, path)
-                ) as any as MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>> :
+                ) as any as MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>> :
                 undefined
         const texture_sample = this.texture?.sample(texture_location, context.outer[MetaShapeSamplingContext_Texture])
 

@@ -3,7 +3,7 @@ import { FieldPoint, FieldsPoint, MultiObjectsGroupsTemplate, MultiObjectsMapped
 
 export type TextureUV = Vec2
 
-export interface TextureLocation extends FieldsPoint {
+export type TextureLocation = {
     /**
      * UV coordinates to sample at
      */

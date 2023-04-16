@@ -5,7 +5,7 @@ import { TextureLocation, TextureSamplingContext } from "../textures/texture.js"
 import { MetaShape, MetaShapeLocation, MetaShapeParametersIn, MetaShapeSample, MetaShapeSamplingContext, MetaShapeSamplingContext_Texture, MetaShapeSamplingContext_Volume, MetaShapeTextureLocation, MetaShapeTxLocation, MetaShapeTxSample, MetaShapeVolume, MetaShapeVolumeSamplingContext } from "./metashape.js";
 import { defaultMeshingSettings } from "../meshing/meshing-algorithm.js";
 import { VolumeSurfaceMeshingKey, VolumeSurfaceMeshingProcessingContext } from "../surfaces/processor.js";
-import { FieldsPointOptional } from "../fields/point.js";
+import { FieldsPoint, FieldsPointOptional } from "../fields/point.js";
 
 export class MetaSphere<
         TxLocation extends TextureLocation = TextureLocation,
@@ -13,8 +13,8 @@ export class MetaSphere<
         Location extends MetaShapeLocation = MetaShapeLocation,
         Sample extends MetaShapeSample = MetaShapeSample,
         TextureContext extends
-            TextureSamplingContext<MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>>> =
-            TextureSamplingContext<MetaShapeTextureLocation<Location, Omit<TxLocation, keyof TextureLocation>>>,
+            TextureSamplingContext<MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>> =
+            TextureSamplingContext<MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>>,
         VolumeContext extends
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext> =
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext>,

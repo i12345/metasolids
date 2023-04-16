@@ -1,7 +1,7 @@
 import { BoundingBox, Vec3 } from "playcanvas-extended";
 import { Field, FieldsField, FieldsPoint, FieldsPointMapped, SampleDomain, SamplingContext, Vec3Field } from "../fields/index.js";
 
-export interface VolumeLocation extends FieldsPoint {
+export type VolumeLocation = {
     /**
      * The point to sample the volume at
      */
@@ -12,7 +12,7 @@ export const defaultVolumeLocationField = new FieldsField<VolumeLocation>({
     p: new Vec3Field()
 } as any as FieldsPointMapped<VolumeLocation, Field>)
 
-export interface VolumeSample extends FieldsPoint {
+export type VolumeSample = {
     /**
      * The presence of the volume at the sampled point
      * 

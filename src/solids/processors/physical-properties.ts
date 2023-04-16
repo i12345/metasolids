@@ -118,14 +118,14 @@ export class SolidWithPhysicalPropertiesProcessor<
     }
 }
 
-export interface StandardIntensiveProperties extends FieldsPoint {
+export type StandardIntensiveProperties = {
     density: number
     temperature: number
     specificHeatCapacity: number
     pressure: number
 }
 
-export interface StandardExtensiveProperties extends FieldsPoint {
+export type StandardExtensiveProperties = {
     /**
      * density = mass / volume
      */
