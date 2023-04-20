@@ -15,7 +15,7 @@ export class ScalarInterpolationType implements FieldInterpolationType<number> {
             return undefined
         
         if (typeof keypoints[0].location !== 'number')
-            throw new Error('not implemented')
+            return undefined
         
         const data = new Float64Array(keypoints.length * 2)
         for (let i = 0; i < keypoints.length; i++) {

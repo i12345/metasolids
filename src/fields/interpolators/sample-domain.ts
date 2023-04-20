@@ -1,20 +1,25 @@
 import { SampleDomain, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldsField } from "../fields/fields.js";
-import { FieldInterpolationType, InterpolationKeypoint, InterpolationManager, InterpolationType, Interpolator, makeInterpolator } from "../interpolation.js";
+import { InterpolationKeypoint, InterpolationManager, InterpolationType, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 
 export class SampleDomainInterpolationType implements InterpolationType<SampleDomain<FieldPoint, FieldPoint>> {
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: InterpolationKeypoint<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>>[]
+            keypoints: InterpolationKeypoint<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>>[],
+            locationField: Field<Location>
         ): Interpolator<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>> {
         if (keypoints.some(({ value: domain }) => !(domain?.field?.interpolationType && domain.field.interpolationType[makeInterpolator])))
             return undefined
         
         const field = FieldsField.merge(...keypoints.map(({ value: domain }) => domain.field as FieldsField))
-        const fieldInterpolationType = field.interpolationType
 
-        return location => new InterpolatingSampleDomain(keypoints, location, field, fieldInterpolationType)
+        return location => new InterpolatingSampleDomain(
+            keypoints,
+            location,
+            locationField,
+            field
+        )
     }
 
     static {
@@ -32,8 +37,8 @@ export class InterpolatingSampleDomain<
     constructor(
         public keypoints: InterpolationKeypoint<T, SampleDomain<Location, Sample, Context>>[],
         public location_interpolation: T,
-        public field: Field<Sample>,
-        public fieldInterpolationType: FieldInterpolationType<Sample>
+        public location_field: Field<T>,
+        public field: Field<Sample>
     ) {
     }
 
@@ -42,7 +47,7 @@ export class InterpolatingSampleDomain<
             ({ location, value: domain }) =>
                 ({ location, value: domain.sample(location_space, context) })
         )
-        const interpolator = this.fieldInterpolationType[makeInterpolator](samples)
+        const interpolator = InterpolationManager[makeInterpolator](samples, this.location_field)
         return interpolator(this.location_interpolation)
     }
 

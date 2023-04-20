@@ -11,7 +11,7 @@ export class QuatInterpolationType implements FieldInterpolationType<Quat> {
             return undefined
         
         if (typeof keypoints[0].location !== 'number')
-            throw new Error('not implemented')
+            return undefined
         
         return location => {
             const t = location as number

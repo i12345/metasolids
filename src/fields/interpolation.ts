@@ -1,3 +1,4 @@
+import { Field } from "./field.js"
 import { FieldPoint } from "./point.js"
 
 export interface InterpolationKeypoint<
@@ -23,7 +24,8 @@ export const makeInterpolator = Symbol('makeInterpolator')
 
 export interface InterpolationType<Point> {
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: InterpolationKeypoint<Location, Point>[]
+            keypoints: InterpolationKeypoint<Location, Point>[],
+            locationField: Field<Location>
         ): Interpolator<Location, Point>
 }
 
@@ -40,10 +42,11 @@ export interface FieldInterpolationType<
 
 export class InterpolationManager implements InterpolationType<any> {
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: InterpolationKeypoint<Location, any>[]
+            keypoints: InterpolationKeypoint<Location, any>[],
+            locationField: Field<Location>
         ): Interpolator<Location, any> {
         for (const interpolationType of InterpolationManager.interpolationTypes) {
-            const interpolator = interpolationType[makeInterpolator](keypoints)
+            const interpolator = interpolationType[makeInterpolator](keypoints, locationField)
             if (interpolator)
                 return interpolator
         }
@@ -58,9 +61,10 @@ export class InterpolationManager implements InterpolationType<any> {
     }
 
     static [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: InterpolationKeypoint<Location, any>[]
+            keypoints: InterpolationKeypoint<Location, any>[],
+            locationField: Field<Location>
         ): Interpolator<Location, any> {
-        return this.instance[makeInterpolator](keypoints)
+        return this.instance[makeInterpolator](keypoints, locationField)
     }
 
     static readonly instance = new InterpolationManager()

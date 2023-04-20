@@ -1,13 +1,17 @@
 import { CurveSet, Mat3, Mat4, Quat, Vec3 } from "playcanvas-extended";
 import { FieldInterpolationKeypoint, FieldInterpolationType, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
+import { Field } from "../field.js";
 
 export class Mat3InterpolationType implements FieldInterpolationType<Mat3> {
-    [makeInterpolator]<Location extends FieldPoint>(keypoints: FieldInterpolationKeypoint<Location, Mat3>[]): FieldInterpolator<Location, Mat3> {
-        if (typeof keypoints[0][0] !== 'number')
-            throw new Error("only supports scalar interpolation locations")
+    [makeInterpolator]<Location extends FieldPoint>(
+            keypoints: FieldInterpolationKeypoint<Location, Mat3>[],
+            locationField: Field<Location>
+        ): FieldInterpolator<Location, Mat3> {
+        if (typeof keypoints[0].location !== 'number')
+            return undefined
         
-        if (!(keypoints[0][1] instanceof Mat3))
+        if (!(keypoints[0].value instanceof Mat3))
             return undefined
         
         const m4 = keypoints.map(({ value: m }) => new Mat4().set([
@@ -20,8 +24,8 @@ export class Mat3InterpolationType implements FieldInterpolationType<Mat3> {
         const r = keypoints.map(({ location }, i) => ({ location, value: new Quat().setFromMat4(m4[i]) }))
         const s = keypoints.map(({ location }, i) => ({ location, value: m4[i].getScale() }))
 
-        const r_interpolator = InterpolationManager[makeInterpolator](r)
-        const s_interpolator = InterpolationManager[makeInterpolator](s)
+        const r_interpolator = InterpolationManager[makeInterpolator](r, locationField)
+        const s_interpolator = InterpolationManager[makeInterpolator](s, locationField)
 
         return location => {
             const m4 = new Mat4().setTRS(

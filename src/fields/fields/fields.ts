@@ -1,7 +1,7 @@
 import { Field } from "../field.js";
 import { FieldsInterpolationType } from "../interpolators/fields.js";
 import { FieldInterpolationType, makeInterpolator } from "../interpolation.js";
-import { FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
+import { FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
 import { extract, mapTreeByLeavesValue } from "../../utils/tree.js";
 
 export class FieldsField<Point extends FieldsPoint = FieldsPoint>
@@ -19,6 +19,23 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     }
 
     constructor(public fields: FieldsPointMapped<Point, Field>) { }
+
+    distance(x: Point, y: Point): number {
+        let distance = 0
+
+        fields_point_map(
+            this.fields,
+            leaf =>
+                leaf.interpolationType !== undefined &&
+                leaf.interpolationType[makeInterpolator] !== undefined,
+            (field, path) => distance += field.distance(
+                extract<FieldPoint>(x, path),
+                extract<FieldPoint>(y, path)
+            )
+        )
+
+        return distance
+    }
 
     /**
      * Merges multiple {@link FieldsField} fields.

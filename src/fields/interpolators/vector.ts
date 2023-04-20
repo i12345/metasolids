@@ -26,7 +26,7 @@ export class VectorInterpolationType implements FieldInterpolationType<Vector> {
             return undefined
         
         if (typeof keypoints[0].location !== 'number')
-            throw new Error("only supports scalar interpolation locations")
+            return undefined
         
         const data = new Array<Float64Array>(n)
         for (let i = 0; i < n; i++) {

@@ -1,5 +1,6 @@
 import { extract } from "../../utils/tree.js"
-import { FieldInterpolationType, makeInterpolator, FieldInterpolator, FieldInterpolationKeypoint } from "../interpolation.js"
+import { Field } from "../field.js"
+import { FieldInterpolationType, makeInterpolator, FieldInterpolator, FieldInterpolationKeypoint, InterpolationManager } from "../interpolation.js"
 import { FieldsPoint, FieldsPointMapped, FieldPoint, fields_point_map } from "../point.js"
 
 export class FieldsInterpolationType<Point extends FieldsPoint = FieldsPoint>
@@ -10,19 +11,21 @@ export class FieldsInterpolationType<Point extends FieldsPoint = FieldsPoint>
     }
 
     [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: FieldInterpolationKeypoint<Location, Point>[]
+            keypoints: FieldInterpolationKeypoint<Location, Point>[],
+            locationField: Field<Location>
         ): FieldInterpolator<Location, Point> {
         const interpolators =
             fields_point_map(
                 this.interpolators,
                 value => value[makeInterpolator] !== undefined,
-                (value, path) => (value as FieldInterpolationType)[makeInterpolator](
+                (valueField, path) => InterpolationManager[makeInterpolator](
                     keypoints.map(
                         ({ location, value: keypoint_value }) => ({
                             location,
                             value: extract(keypoint_value, path)
                         })
-                    )
+                    ),
+                    locationField
                 )
             )
     

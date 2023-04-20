@@ -3,7 +3,7 @@ import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve.js";
 import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 
-export class Vec3InterpolationType implements FieldInterpolationType<Vec3> {
+export class Ratio3InterpolationType implements FieldInterpolationType<Vec3> {
     constructor(
         public curveConfig: CurveConfig = defaultCurveConfig()
     ) { }
@@ -18,19 +18,24 @@ export class Vec3InterpolationType implements FieldInterpolationType<Vec3> {
         if (typeof keypoints[0].location !== 'number')
             return undefined
         
+        const epsilon = 1e-6
+        
         const curves = new CurveSet([
-            keypoints.flatMap(({ location: t, value: p }) => [t, p.x]),
-            keypoints.flatMap(({ location: t, value: p }) => [t, p.y]),
-            keypoints.flatMap(({ location: t, value: p }) => [t, p.z])
+            keypoints.flatMap(({ location: t, value: p }) => [t, Math.log2(p.x + epsilon)]),
+            keypoints.flatMap(({ location: t, value: p }) => [t, Math.log2(p.y + epsilon)]),
+            keypoints.flatMap(({ location: t, value: p }) => [t, Math.log2(p.z + epsilon)])
         ])
 
         curves.type = this.curveConfig.type
         curves.curves.forEach(curve => applyCurveConfig(curve, this.curveConfig))
 
-        return location => new Vec3(curves.value(location as number))
-    }
-
-    static {
-        InterpolationManager.register(new this())
+        return location => {
+            const [x, y, z] = curves.value(location as number)
+            return new Vec3(
+                (2 ** x) - epsilon,
+                (2 ** y) - epsilon,
+                (2 ** z) - epsilon
+            )
+        }
     }
 }

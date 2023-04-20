@@ -62,8 +62,8 @@ class MetaSpline<
     private figure_interpolator: Interpolator<number, MetaSplineSegmentFigure<Location, Sample>>
 
     constructor(public segments: MetaSplineSegment<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[]) {
-        this.transform_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.transform_relative_root })))
-        this.figure_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.figure })))
+        this.transform_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.transform_relative_root })), MetaSplineSegment.defaultFields.t)
+        this.figure_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.figure })), MetaSplineSegment.defaultFields.t)
     }
 
     planeAt(t: number): Mat4 {
@@ -213,7 +213,7 @@ export class MetaSplineSegment<
     ) {
     }
     
-    private spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[]
+    private spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[] = []
     private spline: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>
     private spline_segment_index: number
 
@@ -232,17 +232,17 @@ export class MetaSplineSegment<
         const parent = this.init_spline_find_parent_segment(context[MetaShapeSamplingContext_Volume] as any) 
         if (!parent) {
             this.spline_segment_index = 0
-            this.spline = undefined
             this.t = 0
             this.t_iterations = NaN
             this.transform_relative_root = new Mat4().setIdentity()
+            this.spline = undefined
         }
         else {
             this.spline_segment_index = (parent.segment.spline?.segments.length ?? 0) + 1
-            this.init_spline_potential(new MetaSpline([...(parent.segment.spline?.segments ?? []), this]), context)
             this.t = this.t_offset + parent.segment.t
             this.t_iterations = Math.log2(this.t_offset) + 15
             this.transform_relative_root = new Mat4().mul2(parent.segment.transform_relative_root, parent.transform_to_parent)
+            this.init_spline_potential(new MetaSpline([...(parent.segment.spline?.segments ?? [parent.segment]), this]), context)
         }
 
         this.transform_relative_root_inv = this.transform_relative_root.clone().invert()
@@ -259,10 +259,7 @@ export class MetaSplineSegment<
                 (context[SampleDomainLocationField] as FieldsField<Location>).omit({
                     p: FieldsPoint_Omit_Leaf
                 } as FieldsPointMapped<Location, typeof FieldsPoint_Omit_Leaf>) as any as FieldsField<MetaSplineSegmentFigureLocation<Location>>,
-                new FieldsField<MetaSplineSegmentFigureLocation<Location>>({
-                    phi: new ScalarField([-PiOver2, PiOver2]),
-                    theta: new ScalarField([-Pi, Pi]),
-                } as FieldsPointMapped<MetaSplineSegmentFigureLocation<Location>, Field>)
+                MetaSplineSegment.defaultFields.figureLocation as FieldsField<MetaSplineSegmentFigureLocation<Location>>
             )
         }
 
@@ -271,31 +268,30 @@ export class MetaSplineSegment<
 
     private init_spline_find_parent_segment(
             context: EncapsulatingDomainSamplingContext<Location, Sample>,
-            searching_for_parent: boolean = false,
+            // searching_for_parent: boolean = false,
             transform_to_parent: Mat4 = new Mat4().setIdentity()
         ): {
             segment: MetaSplineSegment<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>,
             transform_to_parent: Mat4
         } {
+        //TODO: consider this method
         if (!context[EncapsulatingDomainSamplingContextParentDomain])
             return undefined
         
         if (context[EncapsulatingDomainSamplingContextParentDomain] instanceof MultiObjectsVolume) {
             const parent = context[EncapsulatingDomainSamplingContextParentDomain] as any as MultiObjectsVolume
-            if (!searching_for_parent) {
-                return this.init_spline_find_parent_segment(
-                    context[EncapsulatingDomainSamplingContextParentContext] as any,
-                    true,
-                    transform_to_parent
-                )
-            }
-            else {
-                const metashape_spline_segment_volume = Reflect.ownKeys(parent.children)
-                    .map(key => parent.children[key] as any)
-                    .find(child => child instanceof MetaShapeVolume && child.inner instanceof MetaSplineSegment)
+            // if (!searching_for_parent) {
+            //     return this.init_spline_find_parent_segment(
+            //         context[EncapsulatingDomainSamplingContextParentContext] as any,
+            //         true,
+            //         transform_to_parent
+            //     )
+            // }
+            // else {
+                const main_metashape = (parent.children["$$main"] as any as MetaShapeVolume)?.shape
                 
-                if (metashape_spline_segment_volume) {
-                    const segment = (metashape_spline_segment_volume as any as MetaShapeVolume).inner as MetaSplineSegment<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>
+                if (main_metashape && main_metashape instanceof MetaSplineSegment && main_metashape !== this) {
+                    const segment = main_metashape as MetaSplineSegment<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>
 
                     return {
                         segment,
@@ -305,25 +301,25 @@ export class MetaSplineSegment<
                 else {
                     return this.init_spline_find_parent_segment(
                         context[EncapsulatingDomainSamplingContextParentContext] as any,
-                        true,
+                        // true,
                         transform_to_parent
                     )
                 }
-            }
+            // }
         }
         else if (context[EncapsulatingDomainSamplingContextParentDomain] instanceof TransformVolume) {
             const volume = context[EncapsulatingDomainSamplingContextParentDomain] as any as TransformVolume
 
             return this.init_spline_find_parent_segment(
                 context[EncapsulatingDomainSamplingContextParentContext] as any,
-                searching_for_parent,
+                // searching_for_parent,
                 new Mat4().mul2(volume.transform, transform_to_parent)
             )
         }
         
         return this.init_spline_find_parent_segment(
             context[EncapsulatingDomainSamplingContextParentContext] as any,
-            searching_for_parent,
+            // searching_for_parent,
             transform_to_parent
         )
     }
@@ -489,5 +485,13 @@ export class MetaSplineSegment<
 
     private uv(t: number, theta: number, phi: number): Vec2 {
         return new Vec2(t + (phi / PiOver2), (theta / TwoPi) + 0.5)
+    }
+
+    static defaultFields = {
+        t: new ScalarField(),
+        figureLocation: new FieldsField<MetaSplineSegmentFigureLocation>({
+            phi: new ScalarField([-PiOver2, PiOver2]),
+            theta: new ScalarField([-Pi, Pi]),
+        } as FieldsPointMapped<MetaSplineSegmentFigureLocation, Field>)
     }
 }

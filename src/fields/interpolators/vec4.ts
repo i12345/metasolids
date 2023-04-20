@@ -16,7 +16,7 @@ export class Vec4InterpolationType implements FieldInterpolationType<Vec4> {
             return undefined
         
         if (typeof keypoints[0].location !== 'number')
-            throw new Error('not implemented')
+            return undefined
         
         const curves = new CurveSet([
             keypoints.flatMap(({ location: t, value: p }) => [t, p.x]),

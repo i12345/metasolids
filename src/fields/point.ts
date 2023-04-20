@@ -535,6 +535,13 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
     }
 }
 
+export function field_point_sum_weighted<Point extends FieldPoint>(X: Point[], weights: number[]): Point {
+    let value = field_point_identity(X[0])
+    for (let i = 0; i < X.length; i++)
+        value = field_point_add_inplace_weighted(value, X[i], weights[i])
+    return value
+}
+
 export function field_point_subtract<Point extends FieldPoint>(a: Point, b: Point): Point {
     if (a instanceof Vec3)
         return new Vec3().sub2(a, b as Vec3) as Point
@@ -914,7 +921,9 @@ export function fields_point_add_inplace<
         key: keyof KeyTemplate,
         addend: Point
     ): Point {
-    if(field_point_isPrimitive(addend))
+    if (!(key in accumulator))
+        return accumulator[key] = field_point_clone(addend)
+    else if (field_point_isPrimitive(addend))
         return accumulator[key] = field_point_add_inplace(accumulator[key], addend)
     else {
         const accumulator_fields = accumulator[key] as FieldsPoint
@@ -939,7 +948,14 @@ export function fields_point_add_inplace_weighted<
         addend: Point,
         weight: number
     ): Point {
-    if(field_point_isPrimitive(addend))
+    if (!(key in accumulator)) {
+        return accumulator[key] = field_point_add_inplace_weighted(
+            accumulator[key] = field_point_identity(addend),
+            addend,
+            weight
+        )
+    }
+    else if(field_point_isPrimitive(addend))
         return accumulator[key] = field_point_add_inplace_weighted(accumulator[key], addend, weight)
     else {
         const accumulator_fields = accumulator[key] as FieldsPoint

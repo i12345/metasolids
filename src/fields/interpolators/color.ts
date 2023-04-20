@@ -18,7 +18,7 @@ export class ColorRGBAClampedCurveInterpolationType implements FieldInterpolatio
             return undefined
         
         if (typeof keypoints[0].location !== 'number')
-            throw new Error('not implemented')
+            return undefined
         
         const curves = new CurveSet([
             keypoints.flatMap(({ location: t, value: color }) => [t, color.r]),

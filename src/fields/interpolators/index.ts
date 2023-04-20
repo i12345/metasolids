@@ -11,7 +11,13 @@ export * from './color.js'
 export * from './vector.js'
 export * from './fields.js'
 
+export * from './ratio3.js'
+
 export * from './convex-polygon.js'
+
+//NOTE: these must be in this order
 
 export * from './sample-domain.js'
 export * from './object.js'
+
+export * from './general.js'

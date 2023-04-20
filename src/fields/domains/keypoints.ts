@@ -1,7 +1,7 @@
-import { SampleDomain, SamplingContext } from "../domain.js";
+import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
-import { FieldInterpolationKeypoint, FieldInterpolationType, FieldInterpolator, makeInterpolator } from "../interpolation.js";
-import { FieldPoint, FieldsPoint } from "../point.js";
+import { FieldInterpolationKeypoint, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 
 export class KeypointsSampleDomain<
         Location extends FieldPoint = FieldPoint,
@@ -13,12 +13,11 @@ export class KeypointsSampleDomain<
 
     constructor(
         public keypoints: FieldInterpolationKeypoint<Location, Sample>[],
-        public field: Field<Sample>,
-        public interpolationType?: FieldInterpolationType<Sample>
+        public field: Field<Sample>
     ) {}
 
     init(context: Context): void {
-        this.interpolator = (this.interpolationType ?? this.field.interpolationType)[makeInterpolator](this.keypoints)
+        this.interpolator = InterpolationManager[makeInterpolator](this.keypoints, context[SampleDomainLocationField])
     }
 
     sample(location: Location, context: Context): Sample {

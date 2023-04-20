@@ -305,7 +305,10 @@ export class MetaShapeVolume<
             location: { outer: Location },
             context: { outer: VolumeContext, inner: Context }
         ): MetaShapeVolumeSample<TxSample, InnerSample> {
-        const texture_location_field = (context.inner[MetaShapeSamplingContext_Texture].context[SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>)
+        const texture_location_field =
+            this.texture ?
+                (context.inner[MetaShapeSamplingContext_Texture].context[SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>) :
+                undefined
         const texture_location =
             this.texture ?
                 fields_point_map<MetaShapeTxLocation<Location, TxLocation>, Field, FieldPoint>(
@@ -319,14 +322,19 @@ export class MetaShapeVolume<
         const texture_sample = this.texture?.sample(texture_location, context.outer[MetaShapeSamplingContext_Texture])
 
         const parameters = MetaShapeVolume.combineParameters(sample, texture_sample)
-        const is_valid = MetaShapeVolume.parametersValid(parameters)
+        const is_valid = MetaShapeVolume.parametersValid(parameters) && sample !== undefined
         
-        const surface_distance = (sample.distance - parameters.unit.height) / parameters.unit.length
+        const surface_distance = !is_valid ? NaN : (sample.distance - parameters.unit.height) / parameters.unit.length
         const presence = !is_valid ? 0 : Math.min(1, Math.exp((surface_distance + parameters.falloff.bias) * -parameters.falloff.rate))
 
         return change<MetaShapeVolumeSample<TxSample, InnerSample>, InnerSample & TxSample, MetaShapeParametersIn>({
             ...texture_sample,
-            ...sample,
+            ...(sample ?? {
+                distance: 0,
+                uv: Vec2.ZERO,
+                gradient: Vec3.ZERO,
+                ...MetaShapeVolume.defaultParameters
+            } as typeof sample),
             presence,
         }, ['falloff', 'unit'], {})
     }

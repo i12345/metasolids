@@ -4,4 +4,8 @@ import { QuatInterpolationType } from "../interpolators/quat.js";
 
 export class QuatField implements Field<Quat> {
     interpolationType = new QuatInterpolationType()
+
+    distance(x: Quat, y: Quat): number {
+        return x.distance(y)
+    }
 }
