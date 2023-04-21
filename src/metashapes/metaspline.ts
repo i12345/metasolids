@@ -213,7 +213,7 @@ export class MetaSplineSegment<
     ) {
     }
     
-    private spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[] = []
+    private spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[]
     private spline: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>
     private spline_segment_index: number
 
@@ -226,6 +226,7 @@ export class MetaSplineSegment<
     boundingBox: BoundingBox
 
     init(context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, TextureContext, VolumeContext>): void {
+        this.spline_potential = []
         this.init_figure(context)
         
         // find parent to connect with
