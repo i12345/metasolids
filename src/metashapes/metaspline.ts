@@ -378,8 +378,8 @@ export class MetaSplineSegment<
 
         const resolution = {
             t: 32,
-            theta: 8,
-            phi: 4
+            theta: 32,
+            phi: 16
         }
 
         const boundingBox = {
