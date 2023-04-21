@@ -363,6 +363,94 @@ export function field_point_clone<Point extends FieldPoint>(p: Point): Point {
     }
 }
 
+export function field_point_random<Point extends FieldPoint>(p: Point): Point {
+    const rnd = Math.random
+    const rnd_vec3 = () => new Vec3(rnd(), rnd(), rnd())
+    const rnd_quat = () => new Quat().setFromEulerAngles(rnd() * 360, rnd() * 360, rnd() * 360)
+
+    if (p instanceof Vec3)
+        return rnd_vec3() as Point
+    else if (p instanceof Mat4)
+        return new Mat4().setTRS(
+            rnd_vec3(),
+            rnd_quat(),
+            rnd_vec3()
+        ) as Point
+    else if (typeof p === 'number')
+        return rnd() as Point
+    else if (p instanceof Vec2)
+        return new Vec2(rnd(), rnd()) as Point
+    else if (p instanceof Vec4)
+        return new Vec4(rnd(), rnd(), rnd(), rnd()) as Point
+    else if (p instanceof Quat)
+        return rnd_quat() as Point
+    else if (p instanceof Mat3)
+        return new Mat3().setFromMat4(new Mat4().setTRS(
+            Vec3.ZERO,
+            rnd_quat(),
+            rnd_vec3()
+        )) as Point
+    else if (p instanceof Color)
+        return new Color(rnd(), rnd(), rnd()) as Point
+    else if (p instanceof Uint8Array) {
+        let newArray = new Uint8Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Uint8ClampedArray) {
+        let newArray = new Uint8ClampedArray(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Int8Array) {
+        let newArray = new Int8Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Uint16Array) {
+        let newArray = new Uint16Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Int16Array) {
+        let newArray = new Int16Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Uint32Array) {
+        let newArray = new Uint32Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Int32Array) {
+        let newArray = new Int32Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Float32Array) {
+        let newArray = new Float32Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else if (p instanceof Float64Array || p instanceof Array) {
+        let newArray = new Float64Array(p.length)
+        for (let i = 0; i < p.length; i++)
+            newArray[i] = rnd()
+        return newArray as FieldPoint as Point
+    }
+    else {
+        return fields_point_random(p as FieldsPoint) as Point
+    }
+}
+
 export function field_point_add<Point extends FieldPoint>(a: Point, b: Point): Point {
     if (a instanceof Vec3)
         return new Vec3().add2(a, b as Vec3) as Point
@@ -877,6 +965,15 @@ export function fields_point_clone<Point extends FieldsPoint>(a: Point): Point {
 
     for (const key of Reflect.ownKeys(a)) 
         c[key] = field_point_clone(a[key])
+    
+    return c as Point
+}
+
+export function fields_point_random<Point extends FieldsPoint>(a: Point): Point {
+    let c = {}
+
+    for (const key of Reflect.ownKeys(a))
+        c[key] = field_point_random(a[key])
     
     return c as Point
 }
