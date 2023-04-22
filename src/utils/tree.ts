@@ -1,3 +1,5 @@
+import { PropertyPath } from "./property-path.js"
+
 export interface TreeByValue<
         Leaf,
         Tree extends TreeByValue<Leaf, Tree>
@@ -42,25 +44,25 @@ export type TreeByValueMapped_recursive<
 
 export const extract = <
         T
-    >(tree: any, path: PropertyKey[]) =>
+    >(tree: any, path: PropertyPath) =>
         path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
 
 export const intract = <T>
-    (tree: object, path: PropertyKey[], value: T) => {
+    (tree: object, path: PropertyPath, value: T) => {
     for (let i = 0; i < path.length - 1; i++)
         tree = (tree[path[i]] ??= {})
     tree[path[path.length - 1]] = value
 }
 
 export const makeExtractor =
-    <TDefault = any>(path: PropertyKey[]) =>
+    <TDefault = any>(path: PropertyPath) =>
     <T = TDefault>(tree: any, makeEmptyObjects = false) =>
         makeEmptyObjects ?
             path.reduce((obj, key) => obj ? (obj[key] ??= {}) : undefined, tree) as T :
             path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
 
 export const makeIntractor =
-    (path: PropertyKey[]) =>
+    (path: PropertyPath) =>
     <T>(tree: object, value: T) =>
         intract(tree, path, value)
 
@@ -71,7 +73,7 @@ export function* pathsToKey<
     >(
         tree: Tree,
         leafKeys: (keyof LeafKeysTemplate)[]
-    ): Generator<PropertyKey[]> {
+    ): Generator<PropertyPath> {
     for (const key of Reflect.ownKeys(tree))
         if (leafKeys.includes(key as keyof LeafKeysTemplate))
             yield [key]
@@ -85,7 +87,7 @@ export function* pathsToValue<
     >(
         tree: Tree,
         leaf: Leaf
-    ): Generator<PropertyKey[]> {
+    ): Generator<PropertyPath> {
     for (const key of Reflect.ownKeys(tree))
         if (tree[key] === leaf)
             yield [key]
@@ -99,7 +101,7 @@ export function* pathsToValues<
     >(
         tree: Tree,
         leaves: Leaf[]
-    ): Generator<PropertyKey[]> {
+    ): Generator<PropertyPath> {
     for (const key of Reflect.ownKeys(tree))
         if (leaves.includes(tree[key] as Leaf))
             yield [key]
@@ -166,12 +168,12 @@ export function mapTreeByLeavesValue(
         values: object,
         template: object,
         leaf: any,
-        action: (value: object, key: PropertyKey, fullpath: PropertyKey[], leaf: any) => void
+        action: (value: object, key: PropertyKey, fullpath: PropertyPath, leaf: any) => void
     ) {
     function traverse(
         values: object,
         template: object,
-        path: PropertyKey[] = []
+        path: PropertyPath = []
     ) {
         for (const key in Reflect.ownKeys(template)) {
             const nextPath = [...path, key]
@@ -193,12 +195,12 @@ export function mapTreeByLeavesValues(
         values: object,
         template: object,
         leaves: any[],
-        action: (value: object, key: PropertyKey, fullpath: PropertyKey[], leaf: any) => void
+        action: (value: object, key: PropertyKey, fullpath: PropertyPath, leaf: any) => void
     ) {
     function traverse(
         values: object,
         template: object,
-        path: PropertyKey[] = []
+        path: PropertyPath = []
     ) {
         for (const key in Reflect.ownKeys(template)) {
             const nextPath = [...path, key]

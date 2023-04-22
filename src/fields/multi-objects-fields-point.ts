@@ -1,5 +1,6 @@
 import { Processor } from "../processor/processor.js";
 import { onlyOne } from "../utils/only-one.js";
+import { PropertyPath } from "../utils/property-path.js";
 import { extract, leavesByValue, mapTreeByLeavesValue, pathsToValue } from "../utils/tree.js";
 import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
 
@@ -39,7 +40,7 @@ export type MultiObjectsMappedAndCombined<
 
 export const objectValuePaths = <
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-    >(objects: Objects): Generator<PropertyKey[]> =>
+    >(objects: Objects): Generator<PropertyPath> =>
     pathsToValue(objects as any, MultiObjectsTemplate_Leaf)
 
 export const objectValues = <
@@ -53,7 +54,7 @@ export const mapObjects = <
     > (
         values: MultiObjectsMapped<Objects, T>,
         template: Objects,
-        action: (o: object, key: PropertyKey, fullpath: PropertyKey[]) => void
+        action: (o: object, key: PropertyKey, fullpath: PropertyPath) => void
     ) =>
     mapTreeByLeavesValue(values, template, MultiObjectsTemplate_Leaf, action)
 
@@ -92,7 +93,7 @@ export type MultiObjectsGrouped<
 
 export const groupPaths = <
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-    >(groups: Groups): Generator<PropertyKey[]> =>
+    >(groups: Groups): Generator<PropertyPath> =>
     pathsToValue(groups as any, MultiObjectsGroupsTemplate_Leaf)
 
 export const groups = <
@@ -245,7 +246,7 @@ export const groupKindPaths = <
         GroupKinds extends
             MultiObjectsGroupsKindsTemplate =
             MultiObjectsGroupsKindsTemplate
-    >(groupKinds: GroupKinds): Generator<PropertyKey[]> =>
+    >(groupKinds: GroupKinds): Generator<PropertyPath> =>
     pathsToValue(groupKinds as any, MultiObjectsGroupsKindsTemplate_Leaf)
 
 export function* groupKinds<

@@ -305,6 +305,7 @@ export class SurfaceWithInterpolatingValueTexturesProcessor<
         public interpolatingGroups?: InterpolatingGroups,
         public textureLocationGroup?: TextureLocationGroup
     ) { }
+    
     init(context: SurfaceProcessingContextT): void {
     }
 

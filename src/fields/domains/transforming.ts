@@ -2,6 +2,7 @@ import { FieldPoint } from '../point.js'
 import { SampleDomain, SampleDomainLocationField, SamplingContext } from '../domain.js'
 import { Field } from '../field.js'
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from './encapsulating.js'
+import { PropertyPath } from '../../utils/property-path.js'
 
 export type TransformingDefaultInnerSamplingContext<
         OuterLocation extends FieldPoint = FieldPoint,
@@ -73,7 +74,7 @@ export abstract class TransformingSampleDomain<
             innerContext: InnerContext,
             outerContext: OuterContext
         ): void {
-        const exclude_keys: PropertyKey[] = [EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain]
+        const exclude_keys: PropertyPath = [EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain]
 
         Reflect.ownKeys(innerContext)
             .filter(key => !exclude_keys.includes(key) && !outerContext[key])

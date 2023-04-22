@@ -6,7 +6,7 @@ export interface Processor<
     > extends
     ContextWorker<Context> {
     readonly dependencies: Function[]
-    
+        
     process(
             item: Item,
             context: Context

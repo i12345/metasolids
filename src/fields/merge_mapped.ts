@@ -1,9 +1,10 @@
+import { PropertyPath } from "../utils/property-path.js";
 import { extract, intract } from "../utils/tree.js";
 import { FieldPoint } from "./point.js";
 
 export interface FieldPointMapping {
-    from: PropertyKey[]
-    to: PropertyKey[]
+    from: PropertyPath
+    to: PropertyPath
 }
 
 /**
@@ -55,9 +56,9 @@ export function mapping_inverse(mapping: FieldPointMapping): FieldPointMapping {
 
 export function map_path(
         mappings: FieldPointMapping[],
-        path: PropertyKey[]
-    ): PropertyKey[][] {
-    const results: PropertyKey[][] = []
+        path: PropertyPath
+    ): PropertyPath[] {
+    const results: PropertyPath[] = []
 
     for (const mapping of mappings) {
         const commonPathLength = Math.min(mapping.from.length, path.length)
@@ -78,12 +79,12 @@ export function map_path(
 
 export function map_path_common(
         mappings: FieldPointMapping[],
-        path: PropertyKey[]
-    ): PropertyKey[] {
+        path: PropertyPath
+    ): PropertyPath {
     return common_start_path(map_path(mappings, path))
 }
 
-export function common_start_path(paths: PropertyKey[][]): PropertyKey[] {
+export function common_start_path(paths: PropertyPath[]): PropertyPath {
     if(paths.length === 0) return []
     if(paths.length === 1) return paths[0]
 
