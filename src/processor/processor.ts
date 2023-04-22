@@ -1,3 +1,4 @@
+import { PropertyPath } from "../utils/property-path.js"
 import { ContextWorker } from "./context-worker.js"
 
 export interface Processor<
@@ -5,8 +6,8 @@ export interface Processor<
         Context = any
     > extends
     ContextWorker<Context> {
-    readonly dependencies: Function[]
-        
+    readonly dependencies: PropertyPath[]    
+
     process(
             item: Item,
             context: Context

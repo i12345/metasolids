@@ -2,6 +2,7 @@ import { FieldPoint, groupKindObjectsGrouped, groupKinds, MultiObjectsCombinedVa
 import { Processor } from "../../processor/processor.js";
 import { ObjectsCombiningTexture, Texture, TextureLocation, TextureSample, VertexInterpolatingTexture } from "../../textures/index.js";
 import { onlyOne } from "../../utils/only-one.js";
+import { PropertyPath } from "../../utils/property-path.js";
 import { SurfaceProcessingContext } from "../processor.js";
 import { Surface, SurfaceSample } from "../surface.js";
 
@@ -298,15 +299,38 @@ export class SurfaceWithInterpolatingValueTexturesProcessor<
             >
     > implements
     Processor<SurfaceT, SurfaceProcessingContextT> {
-    dependencies: Function[];
+    private _dependencies: PropertyPath[]
+    
+    get dependencies() {
+        return this._dependencies
+    }
     
     constructor(
         public interpolatingGroupsKinds: InterpolatingGroupKinds,
         public interpolatingGroups?: InterpolatingGroups,
         public textureLocationGroup?: TextureLocationGroup
-    ) { }
+    ) {
+    }
     
     init(context: SurfaceProcessingContextT): void {
+        const { group: textureLocationGroup } =
+            onlyOne(groupKinds(
+                    context,
+                    SurfaceTextureLocationsGroupKindsTemplate,
+                    this.textureLocationGroup
+                ))
+
+        const interpolatingGroups =
+            groupKinds(
+                    context.sample,
+                    this.interpolatingGroupsKinds,
+                    this.interpolatingGroups
+            )
+        
+        this._dependencies = [
+            textureLocationGroup.path,
+            ...[...interpolatingGroups].map(({ group: { path } }) => path)
+        ]
     }
 
     process(surface: SurfaceT, context: SurfaceProcessingContextT): void {
@@ -551,7 +575,11 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             SurfaceSampleProcessingContextT
         >
     > {
-    dependencies: Function[];
+    private _dependencies: PropertyPath[]
+    
+    get dependencies() {
+        return this._dependencies
+    }
 
     constructor(
         public valueTextureGroups: ValueTextureGroups,
@@ -568,6 +596,29 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             ObjectsValueTexturesGrouped,
             SurfaceSampleProcessingContextT
         >): void {
+        const surfaceTextureLocationGroup = onlyOne(groupKinds(
+            context.sample,
+            SurfaceTextureLocationsGroupKindsTemplate,
+            this.surfaceTextureLocationGroup
+        )).group
+        
+        const influencesGroup = onlyOne(groupKinds(
+            context.sample,
+            MultiObjectsInfluencesGroupKindsTemplate,
+            this.influenceGroup
+        )).group
+
+        const valueTextureGroups = groupKinds(
+            context,
+            SurfaceTexturesGroupKindsTemplate,
+            this.valueTextureGroups
+        )
+
+        this._dependencies = [
+            surfaceTextureLocationGroup.path,
+            influencesGroup.path,
+            ...[...valueTextureGroups].map(({ group: { path } }) => path)
+        ]
     }
 
     process(
@@ -592,14 +643,14 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
                     SurfaceSampleProcessingContextT
                 >
         ): void {
-        const surfaceTexturelocationGroup = onlyOne(groupKinds(
+        const surfaceTextureLocationGroup = onlyOne(groupKinds(
             context.sample,
             SurfaceTextureLocationsGroupKindsTemplate,
             this.surfaceTextureLocationGroup
         )).group
         
         const surfaceTextureLocations = surface.samples.map(sample =>
-            surfaceTexturelocationGroup.get<SurfaceTextureLocationT>(sample))
+            surfaceTextureLocationGroup.get<SurfaceTextureLocationT>(sample))
         const UVs = surfaceTextureLocations.map(location => location.uv)
 
         const influencesGroup = onlyOne(groupKinds(

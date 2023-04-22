@@ -58,26 +58,35 @@ export class VolumeComponent extends Component {
                 return new volumes.MultiObjectsVolume(
                     Object.fromEntries(children),
                     system.multiObj.groupKinds,
-                    system.multiObj.groups
                 )
             }
         }
 
-        const context: volumes.VolumeProcessingContext & surfaces.VolumeSurfaceMeshingProcessingContext = {
-            [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField,
-            [volumes.VolumeSampleKey]: {},
-            [volumes.VolumeSamplingKey]: {
-                volume: compositeVolume(this.entity),
-                extraLocationParameters: this.extraLocationParameters,
-                settings: this.samplingSettings,
-            },
-            [surfaces.VolumeSurfacesKey]: {
-                sample: {}
-            },
-            [surfaces.VolumeSurfaceMeshingKey]: {
-                algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
-                settings: this.meshingSettings,
-            }
+        const context = {
+            ...{
+                [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField,
+                [volumes.VolumeSampleKey]: {},
+                [volumes.VolumeSamplingKey]: {
+                    volume: compositeVolume(this.entity),
+                    extraLocationParameters: this.extraLocationParameters,
+                    settings: this.samplingSettings,
+                },
+                [surfaces.VolumeSurfacesKey]: {
+                    sample: {}
+                },
+                [surfaces.VolumeSurfaceMeshingKey]: {
+                    algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
+                    settings: this.meshingSettings,
+                },
+            } as (
+                volumes.VolumeProcessingContext &
+                surfaces.VolumeSurfaceMeshingProcessingContext
+            ),
+
+            ...{
+                [fields.MultiObjectsProcessingContextGroupKinds]: system.multiObj.groupKinds,
+                ...system.multiObj.groupKindsMappedGroups
+            } as fields.MultiObjectsProcessingContext
         }
 
         const processing = {
@@ -108,7 +117,7 @@ export class VolumeComponent extends Component {
         mesh.setIndices(indices)
         mesh.setNormals(calculateNormals(positions as unknown as number[], indices as unknown as number[]))
         mesh.update(PRIMITIVE_TRIANGLES)
-        
+
         const material = new StandardMaterial()
         material.diffuse.set(0.2, 0.4, 0.23)
         material.update()

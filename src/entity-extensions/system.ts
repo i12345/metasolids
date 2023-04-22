@@ -1,5 +1,5 @@
 import { AppBase, ComponentSystem, Entity } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate } from "../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped } from "../fields/multi-objects-fields-point.js"
 import { solids, surfaces, volumes } from "../index.js"
 import { VolumeProcessor } from "../volumes/processor.js"
 import { VolumeComponent } from "./component.js"
@@ -17,7 +17,7 @@ export class VolumeComponentSystem extends ComponentSystem {
     ]
     multiObj: {
         groupKinds: MultiObjectsGroupsKindsTemplate,
-        groups: MultiObjectsGroupsTemplate
+        groupKindsMappedGroups: MultiObjectsGroupsKindsTemplateMapped<MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsTemplate>
     }
 
     constructor(app: AppBase) {

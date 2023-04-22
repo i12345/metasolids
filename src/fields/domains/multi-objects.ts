@@ -278,8 +278,11 @@ export class MultiObjectsSampleDomain<
             for (const { group } of this.groupsMemoized) {
                 const child_sample_group = group.get(child_sample)
                 const final_sample_group = group.get(sample)
-                final_sample_group[key] = child_sample_group
-                group.set(child_sample, undefined)
+                if (final_sample_group === undefined)
+                    group.set(sample, { [key]: child_sample_group })
+                else
+                    final_sample_group[key] = child_sample_group
+                group.delete(child_sample)
             }
 
             sample = this.combineResidualLeafSample(sample, child_sample as MultiObjectsGroupsOmitted<Groups, LeafSample>)

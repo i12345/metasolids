@@ -5,6 +5,7 @@ import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingKey } from "../../volumes/index.js";
 import { SolidProcessingContext, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../processor.js";
 import { Solid } from "../solid.js";
+import { PropertyPath } from "../../utils/property-path.js";
 
 export interface SolidWithEnclosingVolume<
         Sample extends VolumeSample = VolumeSample,
@@ -43,9 +44,9 @@ export class SolidWithEnclosingVolumeProcessor<
         >): void {
     }
 
-    get dependencies(): Function[] {
-        return []
-    }
+    readonly dependencies = [
+        ['surface', 'mesh']
+    ]
 
     process(
             solid: SolidT,
@@ -247,6 +248,8 @@ export class SolidEnclosingVolumeSampleParallelizer<
             SolidProcessingContextT
         >
     > {
+    readonly dependencyPrefix = ['voxels']
+    
     init(
             context: SolidProcessingContextT,
             parallelizedItemProcessor: ParallelizedProcessor<

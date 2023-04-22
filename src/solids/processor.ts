@@ -4,6 +4,7 @@ import { SurfaceProcessingContext, SurfaceProcessor, VolumeSurfaceProcessingCont
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js"
 import { VolumeProcessing, VolumeProcessingContext } from "../volumes/processor.js"
 import { Solid } from "./solid.js"
+import { PropertyPath } from "../utils/property-path.js"
 
 export interface SolidProcessingContext<
         SampleContextTemplate = any,
@@ -54,8 +55,8 @@ export class SolidSurfaceProcessor<
         SolidT,
         SolidProcessingContextT
     > {
-    get dependencies(): Function[] {
-        return this.processor.dependencies
+    get dependencies() {
+        return this.processor.dependencies.map(dependencies => ["surface", ...dependencies])
     }
 
     constructor(public processor: SurfaceProcessor<
@@ -253,6 +254,8 @@ export class VolumeSolidsParallelizer<
             VolumeProcessingContextT
         >
     > {
+    readonly dependencyPrefix = [VolumeSolidsKey]
+    
     init(
             context: VolumeProcessingContextT,
             itemProcessor: ParallelizedProcessor<
@@ -287,6 +290,7 @@ export class VolumeSolidsParallelizer<
 
         itemProcessor.init(parallelizedContext)
     }
+
     parallelize(
             item: VolumeProcessingT,
             context: VolumeProcessingContextT,
@@ -376,7 +380,7 @@ export class VolumeSurfacesSolidifyingProcessor<
         VolumeProcessingT,
         VolumeProcessingContextT
     > {
-    dependencies: Function[] = []
+    readonly dependencies = []
     
     init(context: VolumeSurfaceProcessingContext<
             Location,

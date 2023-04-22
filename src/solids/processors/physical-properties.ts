@@ -80,9 +80,7 @@ export class SolidWithPhysicalPropertiesProcessor<
             SolidT,
             SolidProcessingContextT
         > {
-    get dependencies(): Function[] {
-        return [SolidWithEnclosingVolumeProcessor]
-    }
+    readonly dependencies = [['voxels']]
 
     constructor(
             public physicalPropertiesTemplate: PhysicalPropertiesTemplateT

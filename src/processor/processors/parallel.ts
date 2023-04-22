@@ -1,3 +1,4 @@
+import { PropertyPath } from "../../utils/property-path.js";
 import { ContextWorker } from "../context-worker.js";
 import { Processor } from "../processor.js";
 
@@ -37,6 +38,8 @@ export interface Parallelizer<
             ParallelizedProcessor<Item, Context, ParallelizedItem, ParallelizedItemContext> =
             ParallelizedProcessor<Item, Context, ParallelizedItem, ParallelizedItemContext>
     > {
+    readonly dependencyPrefix: PropertyPath
+    
     init(
             context: Context,
             parallelizedItemProcessor: ParallelizedItemProcessor
@@ -70,13 +73,20 @@ export class ParallelizingProcessor<
             Parallelizer<Item, Context, ParallelizedItem, ParallelizedItemContext, ParallelizedItemProcessor>
     >
     implements Processor<Item, Context> {
-    get dependencies(): Function[] {
-        return []
+    get dependencies() {
+        return [
+            ...this.itemProcessor.dependencies.map(dependencies => [
+                ...this.parallelizer.dependencyPrefix,
+                ...dependencies
+            ]),
+            ...this.otherDependencies
+        ]
     }
 
     constructor(
             public parallelizer: ParallelizerT,
-            public itemProcessor: ParallelizedItemProcessor
+            public itemProcessor: ParallelizedItemProcessor,
+            public otherDependencies: PropertyPath[] = []
         ) { }
     
     init(context: Context): void {

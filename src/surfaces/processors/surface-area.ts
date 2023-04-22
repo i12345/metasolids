@@ -24,9 +24,7 @@ export class SurfaceWithSurfaceAreaProcessor<
         SurfaceT,
         SurfaceProcessingContextT
     > {
-    get dependencies(): Function[] {
-        return []
-    }
+    readonly dependencies = [['mesh']]
 
     init(): void {
     }

@@ -357,65 +357,64 @@ export type MultiObjectsInfluencesProcessingContext<
             MultiObjectsInfluencesGroupKinds
         >
 
-export class MultiObjectsInfluencesNormalizingProcessor<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        InfluenceGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        Result extends
-            MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups> =
-            MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups>,
-        Context extends
-            MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups> =
-            MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups>
-    >
-    implements Processor<Result, Context> {
-    init(context: Context): void {
-        throw new Error("Method not implemented.");
-    }
-    get dependencies(): Function[] {
-        return []
-    }
+// export class MultiObjectsInfluencesNormalizingProcessor<
+//         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+//         InfluenceGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+//         Result extends
+//             MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups> =
+//             MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups>,
+//         Context extends
+//             MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups> =
+//             MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups>
+//     >
+//     implements Processor<Result, Context> {
+//     init(context: Context): void {
+//         throw new Error("Method not implemented.");
+//     }
 
-    /**
-     * The influence groups to normalize.
-     * 
-     * If undefined or null, all influence groups will be normalized.
-     * 
-     * @default undefined
-     */
-    influenceGroups?: InfluenceGroups
+//     readonly dependencies = []
 
-    process(result: Result, context: Context): void {
-        for (const influenceGroup of groupKindObjectsGrouped(result, context, MultiObjectsInfluencesGroupKindsTemplate)) {
-            if (this.influenceGroups &&
-                !influenceGroup.group.get(this.influenceGroups))
-                continue
+//     /**
+//      * The influence groups to normalize.
+//      * 
+//      * If undefined or null, all influence groups will be normalized.
+//      * 
+//      * @default undefined
+//      */
+//     influenceGroups?: InfluenceGroups
 
-            const influences = influenceGroup.objects.value as MultiObjectsInfluences<Objects>
-            const objects_template = influenceGroup.objects.template
+//     process(result: Result, context: Context): void {
+//         for (const influenceGroup of groupKindObjectsGrouped(result, context, MultiObjectsInfluencesGroupKindsTemplate)) {
+//             if (this.influenceGroups &&
+//                 !influenceGroup.group.get(this.influenceGroups))
+//                 continue
 
-            let sum = 0
-            mapObjects(
-                influences,
-                objects_template,
-                (influences, key) =>
-                    sum += influences[key]
-            )
+//             const influences = influenceGroup.objects.value as MultiObjectsInfluences<Objects>
+//             const objects_template = influenceGroup.objects.template
+
+//             let sum = 0
+//             mapObjects(
+//                 influences,
+//                 objects_template,
+//                 (influences, key) =>
+//                     sum += influences[key]
+//             )
             
-            if (sum > 0) {
-                mapObjects(
-                    influences,
-                    objects_template,
-                    (influences, key) =>
-                        influences[key] /= sum
-                )
+//             if (sum > 0) {
+//                 mapObjects(
+//                     influences,
+//                     objects_template,
+//                     (influences, key) =>
+//                         influences[key] /= sum
+//                 )
 
-                sum = 1
-            }
+//                 sum = 1
+//             }
 
-            influences[MultiObjectsCombinedValue] = sum
-        }
-    }
-}
+//             influences[MultiObjectsCombinedValue] = sum
+//         }
+//     }
+// }
 
 export const influences = <
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -525,8 +524,10 @@ export class MultiObjectsCombiningProcessor<
             MultiObjectsInfluenceCombiningProcessingContext<Objects, InfluenceGroup, ValueGroups, ValueGroupKind, ObjectsGrouped> =
             MultiObjectsInfluenceCombiningProcessingContext<Objects, InfluenceGroup, ValueGroups, ValueGroupKind, ObjectsGrouped>,
     > implements Processor<Result, Context> {
-    get dependencies(): Function[] {
-        return [MultiObjectsInfluencesNormalizingProcessor]
+    private _dependencies: PropertyPath[]
+
+    get dependencies() {
+        return this._dependencies
     }
     
     constructor(
@@ -548,6 +549,13 @@ export class MultiObjectsCombiningProcessor<
     ) { }
 
     init(context: Context): void {
+        const infuenceGroup = onlyOne(groupKinds(context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroup)).group
+        const valueGroups = [...groupKinds(context, this.valueGroupKinds, this.valueGroups)]
+
+        this._dependencies = [
+            infuenceGroup.path,
+            ...valueGroups.map(({ group: { path } }) => path)
+        ]
     }
 
     process(result: Result, context: Context): void {

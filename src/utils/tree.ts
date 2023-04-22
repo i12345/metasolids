@@ -54,6 +54,13 @@ export const intract = <T>
     tree[path[path.length - 1]] = value
 }
 
+export const deletePath =
+    (tree: object, path: PropertyPath) => {
+    for (let i = 0; i < path.length - 1; i++)
+        tree = (tree[path[i]] ??= {})
+    delete tree[path[path.length - 1]]
+}
+
 export const makeExtractor =
     <TDefault = any>(path: PropertyPath) =>
     <T = TDefault>(tree: any, makeEmptyObjects = false) =>
@@ -65,6 +72,11 @@ export const makeIntractor =
     (path: PropertyPath) =>
     <T>(tree: object, value: T) =>
         intract(tree, path, value)
+
+export const makeDeleter =
+    (path: PropertyPath) =>
+    (tree: object) =>
+        deletePath(tree, path)
 
 export function* pathsToKey<
         LeafKeysTemplate,
@@ -128,7 +140,9 @@ export function* leavesByKey<
     for (const path of pathsToKey(tree, leafKeys)) {
         yield {
             path,
-            extractor: makeExtractor(path)
+            get: makeExtractor(path),
+            set: makeIntractor(path),
+            delete: makeDeleter(path),
         }
     }
 }
@@ -145,6 +159,7 @@ export function* leavesByValue<
             path,
             get: makeExtractor(path),
             set: makeIntractor(path),
+            delete: makeDeleter(path),
         }
     }
 }
@@ -159,7 +174,9 @@ export function* leavesByValues<
     for (const path of pathsToValues<Leaf, Tree>(tree, leaves)) {
         yield {
             path,
-            extract: makeExtractor(path)
+            get: makeExtractor(path),
+            set: makeIntractor(path),
+            delete: makeDeleter(path),
         }
     }
 }
