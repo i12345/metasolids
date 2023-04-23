@@ -343,6 +343,10 @@ export const MultiObjectsInfluencesGroupKindsTemplate: MultiObjectsInfluencesGro
     [MultiObjectsInfluencesGroupKindKey]: MultiObjectsGroupsKindsTemplate_Leaf
 }
 
+export const MultiObjectsInfluencesGroupsDefault: MultiObjectsGroupsTemplate = {
+    influences: MultiObjectsGroupsTemplate_Leaf
+}
+
 export type MultiObjectsInfluencesProcessingContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluenceGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,

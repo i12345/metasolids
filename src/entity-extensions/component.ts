@@ -3,6 +3,7 @@ import { FieldsPoint } from "../fields/point.js";
 import { fields, meshing, ProcessorGraph, solids, surfaces, volumes } from "../index.js";
 import { Volume } from "../volumes/volume.js";
 import { VolumeComponentSystem } from "./system.js";
+import { MultiObjectsInfluencesGroupsDefault } from "../fields/multi-objects-fields-point.js";
 
 const _schema = ['enabled']
 
@@ -58,6 +59,8 @@ export class VolumeComponent extends Component {
                 return new volumes.MultiObjectsVolume(
                     Object.fromEntries(children),
                     system.multiObj.groupKinds,
+                    system.multiObj.groupKindsMappedGroups,
+                    MultiObjectsInfluencesGroupsDefault
                 )
             }
         }
@@ -84,7 +87,7 @@ export class VolumeComponent extends Component {
             ),
 
             ...{
-                [fields.MultiObjectsProcessingContextGroupKinds]: system.multiObj.groupKinds,
+                [fields.MultiObjectsProcessingContextGroupKinds]: system.multiObj.groupKinds as fields.MultiObjectsGroupsKindsTemplate,
                 ...system.multiObj.groupKindsMappedGroups
             } as fields.MultiObjectsProcessingContext
         }

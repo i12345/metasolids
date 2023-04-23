@@ -166,10 +166,12 @@ export class MultiObjectsSampleDomain<
     /**
      * Combines the residual into the accumulating sample (the groups are already combined)
      * @param accumulator the accumulating multi object sample
+     * @param key the child whose residual is being combined
      * @param residual the residual of the child's sample that wasn't combined by a group
      */
     protected combineResidualLeafSample(
         accumulator: MultiObjectsSample<Objects, Groups, LeafSample>,
+        key: PropertyKey,
         residual: MultiObjectsGroupsOmitted<Groups, LeafSample>
     ): MultiObjectsSample<Objects, Groups, LeafSample> {
         return field_point_add_inplace(
@@ -285,7 +287,7 @@ export class MultiObjectsSampleDomain<
                 group.delete(child_sample)
             }
 
-            sample = this.combineResidualLeafSample(sample, child_sample as MultiObjectsGroupsOmitted<Groups, LeafSample>)
+            sample = this.combineResidualLeafSample(sample, key, child_sample as MultiObjectsGroupsOmitted<Groups, LeafSample>)
         }
 
         for (const { group } of this.groupsMemoized) {

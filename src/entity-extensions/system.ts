@@ -1,5 +1,5 @@
 import { AppBase, ComponentSystem, Entity } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped } from "../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKindKey, MultiObjectsGroupsTemplate_Leaf, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupKinds } from "../fields/multi-objects-fields-point.js"
 import { solids, surfaces, volumes } from "../index.js"
 import { VolumeProcessor } from "../volumes/processor.js"
 import { VolumeComponent } from "./component.js"
@@ -16,8 +16,15 @@ export class VolumeComponentSystem extends ComponentSystem {
         // new solids.SolidWithEnclosingVolumeProcessor(),
     ]
     multiObj: {
-        groupKinds: MultiObjectsGroupsKindsTemplate,
+        groupKinds: MultiObjectsInfluencesGroupKinds & MultiObjectsGroupsKindsTemplate,
         groupKindsMappedGroups: MultiObjectsGroupsKindsTemplateMapped<MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsTemplate>
+    } = {
+        groupKinds: {
+            ...MultiObjectsInfluencesGroupKindsTemplate
+        },
+        groupKindsMappedGroups: {
+            [MultiObjectsInfluencesGroupKindKey]: MultiObjectsInfluencesGroupsDefault
+        }
     }
 
     constructor(app: AppBase) {
