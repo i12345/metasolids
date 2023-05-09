@@ -1,2 +1,4 @@
 export * from './vertex-interpolating.js'
 export * from './multi-objects.js'
+export * from './cached.js'
+export * from './staged.js'

@@ -25,7 +25,7 @@ export type FieldPointNumbers<Point extends FieldPoint> =
     Point extends Mat3 ? { data: number[] } :
     Point extends Mat4 ? { data: number[] } :
     Point extends Color ? { r: number, g: number, b: number, a: number } :
-    Point extends Vector ? number[] :
+    Point extends Vector ? Vector :
     Point extends FieldsPoint ? { [K in keyof Point]: FieldPointNumbers<Point[K]> } :
     never
 
@@ -38,6 +38,8 @@ export type FieldPointMapped<Point extends FieldPoint, T> =
 export type FieldsPointMapped<Point extends FieldsPoint, T> = {
     [K in keyof Point]: FieldPointMapped<Point[K], T>
 }
+
+export type FieldPointVectorized<Point extends FieldPoint> = FieldPointMapped<Point, Float32Array>
 
 export const FieldsPoint_Omit_Leaf = Symbol('omit')
 export type FieldsPointOmitted<
@@ -624,6 +626,75 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
     }
 }
 
+export function field_point_sum<Point extends FieldPoint = FieldPoint>(points: Point[]): Point {
+    if (points[0] instanceof Vec3) {
+        const sum = new Vec3()
+        for (let i = 0; i < points.length; i++)
+            sum.add(points[i] as Vec3)
+        return sum as Point
+    }
+    else if (points[0] instanceof Mat4)
+        throw new Error("not supported")
+    else if (typeof points[0] === 'number') {
+        let sum = 0
+
+        for (let i = 0; i < points.length; i++)
+            sum += points[i] as number
+        
+        return sum as Point
+    }
+    else if (points[0] instanceof Vec2) {
+        const sum = new Vec2()
+        for (let i = 0; i < points.length; i++)
+            sum.add(points[i] as Vec2)
+        return sum as Point
+    }
+    else if (points[0] instanceof Vec4) {
+        const sum = new Vec4()
+        for (let i = 0; i < points.length; i++)
+            sum.add(points[i] as Vec4)
+        return sum as Point
+    }
+    else if (points[0] instanceof Quat) {
+        const sum = new Vec3()
+        for (let i = 0; i < points.length; i++)
+            sum.add((points[i] as Quat).getEulerAngles())
+        return new Quat().setFromEulerAngles(sum.x, sum.y, sum.z) as Point
+    }
+    else if (points[0] instanceof Mat3)
+        throw new Error("not supported")
+    else if (points[0] instanceof Color) {
+        const sum = new Color()
+        for (let i = 0; i < points.length; i++){
+            const point = points[i] as Color
+
+            sum.r += point.r
+            sum.g += point.g
+            sum.b += point.b
+            sum.a += point.a
+        }
+        return sum as Point
+    }
+    else if (
+        points[0] instanceof Uint8Array ||
+        points[0] instanceof Uint8ClampedArray ||
+        points[0] instanceof Int8Array ||
+        points[0] instanceof Uint16Array ||
+        points[0] instanceof Int16Array ||
+        points[0] instanceof Uint32Array ||
+        points[0] instanceof Int32Array ||
+        points[0] instanceof Float32Array ||
+        points[0] instanceof Float64Array ||
+        points[0] instanceof Array) {
+        const sum = new Float64Array(points[0].length)
+        for (let j = 0; j < points.length; j++)
+            for (let i = 0; i < (points[j] as Vector).length; i++)
+                sum[i] += points[j][i]
+        return sum as Point
+    }
+    else return fields_point_sum(points as FieldsPoint[]) as Point
+}
+
 export function field_point_sum_weighted<Point extends FieldPoint>(X: Point[], weights: number[]): Point {
     let value = field_point_identity(X[0])
     for (let i = 0; i < X.length; i++)
@@ -631,17 +702,47 @@ export function field_point_sum_weighted<Point extends FieldPoint>(X: Point[], w
     return value
 }
 
+export function field_point_primitives_sum<Point extends FieldPoint = FieldPoint>(a: Point): number {
+    if (a instanceof Vec3)
+        return a.x + a.y + a.z
+    else if (a instanceof Mat4)
+        return field_point_primitives_sum(a.data)
+    else if (typeof a === 'number') 
+        return a
+    else if (a instanceof Vec2) 
+        return a.x + a.y
+    else if (a instanceof Vec4) 
+        return a.x + a.y + a.z + a.w
+    else if (a instanceof Quat) 
+        return a.x + a.y + a.z + a.w
+    else if (a instanceof Mat3)
+        return field_point_primitives_sum(a.data)
+    else if (a instanceof Color) 
+        return a.r + a.g + a.b + a.a
+    else if (
+        a instanceof Uint8Array ||
+        a instanceof Uint8ClampedArray ||
+        a instanceof Int8Array ||
+        a instanceof Uint16Array ||
+        a instanceof Int16Array ||
+        a instanceof Uint32Array ||
+        a instanceof Int32Array ||
+        a instanceof Float32Array ||
+        a instanceof Float64Array ||
+        a instanceof Array) {
+        let sum = 0
+        for (let i = 0; i < a.length; i++)
+            sum += a[i]
+        return sum
+    }
+    else return fields_point_primitives_sum(a as FieldsPoint)
+}
+
 export function field_point_subtract<Point extends FieldPoint>(a: Point, b: Point): Point {
     if (a instanceof Vec3)
         return new Vec3().sub2(a, b as Vec3) as Point
-    else if (a instanceof Mat4) {
-        const b_mat = b as Mat4
-        const c = new Mat4()
-        for (let i = 15; i >= 0; i--)
-            c.data[i] = a.data[i] - b_mat.data[i]
-        
-        return c as Point
-    }
+    else if (a instanceof Mat4)
+        return new Mat4().mul2(a, (b as Mat4).clone().invert()) as Point
     else if (typeof a === 'number')
         return a - (b as number) as Point
     else if (a instanceof Vec2)
@@ -652,14 +753,8 @@ export function field_point_subtract<Point extends FieldPoint>(a: Point, b: Poin
         const b_quat = b as Quat
         return new Quat(a.x - b_quat.x, a.y - b_quat.y, a.z - b_quat.z, a.w - b_quat.w) as Point
     }
-    else if (a instanceof Mat3) {
-        const b_mat = b as Mat3
-        const c = new Mat3()
-        for (let i = 8; i >= 0; i--)
-            c.data[i] = a.data[i] - b_mat.data[i]
-        
-        return c as Point
-    }
+    else if (a instanceof Mat3)
+        return new Mat3().setFromMat4(field_point_subtract(mat4_from_mat3(a), mat4_from_mat3(b as Mat3))) as Point
     else if (a instanceof Color) {
         const b_color = b as Color
         
@@ -696,11 +791,8 @@ export function field_point_multiply<Point extends FieldPoint>(a: Point, b: numb
     if (a instanceof Vec3)
         return a.clone().mulScalar(b) as Point
     else if (a instanceof Mat4) {
-        const c = a.clone()
-        for (let i = 15; i >= 0; i--)
-            c.data[i] *= b
-        
-        return c as Point
+        const { t, r, s } = field_point_multiply(trs(a), b)
+        return new Mat4().setTRS(t, r, s) as Point
     }
     else if (typeof a === 'number')
         return a * (b as number) as Point
@@ -710,13 +802,8 @@ export function field_point_multiply<Point extends FieldPoint>(a: Point, b: numb
         return a.clone().mulScalar(b) as Point
     else if (a instanceof Quat)
         return new Quat().setFromEulerAngles(a.getEulerAngles().mulScalar(b)) as Point
-    else if (a instanceof Mat3) {
-        const c = a.clone()
-        for (let i = 8; i >= 0; i--)
-            c.data[i] *= b
-        
-        return c as Point
-    }
+    else if (a instanceof Mat3)
+        return new Mat3().setFromMat4(field_point_divide(mat4_from_mat3(a), b)) as Point
     else if (a instanceof Color) {
         const c = a.clone()
         c.r *= b
@@ -747,15 +834,62 @@ export function field_point_multiply<Point extends FieldPoint>(a: Point, b: numb
     }
 }
 
+export function field_point_multiply_hadamard<Point extends FieldPoint>(a: Point, b: Point): Point {
+    if (a instanceof Vec3)
+        return new Vec3().mul2(a, b as Vec3) as Point
+    else if (a instanceof Mat4)
+        //TODO: consider what really belongs here
+        return new Mat4().mul2(a, b as Mat4) as Point
+    else if (typeof a === 'number')
+        return a * (b as number) as Point
+    else if (a instanceof Vec2)
+        return new Vec2().mul2(a, b as Vec2) as Point
+    else if (a instanceof Vec4)
+        return new Vec4().mul2(a, b as Vec4) as Point
+    else if (a instanceof Quat)
+        //TODO: consider what really belongs here
+        return new Quat().mul2(a, b as Quat) as Point
+    else if (a instanceof Mat3)
+        return new Mat3().setFromMat4(field_point_multiply_hadamard(mat4_from_mat3(a), mat4_from_mat3(b as Mat3))) as Point
+    else if (a instanceof Color) {
+        const b_color = b as Color
+        
+        // this is like a color filter
+
+        const c = a.clone()
+        c.r *= (b_color.r * b_color.a) + (1 - b_color.a)
+        c.g *= (b_color.g * b_color.a) + (1 - b_color.a)
+        c.b *= (b_color.b * b_color.a) + (1 - b_color.a)
+
+        return c as Point
+    }
+    else if (a instanceof Int8Array ||
+        a instanceof Uint8Array ||
+        a instanceof Uint8ClampedArray ||
+        a instanceof Int16Array ||
+        a instanceof Uint16Array ||
+        a instanceof Int32Array ||
+        a instanceof Uint32Array ||
+        a instanceof Float32Array ||
+        a instanceof Float64Array ||
+        a instanceof Array) {
+        console.assert(a.length === b['length'])
+        let newArray = new Float64Array(a.length as number)
+        for (let i = 0; i < newArray.length; i++)
+            newArray[i] = (a[i] as number) * (b[i] as number)
+        return newArray as FieldPoint as Point
+    }
+    else {
+        return fields_point_multiply_hadamard(a as FieldsPoint, b as FieldsPoint) as Point
+    }
+}
+
 export function field_point_divide<Point extends FieldPoint>(a: Point, b: number): Point {
     if (a instanceof Vec3)
         return a.clone().divScalar(b) as Point
     else if (a instanceof Mat4) {
-        const c = a.clone()
-        for (let i = 15; i >= 0; i--)
-            c.data[i] /= b
-        
-        return c as Point
+        const { t, r, s } = field_point_divide(trs(a), b)
+        return new Mat4().setTRS(t, r, s) as Point
     }
     else if (typeof a === 'number')
         return a / (b as number) as Point
@@ -765,13 +899,8 @@ export function field_point_divide<Point extends FieldPoint>(a: Point, b: number
         return a.clone().divScalar(b) as Point
     else if (a instanceof Quat)
         return new Quat().setFromEulerAngles(a.getEulerAngles().divScalar(b)) as Point
-    else if (a instanceof Mat3) {
-        const c = a.clone()
-        for (let i = 8; i >= 0; i--)
-            c.data[i] /= b
-        
-        return c as Point
-    }
+    else if (a instanceof Mat3)
+        return new Mat3().setFromMat4(field_point_divide(mat4_from_mat3(a), b)) as Point
     else if (a instanceof Color) {
         const c = a.clone()
         c.r /= b
@@ -889,6 +1018,74 @@ export function field_point_modulo<Point extends FieldPoint>(a: Point, b: Point)
     }
 }
 
+export function field_point_fraction<Point extends FieldPoint>(a: Point, b: Point): FieldPointNumbers<Point> {
+    if (a === undefined)
+        return field_point_identity(b) as unknown as FieldPointNumbers<Point>
+    else if (b === undefined)
+        return field_point_invalid(a) as unknown as FieldPointNumbers<Point>
+    
+    if (a instanceof Vec3)
+        return new Vec3().div2(a, b as Vec3) as FieldPointNumbers<Vec3> as FieldPointNumbers<Point>
+    else if (a instanceof Mat4) {
+        throw new Error("fraction of matrix makes no sense")
+        // const b_mat = b as Mat4
+
+        // const c = a.clone()
+        // for (let i = 15; i >= 0; i--)
+        //     c.data[i] %= b_mat.data[i]
+        
+        // return c as Point
+    }
+    else if (typeof a === 'number')
+        return a / (b as number) as FieldPointNumbers<Point>
+    else if (a instanceof Vec2) 
+        return new Vec2().div2(a, b as Vec2) as FieldPointNumbers<Vec2> as FieldPointNumbers<Point>
+    else if (a instanceof Vec4) 
+        return new Vec4().div2(a, b as Vec4) as FieldPointNumbers<Vec4> as FieldPointNumbers<Point>
+    else if (a instanceof Quat)
+        throw new Error("fraction of quaternion makes no sense")
+    else if (a instanceof Mat3) {
+        throw new Error("fraction of matrix makes no sense")
+        // const b_mat = b as Mat3
+
+        // const c = a.clone()
+        // for (let i = 8; i >= 0; i--)
+        //     c.data[i] %= b_mat.data[i]
+        
+        // return c as Point
+    }
+    else if (a instanceof Color) {
+        const b_color = b as Color
+        
+        const c = a.clone()
+        c.r /= b_color.r
+        c.g /= b_color.g
+        c.b /= b_color.b
+        c.a /= b_color.a
+
+        return c as FieldPointNumbers<Color> as FieldPointNumbers<Point>
+    }
+    else if (a instanceof Int8Array ||
+        a instanceof Uint8Array ||
+        a instanceof Uint8ClampedArray ||
+        a instanceof Int16Array ||
+        a instanceof Uint16Array ||
+        a instanceof Int32Array ||
+        a instanceof Uint32Array ||
+        a instanceof Float32Array ||
+        a instanceof Float64Array ||
+        a instanceof Array) {
+        console.assert(a.length === b['length'])
+        let newArray = new Float64Array(a.length as number)
+        for (let i = 0; i < newArray.length; i++)
+            newArray[i] = (a[i] as number) / (b[i] as number)
+        return newArray as FieldPointNumbers<Point>
+    }
+    else {
+        return fields_point_fraction(a as Point & FieldsPoint, b as Point & FieldsPoint)
+    }
+}
+
 export function field_point_equal<Point extends FieldPoint>(a: Point, b: Point): boolean {
     if (a instanceof Vec3) {
         const b_vec = b as Vec3
@@ -940,6 +1137,76 @@ export function field_point_equal<Point extends FieldPoint>(a: Point, b: Point):
     }
     else {
         return fields_point_equal(a as FieldsPoint, b as FieldsPoint)
+    }
+}
+
+export function field_point_compare_gte<Point extends FieldPoint>(a: Point, b: Point): boolean {
+    if (a === undefined)
+        return b === undefined || field_point_equal(b, field_point_identity(b))
+    else if (b === undefined)
+        return true
+    
+    if (a instanceof Vec3) {
+        const b_vec = b as Vec3
+        return (
+            a.x >= b_vec.x &&
+            a.y >= b_vec.y &&
+            a.z >= b_vec.z
+        )
+    }
+    else if (a instanceof Mat4)
+        return field_point_compare_gte(trs(a), trs(b as Mat4))
+    else if (typeof a === 'number')
+        return a >= (b as number)
+    else if (a instanceof Vec2) {
+        const b_vec = b as Vec2
+        return (
+            a.x >= b_vec.x &&
+            a.y >= b_vec.y
+        )
+    }
+    else if (a instanceof Vec4) {
+        const b_vec = b as Vec4
+        return (
+            a.x >= b_vec.x &&
+            a.y >= b_vec.y &&
+            a.z >= b_vec.z &&
+            a.w >= b_vec.w
+        )
+    }
+    else if (a instanceof Quat)
+        return field_point_compare_gte(a.getEulerAngles(), (b as Quat).getEulerAngles())
+    else if (a instanceof Mat3)
+        return field_point_compare_gte(mat4_from_mat3(a), mat4_from_mat3(b as Mat3))
+    else if (a instanceof Color) {
+        const b_color = b as Color
+        return (
+            a.r >= b_color.r &&
+            a.g >= b_color.g &&
+            a.b >= b_color.b &&
+            a.a >= b_color.a
+        )
+    }
+    else if (a instanceof Int8Array ||
+        a instanceof Uint8Array ||
+        a instanceof Uint8ClampedArray ||
+        a instanceof Int16Array ||
+        a instanceof Uint16Array ||
+        a instanceof Int32Array ||
+        a instanceof Uint32Array ||
+        a instanceof Float32Array ||
+        a instanceof Float64Array ||
+        a instanceof Array) {
+        const b_vec = b as ArrayLike<number>
+        if (a.length !== b_vec.length)
+            return false
+        for (let i = 0; i < a.length; i++)
+            if (a[i] < b_vec[i])
+                return false
+        return true
+    }
+    else {
+        return fields_point_compare_gte(a as FieldsPoint, b as FieldsPoint)
     }
 }
 
@@ -1070,11 +1337,40 @@ export function fields_point_add_inplace_weighted<
     }
 }
 
+export function fields_point_sum<Point extends FieldsPoint = FieldsPoint>(points: Point[]): Point {
+    let sum = {} as Point
+
+    for (const key of Reflect.ownKeys(points[0])) {
+        const extracted = points.map(point => point[key])
+        sum[key as keyof Point] = field_point_sum(extracted) as Point[typeof key]
+    }
+    
+    return sum
+}
+
+export function fields_point_primitives_sum<Point extends FieldsPoint = FieldsPoint>(point: Point): number {
+    let sum = 0
+
+    for (const key of Reflect.ownKeys(point))
+        sum += field_point_primitives_sum(point[key])
+    
+    return sum
+}
+
 export function fields_point_multiply<Point extends FieldsPoint>(a: Point, b: number): Point {
     let c = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_multiply(a[key], b)
+    
+    return c as Point
+}
+
+export function fields_point_multiply_hadamard<Point extends FieldsPoint>(a: Point, b: Point): Point {
+    let c = {}
+
+    for (const key of Reflect.ownKeys(a))
+        c[key] = field_point_multiply_hadamard(a[key], b)
     
     return c as Point
 }
@@ -1097,6 +1393,14 @@ export function fields_point_modulo<Point extends FieldsPoint>(a: Point, b: Poin
     return c as Point
 }
 
+export function fields_point_fraction<Point extends FieldsPoint>(a: Point, b: Point): FieldPointNumbers<Point> {
+    let c = {}
+
+    for (const key of new Set([...Reflect.ownKeys(a), ...Reflect.ownKeys(b)]))
+        c[key] = field_point_fraction(a[key], b[key])
+    
+    return c as FieldPointNumbers<Point>
+}
 
 export function fields_point_equal<Point extends FieldsPoint>(a: Point, b: Point): boolean {
     const keys_a = Reflect.ownKeys(a)
@@ -1108,6 +1412,17 @@ export function fields_point_equal<Point extends FieldsPoint>(a: Point, b: Point
 
     for (const key of keys_a)
         if (!field_point_equal(a[key], b[key]))
+            return false
+    
+    return true
+}
+
+export function fields_point_compare_gte<Point extends FieldsPoint>(a: Point, b: Point): boolean {
+    const keys_a = Reflect.ownKeys(a)
+    const keys_b = Reflect.ownKeys(b)
+
+    for (const key of new Set([...keys_a, ...keys_b]))
+        if (!field_point_compare_gte(a[key], b[key]))
             return false
     
     return true

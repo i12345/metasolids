@@ -34,6 +34,6 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "playcanvas-extended": "^1.63.2-dev"
+    "playcanvas-extended": "^1.64.1-dev"
   }
 }

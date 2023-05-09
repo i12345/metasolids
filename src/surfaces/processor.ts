@@ -4,7 +4,6 @@ import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
 import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingKey, VolumeSamplingProcessor } from "../volumes/processor.js";
 import { Surface, SurfaceSample } from "./surface.js";
 import { Vec3 } from "playcanvas-extended";
-import { PropertyPath } from "../utils/property-path.js";
 
 export interface SurfaceProcessingContext<
         SampleContextTemplate = any
@@ -320,6 +319,8 @@ export class VolumeSurfacesParallelizer<
         for (const solid of item[VolumeSurfacesKey])
             itemProcessor.process(solid, parallelizedContext)
     }
+
+    static readonly instance = new this()
 }
 
 export const VolumeSurfaceMeshingKey = Symbol("volume.surface-meshing")

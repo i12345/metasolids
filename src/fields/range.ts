@@ -2,6 +2,9 @@ import { Vec3, Mat4, Vec2, Vec4, Quat, Mat3, Color } from "playcanvas-extended"
 import { mat4_from_mat3, trs } from "../utils/matrix.js"
 import { FieldPoint, FieldPointPrimitive, FieldsPoint, field_point_clone, field_point_isPrimitive, field_point_map, Vector } from "./point.js"
 
+export const RANGE_MIN = 0
+export const RANGE_MAX = 1
+
 export type FieldPointRange<Point extends FieldPoint> =
     Point extends FieldPointPrimitive ? [min: Point, max: Point] :
         Point extends FieldsPoint ?

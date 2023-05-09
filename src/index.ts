@@ -1,4 +1,4 @@
-export * from './processor/index.js'
+export * as processors from './processor/index.js'
 export * as fields from './fields/index.js'
 export * as textures from './textures/index.js'
 export * as meshing from './meshing/index.js'

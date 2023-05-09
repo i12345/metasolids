@@ -1,4 +1,5 @@
 export * from './point.js'
+export * from './stats.js'
 
 export * from './range.js'
 export * from './merge_mapped.js'

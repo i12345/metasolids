@@ -1,5 +1,6 @@
 import { Vec2 } from "playcanvas-extended"
 import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
+import { IndiciesArray } from "../utils/indices-array.js"
 
 export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> {
     private v0:  Point[]
@@ -8,11 +9,11 @@ export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> 
 
     constructor(
         public vertices: Point[],
-        public triangles: number[]
+        public triangles: IndiciesArray
     ) {
-        this.v0 = new Array(triangles.length / 3),
-            this.v01 = new Array(triangles.length / 3),
-            this.v02 = new Array(triangles.length / 3)
+        this.v0 = new Array(triangles.length / 3)
+        this.v01 = new Array(triangles.length / 3)
+        this.v02 = new Array(triangles.length / 3)
         
         for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
             const v0 = this.vertices[triangles[i + 0]]

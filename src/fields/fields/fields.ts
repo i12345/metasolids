@@ -83,4 +83,6 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
                     field : undefined
         ) as any as FieldsPointMapped<FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>, Field>)
     }
+
+    static readonly empty = new FieldsField({})
 }

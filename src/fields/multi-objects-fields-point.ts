@@ -343,8 +343,12 @@ export const MultiObjectsInfluencesGroupKindsTemplate: MultiObjectsInfluencesGro
     [MultiObjectsInfluencesGroupKindKey]: MultiObjectsGroupsKindsTemplate_Leaf
 }
 
-export const MultiObjectsInfluencesGroupsDefault: MultiObjectsGroupsTemplate = {
-    influences: MultiObjectsGroupsTemplate_Leaf
+export const MultiObjectsInfluencesGroupsDefaultKey = Symbol("influences")
+export interface MultiObjectsInfluencesGroupsDefault extends MultiObjectsGroupsTemplate {
+    [MultiObjectsInfluencesGroupsDefaultKey]: typeof MultiObjectsGroupsTemplate_Leaf
+}
+export const MultiObjectsInfluencesGroupsDefaultTemplate: MultiObjectsInfluencesGroupsDefault = {
+    [MultiObjectsInfluencesGroupsDefaultKey]: MultiObjectsGroupsTemplate_Leaf
 }
 
 export type MultiObjectsInfluencesProcessingContext<

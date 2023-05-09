@@ -2,12 +2,13 @@
 // https://github.com/theSoenke/ProceduralTerrain/blob/master/Assets/ProceduralTerrain/Core/Scripts/Voxel/Meshing/MeshData.cs
 
 import { Vec3 } from "playcanvas-extended"
+import { IndiciesArray } from "../utils/indices-array.js"
 
 /**
  * Data for mesh creation
  */
 export interface MeshData {
-    readonly triangles: number[]
+    readonly triangles: IndiciesArray
     readonly vertices: Vec3[]
 }
 

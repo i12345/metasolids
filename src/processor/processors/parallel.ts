@@ -1,5 +1,4 @@
 import { PropertyPath } from "../../utils/property-path.js";
-import { ContextWorker } from "../context-worker.js";
 import { Processor } from "../processor.js";
 
 export const ParallelizedContextParallelInfo = Symbol("parallel")
@@ -8,8 +7,8 @@ export interface ParallelizedContext<
         ParallelItem,
         ParallelContext
     > {
-        [ParallelizedContextParallelInfo]: {
-        item: ParallelItem,
+    [ParallelizedContextParallelInfo]: {
+        item: ParallelItem
         context: ParallelContext
     }
 }

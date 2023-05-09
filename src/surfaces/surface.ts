@@ -6,11 +6,11 @@ export type SurfaceSample = VolumeSample
 export interface Surface<
         Sample extends SurfaceSample = SurfaceSample
     > {
-    mesh: MeshData
+    readonly mesh: MeshData
 
     /**
      * These might not be directly from the volume samples, but derived
      * from them.
      */
-    samples: Sample[]
+    readonly samples: Sample[]
 }

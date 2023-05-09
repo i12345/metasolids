@@ -1,7 +1,7 @@
 import { BoundingBox } from 'playcanvas-extended'
 import { FieldPoint, MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsSampleDomain, MultiObjectsLeafContext, MultiObjectsSample, MultiObjectsContext, groups, groupKinds, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsInfluencesGroupKinds, MultiObjectsGroupsOmitted } from '../../fields/index.js'
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume.js'
-import { GeneratorType } from '../../utils/types.js'
+import { GeneratorType } from '../../utils/generator-type.js'
 import { onlyOne } from '../../utils/only-one.js'
 
 /// @ts-ignore

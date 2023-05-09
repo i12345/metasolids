@@ -1,7 +1,7 @@
 import { Vec3 } from "playcanvas-extended"
-import { VolumeSample } from "../../volumes/volume.js"
-import { SurfaceProcessingContext, SurfaceProcessor } from "../processor.js"
-import { Surface } from "../surface.js"
+import { VolumeSample } from "../../../volumes/volume.js"
+import { SurfaceProcessingContext, SurfaceProcessor } from "../../processor.js"
+import { Surface } from "../../surface.js"
 
 export interface SurfaceWithSurfaceArea<
         Sample extends VolumeSample = VolumeSample

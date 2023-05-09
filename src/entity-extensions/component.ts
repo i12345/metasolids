@@ -1,9 +1,11 @@
-import { calculateNormals, Component, createCone, createCylinder, CULLFACE_FRONT, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
+import { calculateNormals, Component, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
 import { FieldsPoint } from "../fields/point.js";
-import { fields, meshing, ProcessorGraph, solids, surfaces, volumes } from "../index.js";
+import { fields, meshing, surfaces, volumes } from "../index.js";
 import { Volume } from "../volumes/volume.js";
 import { VolumeComponentSystem } from "./system.js";
-import { MultiObjectsInfluencesGroupsDefault } from "../fields/multi-objects-fields-point.js";
+import { ProcessorGraph } from "../processor/index.js";
+import { groupKinds, MultiObjectsGroupsTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
+import { MultiObjectsVolume } from "../volumes/index.js";
 
 const _schema = ['enabled']
 
@@ -40,7 +42,7 @@ export class VolumeComponent extends Component {
 
         const system = this.system as VolumeComponentSystem
         
-        function compositeVolume(node: GraphNode) {
+        function compositeVolume(node: GraphNode, require_multiObjects = false) {
             const entity = node as Entity
             const component = entity?.findComponent('volume') as VolumeComponent
             
@@ -53,24 +55,42 @@ export class VolumeComponent extends Component {
 
             if (children.length === 0)
                 return undefined
-            else if (children.length === 1 && component?.volume !== undefined)
+            else if (children.length === 1 && component?.volume !== undefined && !require_multiObjects)
                 return children[0][1]
             else {
                 return new volumes.MultiObjectsVolume(
                     Object.fromEntries(children),
                     system.multiObj.groupKinds,
-                    system.multiObj.groupKindsMappedGroups,
-                    MultiObjectsInfluencesGroupsDefault
+                    undefined,
+                    MultiObjectsInfluencesGroupsDefaultTemplate
                 )
             }
         }
+
+        const compositeVolume_final = compositeVolume(this.entity, true)
+        function objectsTemplate_populate(volume: Volume): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
+            if (volume instanceof MultiObjectsVolume)
+                return Object.fromEntries(Object.entries(volume.children as any).map(([key, child]) =>
+                    [key, objectsTemplate_populate(child as Volume) as ReturnType<typeof objectsTemplate_populate>])
+                ) as MultiObjectsTemplate
+            return MultiObjectsTemplate_Leaf
+        }
+        const objectsTemplate = <MultiObjectsTemplate>objectsTemplate_populate(compositeVolume_final)
+
+        const multiObjectsContext = {
+            [fields.MultiObjectsProcessingContextGroupKinds]: system.multiObj.groupKinds,
+            ...system.multiObj.groupKindsMappedGroups
+        } as fields.MultiObjectsGroupsProcessingContext
+
+        for (const { group } of groupKinds(multiObjectsContext, system.multiObj.groupKinds))
+            group.set(multiObjectsContext, objectsTemplate)
 
         const context = {
             ...{
                 [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField,
                 [volumes.VolumeSampleKey]: {},
                 [volumes.VolumeSamplingKey]: {
-                    volume: compositeVolume(this.entity),
+                    volume: compositeVolume_final,
                     extraLocationParameters: this.extraLocationParameters,
                     settings: this.samplingSettings,
                 },
@@ -86,10 +106,7 @@ export class VolumeComponent extends Component {
                 surfaces.VolumeSurfaceMeshingProcessingContext
             ),
 
-            ...{
-                [fields.MultiObjectsProcessingContextGroupKinds]: system.multiObj.groupKinds as fields.MultiObjectsGroupsKindsTemplate,
-                ...system.multiObj.groupKindsMappedGroups
-            } as fields.MultiObjectsProcessingContext
+            ...multiObjectsContext
         }
 
         const processing = {

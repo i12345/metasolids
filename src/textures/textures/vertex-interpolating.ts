@@ -1,6 +1,7 @@
 import { Vec2 } from "playcanvas-extended";
 import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
 import { Texture, TextureLocation } from "../texture.js";
+import { IndiciesArray } from "../../utils/indices-array.js";
 
 export class VertexInterpolatingTexture
     <VertexSample extends FieldPoint = FieldPoint>
@@ -18,7 +19,7 @@ export class VertexInterpolatingTexture
     constructor(
         public vertices: VertexSample[],
         public uv: Vec2[],
-        public triangles: number[],
+        public triangles: IndiciesArray,
     ) {
     }
 

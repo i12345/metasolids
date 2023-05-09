@@ -327,9 +327,11 @@ export class VolumeSolidsParallelizer<
         for (const solid of item[VolumeSolidsKey])
             itemProcessor.process(solid, parallelizedContext)
     }
+
+    static readonly instance = new this()
 }
 
-export class VolumeSurfacesSolidifyingProcessor<
+export class VolumeSurfaceSolidifyingProcessor<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,

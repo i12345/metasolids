@@ -1,0 +1,1 @@
+export type Array3<T> = [T, T, T]
