@@ -1,6 +1,52 @@
-import { Field, FieldPointCombiner, FieldsField, mapObjects, MultiObjectsMapped, MultiObjectsTemplate, objectValues, SampleDomainLocationField, SamplingContext } from "../../fields/index.js";
+import { Field, FieldPoint, FieldPointCombiner, FieldsField, iterObjects, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues, SampleDomainLocationField, SamplingContext } from "../../fields/index.js";
 import { extract, intract } from "../../utils/tree.js";
 import { Texture, TextureLocation, TextureSample } from "../texture.js";
+
+export type ObjectsCombiningTexturesTemplated<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationT extends TextureLocation = TextureLocation,
+        SampledTextureLocationT extends TextureLocation = TextureLocation,
+        TextureSampleT extends FieldPoint = FieldPoint,
+        TextureSamplesGrouped extends
+            MultiObjectsGroupsMapped<Groups, TextureSampleT> =
+            MultiObjectsGroupsMapped<Groups, TextureSampleT>,
+        ValueTextureT extends
+            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT> =
+            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT>,
+        ValueTexturesGrouped extends
+            MultiObjectsGroupsMapped<Groups, ValueTextureT> =
+            MultiObjectsGroupsMapped<Groups, ValueTextureT>
+    > = {
+        [K in keyof Groups]:
+        Groups[K] extends MultiObjectsGroupsTemplate ?
+        (TextureSamplesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TextureSampleT> ?
+            ValueTexturesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], ValueTextureT> ?
+            ObjectsCombiningTexturesTemplated<
+                Objects,
+                Groups[K],
+                TextureLocationT,
+                SampledTextureLocationT,
+                TextureSampleT,
+                TextureSamplesGrouped[K],
+                ValueTextureT,
+                ValueTexturesGrouped[K]
+            > :
+            never : never) :
+        (TextureSamplesGrouped[K] extends TextureSampleT ?
+            ValueTexturesGrouped[K] extends Texture<
+                    TextureLocationT & SampledTextureLocationT,
+                    TextureSamplesGrouped[K]
+                > ?
+            ObjectsCombiningTexture<
+                Objects,
+                TextureLocationT,
+                SampledTextureLocationT,
+                TextureSamplesGrouped[K],
+                ValueTexturesGrouped[K]
+            > :
+            never : never)
+    }
 
 export type ObjectsInfluencesTextureSample<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -61,7 +107,7 @@ export class ObjectsCombiningTexture<
         const locations = this.locations.sample(location, context)
         const values = {} as MultiObjectsMapped<Objects, TextureSampleT>
         
-        mapObjects(
+        iterObjects(
             this.values,
             this.template,
             (values, key, fullpath) => {

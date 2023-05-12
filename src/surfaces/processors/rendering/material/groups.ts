@@ -1,5 +1,5 @@
 import { Color, StandardMaterial } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate_Leaf } from "../../../../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../../fields/multi-objects-fields-point.js"
 
 export type Material_Groups = {
     /**
@@ -24,7 +24,7 @@ export type Material_Groups = {
      * or [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#diffuseMap)
      * multiplied by [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#diffuseVertexColor))
      */
-    diffuse: typeof MultiObjectsGroupsTemplate_Leaf
+    diffuse: MultiObjectsGroupsTemplateLeaf
 
     /**
      * "The specular color of the material. This color value is 3-component
@@ -72,7 +72,7 @@ export type Material_Groups = {
      * 
      * If only a scalar texture is given, then it controls (specularity factor?)
      */
-    specular: typeof MultiObjectsGroupsTemplate_Leaf
+    specular: MultiObjectsGroupsTemplateLeaf
 
     /**
      * "The emissive color of the material."
@@ -92,7 +92,7 @@ export type Material_Groups = {
      * [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#emissiveMap)
      * multiplied by [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#emissiveVertexColor))
      */
-    emissive: typeof MultiObjectsGroupsTemplate_Leaf
+    emissive: MultiObjectsGroupsTemplateLeaf
 
     /**
      * "Defines how much the surface is metallic. From 0 (dielectric) to 1 (metal)."
@@ -118,7 +118,7 @@ export type Material_Groups = {
      * - [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#metalnessMap)
      * multiplied by [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#metalnessVertexColor)
      */
-    metalness: typeof MultiObjectsGroupsTemplate_Leaf
+    metalness: MultiObjectsGroupsTemplateLeaf
 
     /**
      * "Defines the glossiness of the material from 0 (rough) to 1 (shiny)."
@@ -132,7 +132,7 @@ export type Material_Groups = {
      * - [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#glossMap)
      * multiplied by [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#glossVertexColor)
      */
-    glossiness: typeof MultiObjectsGroupsTemplate_Leaf
+    glossiness: MultiObjectsGroupsTemplateLeaf
 
     /**
      * "The height map of the material (default is null). Used for a
@@ -175,7 +175,7 @@ export type Material_Groups = {
      * added to [secondary normal map texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#normalDetailMap)
      * scaled by [bumpiness factor](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#normalDetailMapBumpiness)
      */
-    height: typeof MultiObjectsGroupsTemplate_Leaf
+    height: MultiObjectsGroupsTemplateLeaf
 
     /**
      * "The opacity of the material. This value can be between 0 and 1, where 0
@@ -196,7 +196,7 @@ export type Material_Groups = {
      * - [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#opacityMap)
      * multiplied by [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#opacityVertexColor)
      */
-    opacity: typeof MultiObjectsGroupsTemplate_Leaf
+    opacity: MultiObjectsGroupsTemplateLeaf
 
     /**
      * Iridescence
@@ -212,7 +212,7 @@ export type Material_Groups = {
          * 
          * - [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#iridescenceMap)
          */
-        intensity: typeof MultiObjectsGroupsTemplate_Leaf
+        intensity: MultiObjectsGroupsTemplateLeaf
 
         /**
          * "The index of refraction of the iridescent thin-film.
@@ -224,7 +224,7 @@ export type Material_Groups = {
          * 
          * - [constant value](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#iridescenceRefractionIndex)
          */
-        indexOfRefraction: typeof MultiObjectsGroupsTemplate_Leaf
+        indexOfRefraction: MultiObjectsGroupsTemplateLeaf
 
         /**
          * Iridescence thickness (in nm)
@@ -235,7 +235,7 @@ export type Material_Groups = {
          * - [constant value](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#iridescenceThicknessMax)
          * - [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#iridescenceThicknessMap)
          */
-        thickness: typeof MultiObjectsGroupsTemplate_Leaf
+        thickness: MultiObjectsGroupsTemplateLeaf
     }
 
     /**
@@ -269,7 +269,7 @@ export type Material_Groups = {
          * 
          * @default 0
          */
-        visibility: typeof MultiObjectsGroupsTemplate_Leaf
+        visibility: MultiObjectsGroupsTemplateLeaf
 
         /**
          * "Defines the index of refraction, i.e. The amount of distortion.
@@ -291,7 +291,7 @@ export type Material_Groups = {
          * 
          * @default 1
          */
-        indexOfRefraction: typeof MultiObjectsGroupsTemplate_Leaf
+        indexOfRefraction: MultiObjectsGroupsTemplateLeaf
 
         /**
          * TODO: should this be moved to the top level?
@@ -320,7 +320,7 @@ export type Material_Groups = {
              * 
              * @default Color.BLACK
              */
-            color: typeof MultiObjectsGroupsTemplate_Leaf
+            color: MultiObjectsGroupsTemplateLeaf
 
             /**
              * "The distance defining the absorption rate of light within the medium"
@@ -335,7 +335,7 @@ export type Material_Groups = {
              * 
              * @default 1
              */
-            distance: typeof MultiObjectsGroupsTemplate_Leaf
+            distance: MultiObjectsGroupsTemplateLeaf
         }
     }
 
@@ -365,7 +365,7 @@ export type Material_Groups = {
          * [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#sheenMap)
          * multiplied by [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#sheenVertexColor))
          */
-        color: typeof MultiObjectsGroupsTemplate_Leaf
+        color: MultiObjectsGroupsTemplateLeaf
 
         /**
          * "The glossiness of the sheen (fabric) microfiber structure.
@@ -387,7 +387,7 @@ export type Material_Groups = {
          * multiplied by [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#sheenGlossVertexColor))
          * 
          */
-        glossiness: typeof MultiObjectsGroupsTemplate_Leaf
+        glossiness: MultiObjectsGroupsTemplateLeaf
     }
 
     clearCoat: {
@@ -407,7 +407,7 @@ export type Material_Groups = {
          * multiplied by [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#clearCoatMap)
          * and [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#clearCoatVertexColor)
          */
-        intensity: typeof MultiObjectsGroupsTemplate_Leaf
+        intensity: MultiObjectsGroupsTemplateLeaf
 
         /**
          * "Defines the clearcoat glossiness of the clearcoat layer from 0 (rough) to 1 (mirror)."
@@ -424,7 +424,7 @@ export type Material_Groups = {
          * multiplied by [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#clearCoatGlossMap)
          * and [vertex colors](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#clearCoatGlossVertexColor)
          */
-        glossiness: typeof MultiObjectsGroupsTemplate_Leaf
+        glossiness: MultiObjectsGroupsTemplateLeaf
 
         /**
          * The height map for the clearcoat layer.
@@ -436,7 +436,7 @@ export type Material_Groups = {
          * - normal map [texture](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#clearCoatNormalMap)
          * scaled by [bumpiness factor](https://developer.playcanvas.com/en/api/pc.StandardMaterial.html#clearCoatBumpiness)
          */
-        height: typeof MultiObjectsGroupsTemplate_Leaf
+        height: MultiObjectsGroupsTemplateLeaf
     }
 }
 

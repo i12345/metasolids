@@ -1,7 +1,22 @@
 import { Vec2 } from "playcanvas-extended";
-import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
+import { Field, FieldPoint, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
 import { Texture, TextureLocation } from "../texture.js";
 import { IndiciesArray } from "../../utils/indices-array.js";
+
+export type VertexInterpolatingTexturesTemplated<
+        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TexelType extends FieldPoint = FieldPoint,
+        TexelTypesGrouped extends
+            MultiObjectsGroupsMapped<Groups, TexelType> =
+            MultiObjectsGroupsMapped<Groups, TexelType>
+    > = {
+    [K in keyof TexelTypesGrouped]:
+        Groups[K] extends MultiObjectsGroupsTemplate ?
+            (TexelTypesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelType> ?
+                VertexInterpolatingTexturesTemplated<Groups[K], TexelTypesGrouped[K]> :
+                never) :
+            VertexInterpolatingTexture<TexelTypesGrouped[K]>
+    }
 
 export class VertexInterpolatingTexture
     <VertexSample extends FieldPoint = FieldPoint>

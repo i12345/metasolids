@@ -1,6 +1,6 @@
 import { FieldPoint, FieldsPoint, fields_point_add_inplace, field_point_divide, field_point_multiply } from "../../fields/point.js"
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js"
-import { makeExtractor, mapTreeByLeavesValues, TreeByValue, TreeByValueMapped } from "../../utils/tree.js"
+import { makeExtractor, iterTreeByLeavesValues, TreeByValue, TreeByValueMapped } from "../../utils/tree.js"
 import { VolumeSample } from "../../volumes/index.js"
 import { SolidProcessingContext, SolidProcessor } from "../processor.js"
 import { SolidWithEnclosingVolume, SolidWithEnclosingVolumeProcessor } from "./enclosing-volume.js"
@@ -89,7 +89,7 @@ export class SolidWithPhysicalPropertiesProcessor<
     }
 
     process(solid: SolidT): void {
-        mapTreeByLeavesValues(
+        iterTreeByLeavesValues(
             solid,
             this.physicalPropertiesTemplate,
             [PhysicalPropertiesTemplate_Leaf_Extensive, PhysicalPropertiesTemplate_Leaf_Intensive],

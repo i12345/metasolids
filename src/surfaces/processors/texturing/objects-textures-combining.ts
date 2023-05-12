@@ -1,35 +1,31 @@
-import { groupKindObjectsGrouped, groupKinds, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsTemplate, MultiObjectsInfluences, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsTemplate } from "../../../fields/index.js";
+import { groupKindObjectsGrouped, groupKinds, MultiObjectsCombined, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsCombined, MultiObjectsGroupsCombinedMapped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsInfluences, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsTemplate } from "../../../fields/index.js";
 import { Processor } from "../../../processor/processor.js";
-import { ObjectsCombiningTexture, Texture, TextureSample, VertexInterpolatingTexture } from "../../../textures/index.js";
+import { ObjectsCombiningTexture, ObjectsCombiningTexturesTemplated, ObjectsTextureLocationsTextureSample, Texture, TextureLocation, TextureSample, TextureSamplesExtracted, TextureSamplesExtracted1, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { onlyOne } from "../../../utils/only-one.js";
-import { PropertyPath } from "../../../utils/property-path.js";
-import { Surface } from "../../surface.js";
-import { SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithObjectsTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceTextureLocation, SurfaceTextureLocationsGroupKindsTemplate, SurfaceTexturesGroupKindsTemplate, SurfaceWithObjectsTextures } from "./types.js";
-import { SurfaceSampleWithInterpolatingValues } from "./vertex-interpolating.js";
+import { PropertyPath, PROPERTYKEY_ANY } from "../../../utils/property-path.js";
+import { SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithObjectsTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceWithIndividualTextures, SurfaceObjectsTextureLocationsGroupKindsTemplate } from "./types.js";
 
+/**
+ * The surface texture location group is singular, and it is not just "an"
+ * individual texture location group, but the only one here considered.
+ * 
+ * The value texture location group is similarly singular, and will be used for
+ * every value texture group.
+ */
 export type SurfaceSampleWithSurfaceAndObjectsTextureLocations<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceTextureLocationT extends SurfaceTextureLocation = SurfaceTextureLocation,
-        ValueTextureLocationsGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        ValueTextureLocationT extends SurfaceTextureLocation = SurfaceTextureLocation,
+        SurfaceTextureLocationT extends TextureLocation = TextureLocation,
+        ValueTextureLocationsGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ValueTextureLocationT extends TextureLocation = TextureLocation,
     > =
-    SurfaceSampleWithInterpolatingValues<
-            SurfaceTextureLocationGroup,
-            ValueTextureLocationsGroups,
-            MultiObjectsMappedGrouped<
-                Objects,
-                ValueTextureLocationsGroups,
-                ValueTextureLocationT
-            >
-        > &
     MultiObjectsInfluencesGrouped<Objects, InfluenceGroup> &
-    // = SurfaceSampleWithObjectsTextureLocations<
-    //         Objects,
-    //         ValueTextureLocationsGroups,
-    //         ValueTextureLocationT
-    //     > &
+    SurfaceSampleWithObjectsTextureLocations<
+            Objects,
+            ValueTextureLocationsGroup,
+            ValueTextureLocationT
+        > &
     SurfaceSampleWithIndividualTextureLocations<
             SurfaceTextureLocationGroup,
             SurfaceTextureLocationT
@@ -42,37 +38,62 @@ export type SurfaceSampleProcessingContextWithSurfaceAndObjectsTextureLocations<
             MultiObjectsGrouped<Objects, InfluenceGroup> =
             MultiObjectsGrouped<Objects, InfluenceGroup>,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        ValueTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ValueTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsValueTextureLocationsGrouped extends
-            MultiObjectsGrouped<Objects, ValueTextureLocationGroups> =
-            MultiObjectsGrouped<Objects, ValueTextureLocationGroups>,
+            MultiObjectsGrouped<Objects, ValueTextureLocationGroup> =
+            MultiObjectsGrouped<Objects, ValueTextureLocationGroup>,
     > =
     MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroup, ObjectsInfluencesGrouped> &
     SurfaceSampleProcessingContextWithObjectsTextureLocations<
-        Objects,
-        ValueTextureLocationGroups,
-        ObjectsValueTextureLocationsGrouped
-    > &
+            Objects,
+            ValueTextureLocationGroup,
+            ObjectsValueTextureLocationsGrouped
+        > &
     SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>
 
+// let a: SurfaceSampleProcessingContextWithIndividualTextureLocations
+// let b: SurfaceSampleProcessingContextWithObjectsTextureLocations
+// let c: SurfaceSampleProcessingContextWithSurfaceAndObjectsTextureLocations
+// a = c // works
+// b = c // works
+// c = a // error
+// c = b // error
+
+/**
+ * A surface with value textures for objects that are also combined for each
+ * value texture group, weighted using the influences group for all value
+ * textures.
+ * 
+ * The value texture location group does not have to be the value texture
+ * groups; there is just one value texture location group but there can be many
+ * value texture groups. The value texture group must be an objects texture
+ * locations group.
+ * 
+ * The combining textures, for each value texture group, are placed in the
+ * `[MultiObjectsCombinedValue]` key of the root of each value texture group.
+ */
 export type SurfaceWithSurfaceAndObjectsTextures<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceTextureLocationT extends SurfaceTextureLocation = SurfaceTextureLocation,
+        SurfaceTextureLocationT extends TextureLocation = TextureLocation,
+        ValueTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ValueTexturesGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        ValueTextureLocationT extends SurfaceTextureLocation = SurfaceTextureLocation,
+        ValueTextureLocationT extends TextureLocation = TextureLocation,
         ValueTextureSampleT extends TextureSample = TextureSample,
         ValueTextureT extends
             Texture<ValueTextureLocationT, ValueTextureSampleT> =
             Texture<ValueTextureLocationT, ValueTextureSampleT>,
+        ValueTexturesGrouped extends
+            MultiObjectsGroupsMapped<ValueTexturesGroups, ValueTextureT> =
+            MultiObjectsGroupsMapped<ValueTexturesGroups, ValueTextureT>,
         SurfaceSampleT extends
             SurfaceSampleWithSurfaceAndObjectsTextureLocations<
                     Objects,
                     InfluenceGroup,
                     SurfaceTextureLocationGroup,
                     SurfaceTextureLocationT,
-                    ValueTexturesGroups,
+                    ValueTextureLocationGroup,
                     ValueTextureLocationT
                 > =
             SurfaceSampleWithSurfaceAndObjectsTextureLocations<
@@ -80,32 +101,69 @@ export type SurfaceWithSurfaceAndObjectsTextures<
                     InfluenceGroup,
                     SurfaceTextureLocationGroup,
                     SurfaceTextureLocationT,
-                    ValueTexturesGroups,
+                    ValueTextureLocationGroup,
                     ValueTextureLocationT
                 >,
     > =
-    // SurfaceSampleT is added separately here to avoid 'too much complexity' error
-    Surface<SurfaceSampleT> &
     SurfaceWithObjectsTextures<
-        Objects,
-        ValueTexturesGroups,
-        ValueTextureLocationT,
-        ValueTextureSampleT,
-        ValueTextureT
-        // SurfaceSampleT
-    > &
-    MultiObjectsMappedAndCombinedGrouped<
-        Objects,
-        ValueTexturesGroups,
-        ValueTextureT,
-        ObjectsCombiningTexture<
             Objects,
-            SurfaceTextureLocationT,
+            ValueTextureLocationGroup,
             ValueTextureLocationT,
             ValueTextureSampleT,
-            ValueTextureT
+            ValueTexturesGroups,
+            ValueTextureT,
+            ValueTexturesGrouped,
+            SurfaceSampleT
+        > &
+    SurfaceWithIndividualTextures<
+            MultiObjectsGroupsCombined<ValueTexturesGroups>,
+            SurfaceTextureLocationT,
+            ValueTextureSampleT,
+            ObjectsCombiningTexture<
+                    Objects,
+                    SurfaceTextureLocationT,
+                    ValueTextureLocationT,
+                    ValueTextureSampleT,
+                    ValueTextureT
+                >
+            // MultiObjectsGroupsCombinedMapped<
+            //         ValueTexturesGroups,
+            //         ObjectsCombiningTexture<
+            //                 Objects,
+            //                 SurfaceTextureLocationT,
+            //                 ValueTextureLocationT,
+            //                 ValueTextureSampleT,
+            //                 ValueTextureT
+            //             >,
+            //         ObjectsCombiningTexturesTemplated<
+            //                 Objects,
+            //                 ValueTexturesGroups,
+            //                 SurfaceTextureLocationT,
+            //                 ValueTextureLocationT,
+            //                 ValueTextureSampleT,
+            //                 TextureSamplesExtracted<
+            //                         ValueTexturesGroups,
+            //                         ValueTextureT,
+            //                         ValueTexturesGrouped
+            //                     >,
+            //                 ValueTextureT,
+            //                 ValueTexturesGrouped
+            //             >
+            //     >,
+            // SurfaceSampleT
         >
-    >
+    // MultiObjectsMappedAndCombinedGrouped<
+    //     Objects,
+    //     ValueTexturesGroups,
+    //     ValueTextureT,
+    //     ObjectsCombiningTexture<
+    //         Objects,
+    //         SurfaceTextureLocationT,
+    //         ValueTextureLocationT,
+    //         ValueTextureSampleT,
+    //         ValueTextureT
+    //     >
+    // >
 
 export type SurfaceProcessingContextWithSurfaceAndObjectsTextures<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -114,6 +172,10 @@ export type SurfaceProcessingContextWithSurfaceAndObjectsTextures<
             MultiObjectsGrouped<Objects, InfluenceGroup> =
             MultiObjectsGrouped<Objects, InfluenceGroup>,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ValueTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ObjectsValueTextureLocationsGrouped extends
+            MultiObjectsGrouped<Objects, ValueTextureLocationGroups> =
+            MultiObjectsGrouped<Objects, ValueTextureLocationGroups>,
         ValueTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsValueTexturesGrouped extends
             MultiObjectsGrouped<Objects, ValueTextureGroups> =
@@ -124,26 +186,29 @@ export type SurfaceProcessingContextWithSurfaceAndObjectsTextures<
                     InfluenceGroup,
                     ObjectsInfluencesGrouped,
                     SurfaceTextureLocationGroup,
-                    ValueTextureGroups,
-                    ObjectsValueTexturesGrouped
+                    ValueTextureLocationGroups,
+                    ObjectsValueTextureLocationsGrouped
                 > =
             SurfaceSampleProcessingContextWithSurfaceAndObjectsTextureLocations<
                     Objects,
                     InfluenceGroup,
                     ObjectsInfluencesGrouped,
                     SurfaceTextureLocationGroup,
-                    ValueTextureGroups,
-                    ObjectsValueTexturesGrouped
+                    ValueTextureLocationGroups,
+                    ObjectsValueTextureLocationsGrouped
                 >
     > =
     SurfaceProcessingContextWithObjectsTextures<
         Objects,
+        ValueTextureLocationGroups,
+        ObjectsValueTextureLocationsGrouped,
         ValueTextureGroups,
         ObjectsValueTexturesGrouped,
         SampleProcessingContextT
     > &
     SurfaceProcessingContextWithIndividualTextures<
         SurfaceTextureLocationGroup,
+        MultiObjectsGroupsCombined<ValueTextureGroups>,
         SampleProcessingContextT
     >
 
@@ -154,25 +219,30 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             MultiObjectsGrouped<Objects, InfluenceGroup> =
             MultiObjectsGrouped<Objects, InfluenceGroup>,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceTextureLocationT extends SurfaceTextureLocation = SurfaceTextureLocation,
-        ValueTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        ObjectsValueTexturesGrouped extends
-            MultiObjectsGrouped<Objects, ValueTextureGroups> =
-            MultiObjectsGrouped<Objects, ValueTextureGroups>,
-        ValueTextureLocationT extends
-            SurfaceTextureLocation =
-            SurfaceTextureLocation,
+        SurfaceTextureLocationT extends TextureLocation = TextureLocation,
+        ValueTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ObjectsValueTextureLocationsGrouped extends
+            MultiObjectsGrouped<Objects, ValueTextureLocationGroup> =
+            MultiObjectsGrouped<Objects, ValueTextureLocationGroup>,
+        ValueTextureLocationT extends TextureLocation = TextureLocation,
         ValueTextureSampleT extends TextureSample = TextureSample,
         ValueTextureT extends
             Texture<ValueTextureLocationT, ValueTextureSampleT> =
             Texture<ValueTextureLocationT, ValueTextureSampleT>,
+        ValueTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ValueTexturesGrouped extends
+            MultiObjectsGroupsMapped<ValueTextureGroups, ValueTextureT> =
+            MultiObjectsGroupsMapped<ValueTextureGroups, ValueTextureT>,
+        ObjectsValueTexturesGrouped extends
+            MultiObjectsGrouped<Objects, ValueTextureGroups> =
+            MultiObjectsGrouped<Objects, ValueTextureGroups>,
         SurfaceSampleT extends
             SurfaceSampleWithSurfaceAndObjectsTextureLocations<
                     Objects,
                     InfluenceGroup,
                     SurfaceTextureLocationGroup,
                     SurfaceTextureLocationT,
-                    ValueTextureGroups,
+                    ValueTextureLocationGroup,
                     ValueTextureLocationT
                 > =
             SurfaceSampleWithSurfaceAndObjectsTextureLocations<
@@ -180,7 +250,7 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
                     InfluenceGroup,
                     SurfaceTextureLocationGroup,
                     SurfaceTextureLocationT,
-                    ValueTextureGroups,
+                    ValueTextureLocationGroup,
                     ValueTextureLocationT
                 >,
         SurfaceSampleProcessingContextT extends
@@ -189,16 +259,16 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
                     InfluenceGroup,
                     ObjectsInfluencesGrouped,
                     SurfaceTextureLocationGroup,
-                    ValueTextureGroups,
-                    ObjectsValueTexturesGrouped
+                    ValueTextureLocationGroup,
+                    ObjectsValueTextureLocationsGrouped
                 > =
             SurfaceSampleProcessingContextWithSurfaceAndObjectsTextureLocations<
                     Objects,
                     InfluenceGroup,
                     ObjectsInfluencesGrouped,
                     SurfaceTextureLocationGroup,
-                    ValueTextureGroups,
-                    ObjectsValueTexturesGrouped
+                    ValueTextureLocationGroup,
+                    ObjectsValueTextureLocationsGrouped
                 >
     > implements
     Processor<
@@ -207,10 +277,12 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             InfluenceGroup,
             SurfaceTextureLocationGroup,
             SurfaceTextureLocationT,
+            ValueTextureLocationGroup,
             ValueTextureGroups,
             ValueTextureLocationT,
             ValueTextureSampleT,
             ValueTextureT,
+            ValueTexturesGrouped,
             SurfaceSampleT
         >,
         SurfaceProcessingContextWithSurfaceAndObjectsTextures<
@@ -218,6 +290,8 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             InfluenceGroup,
             ObjectsInfluencesGrouped,
             SurfaceTextureLocationGroup,
+            ValueTextureLocationGroup,
+            ObjectsValueTextureLocationsGrouped,
             ValueTextureGroups,
             ObjectsValueTexturesGrouped,
             SurfaceSampleProcessingContextT
@@ -233,39 +307,53 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
         public valueTextureGroups: ValueTextureGroups,
         public influenceGroup?: InfluenceGroup,
         public surfaceTextureLocationGroup?: SurfaceTextureLocationGroup,
-    ) {}
-
+        public valueTextureLocationGroup?: ValueTextureLocationGroup,
+    ) { }
+    
     init(context: SurfaceProcessingContextWithSurfaceAndObjectsTextures<
             Objects,
             InfluenceGroup,
             ObjectsInfluencesGrouped,
             SurfaceTextureLocationGroup,
+            ValueTextureLocationGroup,
+            ObjectsValueTextureLocationsGrouped,
             ValueTextureGroups,
             ObjectsValueTexturesGrouped,
             SurfaceSampleProcessingContextT
         >): void {
-        const surfaceTextureLocationGroup = onlyOne(groupKinds(
-            context.sample,
-            SurfaceTextureLocationsGroupKindsTemplate,
-            this.surfaceTextureLocationGroup
-        )).group
-        
+        const valueTextureGroups = [...groupKinds(
+            context,
+            SurfaceObjectsTexturesGroupKindsTemplate,
+            this.valueTextureGroups
+        )]
+
         const influencesGroup = onlyOne(groupKinds(
             context.sample,
             MultiObjectsInfluencesGroupKindsTemplate,
             this.influenceGroup
         )).group
+        
+        const surfaceTextureLocationGroup = onlyOne(groupKinds(
+            context.sample,
+            SurfaceIndividualTextureLocationsGroupKindsTemplate,
+            this.surfaceTextureLocationGroup
+        )).group
+        
+        const valueTextureLocationGroups = onlyOne(groupKinds(
+            context.sample,
+            SurfaceObjectsTextureLocationsGroupKindsTemplate,
+            this.valueTextureLocationGroup
+        )).group
 
-        const valueTextureGroups = groupKinds(
-            context,
-            SurfaceTexturesGroupKindsTemplate,
-            this.valueTextureGroups
-        )
-
-        this._dependencies = [
-            surfaceTextureLocationGroup.path,
+        const sampleDependencies = [
             influencesGroup.path,
-            ...[...valueTextureGroups].map(({ group: { path } }) => path)
+            surfaceTextureLocationGroup.path,
+            valueTextureLocationGroups.path,
+        ]
+        
+        this._dependencies = [
+            ...sampleDependencies.map(path => ['samples', PROPERTYKEY_ANY, ...path]),
+            ...valueTextureGroups.map(({ group: { path } }) => path)
         ]
     }
 
@@ -275,10 +363,12 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
                     InfluenceGroup,
                     SurfaceTextureLocationGroup,
                     SurfaceTextureLocationT,
+                    ValueTextureLocationGroup,
                     ValueTextureGroups,
                     ValueTextureLocationT,
                     ValueTextureSampleT,
                     ValueTextureT,
+                    ValueTexturesGrouped,
                     SurfaceSampleT
                 >,
             context: SurfaceProcessingContextWithSurfaceAndObjectsTextures<
@@ -286,6 +376,8 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
                     InfluenceGroup,
                     ObjectsInfluencesGrouped,
                     SurfaceTextureLocationGroup,
+                    ValueTextureLocationGroup,
+                    ObjectsValueTextureLocationsGrouped,
                     ValueTextureGroups,
                     ObjectsValueTexturesGrouped,
                     SurfaceSampleProcessingContextT
@@ -293,7 +385,7 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
         ): void {
         const surfaceTextureLocationGroup = onlyOne(groupKinds(
             context.sample,
-            SurfaceTextureLocationsGroupKindsTemplate,
+            SurfaceIndividualTextureLocationsGroupKindsTemplate,
             this.surfaceTextureLocationGroup
         )).group
         
@@ -311,15 +403,21 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
         const influences_texture = new VertexInterpolatingTexture(influenceValues, UVs, surface.mesh.triangles)
 
         const valueTextureGroups = groupKindObjectsGrouped(
-                surface,
-                context,
-                SurfaceTexturesGroupKindsTemplate,
-                this.valueTextureGroups
-            )
+            surface,
+            context,
+            SurfaceObjectsTexturesGroupKindsTemplate,
+            this.valueTextureGroups
+        )
 
+        const valueTextureLocationGroup = onlyOne(groupKinds(
+            context.sample,
+            SurfaceObjectsTextureLocationsGroupKindsTemplate,
+            this.valueTextureLocationGroup
+        )).group
+        
         for (const { group, objects: { value, template } } of valueTextureGroups) {
-            const locations = surface.samples.map(sample =>
-                group.get<MultiObjectsMapped<Objects, ValueTextureLocationT>>(sample))
+            const locations = surface.samples.map((sample: SurfaceSampleWithObjectsTextureLocations<Objects, ValueTextureLocationGroup, ValueTextureLocationT>) =>
+                valueTextureLocationGroup.get<ObjectsTextureLocationsTextureSample<Objects, ValueTextureLocationT>>(sample))
             const locations_texture = new VertexInterpolatingTexture(locations, UVs, surface.mesh.triangles)
 
             const combined = new ObjectsCombiningTexture(

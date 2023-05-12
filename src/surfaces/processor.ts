@@ -334,11 +334,15 @@ export interface VolumeSurfaceMeshingProcessingContext<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleContextTemplate = any,
+        SurfaceProcessingContextT extends
+            SurfaceProcessingContext<SampleContextTemplate> =
+            SurfaceProcessingContext<SampleContextTemplate>,
     > extends
     VolumeSurfacesProcessingContext<
         Location,
         Sample,
-        SampleContextTemplate
+        SampleContextTemplate,
+        SurfaceProcessingContextT
     > {
     [VolumeSurfaceMeshingKey]: {
         algorithm: MeshingAlgorithm,
@@ -368,13 +372,13 @@ export class VolumeSurfaceMeshingProcessor<
     }
 
     process(
-        volume: VolumeSurfaceMeshingProcessing<Sample>,
-        context: VolumeSurfaceMeshingProcessingContext<
-            Location,
-            Sample,
-            SampleContextTemplate
-        >
-    ): void {
+            volume: VolumeSurfaceMeshingProcessing<Sample>,
+            context: VolumeSurfaceMeshingProcessingContext<
+                Location,
+                Sample,
+                SampleContextTemplate
+            >
+        ): void {
         const sampling = volume[VolumeSamplingKey]
         const algorithm = context[VolumeSurfaceMeshingKey].algorithm
         const mesh = algorithm.mesh(

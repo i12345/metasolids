@@ -1,31 +1,60 @@
 import { Surface, SurfaceSample } from "../../surface.js";
-import { SurfaceProcessingContext } from "../../processor.js";
 import { Material_Groups_Textures, Material_Texture_Context } from "./material/material-texture.js";
 import { VolumeLocation } from "../../../volumes/volume.js";
-import { SurfaceSampleProcessingContextWithIndividualTextureLocations } from "../texturing/types.js";
+import { SurfaceProcessingContextWithIndividualTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations } from "../texturing/types.js";
 import { SurfaceRendererShared } from "./renderer.js";
-import { MultiObjectsGroupsMapped } from "../../../fields/multi-objects-fields-point.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../../fields/multi-objects-fields-point.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
 
-export const SurfaceWithRendering_TexturesGroupsTemplate = {
-    textures: Material_Groups_Template
+export type SurfaceWithRendering_TextureGroups = {
+    material: {
+        textures: Material_Groups
+    }
 }
 
-export interface SurfaceWithRendering
-    <Sample extends SurfaceSample = SurfaceSample>
-    extends Surface<Sample> {
+export const SurfaceWithRendering_TextureGroupsTemplate = {
+    material: {
+        textures: Material_Groups_Template
+    }
+}
+
+export interface SurfaceWithRender_TexturesTemplated<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > {
+    material: {
+        textures: Material_Groups_Textures<VolumeLocationT>
+    }
+}
+
+export interface SurfaceWithRendering<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        Sample extends SurfaceSample = SurfaceSample
+    >
+    extends Surface<Sample>,
+    SurfaceWithRender_TexturesTemplated<VolumeLocationT> {
     renderer: SurfaceRendererShared
-    textures: Material_Groups_Textures
 }
 
 export interface SurfaceProcessingContextWithRendering<
-        VolumeLocationT extends
-            VolumeLocation =
-            VolumeLocation,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SampleContextTemplate extends
-            SurfaceSampleProcessingContextWithIndividualTextureLocations =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations,
-    >
-    extends SurfaceProcessingContext<SampleContextTemplate> {
-    textures: MultiObjectsGroupsMapped<Material_Groups, Material_Texture_Context<VolumeLocationT>>
+            SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup> =
+            SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
+    > extends
+    SurfaceProcessingContextWithIndividualTextures<
+        SurfaceTextureLocationGroup,
+        SurfaceWithRendering_TextureGroups,
+        SampleContextTemplate
+    > {
+    material: {
+        textures?: MultiObjectsGroupsMapped<
+            Material_Groups,
+            Material_Texture_Context<VolumeLocationT>
+        >
+    }
 }
+
+// let a: SurfaceProcessingContextWithRendering<VolumeLocation, { a: MultiObjectsGroupsTemplateLeaf }, SurfaceSampleProcessingContextWithIndividualTextureLocations<{ a: MultiObjectsGroupsTemplateLeaf }>>
+// a[SurfaceIndividualTexturesGroupKindKey].material.textures.diffuse // MultiObjectsGroupsTemplateLeaf
+// a.material.textures.diffuse // Material_Texture_Context<VolumeLocation>

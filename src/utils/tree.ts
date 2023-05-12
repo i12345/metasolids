@@ -9,14 +9,6 @@ export interface TreeByValue<
         Leaf
 }
 
-export type TreeByKey<
-        LeafKeysTemplate,
-        LeafValue,
-        Tree extends TreeByKey<LeafKeysTemplate, LeafValue, Tree>
-    > =
-    { [key: PropertyKey]: Tree } &
-    { [K in keyof LeafKeysTemplate]: LeafValue }
-
 export type TreeByValueOrLeaf<
         Leaf,
         Tree extends TreeByValue<Leaf, Tree>
@@ -42,9 +34,8 @@ export type TreeByValueMapped_recursive<
             Tree[K] extends Leaf ? T : never
 }
 
-export const extract = <
-        T
-    >(tree: any, path: PropertyPath) =>
+export const extract = <T>
+    (tree: any, path: PropertyPath) =>
         path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
 
 export const intract = <T>
@@ -69,8 +60,8 @@ export const makeExtractor =
             path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
 
 export const makeIntractor =
-    (path: PropertyPath) =>
-    <T>(tree: object, value: T) =>
+    <TDefault = any>(path: PropertyPath) =>
+    <T = TDefault>(tree: object, value: T) =>
         intract(tree, path, value)
 
 export const makeDeleter =
@@ -78,19 +69,46 @@ export const makeDeleter =
     (tree: object) =>
         deletePath(tree, path)
 
-export function* pathsToKey<
-        LeafKeysTemplate,
-        LeafValue,
-        Tree extends TreeByKey<LeafKeysTemplate, LeafValue, Tree>
-    >(
-        tree: Tree,
-        leafKeys: (keyof LeafKeysTemplate)[]
+/**
+ * Searches for nodes that have a search keys present and returns paths to
+ * those nodes.
+ * @param tree the tree to search for nodes with a certain key
+ * @param leaf the key to look for on each node
+ */
+export function* pathsToNodeWithKey(
+        tree: object,
+        leaf: PropertyKey
     ): Generator<PropertyPath> {
-    for (const key of Reflect.ownKeys(tree))
-        if (leafKeys.includes(key as keyof LeafKeysTemplate))
-            yield [key]
-        else for (const subpath of pathsToKey(tree[key], leafKeys))
+    let nodeHasKeys = false
+    for (const key of Reflect.ownKeys(tree)) {
+        if (!nodeHasKeys && leaf === key) {
+            nodeHasKeys = true
+            yield []
+        }
+        else for (const subpath of pathsToNodeWithKey(tree[key], leaf))
             yield [key, ...subpath]
+    }
+}
+
+/**
+ * Searches for nodes that have one or more search keys present and returns
+ * paths to those nodes.
+ * @param tree the tree to search for nodes with certain keys
+ * @param leaves the keys to look for on each node
+ */
+export function* pathsToNodeWithKeys(
+        tree: object,
+        leaves: PropertyKey[]
+    ): Generator<PropertyPath> {
+    let nodeHasKeys = false
+    for (const key of Reflect.ownKeys(tree)) {
+        if (!nodeHasKeys && leaves.includes(key)) {
+            yield []
+            nodeHasKeys = true
+        }
+        else for (const subpath of pathsToNodeWithKeys(tree[key], leaves))
+            yield [key, ...subpath]
+    }
 }
 
 export function* pathsToValue<
@@ -121,31 +139,51 @@ export function* pathsToValues<
             yield [key, ...subpath]
 }
 
-/**
- * Searches for subtrees that are related by a key in {@link leafKeys} and returns them
- * 
- * @deprecated use {@link leavesByValue} instead and apply its extractor to
- * the key-leaved trees.
- * @param tree the tree to search for leaves in
- * @param leafKeys the keys to consider to be leaves in the tree
- */
-export function* leavesByKey<
-        LeafKeysTemplate,
-        LeafValue,
-        Tree extends TreeByKey<LeafKeysTemplate, LeafValue, Tree>
-    >(
-        tree: Tree,
-        leafKeys: (keyof LeafKeysTemplate)[]
-    ) {
-    for (const path of pathsToKey(tree, leafKeys)) {
-        yield {
-            path,
-            get: makeExtractor(path),
-            set: makeIntractor(path),
-            delete: makeDeleter(path),
-        }
-    }
+export interface LeafInterface<T = any> {
+    path: PropertyPath
+    get: ReturnType<typeof makeExtractor<T>>
+    set: ReturnType<typeof makeIntractor<T>>
+    delete: ReturnType<typeof makeDeleter>
 }
+
+export const makeLeafInterface = <T = any>(path: PropertyPath): LeafInterface<T> => ({
+    path,
+    get: makeExtractor(path),
+    set: makeIntractor(path),
+    delete: makeDeleter(path),
+})
+
+// /**
+//  * Searches for subtrees that are related by a key {@link leafKey} and returns them
+//  * 
+//  * @deprecated use {@link leavesByValue} instead and apply its extractor to
+//  * the key-leaved trees.
+//  * @param tree the tree to search for leaves in
+//  * @param leafKey the key to consider to be leaves in the tree
+//  */
+// export function* leavesByKey(
+//         tree: object,
+//         leafKey: PropertyKey
+//     ) {
+//     for (const path of pathsToKey(tree, leafKey))
+//         yield makeLeafInterface(path)
+// }
+
+// /**
+//  * Searches for subtrees that are related by a key in {@link leafKeys} and returns them
+//  * 
+//  * @deprecated use {@link leavesByValues} instead and apply its extractor to
+//  * the key-leaved trees.
+//  * @param tree the tree to search for leaves in
+//  * @param leafKeys the keys to consider to be leaves in the tree
+//  */
+// export function* leavesByKeys(
+//         tree: object,
+//         leafKeys: PropertyKey[]
+//     ) {
+//     for (const path of pathsToKeys(tree, leafKeys))
+//         yield makeLeafInterface(path)
+// }
 
 export function* leavesByValue<
         Leaf = any,
@@ -154,14 +192,8 @@ export function* leavesByValue<
         tree: Tree,
         leaf: Leaf
     ) {
-    for (const path of pathsToValue<Leaf, Tree>(tree, leaf)) {
-        yield {
-            path,
-            get: makeExtractor(path),
-            set: makeIntractor(path),
-            delete: makeDeleter(path),
-        }
-    }
+    for (const path of pathsToValue<Leaf, Tree>(tree, leaf))
+        yield makeLeafInterface(path)
 }
 
 export function* leavesByValues<
@@ -171,17 +203,11 @@ export function* leavesByValues<
         tree: Tree,
         leaves: Leaf[]
     ) {
-    for (const path of pathsToValues<Leaf, Tree>(tree, leaves)) {
-        yield {
-            path,
-            get: makeExtractor(path),
-            set: makeIntractor(path),
-            delete: makeDeleter(path),
-        }
-    }
+    for (const path of pathsToValues<Leaf, Tree>(tree, leaves))
+        yield makeLeafInterface(path)
 }
 
-export function mapTreeByLeavesValue(
+export function iterTreeByLeavesValue(
         values: object,
         template: object,
         leaf: any,
@@ -195,20 +221,25 @@ export function mapTreeByLeavesValue(
         for (const key in Reflect.ownKeys(template)) {
             const nextPath = [...path, key]
             
-            if (template[key] === leaf) {
+            if (template[key] === leaf)
                 action(values, key, nextPath, template[key])
-            } else traverse(
-                values[key],
-                template[key],
-                nextPath
-            )
+            else {
+                if (!(key in values))
+                    values[key] = {}
+                
+                traverse(
+                    values[key],
+                    template[key],
+                    nextPath
+                )
+            }
         }
     }
     
     traverse(values, template)
 }
 
-export function mapTreeByLeavesValues(
+export function iterTreeByLeavesValues(
         values: object,
         template: object,
         leaves: any[],
@@ -222,13 +253,18 @@ export function mapTreeByLeavesValues(
         for (const key in Reflect.ownKeys(template)) {
             const nextPath = [...path, key]
 
-            if (leaves.includes(template[key])) {
+            if (leaves.includes(template[key]))
                 action(values, key, nextPath, template[key])
-            } else traverse(
-                values[key],
-                template[key],
-                nextPath
-            )
+            else {
+                if (!(key in values))
+                    values[key] = {}
+
+                traverse(
+                    values[key],
+                    template[key],
+                    nextPath
+                )
+            }
         }
     }
 

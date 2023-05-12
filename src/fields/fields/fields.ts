@@ -2,7 +2,7 @@ import { Field } from "../field.js";
 import { FieldsInterpolationType } from "../interpolators/fields.js";
 import { FieldInterpolationType, makeInterpolator } from "../interpolation.js";
 import { FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
-import { extract, mapTreeByLeavesValue } from "../../utils/tree.js";
+import { extract, iterTreeByLeavesValue } from "../../utils/tree.js";
 
 export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     implements Field<Point> {

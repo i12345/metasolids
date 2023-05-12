@@ -1,11 +1,16 @@
 import { calculateNormals, Component, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
 import { FieldsPoint } from "../fields/point.js";
-import { fields, meshing, surfaces, volumes } from "../index.js";
+import { fields, meshing, solids, surfaces, textures, volumes } from "../index.js";
 import { Volume } from "../volumes/volume.js";
 import { VolumeComponentSystem } from "./system.js";
 import { ProcessorGraph } from "../processor/index.js";
-import { groupKinds, MultiObjectsGroupsTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
+import { groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
 import { MultiObjectsVolume } from "../volumes/index.js";
+import { GroupsKindsT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT } from "./types.js";
+import { MultiObjectsGroupsTemplate } from "../fields/multi-objects-fields-point.js";
+import { makeClone } from "../utils/cloneable.js";
+import { MultiObjectsGroupedObjectsKey } from "../fields/multi-objects-fields-point.js";
+import { intract, pathsToNodeWithKey } from "../utils/tree.js";
 
 const _schema = ['enabled']
 
@@ -60,8 +65,8 @@ export class VolumeComponent extends Component {
             else {
                 return new volumes.MultiObjectsVolume(
                     Object.fromEntries(children),
-                    system.multiObj.groupKinds,
                     undefined,
+                    Sample_MultiObjectsMappedGroups_Template,
                     MultiObjectsInfluencesGroupsDefaultTemplate
                 )
             }
@@ -75,46 +80,74 @@ export class VolumeComponent extends Component {
                 ) as MultiObjectsTemplate
             return MultiObjectsTemplate_Leaf
         }
+
         const objectsTemplate = <MultiObjectsTemplate>objectsTemplate_populate(compositeVolume_final)
 
-        const multiObjectsContext = {
-            [fields.MultiObjectsProcessingContextGroupKinds]: system.multiObj.groupKinds,
-            ...system.multiObj.groupKindsMappedGroups
-        } as fields.MultiObjectsGroupsProcessingContext
-
-        for (const { group } of groupKinds(multiObjectsContext, system.multiObj.groupKinds))
-            group.set(multiObjectsContext, objectsTemplate)
-
-        const context = {
-            ...{
-                [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField,
-                [volumes.VolumeSampleKey]: {},
-                [volumes.VolumeSamplingKey]: {
-                    volume: compositeVolume_final,
-                    extraLocationParameters: this.extraLocationParameters,
-                    settings: this.samplingSettings,
-                },
-                [surfaces.VolumeSurfacesKey]: {
-                    sample: {}
-                },
-                [surfaces.VolumeSurfaceMeshingKey]: {
-                    algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
-                    settings: this.meshingSettings,
-                },
-            } as (
-                volumes.VolumeProcessingContext &
-                surfaces.VolumeSurfaceMeshingProcessingContext
-            ),
-
-            ...multiObjectsContext
+        function multiObjectsContext_insertObjects<
+                Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+                ObjectsGrouped extends
+                    MultiObjectsGrouped<Objects, Groups> =
+                    MultiObjectsGrouped<Objects, Groups>,
+                GroupsKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
+            >({
+                [MultiObjectsProcessingContextObjectsGrouped]: objectsGrouped
+            }: MultiObjectsProcessingContext<Objects, Groups, ObjectsGrouped, GroupsKinds>) {
+            for (const path of pathsToNodeWithKey(objectsGrouped, MultiObjectsGroupedObjectsKey)) {
+                intract(
+                    objectsGrouped,
+                    [...path, MultiObjectsGroupedObjectsKey],
+                    objectsTemplate
+                )
+            }
         }
 
-        const processing = {
-        } as surfaces.VolumeSurfaceMeshingProcessing & volumes.VolumeProcessing
+        const sample_multiObjectsContext = makeClone(SampleProcessingContext_MultiObjects_Template)
+        const surface_multiObjectsContext = makeClone(SurfaceProcessingContext_MultiObjects_Template)
+        const volume_multiObjectsContext = makeClone(VolumeProcessingContext_MultiObjects_Template)
+        multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext)
+        multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
+        multiObjectsContext_insertObjects(volume_multiObjectsContext as any)
+
+        const sample_context: SampleProcessingContextT = {
+            ...sample_multiObjectsContext,
+        }
+
+        const surface_context: SurfaceProcessingContextT = {
+            sample: sample_context,
+            material: { },
+            
+            ...surface_multiObjectsContext
+        }
+
+        const volume_context: VolumeProcessingContextT = {
+            [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField,
+
+            [volumes.VolumeSampleKey]: sample_context,
+            [volumes.VolumeSamplingKey]: {
+                volume: compositeVolume_final,
+                extraLocationParameters: this.extraLocationParameters,
+                settings: this.samplingSettings,
+            },
+
+            [surfaces.VolumeSurfacesKey]: surface_context,
+            [surfaces.VolumeSurfaceMeshingKey]: {
+                algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
+                settings: this.meshingSettings,
+            },
+
+            [solids.VolumeSolidsKey]: {
+                sample: sample_context,
+                surface: surface_context,
+            },
+
+            ...volume_multiObjectsContext
+        }
+
+        const processing = {} as VolumeProcessingT
 
         const graph = new ProcessorGraph(system.processors)
-        graph.init(context)
-        graph.process(processing, context)
+        graph.init(volume_context)
+        graph.process(processing, volume_context)
 
         const surface = processing[surfaces.VolumeSurfacesKey][0]
         
