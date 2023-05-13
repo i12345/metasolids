@@ -10,7 +10,7 @@ export function change<Final, Start, Subtract>(
     for (const key of subtract) delete subtracted[key]
     
     const added = subtracted as unknown as Final
-    for (const [key, value] of Object.entries(add)) added[key] = value
+    for (const [key, value] of Object.entries(add)) (added as any)[key] = value
     
     return added
 }

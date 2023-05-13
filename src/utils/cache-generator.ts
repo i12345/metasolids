@@ -1,13 +1,14 @@
 export function cacheGenerator<T = unknown, TReturn = any, TNext = unknown>(generator: Generator<T, TReturn, TNext>) {
-    const cache = []
+    const cache: ReturnType<typeof generator["next"]>["value"][] = []
+    let currentGenerator: typeof generator | undefined = generator
 
     return function* () {
         for (let i = 0; i < cache.length; i++)
             yield cache[i]
         
-        while (generator) {
+        while (currentGenerator) {
             const { value, done } = generator.next()
-            if (done) generator = undefined
+            if (done) currentGenerator = undefined
             cache.push(value)
             yield value
         }

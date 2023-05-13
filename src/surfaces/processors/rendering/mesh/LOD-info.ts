@@ -4,7 +4,7 @@ import { MeshDecimationIndividual } from "./decimation.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
 import { IndiciesArray, indicesArrayType } from "../../../../utils/indices-array.js"
 import { onlyOne } from "../../../../utils/index.js"
-import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js"
+import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js"
 import { TextureLocation } from "../../../../textures/texture.js"
 
 type LevelOfDetailInfo_Edge_Cached = {
@@ -66,8 +66,9 @@ export class LevelOfDetailInfoComputerShared {
     }
 
     cached(quality: number) {
-        if (this.cache.has(quality))
-            return this.cache.get(quality)
+        const cached = this.cache.get(quality)
+        if (cached)
+            return cached
         else {
             const cached = this.computeCache(quality)
             this.cache.set(quality, cached)
@@ -79,21 +80,29 @@ export class LevelOfDetailInfoComputerShared {
         const isFirst = this.renderer.implementation_cache.size === 0
         const surface = this.renderer.renderer.surface
         const meshData = surface.mesh
-        const render2samples = !isFirst ? this.renderer.decimation.cached(quality).render2samples : undefined
+        
+        const render2samples = isFirst ?
+            new Array(meshData.vertices.length) :
+            this.renderer.decimation.cached(quality).render2samples
 
+        if (isFirst)
+            for (let i = 0; i < render2samples.length; i++)
+                render2samples[i] = i
+        
         const sample_textureLocationGroup =
-            onlyOne(groupKinds(this.renderer.renderer.context.sample, SurfaceTextureLocationsGroupKindsTemplate)).group
+            onlyOne(groupKinds(this.renderer.renderer.context.sample as any, SurfaceIndividualTextureLocationsGroupKindsTemplate)).group
 
         const positions = isFirst ?
             meshData.vertices :
-            new Array<Vec3>(render2samples.length)
-        const indices = isFirst ?
-            meshData.triangles :
-            this.renderer.decimation.cached(quality).triangles
+            new Array<Vec3>(render2samples!.length)
         
         if (!isFirst)
             for (let i = 0; i < positions.length; i++)
-                positions[i] = meshData.vertices[render2samples[i]]
+                positions[i] = meshData.vertices[render2samples![i]]
+        
+        const indices = isFirst ?
+            meshData.triangles :
+            this.renderer.decimation.cached(quality).triangles
         
         const edges: LevelOfDetailInfo_Edge_Cached[] = []
         
@@ -133,8 +142,8 @@ export class LevelOfDetailInfoComputerShared {
 }
 
 export class LevelOfDetailInfoComputerIndividual {
-    private readonly edge_distance_world_mean: number
-    private _info: LevelOfDetailInfo
+    private readonly edge_distance_world_mean!: number
+    private _info!: LevelOfDetailInfo
 
     get info(): LevelOfDetailInfo {
         return this._info
@@ -148,7 +157,7 @@ export class LevelOfDetailInfoComputerIndividual {
     }
 
     update() {
-        const camera = Application.getApplication().systems.camera.cameras[0]
+        const camera = Application.getApplication()!.systems.camera!.cameras[0]
         const distance = this.renderer.renderer.entity.getPosition().distance(camera.entity.getPosition())
 
         const edge_distance_calc_world_0 = camera.entity.forward.clone().mulScalar(distance).add(camera.entity.getPosition())

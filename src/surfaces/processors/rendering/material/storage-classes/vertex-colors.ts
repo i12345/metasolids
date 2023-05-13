@@ -9,7 +9,7 @@ interface PackedRenderedBufferForSemanticWithMixedBuffer
     extends PackedRenderedBufferForSemanticWithRefCount<RenderedBufferForSemanticWithImplementation> {
     quality: number
     buffer: ReturnType<typeof renderPack>
-    renderedMeshes: Mesh[]
+    renderedMeshes?: Mesh[]
 }
 
 export class MaterialSemanticImplementationStorageClass_VertexColors
@@ -47,7 +47,7 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColo
             renderer
                 .material
                 .storageClassInstances
-                .find($class => $class instanceof MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors)
+                .find($class => $class instanceof MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors)!
                 .apply([], [])
         }
 
@@ -63,7 +63,7 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColo
 export class MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors
     implements MaterialSemanticImplementationStorageClassInstanceIndividual {
     readonly rendered: RenderedBufferForSemanticWithImplementation[] = []
-    private _renderedPacked: PackedRenderedBufferForSemanticWithMixedBuffer
+    private _renderedPacked?: PackedRenderedBufferForSemanticWithMixedBuffer
     private _hasRequestedIndividual_material = false
     
     constructor(
@@ -100,10 +100,10 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
         const material = this.renderer.material.implementation
 
         for (const remove_buffer of remove) {
-            this.rendered.splice(this.rendered.indexOf(remove_buffer), 1)
+            this.rendered.splice(this.rendered.indexOf(remove_buffer), 1);
 
-            material[remove_buffer.semantic as string] = false
-            material[`${remove_buffer.semantic}Channel`] = undefined
+            (material as any)[remove_buffer.semantic as string] = false;
+            (material as any)[`${remove_buffer.semantic}Channel`] = undefined;
         }
 
         this.rendered.push(...add)
@@ -127,7 +127,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
             const useHdr = !this.rendered.every(buffer => buffer.buffer instanceof Uint8Array)
             const packed = onlyOne(pack(this.rendered, useHdr ? [1, 2, 3, 4] : [4]))
         
-            let buffer: typeof this._renderedPacked["buffer"]
+            let buffer: NonNullable<typeof this._renderedPacked>["buffer"]
 
             if ((packed.sources.length === 1 && decimation.quality === 1) &&
                 (packed.sources[0].buffer instanceof Float32Array ||
@@ -148,10 +148,12 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
                 decimation.indices.render2samples
             )
 
-            this._renderedPacked.refCount--
-            if (this._renderedPacked.refCount === 0)
-                this.$class.packs_stage0.splice(this.$class.packs_stage0.indexOf(this._renderedPacked), 1)
-            
+            if (this._renderedPacked) {
+                this._renderedPacked.refCount--
+                if (this._renderedPacked.refCount === 0)
+                    this.$class.packs_stage0.splice(this.$class.packs_stage0.indexOf(this._renderedPacked), 1)
+            }
+
             this._renderedPacked = {
                 quality: this.renderer.mesh.decimation.quality,
                 buffer,
@@ -161,26 +163,26 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
             }
 
             if (isShareable)
-                this.$class.packs_stage0.push(this._renderedPacked)
+                this.$class.packs_stage0.push(this._renderedPacked!)
         }
 
-        if (this._renderedPacked.renderedMeshes &&
-            !this._renderedPacked.renderedMeshes.includes(mesh)) {
-            if (this._renderedPacked.buffer instanceof Float32Array) {
-                mesh.setColors(this._renderedPacked.buffer, this._renderedPacked.channels)
+        if (this._renderedPacked!.renderedMeshes &&
+            !this._renderedPacked!.renderedMeshes.includes(mesh)) {
+            if (this._renderedPacked!.buffer instanceof Float32Array) {
+                mesh.setColors(this._renderedPacked!.buffer, this._renderedPacked!.channels)
                 mesh.setColors32([])
             }
             else {
-                mesh.setColors32(this._renderedPacked.buffer, this._renderedPacked.channels)
+                mesh.setColors32(this._renderedPacked!.buffer, this._renderedPacked!.channels)
                 mesh.setColors([])
             }
-            this._renderedPacked.renderedMeshes?.push(mesh)
+            this._renderedPacked!.renderedMeshes?.push(mesh)
         }
 
         for (const { source: { implementation, semantic }, channels } of this._renderedPacked.targets) {
             if (this.rendered.some(rendered => rendered.implementation.equals(implementation))) {
-                material[semantic as string] = true
-                material[`${semantic}Channel`] = colorChannelsString(channels)
+                (material as any)[semantic as string] = true;
+                (material as any)[`${semantic}Channel`] = colorChannelsString(channels);
             }
         }
     }

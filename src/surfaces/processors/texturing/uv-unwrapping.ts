@@ -16,28 +16,21 @@ export class SurfaceUVUnwrappingProcessor<
             SurfaceSampleWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
         SampleProcessingContextT extends
             SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup> =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
-        SurfaceT extends Surface<Sample> = Surface<Sample>,
-        SurfaceProcessingContextT extends
-            SurfaceProcessingContextWithIndividualTextureLocations<
-                    SurfaceTextureLocationGroup,
-                    SampleProcessingContextT
-                > =
-            SurfaceProcessingContextWithIndividualTextureLocations<
-                    SurfaceTextureLocationGroup,
-                    SampleProcessingContextT
-                >
+            SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>
     > implements
     SurfaceProcessor<
             Sample,
             SampleProcessingContextT,
-            SurfaceT,
-            SurfaceProcessingContextT
+            Surface<Sample>,
+            SurfaceProcessingContextWithIndividualTextureLocations<
+                    SurfaceTextureLocationGroup,
+                    SampleProcessingContextT
+                >
         > {
     readonly dependencies = [['samples']]
     readonly algorithm: SurfaceUVUnwrappingAlgorithm
     
-    private surfaceTextureLocationGroup_set: GeneratorType<ReturnType<typeof groups>>["set"]
+    private surfaceTextureLocationGroup_set?: GeneratorType<ReturnType<typeof groups>>["set"]
 
     constructor(
         algorithm: SurfaceUVUnwrappingAlgorithm | keyof typeof SurfaceUVUnwrappingAlgorithms,
@@ -48,19 +41,22 @@ export class SurfaceUVUnwrappingProcessor<
         else this.algorithm = algorithm
     }
 
-    process(surface: SurfaceT): void {
+    process(surface: Surface<Sample>): void {
         const textureLocations = this.algorithm.unwrap(surface.mesh)
         for (let i = 0; i < surface.samples.length; i++) {
-            this.surfaceTextureLocationGroup_set(
+            this.surfaceTextureLocationGroup_set!(
                 surface.samples[i],
                 textureLocations[i]
             )
         }
     }
 
-    init(context: SurfaceProcessingContextT): void {
+    init(context: SurfaceProcessingContextWithIndividualTextureLocations<
+            SurfaceTextureLocationGroup,
+            SampleProcessingContextT
+        >): void {
         this.surfaceTextureLocationGroup_set = onlyOne(groupKinds(
-            context,
+            context.sample,
             SurfaceIndividualTextureLocationsGroupKindsTemplate,
             this.surfaceTextureLocationGroup
         )).group.set
@@ -76,6 +72,7 @@ export const SurfaceUVUnwrappingAlgorithms = {
         unwrap(mesh) {
             // https://members.loria.fr/Bruno.Levy/papers/LSCM_SIGGRAPH_2002.pdf
 
+            throw new Error('not implemented')
         }
     } as SurfaceUVUnwrappingAlgorithm
 }

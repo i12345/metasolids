@@ -1,5 +1,5 @@
 import { Vec2 } from "playcanvas-extended";
-import { Field, FieldPoint, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
+import { Field, FieldPoint, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, defaultField } from "../../fields/index.js";
 import { Texture, TextureLocation } from "../texture.js";
 import { IndiciesArray } from "../../utils/indices-array.js";
 
@@ -27,8 +27,8 @@ export class VertexInterpolatingTexture
     > {
     field: Field<VertexSample>
     
-    private collider: Triangles2DMeshCollider
-    private interpolator: Triangles2DMeshInterpolator<VertexSample>
+    private collider?: Triangles2DMeshCollider
+    private interpolator?: Triangles2DMeshInterpolator<VertexSample>
     
 
     constructor(
@@ -36,15 +36,16 @@ export class VertexInterpolatingTexture
         public uv: Vec2[],
         public triangles: IndiciesArray,
     ) {
+        this.field = vertices.length > 0 ? defaultField(vertices[0]) : undefined!
     }
 
     sample(location: TextureLocation): VertexSample {
-        let interpolated = { sample: undefined as VertexSample }
+        let interpolated = { sample: undefined! as VertexSample }
 
-        this.collider.collide(
+        this.collider!.collide(
             location.uv,
             (tri, w1, w2) =>
-                this.interpolator.interpolate_add(
+                this.interpolator!.interpolate_add(
                     interpolated,
                     'sample',
                     tri, w1, w2

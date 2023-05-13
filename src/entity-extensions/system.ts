@@ -2,7 +2,7 @@ import { AppBase, ComponentSystem, Entity } from "playcanvas-extended"
 import { processors, solids, surfaces, volumes } from "../index.js"
 import { VolumeComponent } from "./component.js"
 import { VolumeComponentData } from "./data.js"
-import { GroupsKindsMappedGroupsTemplate, GroupsKindsTemplate, InterpolatingGroupsTemplate, SurfaceCombinedTextureLocationGroupTemplate, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
+import { InterpolatingGroupsTemplate, SurfaceCombinedTextureLocationGroupTemplate, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
 
 export class VolumeComponentSystem extends ComponentSystem {
     id: 'volume'
@@ -52,7 +52,7 @@ export class VolumeComponentSystem extends ComponentSystem {
         this.on('beforeremove', this._onBeforeRemove, this);
     }
 
-    initializeComponentData(component: VolumeComponent, data: VolumeComponentData, properties) {
+    initializeComponentData(component: VolumeComponent, data: VolumeComponentData, properties: any) {
         component.enabled = data.hasOwnProperty('enabled') ? !!data.enabled : true;
     }
 

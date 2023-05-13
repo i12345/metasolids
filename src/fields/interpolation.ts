@@ -26,7 +26,7 @@ export interface InterpolationType<Point> {
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: InterpolationKeypoint<Location, Point>[],
             locationField: Field<Location>
-        ): Interpolator<Location, Point>
+        ): Interpolator<Location, Point> | undefined
 }
 
 export interface FieldInterpolator<
@@ -51,7 +51,7 @@ export class InterpolationManager implements InterpolationType<any> {
                 return interpolator
         }
          
-        return undefined
+        throw new Error('matching interpolator not found')
     }
     
     private static interpolationTypes: InterpolationType<any>[] = []

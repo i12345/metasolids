@@ -1,7 +1,7 @@
 import { Field } from "../field.js";
 import { FieldsInterpolationType } from "../interpolators/fields.js";
-import { FieldInterpolationType, makeInterpolator } from "../interpolation.js";
-import { FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
+import { FieldInterpolationType, InterpolationType, makeInterpolator } from "../interpolation.js";
+import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
 import { extract, iterTreeByLeavesValue } from "../../utils/tree.js";
 
 export class FieldsField<Point extends FieldsPoint = FieldsPoint>
@@ -45,18 +45,21 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     static merge<Point extends FieldsPoint = FieldsPoint>(...fields: FieldsField<Point>[]): FieldsField<Point> {
         let result = {}
 
-        function mergeIn(subfields: Field | FieldsPointMapped<FieldsPoint, Field>, subresult: any) {
+        function mergeIn(subfields: Field | FieldsPointMapped<FieldsPoint, Field>, subresult: any): FieldPointMapped<FieldPoint, Field> | undefined {
             if (!subfields)
                 return undefined
-            else if (subfields.interpolationType) {
-                if (subfields instanceof FieldsField)
-                    subfields = mergeIn(subfields.fields, subresult)
-                
-                return subfields
+            else if (subfields.interpolationType &&
+                (subfields.interpolationType as FieldInterpolationType)[makeInterpolator]) {
+                return (subfields instanceof FieldsField) ?
+                    mergeIn(subfields.fields, subresult) :
+                    subfields
             }
             else { // subfields is FieldsPointMapped<FieldsPoint, Field>
                 for (const key of Reflect.ownKeys(subfields))
-                    if (!(subresult[key] = mergeIn(subfields[key], subresult[key] ??= {})))
+                    if (!(subresult[key] = mergeIn(
+                            (subfields as FieldsPointMapped<FieldsPoint, Field>)[key],
+                            subresult[key] ??= {}
+                        )))
                         delete subresult[key]
 
                 return subresult

@@ -97,9 +97,9 @@ export class SolidWithPhysicalPropertiesProcessor<
                 const extractor = makeExtractor(fullpath)
                 
                 for (const voxel of solid.voxels)
-                    fields_point_add_inplace(
+                    fields_point_add_inplace<any, FieldPoint>(
                         value,
-                        key as keyof typeof value,
+                        key,
                         extractor(voxel) as PhysicalPropertiesValueT
                     )
 

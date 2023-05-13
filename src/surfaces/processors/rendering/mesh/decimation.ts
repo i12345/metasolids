@@ -1,7 +1,5 @@
-import { Mat3, Vec3, Vec4 } from "playcanvas-extended"
 import { IndiciesArray, indicesArrayType } from "../../../../utils/indices-array.js"
 import { MeshRendererShared } from "./renderer.js"
-import { mat4_from_mat3 } from "../../../../utils/matrix.js"
 
 export class MeshDecimationShared {
     /** quality -> indices */
@@ -11,12 +9,13 @@ export class MeshDecimationShared {
     }
 
     cached(quality: number) {
-        if (this.cache.has(quality))
-            return this.cache.get(quality)
-        
-        const decimation = this.computeCache(quality)
-        this.cache.set(quality, decimation)
-        return decimation
+        return this.cache.get(quality) ?? this.addCached(quality)
+    }
+
+    private addCached(quality: number) {
+        const cached = this.computeCache(quality)
+        this.cache.set(quality, cached)
+        return cached
     }
 
     private computeCache(quality: number) {
@@ -525,7 +524,7 @@ export class MeshDecimationShared {
 export class MeshDecimationIndividual {
     private _quality: number = NaN
 
-    private _indices: {
+    private _indices!: {
         readonly samples2render: IndiciesArray
         readonly render2samples: IndiciesArray
         readonly triangles: IndiciesArray

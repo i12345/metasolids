@@ -8,7 +8,9 @@ export class VectorInterpolationType implements FieldInterpolationType<Vector> {
         public curveConfig: CurveConfig = defaultCurveConfig()
     ) { }
 
-    [makeInterpolator]<Location extends FieldPoint>(keypoints: FieldInterpolationKeypoint<Location, Vector>[]): FieldInterpolator<Location, Vector> {
+    [makeInterpolator]<Location extends FieldPoint>(
+            keypoints: FieldInterpolationKeypoint<Location, Vector>[]
+        ): FieldInterpolator<Location, Vector> | undefined {
         const template = keypoints[0].value
         const n = template.length
         const k = keypoints.length

@@ -3,7 +3,7 @@ import { InterpolationKeypoint, InterpolationType, Interpolator, makeInterpolato
 import { FieldPoint } from "../point.js";
 
 export class ConstantInterpolationType<T> implements InterpolationType<T> {
-    [makeInterpolator]<Location extends FieldPoint>(keypoints: InterpolationKeypoint<Location, T>[]): Interpolator<Location, T> {
+    [makeInterpolator]<Location extends FieldPoint>(keypoints: InterpolationKeypoint<Location, T>[]): Interpolator<Location, T> | undefined {
         if (typeof keypoints[0].location !== 'number')
             return undefined
         

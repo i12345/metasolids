@@ -1,7 +1,7 @@
 import { FieldPoint, ExtraFields } from "../../../../fields/point.js"
 import { TextureLocation, TextureSamplingContext, TexturesTemplated } from "../../../../textures/texture.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"
-import { Material_Groups_Textures_TexelTypes } from "./groups.js"
+import { Material_Groups, Material_Groups_Textures_TexelTypes } from "./groups.js"
 
 export type Material_Texture_Location<
         VolumeLocationT extends VolumeLocation = VolumeLocation

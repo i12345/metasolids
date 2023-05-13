@@ -16,7 +16,7 @@ export class RepeatingSampleDomain<
         Sample,
         Context
     > {
-    private size_double: Location
+    private size_double!: Location
 
     constructor(
         inner: SampleDomain<Location, Sample, Context>,

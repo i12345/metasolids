@@ -293,7 +293,7 @@ export class MetaShapeVolume<
             [MetaShapeSamplingContext_Volume]: context,
             [MetaShapeSamplingContext_Texture]: {
                 context: context[MetaShapeSamplingContext_Texture],
-                item: this.texture
+                item: this.texture!
             }
         }
 
@@ -312,14 +312,14 @@ export class MetaShapeVolume<
         const texture_location =
             this.texture ?
                 fields_point_map<MetaShapeTxLocation<Location, TxLocation>, Field, FieldPoint>(
-                    texture_location_field.fields,
+                    texture_location_field!.fields,
                     leaf =>
                         leaf.interpolationType !== undefined &&
                         leaf.interpolationType[makeInterpolator] !== undefined,
                     (_, path) => extract(location, path) ?? extract(sample, path)
                 ) as any as MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>> :
                 undefined
-        const texture_sample = this.texture?.sample(texture_location, context.outer[MetaShapeSamplingContext_Texture])
+        const texture_sample = this.texture?.sample(texture_location!, context.outer[MetaShapeSamplingContext_Texture])
 
         const parameters = MetaShapeVolume.combineParameters(sample, texture_sample)
         const is_valid = MetaShapeVolume.parametersValid(parameters) && sample !== undefined
@@ -328,7 +328,7 @@ export class MetaShapeVolume<
         const presence = !is_valid ? 0 : Math.min(1, Math.exp((surface_distance + parameters.falloff.bias) * -parameters.falloff.rate))
 
         return change<MetaShapeVolumeSample<TxSample, InnerSample>, InnerSample & TxSample, MetaShapeParametersIn>({
-            ...texture_sample,
+            ...(texture_sample ?? {} as NonNullable<typeof texture_sample>),
             ...(sample ?? {
                 distance: 0,
                 uv: Vec2.ZERO,

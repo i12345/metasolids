@@ -9,7 +9,7 @@ export class CompositeSampleDomain<
         Context extends SamplingContext<Location> = SamplingContext<Location>
     > implements
     SampleDomain<Location, Sample, Context> {
-    private _field: Field<Sample>
+    private _field!: Field<Sample>
     
     get field() {
         return this._field
@@ -42,17 +42,19 @@ export class CompositeSampleDomain<
      * @returns the accumulator mutated in place
      */
     protected composite(
-        accumulator: Sample,
-        addition: Sample
-    ): Sample {
+            accumulator: Sample | undefined,
+            addition: Sample
+        ): Sample {
+        if (accumulator === undefined)
+            return addition
         return field_point_add_inplace(accumulator, addition)
     }
 
     sample(location: Location, context: Context): Sample {
-        let sample: Sample = undefined
+        let sample: Sample | undefined = undefined
         for (const child of this.children)
             sample = this.composite(sample, child.sample(location, context))
         
-        return sample
+        return sample!
     }
 }

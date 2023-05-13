@@ -11,7 +11,7 @@ export class Vec4InterpolationType implements FieldInterpolationType<Vec4> {
 
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, Vec4>[]
-        ): Interpolator<Location, Vec4> {
+        ): Interpolator<Location, Vec4> | undefined {
         if (!(keypoints[0].value instanceof Vec4))
             return undefined
         

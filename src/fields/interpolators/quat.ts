@@ -6,7 +6,7 @@ import { FieldPoint } from "../point.js";
 export class QuatInterpolationType implements FieldInterpolationType<Quat> {
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, Quat>[]
-        ): Interpolator<Location, Quat> {
+        ): Interpolator<Location, Quat> | undefined {
         if (!keypoints.every(({ value }) => value instanceof Quat))
             return undefined
         

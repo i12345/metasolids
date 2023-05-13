@@ -69,9 +69,9 @@ export class ObjectsCombiningTexture<
             Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT>
     > implements
     Texture<TextureLocationT, TextureSampleT> {
-    field: Field<TextureSampleT>;
+    field!: Field<TextureSampleT>
 
-    private location_fields: MultiObjectsMapped<Objects, Field<TextureLocationT & SampledTextureLocationT>>
+    private location_fields!: MultiObjectsMapped<Objects, Field<TextureLocationT & SampledTextureLocationT>>
 
     constructor(
         public template: Objects,
@@ -100,6 +100,13 @@ export class ObjectsCombiningTexture<
                 })
             }
         }
+
+        const objFields: ValueTextureT["field"][] = []
+        iterObjects(this.values, this.template, (values, key, path) =>
+            objFields.push(extract<ValueTextureT>(this.values, path).field))
+        if (objFields[0] instanceof FieldsField)
+            this.field = FieldsField.merge(...(objFields as unknown as FieldsField[])) as unknown as Field<TextureSampleT>
+        else this.field = objFields[0]
     }
 
     sample(location: TextureLocationT, context: SamplingContext<TextureLocationT>): TextureSampleT {

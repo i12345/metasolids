@@ -3,8 +3,8 @@ import { SurfaceSample } from "../../surface.js";
 import { PropertyPath } from "../../../utils/property-path.js";
 import { Material_Groups_Template } from "./material/groups.js";
 import { VolumeLocation } from "../../../volumes/volume.js";
-import { Field, FieldsField, FieldsPointMapped, FieldsPoint_Omit_Leaf, SampleDomainLocationField, Vec2Field, groups } from "../../../fields/index.js";
-import { SurfaceSampleProcessingContextWithIndividualTextureLocations } from "../texturing/index.js";
+import { Field, FieldsField, FieldsPointMapped, FieldsPoint_Omit_Leaf, MultiObjectsGroupsTemplate, SampleDomainLocationField, Vec2Field, groups } from "../../../fields/index.js";
+import { SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations } from "../texturing/index.js";
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./surface.js";
 import { SurfaceRendererShared } from "./renderer.js";
 import { Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js";
@@ -12,40 +12,40 @@ import { ParallelizedContextParallelInfo } from "../../../processor/index.js";
 
 export class SurfaceWithRenderingProcessor<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        Sample extends SurfaceSample = SurfaceSample,
-        SampleContextTemplate extends
-            SurfaceSampleProcessingContextWithIndividualTextureLocations =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > implements
     SurfaceProcessor<
-        Sample,
-        SampleContextTemplate,
+        SurfaceSampleWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
+        SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
         SurfaceWithRendering<
-                Sample
+                VolumeLocationT,
+                SurfaceTextureLocationGroup
             >,
         SurfaceProcessingContextWithRendering<
                 VolumeLocationT,
-                SampleContextTemplate
+                SurfaceTextureLocationGroup
             >
     > {
-    readonly dependencies: PropertyPath[]
+    readonly dependencies: PropertyPath[] = [['material', 'textures']]
 
     process(
             surface: SurfaceWithRendering<
-                Sample
+                VolumeLocationT,
+                SurfaceTextureLocationGroup
             >,
             context: SurfaceProcessingContextWithRendering<
                 VolumeLocationT,
-                SampleContextTemplate
+                SurfaceTextureLocationGroup
             >
         ): void {
+        ///@ts-ignore
         surface.renderer = new SurfaceRendererShared(surface, context)
     }
 
     init(context: SurfaceProcessingContextWithRendering<
-            VolumeLocationT,
-            SampleContextTemplate
-        >): void {
+                VolumeLocationT,
+                SurfaceTextureLocationGroup
+            >): void {
         type TextureLocationT = Material_Texture_Location<VolumeLocationT>
         
         const parallelizedContext = (context as unknown as VolumeSurfaceProcessingContext)[ParallelizedContextParallelInfo]?.context
@@ -66,9 +66,9 @@ export class SurfaceWithRenderingProcessor<
             sample: context.sample
         } as Material_Texture_Context<VolumeLocationT>
         
-        context.textures = {} as typeof context.textures
+        context.material.textures = {} as typeof context.material.textures
         for (const group of groups(Material_Groups_Template))
-            group.set(context.textures, { ...sharedContext })
+            group.set(context.material.textures, { ...sharedContext })
     }    
 }
 

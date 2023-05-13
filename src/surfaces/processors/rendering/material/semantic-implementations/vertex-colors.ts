@@ -71,7 +71,7 @@ export class MaterialSemanticImplementation_VertexColors<
     implement(renderer: SurfaceRendererIndividual): RenderedBufferForSemanticWithImplementation[] {
         const buffer = new Float32Array(this.channels * renderer.shared.surface.samples.length)
         
-        const textureContext = this.surface_textureGroup.get(renderer.shared.context.textures) as Material_Texture_Context<VolumeLocationT>
+        const textureContext = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>
         
         const sample_texture_values = renderer.shared.surface.samples.map(sample =>
             this.texture.sample(

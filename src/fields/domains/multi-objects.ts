@@ -1,4 +1,4 @@
-import { extract, GeneratorType } from "../../utils/index.js"
+import { GeneratorType } from "../../utils/index.js"
 import { SampleDomain, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
@@ -154,8 +154,8 @@ export class MultiObjectsSampleDomain<
         Sample,
         MultiObjectsContext<Objects, Groups, GroupKinds, Location, LeafContext>
     > {
-    field: Field<Sample>
-    private groupsMemoized: GeneratorType<ReturnType<typeof groupKinds>>[]
+    field!: Field<Sample>
+    private groupsMemoized!: GeneratorType<ReturnType<typeof groupKinds>>[]
 
     constructor(
         public children: { [Object in keyof Objects]: LeafDomain },
@@ -170,10 +170,10 @@ export class MultiObjectsSampleDomain<
      * @param residual the residual of the child's sample that wasn't combined by a group
      */
     protected combineResidualLeafSample(
-        accumulator: MultiObjectsSample<Objects, Groups, LeafSample>,
-        key: PropertyKey,
-        residual: MultiObjectsGroupsOmitted<Groups, LeafSample>
-    ): MultiObjectsSample<Objects, Groups, LeafSample> {
+            accumulator: MultiObjectsSample<Objects, Groups, LeafSample>,
+            key: PropertyKey,
+            residual: MultiObjectsGroupsOmitted<Groups, LeafSample>
+        ): MultiObjectsSample<Objects, Groups, LeafSample> {
         return field_point_add_inplace(
             accumulator as any as MultiObjectsGroupsOmitted<Groups, LeafSample>,
             residual
@@ -236,8 +236,9 @@ export class MultiObjectsSampleDomain<
                 group.set(child_context, undefined)
                 
                 const child_field = group.get(child_fields)
-                const child_field_container = extract(child_fields, group.path.slice(0, -1))
-                child_field_container[group.path.at(-1)] = { [key]: child_field }
+                group.get(child_fields)[key] = child_field
+                // const child_field_container = extract(child_fields, group.path.slice(0, -1))
+                // child_field_container[group.path.at(-1)] = { [key]: child_field }
             }
 
             fields.push(child_fields as any as FieldsField<Sample>)

@@ -419,6 +419,7 @@ export function field_point_range_equal<Point extends FieldPoint = FieldPoint>(
 
             return true
         }
+        else throw new Error("invalid type")
     }
     else {
         for (const key of Reflect.ownKeys(b))
@@ -430,9 +431,9 @@ export function field_point_range_equal<Point extends FieldPoint = FieldPoint>(
 }
 
 export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>(
-    superset: FieldPointRange<Point>,
-    subset: FieldPointRange<Point>
-): boolean {
+        superset: FieldPointRange<Point>,
+        subset: FieldPointRange<Point>
+    ): boolean {
     function ensure_valid([min, max]: [Vec3, Vec3]) {
         if (min.x > max.x) min.x = max.x
         if (min.y > max.y) min.y = max.y
@@ -599,6 +600,7 @@ export function field_point_range_subsets<Point extends FieldPoint = FieldPoint>
 
             return true
         }
+        else throw new Error('invalid type')
     }
     else {
         for (const key of Reflect.ownKeys(subset))

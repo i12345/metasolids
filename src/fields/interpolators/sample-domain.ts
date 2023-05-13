@@ -8,7 +8,7 @@ export class SampleDomainInterpolationType implements InterpolationType<SampleDo
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: InterpolationKeypoint<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>>[],
             locationField: Field<Location>
-        ): Interpolator<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>> {
+        ): Interpolator<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>> | undefined {
         if (keypoints.some(({ value: domain }) => !(domain?.field?.interpolationType && domain.field.interpolationType[makeInterpolator])))
             return undefined
         

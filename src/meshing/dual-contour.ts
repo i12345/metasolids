@@ -165,13 +165,13 @@ export class DualContouringUniform {
             else {
                 let vDiff = new Vec3().sub2(corners[n1].pos, corners[n2].pos)
                 let p = new Vec3(0, 0, 0)
-                if (Math.abs(vDiff[0]) > this.ToleranceDensity) {
+                if (Math.abs(vDiff.x) > this.ToleranceDensity) {
                     this.IntersectXAxis(corners[n1], corners[n2], p)
                 }
-                if (Math.abs(vDiff[1]) > this.ToleranceDensity) {
+                if (Math.abs(vDiff.y) > this.ToleranceDensity) {
                     this.IntersectYAxis(corners[n1], corners[n2], p)
                 }
-                if (Math.abs(vDiff[2]) > this.ToleranceDensity) {
+                if (Math.abs(vDiff.z) > this.ToleranceDensity) {
                     this.IntersectZAxis(corners[n1], corners[n2], p)
                 }
                 data.intersectionPoints.push(p)
@@ -344,17 +344,17 @@ export class DualContouringUniform {
 
         if (p0.density < 0)
         {
-            xa = p0.pos[0]
-            xb = p1.pos[0]
+            xa = p0.pos.x
+            xb = p1.pos.x
         }
         else
         {
-            xa = p1.pos[0]
-            xb = p0.pos[0]
+            xa = p1.pos.x
+            xb = p0.pos.x
         }
 
-        let y = p0.pos[1]
-        let z = p0.pos[2]
+        let y = p0.pos.y
+        let z = p0.pos.z
         let xm: number
 
         while (true)
@@ -398,17 +398,17 @@ export class DualContouringUniform {
 
         if (p0.density < 0)
         {
-            ya = p0.pos[1]
-            yb = p1.pos[1]
+            ya = p0.pos.y
+            yb = p1.pos.y
         }
         else
         {
-            ya = p1.pos[1]
-            yb = p0.pos[1]
+            ya = p1.pos.y
+            yb = p0.pos.y
         }
 
-        let x = p0.pos[0]
-        let z = p0.pos[2]
+        let x = p0.pos.x
+        let z = p0.pos.z
         let ym: number
 
         while (true)
@@ -452,17 +452,17 @@ export class DualContouringUniform {
 
         if (p0.density < 0)
         {
-            za = p0.pos[2]
-            zb = p1.pos[2]
+            za = p0.pos.z
+            zb = p1.pos.z
         }
         else
         {
-            za = p1.pos[2]
-            zb = p0.pos[2]
+            za = p1.pos.z
+            zb = p0.pos.z
         }
 
-        let x = p0.pos[0]
-        let y = p0.pos[1]
+        let x = p0.pos.x
+        let y = p0.pos.y
         let zm: number
 
         while (true)

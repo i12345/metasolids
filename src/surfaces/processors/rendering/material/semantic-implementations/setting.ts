@@ -24,7 +24,7 @@ export class MaterialSemanticImplementation_Setting
     }
 
     implement(renderer: SurfaceRendererIndividual): RenderedBufferForSemanticWithImplementation[] {
-        renderer.material.implementation[this.key as PropertyKey] = this.value
+        (renderer.material.implementation as any)[this.key] = this.value
         return []
     }
 }

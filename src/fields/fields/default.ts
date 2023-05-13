@@ -10,24 +10,25 @@ import { Vec2Field } from "./vec2.js";
 import { Vec3Field } from "./vec3.js";
 import { Vec4Field } from "./vec4.js";
 import { VectorField } from "./vector.js";
+import { Field } from "../field.js";
 
-export function defaultField(p: FieldPoint) {
+export function defaultField<Point extends FieldPoint = FieldPoint>(p: Point): Field<Point> {
     if (typeof p === 'number')
-        return new ScalarField()
+        return new ScalarField() as unknown as Field<Point>
     else if (p instanceof Vec2)
-        return new Vec2Field()
+        return new Vec2Field() as unknown as Field<Point>
     else if (p instanceof Vec3)
-        return new Vec3Field()
+        return new Vec3Field() as unknown as Field<Point>
     else if (p instanceof Vec4)
-        return new Vec4Field()
+        return new Vec4Field() as unknown as Field<Point>
     else if (p instanceof Quat)
-        return new QuatField()
+        return new QuatField() as unknown as Field<Point>
     else if (p instanceof Mat3)
-        return new Mat3Field()
+        return new Mat3Field() as unknown as Field<Point>
     else if (p instanceof Mat4)
-        return new Mat4Field()
+        return new Mat4Field() as unknown as Field<Point>
     else if (p instanceof Color)
-        return new ColorField()
+        return new ColorField() as unknown as Field<Point>
     else if (p instanceof Array ||
         p instanceof Uint8Array ||
         p instanceof Uint8ClampedArray ||
@@ -38,10 +39,10 @@ export function defaultField(p: FieldPoint) {
         p instanceof Int32Array ||
         p instanceof Float32Array ||
         p instanceof Float64Array)
-        return new VectorField()
+        return new VectorField() as unknown as Field<Point>
     else return new FieldsField(fields_point_map(
         p as FieldsPointMapped<FieldsPoint, FieldPoint>,
         field_point_isPrimitive,
         value => defaultField(value)
-    ))
+    )) as unknown as Field<Point>
 }

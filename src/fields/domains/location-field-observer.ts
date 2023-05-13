@@ -12,7 +12,7 @@ export class LocationFieldObserverSampleDomain<
             Location, Sample, Context,
             Location, Sample, Context
         > {
-    private _locationField: Field<Location>
+    private _locationField?: Field<Location>
 
     get locationField() {
         return this._locationField

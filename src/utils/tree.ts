@@ -39,14 +39,14 @@ export const extract = <T>
         path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
 
 export const intract = <T>
-    (tree: object, path: PropertyPath, value: T) => {
+    (tree: any, path: PropertyPath, value: T) => {
     for (let i = 0; i < path.length - 1; i++)
         tree = (tree[path[i]] ??= {})
     tree[path[path.length - 1]] = value
 }
 
 export const deletePath =
-    (tree: object, path: PropertyPath) => {
+    (tree: any, path: PropertyPath) => {
     for (let i = 0; i < path.length - 1; i++)
         tree = (tree[path[i]] ??= {})
     delete tree[path[path.length - 1]]
@@ -61,12 +61,12 @@ export const makeExtractor =
 
 export const makeIntractor =
     <TDefault = any>(path: PropertyPath) =>
-    <T = TDefault>(tree: object, value: T) =>
+    <T = TDefault>(tree: any, value: T) =>
         intract(tree, path, value)
 
 export const makeDeleter =
     (path: PropertyPath) =>
-    (tree: object) =>
+    (tree: any) =>
         deletePath(tree, path)
 
 /**
@@ -76,7 +76,7 @@ export const makeDeleter =
  * @param leaf the key to look for on each node
  */
 export function* pathsToNodeWithKey(
-        tree: object,
+        tree: any,
         leaf: PropertyKey
     ): Generator<PropertyPath> {
     let nodeHasKeys = false
@@ -97,7 +97,7 @@ export function* pathsToNodeWithKey(
  * @param leaves the keys to look for on each node
  */
 export function* pathsToNodeWithKeys(
-        tree: object,
+        tree: any,
         leaves: PropertyKey[]
     ): Generator<PropertyPath> {
     let nodeHasKeys = false
@@ -208,14 +208,14 @@ export function* leavesByValues<
 }
 
 export function iterTreeByLeavesValue(
-        values: object,
-        template: object,
+        values: any,
+        template: any,
         leaf: any,
-        action: (value: object, key: PropertyKey, fullpath: PropertyPath, leaf: any) => void
+        action: (value: any, key: PropertyKey, fullpath: PropertyPath, leaf: any) => void
     ) {
     function traverse(
-        values: object,
-        template: object,
+        values: any,
+        template: any,
         path: PropertyPath = []
     ) {
         for (const key in Reflect.ownKeys(template)) {
@@ -240,14 +240,14 @@ export function iterTreeByLeavesValue(
 }
 
 export function iterTreeByLeavesValues(
-        values: object,
-        template: object,
+        values: any,
+        template: any,
         leaves: any[],
-        action: (value: object, key: PropertyKey, fullpath: PropertyPath, leaf: any) => void
+        action: (value: any, key: PropertyKey, fullpath: PropertyPath, leaf: any) => void
     ) {
     function traverse(
-        values: object,
-        template: object,
+        values: any,
+        template: any,
         path: PropertyPath = []
     ) {
         for (const key in Reflect.ownKeys(template)) {

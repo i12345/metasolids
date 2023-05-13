@@ -7,7 +7,7 @@ export class Mat4InterpolationType implements FieldInterpolationType<Mat4> {
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, Mat4>[],
             locationField: Field<Location>
-        ): FieldInterpolator<Location, Mat4> {
+        ): FieldInterpolator<Location, Mat4> | undefined {
         if (typeof keypoints[0].location !== 'number')
             return undefined
         

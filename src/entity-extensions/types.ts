@@ -1,4 +1,4 @@
-import { FieldPoint, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate_Leaf, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsCombined, MultiObjectsInfluencesProcessingContext, MultiObjectsGrouped, MultiObjectsInfluencesGroupsDefault, MultiObjectsTemplate, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsProcessingContext_Groups } from "../fields/index.js"
+import { FieldPoint, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate_Leaf, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsCombined, MultiObjectsInfluencesProcessingContext, MultiObjectsGrouped, MultiObjectsInfluencesGroupsDefault, MultiObjectsTemplate, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsInfluencesGroupsDefaultTemplate } from "../fields/index.js"
 import { textures, volumes, surfaces, solids } from "../index.js"
 
 export type VolumeLocationT = volumes.VolumeLocation
@@ -151,6 +151,8 @@ export type SampleT = volumes.VolumeSample &
             OtherInterpolatingValuesGrouped
         > &
     {}
+
+export type VolumeT = volumes.Volume<VolumeLocationT, SampleT>
 
 export type SampleProcessingContextT = {} &
     surfaces.SurfaceSampleProcessingContextWithSurfaceAndObjectsTextureLocations<
@@ -484,7 +486,11 @@ export type SurfaceT = surfaces.Surface<SampleT> &
             OtherInterpolatingValuesGrouped,
             SampleT
         > &
-    surfaces.SurfaceWithRendering<VolumeLocationT, SampleT>
+    surfaces.SurfaceWithRendering<
+            VolumeLocationT,
+            SurfaceCombinedTextureLocationGroupT
+        > &
+    {}
 
 export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<SampleProcessingContextT> &
     // surfaces.SurfaceProcessingContextWithSurfaceArea<SampleProcessingContextT> (doesn't exist) &
@@ -509,8 +515,7 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
         > &
     surfaces.SurfaceProcessingContextWithRendering<
             VolumeLocationT,
-            SurfaceCombinedTextureLocationGroupT,
-            SampleProcessingContextT
+            SurfaceCombinedTextureLocationGroupT
         >
 
 export type SurfaceProcessingContext_MultiObjects =

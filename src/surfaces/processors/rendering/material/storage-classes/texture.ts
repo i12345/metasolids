@@ -43,7 +43,7 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_Texture
         renderer.material.computeBackingCallbacks.push(renderer => {
             renderer
                 .storageClassInstances
-                .find($class => $class instanceof MaterialSemanticImplementationStorageClassInstanceIndividual_Texture)
+                .find($class => $class instanceof MaterialSemanticImplementationStorageClassInstanceIndividual_Texture)!
                 .apply([], [])
         })}
     
@@ -91,10 +91,10 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
 
         this.rendered.push(...add)
         for (const remove_buffer of remove) {
-            this.rendered.splice(this.rendered.indexOf(remove_buffer), 1)
+            this.rendered.splice(this.rendered.indexOf(remove_buffer), 1);
 
-            this.renderer.implementation.material[remove_buffer.semantic as string] = undefined
-            this.renderer.implementation.material[`${remove_buffer.semantic}Channel`] = undefined
+            (this.renderer.implementation.material as any)[remove_buffer.semantic] = undefined;
+            (this.renderer.implementation.material as any)[`${remove_buffer.semantic}Channel`] = undefined;
 
             const pack_index = this.rendered_packs.findIndex(pack => pack.sources.includes(remove_buffer))
             if (pack_index !== -1) {
@@ -104,7 +104,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
                 pack.refCount--
                 if (pack.refCount === 0) {
                     for (const { source } of pack.targets)
-                        this.renderer.implementation.material[source.semantic as string] = undefined
+                        (this.renderer.material.implementation as any)[source.semantic] = undefined
                     pack.texture.destroy()
                     this.$class.rendered_packs_stage0.splice(this.$class.rendered_packs_stage0.indexOf(pack), 1)
                 }
@@ -163,8 +163,8 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
         for (const pack of this.rendered_packs) {
             for (const { source, channels } of pack.targets) {
                 if (this.rendered.includes(source)) {
-                    this.renderer.implementation.material[source.semantic as string] = pack.texture
-                    this.renderer.implementation.material[`${source.semantic}Channel`] = colorChannelsString(channels)
+                    (this.renderer.implementation.material as any)[source.semantic] = pack.texture;
+                    (this.renderer.implementation.material as any)[`${source.semantic}Channel`] = colorChannelsString(channels);
                 }
             }
         }

@@ -23,7 +23,7 @@ function cotangent(a: Vec2, b: Vec2, c: Vec2, bc: Vec2) {
 
 export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoint>
     implements FieldInterpolationType<Point> {
-    [makeInterpolator]<Location extends FieldPoint>(keypoints: FieldInterpolationKeypoint<Location, Point>[]): Interpolator<Location, Point> {
+    [makeInterpolator]<Location extends FieldPoint>(keypoints: FieldInterpolationKeypoint<Location, Point>[]): Interpolator<Location, Point> | undefined {
         const path_vec2 = field_point_path(keypoints[0].location, location => location instanceof Vec2)
         if(!path_vec2) return undefined
 
@@ -162,8 +162,8 @@ function isConvexPolygon(polygon: Vec2[]): boolean {
     if (polygon.length < 3)
         return false
     // Get starting information
-    let { x: old_x, y: old_y } = polygon.at(-2)
-    let { x: new_x, y: new_y } = polygon.at(-1)
+    let { x: old_x, y: old_y } = polygon.at(-2)!
+    let { x: new_x, y: new_y } = polygon.at(-1)!
     let old_direction: number
     let new_direction = Math.atan2(new_y - old_y, new_x - old_x)
     let angle_sum = 0.0
@@ -189,7 +189,7 @@ function isConvexPolygon(polygon: Vec2[]): boolean {
             orientation = (angle > 0.0) ? 1.0 : -1.0
         }
         else {  // if other time through loop, check orientation is stable
-            if (orientation * angle <= 0.0)  // not both pos.or both neg.
+            if (orientation! * angle <= 0.0)  // not both pos.or both neg.
                 return false
         }
         // Accumulate the direction - change angle

@@ -58,7 +58,7 @@ export const iterObjects = <
     > (
         values: MultiObjectsMapped<Objects, T>,
         template: Objects,
-        action: (o: object, key: PropertyKey, fullpath: PropertyPath) => void
+        action: (o: any, key: PropertyKey, fullpath: PropertyPath) => void
     ) =>
     iterTreeByLeavesValue(values, template, MultiObjectsTemplate_Leaf, action)
 
@@ -671,14 +671,14 @@ export class FieldPointCombiner<
     > implements
     Combiner<Value, Objects> {
     combine(
-        template: Objects,
-        values: MultiObjectsMapped<Objects, Value>,
-        influences: MultiObjectsInfluences<Objects>
-    ) {
+            template: Objects,
+            values: MultiObjectsMapped<Objects, Value>,
+            influences: MultiObjectsInfluences<Objects>
+        ) {
         let combined: FieldsPoint & {
             value: Value,
             influence: number
-        } = undefined
+        } | undefined = undefined
 
         iterObjects(
             values,
@@ -701,7 +701,7 @@ export class FieldPointCombiner<
             }
         )
 
-        return field_point_divide(combined.value, combined.influence)
+        return field_point_divide(combined!.value, combined!.influence)
     }
 
     static readonly instance = new FieldPointCombiner()
@@ -723,7 +723,7 @@ export class MultiObjectsCombiningProcessor<
             MultiObjectsInfluenceCombiningProcessingContext<Objects, InfluenceGroup, ValueGroups, ValueGroupKind, ObjectsGrouped> =
             MultiObjectsInfluenceCombiningProcessingContext<Objects, InfluenceGroup, ValueGroups, ValueGroupKind, ObjectsGrouped>,
     > implements Processor<Result, Context> {
-    private _dependencies: PropertyPath[]
+    private _dependencies!: PropertyPath[]
 
     get dependencies() {
         return this._dependencies

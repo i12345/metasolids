@@ -3,12 +3,16 @@ import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js
 import { LevelOfDetailInfoComputerShared, LevelOfDetailInfoComputerIndividual } from "./LOD-info.js";
 import { MeshDecimationIndividual, MeshDecimationShared } from "./decimation.js";
 import { RefCount } from "../../../../utils/ref-count.js";
-import { RANGE_MAX, RANGE_MIN, groupKinds } from "../../../../fields/index.js";
+import { MultiObjectsGroupsTemplate, RANGE_MAX, RANGE_MIN, groupKinds } from "../../../../fields/index.js";
 import { onlyOne } from "../../../../utils/index.js";
 import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";
 import { TextureLocation } from "../../../../textures/texture.js";
+import { VolumeLocation } from "../../../../volumes/volume.js";
 
-export class MeshRendererShared {
+export class MeshRendererShared<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    > {
     readonly decimation: MeshDecimationShared
     readonly LOD: LevelOfDetailInfoComputerShared
     
@@ -16,30 +20,34 @@ export class MeshRendererShared {
     readonly implementation_cache = new Map<number, Mesh>()
     readonly computeBackingCallbacks: ((individual: MeshRendererIndividual) => void)[] = []
 
-    constructor(public readonly renderer: SurfaceRendererShared) {
+    constructor(public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>) {
+        ///@ts-ignore
         this.decimation = new MeshDecimationShared(this)
         this.LOD = new LevelOfDetailInfoComputerShared(this)
     }
 
-    individualize(renderer: SurfaceRendererIndividual) {
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>) {
         return new MeshRendererIndividual(this, renderer)
     }
 }
 
-export class MeshRendererIndividual {
+export class MeshRendererIndividual<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    > {
     readonly decimation: MeshDecimationIndividual
     readonly LOD: LevelOfDetailInfoComputerIndividual
     readonly individuality = new RefCount()
-    private _implementation: Mesh
-    private _individualImplimentationQuality: number
+    private _implementation!: Mesh
+    private _individualImplimentationQuality?: number
 
     get implementation() {
         return this._implementation
     }
 
     constructor(
-        public readonly shared: MeshRendererShared,
-        public readonly renderer: SurfaceRendererIndividual
+        public readonly shared: MeshRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
+        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
     ) {
         this.decimation = shared.decimation.individualize()
         this.LOD = shared.LOD.individualize(this)
@@ -90,6 +98,8 @@ export class MeshRendererIndividual {
                 this.computeBacking()
                 this.shared.implementation_cache.set(this.decimation.quality, this.implementation)
             }
+
+            this._individualImplimentationQuality = undefined
         }
         else {
             if (currentlyShared) {
@@ -104,13 +114,13 @@ export class MeshRendererIndividual {
                     this.computeBacking()
                 }
             }
-            else if (this._individualImplimentationQuality !== this.decimation.quality) {
-                this._individualImplimentationQuality = this.decimation.quality
+            else if (this._individualImplimentationQuality !== this.decimation.quality)
                 this.computeBacking()
-            }
             else {
                 // The individual implementation is already made
             }
+
+            this._individualImplimentationQuality = this.decimation.quality
         }
 
         const oldMesh = this.renderer.implementation.mesh

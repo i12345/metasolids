@@ -1,54 +1,41 @@
 import { Entity, MeshInstance } from "playcanvas-extended"
 import { VolumeLocation } from "../../../volumes/volume.js"
-import { SurfaceSample } from "../../surface.js"
-import { SurfaceSampleProcessingContextWithIndividualTextureLocations } from "../index.js"
 import { MaterialRendererIndividual, MaterialRendererShared } from "./material/renderer.js"
 import { SurfaceWithRendering, SurfaceProcessingContextWithRendering } from "./surface.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./mesh/renderer.js"
+import { MultiObjectsGroupsTemplate } from "../../../fields/index.js"
 
 export class SurfaceRendererShared<
-        VolumeLocationT extends
-            VolumeLocation =
-            VolumeLocation,
-        Sample extends SurfaceSample = SurfaceSample,
-        SampleContextTemplate extends
-            SurfaceSampleProcessingContextWithIndividualTextureLocations =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
-    readonly mesh: MeshRendererShared
-    readonly material: MaterialRendererShared
+    readonly mesh: MeshRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>
+    readonly material: MaterialRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>
 
     constructor(
-        readonly surface: SurfaceWithRendering<Sample>,
-        readonly context: SurfaceProcessingContextWithRendering<
-            VolumeLocationT,
-            SampleContextTemplate
-        >
+        readonly surface: SurfaceWithRendering<VolumeLocationT, SurfaceTextureLocationGroup>,
+        readonly context: SurfaceProcessingContextWithRendering<VolumeLocationT, SurfaceTextureLocationGroup>
     ) {
         this.mesh = new MeshRendererShared(this)
         this.material = new MaterialRendererShared(this)
     }
 
-    individualize(entity: Entity) {
+    individualize(entity: Entity): SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup> {
+        ///@ts-ignore
         return new SurfaceRendererIndividual(this, entity)
     }
 }
 
 export class SurfaceRendererIndividual<
-        VolumeLocationT extends
-            VolumeLocation =
-            VolumeLocation,
-        Sample extends SurfaceSample = SurfaceSample,
-        SampleContextTemplate extends
-            SurfaceSampleProcessingContextWithIndividualTextureLocations =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
-    readonly mesh: MeshRendererIndividual
-    readonly material: MaterialRendererIndividual
-    readonly implementation: MeshInstance
+    readonly mesh: MeshRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
+    readonly material: MaterialRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
+    readonly implementation!: MeshInstance
 
     constructor(
-            public readonly shared: SurfaceRendererShared<VolumeLocationT, Sample, SampleContextTemplate>,
+            public readonly shared: SurfaceRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
             public readonly entity: Entity
         ) {
         this.mesh = shared.mesh.individualize(this)

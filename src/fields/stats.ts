@@ -50,13 +50,13 @@ export function field_point_stdDev<Point extends FieldPoint = FieldPoint>(points
         for (let i = 0; i < points[0].length; i++) {
             let sum = 0
             for (let j = 0; j < points.length; j++)
-                sum += points[j][i]
+                sum += (points as Array<number>[])[j][i]
             
             const mean = sum / points.length
             let squaredDiff_sum = 0
 
             for (let j = 0; j < points.length; j++)
-                squaredDiff_sum += (points[j][i] - mean) ** 2
+                squaredDiff_sum += ((points as Array<number>[])[j][i] - mean) ** 2
             
             const stdDev = Math.sqrt(squaredDiff_sum / (points.length - 1))
             stdDevs_sum += stdDev

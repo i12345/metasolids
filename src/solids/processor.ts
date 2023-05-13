@@ -395,17 +395,17 @@ export class VolumeSurfaceSolidifyingProcessor<
     }
 
     process(
-        surface: SurfaceT,
-        context: VolumeSurfaceProcessingContext<
-            Location,
-            Sample,
-            SampleContextTemplate,
-            SurfaceProcessingContextT,
-            VolumeProcessingT,
-            VolumeProcessingContextT
-        >
-    ): void {
-        const volumeProcessing = context[ParallelizedContextParallelInfo].item
+            surface: SurfaceT,
+            context: VolumeSurfaceProcessingContext<
+                Location,
+                Sample,
+                SampleContextTemplate,
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingContextT
+            >
+        ): void {
+        const volumeProcessing = context[ParallelizedContextParallelInfo].item!
         volumeProcessing[VolumeSolidsKey].push({ surface })
     }
 }

@@ -1,7 +1,7 @@
-import { Surface, SurfaceSample } from "../../surface.js";
+import { Surface } from "../../surface.js";
 import { Material_Groups_Textures, Material_Texture_Context } from "./material/material-texture.js";
 import { VolumeLocation } from "../../../volumes/volume.js";
-import { SurfaceProcessingContextWithIndividualTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations } from "../texturing/types.js";
+import { SurfaceProcessingContextWithIndividualTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations } from "../texturing/types.js";
 import { SurfaceRendererShared } from "./renderer.js";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../../fields/multi-objects-fields-point.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
@@ -28,24 +28,21 @@ export interface SurfaceWithRender_TexturesTemplated<
 
 export interface SurfaceWithRendering<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        Sample extends SurfaceSample = SurfaceSample
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     >
-    extends Surface<Sample>,
+    extends Surface<SurfaceSampleWithIndividualTextureLocations<SurfaceTextureLocationGroup>>,
     SurfaceWithRender_TexturesTemplated<VolumeLocationT> {
     renderer: SurfaceRendererShared
 }
 
 export interface SurfaceProcessingContextWithRendering<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SampleContextTemplate extends
-            SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup> =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > extends
     SurfaceProcessingContextWithIndividualTextures<
         SurfaceTextureLocationGroup,
         SurfaceWithRendering_TextureGroups,
-        SampleContextTemplate
+        SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>
     > {
     material: {
         textures?: MultiObjectsGroupsMapped<

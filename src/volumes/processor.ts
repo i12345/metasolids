@@ -155,7 +155,7 @@ export class VolumeSampleParallelizer<
 
         const parallelizedContext: SampleContext = {
             ...context[VolumeSampleKey],
-            [ParallelizedContextParallelInfo]: { item: undefined, context }
+            [ParallelizedContextParallelInfo]: { context }
         }
         
         parallelizedItemProcessor.init(parallelizedContext)

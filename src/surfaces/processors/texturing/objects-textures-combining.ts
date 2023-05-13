@@ -297,7 +297,7 @@ export class SurfaceWithObjectsTexturesCombiningProcessor<
             SurfaceSampleProcessingContextT
         >
     > {
-    private _dependencies: PropertyPath[]
+    private _dependencies!: PropertyPath[]
     
     get dependencies() {
         return this._dependencies

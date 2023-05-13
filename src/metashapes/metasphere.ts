@@ -31,8 +31,8 @@ export class MetaSphere<
         VolumeContext,
         Context
     > {
-    boundingBox: BoundingBox
-    field = MetaShapeVolume.defaultFields.sample as FieldsField<Sample>
+    readonly boundingBox = new BoundingBox()
+    readonly field = MetaShapeVolume.defaultFields.sample as FieldsField<Sample>
     
     sample(location: Location, context: Context): Sample {
         const theta = Math.atan2(location.p.y, location.p.x)
@@ -89,9 +89,6 @@ export class MetaSphere<
             }
         }
 
-        this.boundingBox = new BoundingBox(
-            new Vec3().add2(boundingBox.max, boundingBox.min).divScalar(2),
-            new Vec3().sub2(boundingBox.max, boundingBox.min).divScalar(2)
-        )
+        this.boundingBox.setMinMax(boundingBox.min, boundingBox.max)
     }
 }

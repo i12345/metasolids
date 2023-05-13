@@ -44,8 +44,8 @@ export abstract class TransformingSampleDomain<
     > implements
     SampleDomain<OuterLocation, OuterSample, OuterContext> {
     constructor(public inner: SampleDomain<InnerLocation, InnerSample, InnerContext>) {}
-    field: Field<OuterSample>
-    private location_field: Field<InnerLocation>
+    field!: Field<OuterSample>
+    private location_field!: Field<InnerLocation>
 
     init(context: OuterContext): void {
         this.location_field = this.init_location_field(context)
@@ -77,8 +77,8 @@ export abstract class TransformingSampleDomain<
         const exclude_keys: PropertyPath = [EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain]
 
         Reflect.ownKeys(innerContext)
-            .filter(key => !exclude_keys.includes(key) && !outerContext[key])
-            .forEach(key => outerContext[key] = innerContext[key])
+            .filter(key => !exclude_keys.includes(key) && !(outerContext as any)[key])
+            .forEach(key => (outerContext as any)[key] = (innerContext as any)[key])
     }
 
     protected init_make_field(innerField: Field<InnerSample>): Field<OuterSample> {

@@ -32,7 +32,7 @@ class MaterialSemanticImplementationStorageClassInstanceShared_Constant
         renderer.material.computeBackingCallbacks.push(renderer => {
             renderer
                 .storageClassInstances
-                .find($class => $class instanceof MaterialSemanticImplementationStorageClassInstanceIndividual_Constant)
+                .find($class => $class instanceof MaterialSemanticImplementationStorageClassInstanceIndividual_Constant)!
                 .apply([], [])
         })
     }
@@ -80,13 +80,13 @@ class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant
             defaultMaterial = new StandardMaterial()
         
         for (const { semantic } of remove)
-            this.renderer.implementation.material[semantic as string] = defaultMaterial[semantic]
+            (this.renderer.implementation.material as any)[semantic as string] = defaultMaterial[semantic]
         
         for (const { semantic, buffer } of add) {
-            const mat_semantic = this.renderer.implementation.material[semantic]
+            const mat_semantic = this.renderer.material.implementation[semantic]
 
             if (typeof mat_semantic === 'number')
-                this.renderer.implementation.material[semantic as string] = buffer[0]
+                (this.renderer.material.implementation as any)[semantic] = buffer[0]
             else if (mat_semantic instanceof Color)
                 mat_semantic.set(buffer[0], buffer[1], buffer[2], buffer[3])
             else if (mat_semantic instanceof Vec3)

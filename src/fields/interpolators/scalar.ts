@@ -10,7 +10,7 @@ export class ScalarInterpolationType implements FieldInterpolationType<number> {
 
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, number>[]
-        ): Interpolator<Location, number> {
+        ): Interpolator<Location, number> | undefined {
         if (!keypoints.every(({ value }) => typeof value === 'number'))
             return undefined
         

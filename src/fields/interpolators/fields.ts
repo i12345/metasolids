@@ -13,22 +13,34 @@ export class FieldsInterpolationType<Point extends FieldsPoint = FieldsPoint>
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, Point>[],
             locationField: Field<Location>
-        ): FieldInterpolator<Location, Point> {
+        ): FieldInterpolator<Location, Point> | undefined {
+        let anyUndefined = false
+        
         const interpolators =
             fields_point_map(
                 this.interpolators,
                 value => value[makeInterpolator] !== undefined,
-                (valueField, path) => InterpolationManager[makeInterpolator](
-                    keypoints.map(
-                        ({ location, value: keypoint_value }) => ({
-                            location,
-                            value: extract(keypoint_value, path)
-                        })
-                    ),
-                    locationField
-                )
+                (valueField, path) => {
+                    const interpolator = InterpolationManager[makeInterpolator](
+                        keypoints.map(
+                            ({ location, value: keypoint_value }) => ({
+                                location,
+                                value: extract(keypoint_value, path)
+                            })
+                        ),
+                        locationField
+                    )
+
+                    if (interpolator === undefined)
+                        anyUndefined = true
+
+                    return interpolator
+                }
             )
     
+        if (anyUndefined)
+            return undefined
+        
         return location =>
             fields_point_map(
                 interpolators,

@@ -11,8 +11,8 @@ export class TransformVolume<
     > extends
     TransformingSampleDomain<Location, Sample, Context>
     implements Volume<Location, Sample, Context> {
-    boundingBox: BoundingBox
-    private transformInverse: Mat4
+    readonly boundingBox = new BoundingBox()
+    private transformInverse = new Mat4()
     
     constructor(
         public inner: Volume<
@@ -31,18 +31,18 @@ export class TransformVolume<
     }
     
     init(context: Context) {
-        this.transformInverse = this.transform.clone().invert()
+        this.transform.copy(this.transformInverse)
+        this.transformInverse.invert()
 
         super.init(context)
 
-        this.boundingBox = new BoundingBox()
         this.boundingBox.setFromTransformedAabb(this.inner.boundingBox, this.transform)
     }
 
     protected transformLocation(location: Location) {
         return {
             ...location,
-            p: this.transformInverse.transformPoint(location.p)
+            p: this.transformInverse!.transformPoint(location.p)
         }
     }
 

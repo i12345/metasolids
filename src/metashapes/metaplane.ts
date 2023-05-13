@@ -34,8 +34,8 @@ export class MetaPlane<
         VolumeContext,
         Context
     > {
-    boundingBox: BoundingBox
-    field = FieldsField.merge<Sample>(
+    readonly boundingBox = new BoundingBox()
+    readonly field = FieldsField.merge<Sample>(
         MetaShapeVolume.defaultFields.sample as FieldsField<Sample>,
         new FieldsField({
             side: new SignField(),
@@ -103,10 +103,7 @@ export class MetaPlane<
             }
         }
         
-        this.boundingBox = new BoundingBox(
-            new Vec3().add2(boundingBox.max, boundingBox.min).divScalar(2),
-            new Vec3().sub2(boundingBox.max, boundingBox.min).divScalar(2)
-        )
+        this.boundingBox.setMinMax(boundingBox.min, boundingBox.max)
     }
 
     sample(location: Location, context: Context): Sample {

@@ -43,12 +43,13 @@ export type SurfaceSampleWithObjectsInterpolatingValues<
     > =
     SurfaceSample &
     SurfaceSampleWithIndividualTextureLocations<SurfaceTextureLocationGroup> &
-    MultiObjectsMappedAgainGrouped<
-            Objects,
-            InterpolatingGroups,
-            InterpolatingValue,
-            InterpolatingValuesGrouped
-        >
+    // MultiObjectsMappedAgainGrouped<
+    //         Objects,
+    //         InterpolatingGroups,
+    //         InterpolatingValue,
+    //         InterpolatingValuesGrouped
+    //     >
+    {}
 
 export type SurfaceSampleProcessingContextWithObjectsInterpolatingValues<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -97,13 +98,14 @@ export type SurfaceWithObjectsInterpolatingValueTextures<
                 >
     > =
     Surface<SurfaceSampleT> &
-    TexturesTemplatedWithObjects<
-            Objects,
-            InterpolatingGroups,
-            ObjectsInterpolatingGrouped,
-            InterpolatingValue,
-            InterpolatingValuesGrouped
-        >
+    // TexturesTemplatedWithObjects<
+    //         Objects,
+    //         InterpolatingGroups,
+    //         ObjectsInterpolatingGrouped,
+    //         InterpolatingValue,
+    //         InterpolatingValuesGrouped
+    //     >
+    {}
 
 export type SurfaceProcessingContextWithObjectsInterpolatingValueTextures<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -205,7 +207,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesProcessor<
                     SurfaceSampleProcessingContextT
                 >
         > {
-    private _dependencies: PropertyPath[]
+    private _dependencies!: PropertyPath[]
     
     get dependencies() {
         return this._dependencies
@@ -228,7 +230,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesProcessor<
         >): void {
         const { group: surfaceTextureLocationGroup } =
             onlyOne(groupKinds(
-                    context,
+                    context.sample,
                     SurfaceIndividualTextureLocationsGroupKindsTemplate,
                     this.surfaceTextureLocationGroup
                 ))
@@ -267,7 +269,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesProcessor<
         ): void {
         const { group: surfaceTextureLocationGroup } =
             onlyOne(groupKinds(
-                    context,
+                    context.sample,
                     SurfaceIndividualTextureLocationsGroupKindsTemplate,
                     this.surfaceTextureLocationGroup
                 ))
@@ -283,6 +285,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesProcessor<
                     InterpolatingGroupKinds,
                     Texture<TextureLocation, InterpolatingValue>
                 >(
+                    ///@ts-ignore
                     surface,
                     context.sample,
                     this.interpolatingGroupsKinds,

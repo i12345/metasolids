@@ -117,7 +117,7 @@ export function field_point_is<Point = any>(p: Point): Point extends FieldPoint 
         return true as (Point extends FieldPoint ? true : false)
     else if (typeof p === 'object' && p !== null) {
         for (const key of Reflect.ownKeys(p))
-            if (!field_point_is(p[key]))
+            if (!field_point_is((p as any)[key]))
                 return false as (Point extends FieldPoint ? true : false)
         
         return true as (Point extends FieldPoint ? true : false);
@@ -166,7 +166,7 @@ export function field_point_path(
         return []
     else if (typeof point === 'object') {
         for (const key of Reflect.ownKeys(point)) {
-            const path_key = field_point_path(point[key], predicate)
+            const path_key = field_point_path((point as any)[key], predicate)
             if (path_key !== undefined)
                 return [key, ...path_key]
         }
@@ -187,7 +187,7 @@ export const field_point_map =
             Object.fromEntries(
                 Reflect.ownKeys(point as FieldsPointMapped<FieldsPoint, T>)
                     .map(key => {
-                        const value = point[key]
+                        const value = (point as any)[key]
                         const newpath = [...path, key]
                         if (leafDeterminer(value as T))
                             return [key, action(value as T, newpath)]
@@ -490,10 +490,11 @@ export function field_point_add<Point extends FieldPoint>(a: Point, b: Point): P
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
+        const b_array = b as ArrayLike<number>
+        console.assert(a.length === b_array.length)
         let newArray = new Float64Array(a.length as number)
         for (let i = 0; i < newArray.length; i++)
-            newArray[i] = (a[i] as number) + (b[i] as number)
+            newArray[i] = (a[i] as number) + b_array[i]
         return newArray as FieldPoint as Point
     }
     else {
@@ -541,9 +542,10 @@ export function field_point_add_inplace<Point extends FieldPoint>(a: Point, b: P
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
+        const b_array = b as ArrayLike<number>
+        console.assert(a.length === b_array.length)
         for (let i = 0; i < a.length; i++)
-            a[i] += (b[i] as number)
+            a[i] += b_array[i]
         return a as Point
     }
     else {
@@ -607,9 +609,10 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
+        const b_array = b as ArrayLike<number>
+        console.assert(a.length === b_array.length)
         for (let i = 0; i < a.length; i++)
-            a[i] += (b[i] as number) * weight
+            a[i] += b_array[i] * weight
         return a as Point
     }
     else {
@@ -689,7 +692,7 @@ export function field_point_sum<Point extends FieldPoint = FieldPoint>(points: P
         const sum = new Float64Array(points[0].length)
         for (let j = 0; j < points.length; j++)
             for (let i = 0; i < (points[j] as Vector).length; i++)
-                sum[i] += points[j][i]
+                sum[i] += (points as ArrayLike<number>[])[j][i]
         return sum as Point
     }
     else return fields_point_sum(points as FieldsPoint[]) as Point
@@ -776,10 +779,11 @@ export function field_point_subtract<Point extends FieldPoint>(a: Point, b: Poin
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
+        const b_array = b as ArrayLike<number>
+        console.assert(a.length === b_array.length)
         let newArray = new Float64Array(a.length as number)
         for (let i = 0; i < newArray.length; i++)
-            newArray[i] = (a[i] as number) - (b[i] as number)
+            newArray[i] = (a[i] as number) - b_array[i] as number
         return newArray as FieldPoint as Point
     }
     else {
@@ -823,7 +827,6 @@ export function field_point_multiply<Point extends FieldPoint>(a: Point, b: numb
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
         let newArray = new Float64Array(a.length as number)
         for (let i = 0; i < newArray.length; i++)
             newArray[i] = (a[i] as number) * b
@@ -873,10 +876,11 @@ export function field_point_multiply_hadamard<Point extends FieldPoint>(a: Point
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
+        const b_array = b as ArrayLike<number>
+        console.assert(a.length === b_array.length)
         let newArray = new Float64Array(a.length as number)
         for (let i = 0; i < newArray.length; i++)
-            newArray[i] = (a[i] as number) * (b[i] as number)
+            newArray[i] = (a[i] as number) * b_array[i]
         return newArray as FieldPoint as Point
     }
     else {
@@ -920,7 +924,6 @@ export function field_point_divide<Point extends FieldPoint>(a: Point, b: number
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
         let newArray = new Float64Array(a.length as number)
         for (let i = 0; i < newArray.length; i++)
             newArray[i] = (a[i] as number) / b
@@ -1007,10 +1010,11 @@ export function field_point_modulo<Point extends FieldPoint>(a: Point, b: Point)
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
+        const b_array = b as ArrayLike<number>
+        console.assert(a.length === b_array.length)
         let newArray = new Float64Array(a.length as number)
         for (let i = 0; i < newArray.length; i++)
-            newArray[i] = (a[i] as number) % (b[i] as number)
+            newArray[i] = (a[i] as number) % b_array[i]
         return newArray as FieldPoint as Point
     }
     else {
@@ -1075,10 +1079,10 @@ export function field_point_fraction<Point extends FieldPoint>(a: Point, b: Poin
         a instanceof Float32Array ||
         a instanceof Float64Array ||
         a instanceof Array) {
-        console.assert(a.length === b['length'])
+        const b_array = b as ArrayLike<number>
         let newArray = new Float64Array(a.length as number)
         for (let i = 0; i < newArray.length; i++)
-            newArray[i] = (a[i] as number) / (b[i] as number)
+            newArray[i] = (a[i] as number) / b_array[i]
         return newArray as FieldPointNumbers<Point>
     }
     else {
@@ -1211,7 +1215,7 @@ export function field_point_compare_gte<Point extends FieldPoint>(a: Point, b: P
 }
 
 export function fields_point_identity<Point extends FieldsPoint>(a: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_identity(a[key])
@@ -1220,7 +1224,7 @@ export function fields_point_identity<Point extends FieldsPoint>(a: Point): Poin
 }
 
 export function fields_point_invalid<Point extends FieldsPoint>(a: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_invalid(a[key])
@@ -1229,7 +1233,7 @@ export function fields_point_invalid<Point extends FieldsPoint>(a: Point): Point
 }
 
 export function fields_point_clone<Point extends FieldsPoint>(a: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a)) 
         c[key] = field_point_clone(a[key])
@@ -1238,7 +1242,7 @@ export function fields_point_clone<Point extends FieldsPoint>(a: Point): Point {
 }
 
 export function fields_point_random<Point extends FieldsPoint>(a: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_random(a[key])
@@ -1247,7 +1251,7 @@ export function fields_point_random<Point extends FieldsPoint>(a: Point): Point 
 }
 
 export function fields_point_add<Point extends FieldsPoint>(a: Point, b: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a)) {
         if (a[key] !== undefined)
@@ -1263,7 +1267,7 @@ export function fields_point_add<Point extends FieldsPoint>(a: Point, b: Point):
 }
 
 export function fields_point_subtract<Point extends FieldsPoint>(a: Point, b: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a)) {
         if (a[key] !== undefined)
@@ -1279,7 +1283,7 @@ export function fields_point_subtract<Point extends FieldsPoint>(a: Point, b: Po
 }
 
 export function fields_point_add_inplace<
-        KeyTemplate extends object = object,
+        KeyTemplate extends any = any,
         Point extends FieldPoint = FieldPoint
     >(
         accumulator: { [K in keyof KeyTemplate]: Point } & any,
@@ -1358,7 +1362,7 @@ export function fields_point_primitives_sum<Point extends FieldsPoint = FieldsPo
 }
 
 export function fields_point_multiply<Point extends FieldsPoint>(a: Point, b: number): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_multiply(a[key], b)
@@ -1367,7 +1371,7 @@ export function fields_point_multiply<Point extends FieldsPoint>(a: Point, b: nu
 }
 
 export function fields_point_multiply_hadamard<Point extends FieldsPoint>(a: Point, b: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_multiply_hadamard(a[key], b)
@@ -1376,7 +1380,7 @@ export function fields_point_multiply_hadamard<Point extends FieldsPoint>(a: Poi
 }
 
 export function fields_point_divide<Point extends FieldsPoint>(a: Point, b: number): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_divide(a[key], b)
@@ -1385,7 +1389,7 @@ export function fields_point_divide<Point extends FieldsPoint>(a: Point, b: numb
 }
 
 export function fields_point_modulo<Point extends FieldsPoint>(a: Point, b: Point): Point {
-    let c = {}
+    let c: any = {}
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_modulo(a[key], b[key])
@@ -1394,7 +1398,7 @@ export function fields_point_modulo<Point extends FieldsPoint>(a: Point, b: Poin
 }
 
 export function fields_point_fraction<Point extends FieldsPoint>(a: Point, b: Point): FieldPointNumbers<Point> {
-    let c = {}
+    let c: any = {}
 
     for (const key of new Set([...Reflect.ownKeys(a), ...Reflect.ownKeys(b)]))
         c[key] = field_point_fraction(a[key], b[key])

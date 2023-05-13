@@ -23,18 +23,19 @@ export function field_point_merge_mapped<
         Dst extends FieldPoint,
         Src extends FieldPoint
     >(
-        dst: Dst,
-        src: Src,
+        dst: Dst | undefined,
+        src: Src | undefined,
         mappings: FieldPointMapping[]
     ): Dst {
     const dstObj = { dst }
 
     for (const mapping of mappings) {
-        const value = extract(src, mapping.from)
-        intract(dstObj, ['dst', ...mapping.to], value)
+        const value = extract<FieldPoint | undefined>(src, mapping.from)
+        if (value !== undefined)
+            intract(dstObj, ['dst', ...mapping.to], value)
     }
 
-    return dstObj.dst
+    return dstObj.dst!
 }
 
 export function field_point_mapped<
@@ -44,7 +45,7 @@ export function field_point_mapped<
         src: Src,
         mappings: FieldPointMapping[]
     ): Dst {
-    return field_point_merge_mapped<Dst, Src>(undefined as Dst, src, mappings)
+    return field_point_merge_mapped<Dst, Src>(undefined, src, mappings)
 }
 
 export function mapping_inverse(mapping: FieldPointMapping): FieldPointMapping {

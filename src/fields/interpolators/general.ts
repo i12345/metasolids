@@ -5,9 +5,9 @@ import { FieldPoint, field_point_sum_weighted } from "../point.js";
 export class GeneralInterpolationType<Point extends FieldPoint = FieldPoint>
     implements InterpolationType<Point> {
     [makeInterpolator]<Location extends FieldPoint>(
-        keypoints: InterpolationKeypoint<Location, Point>[],
-        locationField: Field<Location>
-    ): FieldInterpolator<Location, Point> {
+            keypoints: InterpolationKeypoint<Location, Point>[],
+            locationField: Field<Location>
+        ): FieldInterpolator<Location, Point> | undefined {
         const locations = keypoints.map(({ location }) => location)
         const values = keypoints.map(({ value }) => value)
 

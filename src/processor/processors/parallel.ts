@@ -8,7 +8,7 @@ export interface ParallelizedContext<
         ParallelContext
     > {
     [ParallelizedContextParallelInfo]: {
-        item: ParallelItem
+        item?: ParallelItem
         context: ParallelContext
     }
 }

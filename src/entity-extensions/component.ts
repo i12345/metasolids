@@ -4,9 +4,9 @@ import { fields, meshing, solids, surfaces, textures, volumes } from "../index.j
 import { Volume } from "../volumes/volume.js";
 import { VolumeComponentSystem } from "./system.js";
 import { ProcessorGraph } from "../processor/index.js";
-import { groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
-import { MultiObjectsVolume } from "../volumes/index.js";
-import { GroupsKindsT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT } from "./types.js";
+import { MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
+import { MultiObjectsVolume, TransformVolume } from "../volumes/index.js";
+import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeT } from "./types.js";
 import { MultiObjectsGroupsTemplate } from "../fields/multi-objects-fields-point.js";
 import { makeClone } from "../utils/cloneable.js";
 import { MultiObjectsGroupedObjectsKey } from "../fields/multi-objects-fields-point.js";
@@ -15,7 +15,7 @@ import { intract, pathsToNodeWithKey } from "../utils/tree.js";
 const _schema = ['enabled']
 
 export class VolumeComponent extends Component {
-    volume: Volume
+    volume?: Volume
     makeRoot: boolean = false
     extraLocationParameters?: FieldsPoint
     samplingSettings = { ...volumes.defaultVolumeSamplerSettings }
@@ -45,18 +45,22 @@ export class VolumeComponent extends Component {
             return
         }
 
+        if (!this.volume)
+            return
+
         const system = this.system as VolumeComponentSystem
         
-        function compositeVolume(node: GraphNode, require_multiObjects = false) {
+        function compositeVolume(node: GraphNode, require_multiObjects = false): VolumeT | undefined {
             const entity = node as Entity
             const component = entity?.findComponent('volume') as VolumeComponent
             
             const children = [
-                ['$$main', component?.volume],
+                ...(component?.volume ? [['$$main', component.volume]] : []),
                 ...node.children
                     .filter(child => !child.name.startsWith("$$"))
-                    .map(child => [child.name, new volumes.TransformVolume(compositeVolume(child), child.getLocalTransform())])
-            ].filter(([, volume]) => volume !== undefined)
+                    .map(child => [child.name, new volumes.TransformVolume(compositeVolume(child)!, child.getLocalTransform())] as [string, TransformVolume])
+                    .filter(([, { inner }]) => inner !== undefined)
+            ] as [string, VolumeT][]
 
             if (children.length === 0)
                 return undefined
@@ -65,14 +69,14 @@ export class VolumeComponent extends Component {
             else {
                 return new volumes.MultiObjectsVolume(
                     Object.fromEntries(children),
-                    undefined,
+                    undefined as unknown as MultiObjectsInfluencesGroupKinds & MultiObjectsGroupsKindsTemplate,
                     Sample_MultiObjectsMappedGroups_Template,
                     MultiObjectsInfluencesGroupsDefaultTemplate
-                )
+                ) as any as VolumeT
             }
         }
 
-        const compositeVolume_final = compositeVolume(this.entity, true)
+        const compositeVolume_final = compositeVolume(this.entity, true)!
         function objectsTemplate_populate(volume: Volume): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
             if (volume instanceof MultiObjectsVolume)
                 return Object.fromEntries(Object.entries(volume.children as any).map(([key, child]) =>
@@ -195,7 +199,7 @@ export class VolumeComponent extends Component {
 
     private findRoot(node: GraphNode = this.entity): VolumeComponent {
         if (node.root === node)
-            return undefined
+            return undefined!
         
         const e = node as Entity
         if (!e.findComponent)

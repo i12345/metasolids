@@ -9,7 +9,7 @@ export class KeypointsSampleDomain<
         Context extends SamplingContext<Location> = SamplingContext<Location>
     > implements
     SampleDomain<Location, Sample, Context> {
-    private interpolator: FieldInterpolator<Location, Sample>
+    private interpolator!: FieldInterpolator<Location, Sample>
 
     constructor(
         public keypoints: FieldInterpolationKeypoint<Location, Sample>[],

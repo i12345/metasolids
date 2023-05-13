@@ -4,7 +4,6 @@ import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../
 import { GeneratorType } from '../../utils/generator-type.js'
 import { onlyOne } from '../../utils/only-one.js'
 
-/// @ts-ignore
 export class MultiObjectsVolume<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -50,7 +49,8 @@ export class MultiObjectsVolume<
     //     MultiObjectsContext<Objects, Groups, GroupKinds, Location, LeafContext>
     // >
 {
-    private influenceGroupRef: GeneratorType<ReturnType<typeof groups>>
+    boundingBox!: BoundingBox
+    private influenceGroupRef?: GeneratorType<ReturnType<typeof groups>>
 
     constructor(
         children: {
@@ -67,13 +67,11 @@ export class MultiObjectsVolume<
     ) {
         super(children as any, groupKindsTemplate, groupsTemplate)
     }
-    
-    boundingBox: BoundingBox
 
     init(context: MultiObjectsContext<Objects, Groups, GroupKinds, Location /* , LeafContext */>): void {
         super.init(context)
 
-        this.boundingBox = undefined
+        this.boundingBox = undefined!
         for (const child_key of Reflect.ownKeys(this.children)) {
             const child = this.children[child_key]
             const box = (child as Volume).boundingBox
@@ -90,9 +88,9 @@ export class MultiObjectsVolume<
 
     protected override combineResidualLeafSample(accumulator: MultiObjectsSample<Objects, Groups, MultiObjectsGroupsMapped<Groups, FieldPoint>>, key: PropertyKey, residual: MultiObjectsGroupsOmitted<Groups, MultiObjectsGroupsMapped<Groups, FieldPoint>>): MultiObjectsSample<Objects, Groups, MultiObjectsGroupsMapped<Groups, FieldPoint>> {
         const presence = (residual as VolumeSample).presence
-        const influenceGroup = this.influenceGroupRef.get(accumulator)
+        const influenceGroup = this.influenceGroupRef!.get(accumulator)
         if (influenceGroup === undefined)
-            this.influenceGroupRef.set(accumulator, { [key]: presence })
+            this.influenceGroupRef!.set(accumulator, { [key]: presence })
         else influenceGroup[key] = presence
         
         return super.combineResidualLeafSample(accumulator, key, residual)

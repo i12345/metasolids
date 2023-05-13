@@ -73,7 +73,7 @@ export class SolidWithEnclosingVolumeProcessor<
         const triangles_mesh = Triangles2DMesh.build(xy, mesh.triangles)
         const triangles_meshCollider = new Triangles2DMeshCollider(triangles_mesh)
 
-        const sampling = context[ParallelizedContextParallelInfo].item[VolumeSamplingKey]
+        const sampling = context[ParallelizedContextParallelInfo].item![VolumeSamplingKey]
 
         const local_space_offset_3d = sampling.boundingBox.getMin()
         const local_space_offset = new Vec2(

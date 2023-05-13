@@ -1,10 +1,10 @@
 export function onlyOne<T>(generator: Generator<T>): T {
-    let retval: T
+    let retval: T | undefined = undefined
     for (const item of generator) {
-        if (!retval)
+        if (retval === undefined)
             retval = item
-        else return undefined
+        else throw new Error("more than one")
     }
 
-    return retval
+    return retval!
 }

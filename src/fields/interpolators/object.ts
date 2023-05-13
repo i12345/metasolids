@@ -7,7 +7,7 @@ export class ObjectInterpolationType<T extends object & Cloneable> implements In
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: InterpolationKeypoint<Location, T>[],
             locationField: Field<Location>
-        ): Interpolator<Location, T> {
+        ): Interpolator<Location, T> | undefined {
         //TODO: does this always have to be the case
         // if (keypoints.some(({ value: obj }) => Object.getPrototypeOf(obj) !== Object.getPrototypeOf(keypoints[0][1])))
         //     return undefined
@@ -20,7 +20,7 @@ export class ObjectInterpolationType<T extends object & Cloneable> implements In
                 interpolator: InterpolationManager[makeInterpolator](
                     keypoints.map(
                         ({ location, value: keypoint }) =>
-                            ({ location, value: keypoint[key] })
+                            ({ location, value: (keypoint as any)[key] })
                     ),
                     locationField
                 )
@@ -32,12 +32,12 @@ export class ObjectInterpolationType<T extends object & Cloneable> implements In
         const template = keypoints[0].value
         
         return location => {
-            const obj = makeClone(template) as T
+            const obj = makeClone(template) as any
             
             for (const { key, interpolator } of propertyInterpolators)
                 obj[key] = interpolator(location)
 
-            return obj
+            return obj as T
         }
     }
 

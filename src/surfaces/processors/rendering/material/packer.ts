@@ -69,12 +69,12 @@ export function renderPack(
                 buffer_dst[i] = math.clamp(Math.floor(buffer_src[i] * 255), 0, 255)
     }
     else {
-        const size = indices_dst.length
+        const size = indices_dst?.length ?? (pack.sources[0].buffer.length / pack.sources[0].channels)
         if (buffer_dst.length !== size * pack.channels)
             throw new Error()
         
         for (const source of pack.sources) {
-            const target = pack.targets.find(target => target.source.semantic === source.semantic)
+            const target = pack.targets.find(target => target.source.semantic === source.semantic)!
             for (const [source_channel_index, pack_channel] of target.channels.entries()) {
                 if (buffer_dst instanceof Float32Array) {
                     for (let i = 0; i < size; i++) {

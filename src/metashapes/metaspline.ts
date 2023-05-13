@@ -57,7 +57,7 @@ class MetaSpline<
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext> =
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext>
     > {
-    private t: number[]
+    // private t: number[]
     private transform_interpolator: FieldInterpolator<number, Mat4>
     private figure_interpolator: Interpolator<number, MetaSplineSegmentFigure<Location, Sample>>
 
@@ -109,7 +109,7 @@ class MetaSpline<
             let cmp: ReturnType<typeof transform_interpolate>
             let low = t0, high = t0 + t_m
 
-            while (iterations-- > 0) {
+            do {
                 mid = (low + high) / 2
                 cmp = transform_interpolate(mid);
                 
@@ -124,7 +124,7 @@ class MetaSpline<
                 // Key found.
                 else
                     return { ...cmp, t: mid, outOfBounds: false }
-            }
+            } while (--iterations > 0)
 
             if (low === 0) {
                 return {
@@ -204,7 +204,7 @@ export class MetaSplineSegment<
             VolumeContext
         >
     > {
-    field: Field<Sample>
+    field!: Field<Sample>
     
     //TODO: let there be multiple figures with different times for a single SplineSegment
     constructor(
@@ -213,20 +213,20 @@ export class MetaSplineSegment<
     ) {
     }
     
-    private spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[]
-    private spline: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>
-    private spline_segment_index: number
+    private readonly spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>[] = []
+    private spline?: MetaSpline<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>
+    private spline_segment_index!: number
 
-    transform_relative_root: Mat4
-    transform_relative_root_inv: Mat4
+    readonly transform_relative_root = new Mat4()
+    readonly transform_relative_root_inv = new Mat4()
 
     t: number = 0
-    t_iterations: number
+    t_iterations!: number
 
-    boundingBox: BoundingBox
+    readonly boundingBox = new BoundingBox()
 
     init(context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, TextureContext, VolumeContext>): void {
-        this.spline_potential = []
+        this.spline_potential.splice(0, this.spline_potential.length)
         this.init_figure(context)
         
         // find parent to connect with
@@ -235,18 +235,19 @@ export class MetaSplineSegment<
             this.spline_segment_index = 0
             this.t = 0
             this.t_iterations = NaN
-            this.transform_relative_root = new Mat4().setIdentity()
+            this.transform_relative_root.setIdentity()
             this.spline = undefined
         }
         else {
             this.spline_segment_index = (parent.segment.spline?.segments.length ?? 0) + 1
             this.t = this.t_offset + parent.segment.t
             this.t_iterations = Math.log2(this.t_offset) + 15
-            this.transform_relative_root = new Mat4().mul2(parent.segment.transform_relative_root, parent.transform_to_parent)
+            this.transform_relative_root.mul2(parent.segment.transform_relative_root, parent.transform_to_parent)
             this.init_spline_potential(new MetaSpline([...(parent.segment.spline?.segments ?? [parent.segment]), this]), context)
         }
 
-        this.transform_relative_root_inv = this.transform_relative_root.clone().invert()
+        this.transform_relative_root.copy(this.transform_relative_root_inv)
+        this.transform_relative_root_inv.invert()
         
         this.field = FieldsField.merge<Sample>(
             (this.figure.field as FieldsField<MetaSplineSegmentFigureSample<Sample>>) as FieldsField<Sample>,
@@ -274,7 +275,7 @@ export class MetaSplineSegment<
         ): {
             segment: MetaSplineSegment<TxLocation, TxSample, Location, Sample, TextureContext, VolumeContext>,
             transform_to_parent: Mat4
-        } {
+        } | undefined {
         //TODO: consider this method
         if (!context[EncapsulatingDomainSamplingContextParentDomain])
             return undefined
@@ -363,18 +364,18 @@ export class MetaSplineSegment<
 
     private init_bounding_box(context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, TextureContext, VolumeContext>) {
         if (this.spline_segment_index === 0) {
-            this.boundingBox = new BoundingBox()
+            this.boundingBox.setMinMax(Vec3.ZERO, Vec3.ZERO)
             return
         }
 
         const segment_first = this.spline_segment_index === 1
-        const segment_last = this.spline_segment_index === this.spline.segments.length - 1
+        const segment_last = this.spline_segment_index === this.spline!.segments.length - 1
 
         const texture = context[MetaShapeSamplingContext_Texture].item
 
         const meshingSettings = (context[MetaShapeSamplingContext_Volume] as unknown as VolumeSurfaceMeshingProcessingContext)[VolumeSurfaceMeshingKey].settings ?? defaultMeshingSettings
 
-        const t0 = this.spline.segments[this.spline_segment_index - 1].t
+        const t0 = this.spline!.segments[this.spline_segment_index - 1].t
 
         const resolution = {
             t: 32,
@@ -404,7 +405,7 @@ export class MetaSplineSegment<
                 const texture_location = { uv, gradient: v } as MetaShapeTxLocation<Location, TxLocation> & Sample
                 const texture_sample = texture?.sample(texture_location, context[MetaShapeSamplingContext_Texture].context)
 
-                const figure_sample = this.spline.figureSample(t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
+                const figure_sample = this.spline!.figureSample(t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
                 
                 const parameters = MetaShapeVolume.combineParameters(
                     (texture_sample ?? MetaShapeVolume.defaultParameters) as FieldsPointOptional<MetaShapeParametersIn>,
@@ -425,14 +426,14 @@ export class MetaSplineSegment<
 
         for (let t_i = 0; t_i <= this.t_offset * resolution.t; t_i++) {
             const t = t0 + (t_i / resolution.t)
-            const m = this.spline.planeAt(t)
+            const m = this.spline!.planeAt(t)
 
             sample_theta(t, m)
         }
 
         if (segment_first) {
             const t = t0
-            const m = this.spline.planeAt(t)
+            const m = this.spline!.planeAt(t)
             
             for (let phi_i = 1; phi_i <= resolution.phi; phi_i++)
                 sample_theta(t, m, phi_i * -PiOver2 / resolution.phi)
@@ -440,16 +441,13 @@ export class MetaSplineSegment<
 
         if (segment_last) {
             const t = this.t
-            const m = this.spline.planeAt(t)
+            const m = this.spline!.planeAt(t)
             
             for (let phi_i = 1; phi_i <= resolution.phi; phi_i++)
                 sample_theta(t, m, phi_i * PiOver2 / resolution.phi)
         }
 
-        this.boundingBox = new BoundingBox(
-            new Vec3().add2(boundingBox.max, boundingBox.min).divScalar(2),
-            new Vec3().sub2(boundingBox.max, boundingBox.min).divScalar(2)
-        )
+        this.boundingBox.setMinMax(boundingBox.min, boundingBox.max)
     }
 
     sample(
@@ -462,16 +460,19 @@ export class MetaSplineSegment<
                     VolumeContext
                 >
         ): Sample {
+        //TODO: consider if this is what should be returned
+        // For this and the next `return undefined!` statements,
+        // is that how transparency should be processed?
         if (this.spline_segment_index === 0)
-            return undefined
+            return undefined!
         
         const location_extra = extraFields<MetaShapeLocation, Location>(location, { p: true })
 
-        const plane_sample = this.spline.intersectingPlane(location.p, this.spline_segment_index)
-        if (!plane_sample) return undefined
+        const plane_sample = this.spline!.intersectingPlane(location.p, this.spline_segment_index)
+        if (!plane_sample) return undefined!
         
         const { t, r, theta, phi, v } = plane_sample
-        const figure_sample = this.spline.figureSample(t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
+        const figure_sample = this.spline!.figureSample(t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
         const uv = this.uv(t, theta, phi)
         
         const shape_sample = {

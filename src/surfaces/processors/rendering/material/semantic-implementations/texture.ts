@@ -90,7 +90,7 @@ export class MaterialSemanticImplementation_Texture<
     implement(renderer: SurfaceRendererIndividual): RenderedBufferForSemanticWithImplementation[] {
         const buffer = new (this.hdr ? Float32Array : Uint8Array)(this.channels * (this.resolution ** 2))
 
-        const texture_context = this.surface_textureGroup.get(renderer.shared.context.textures) as Material_Texture_Context<VolumeLocationT>
+        const texture_context = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>
 
         const texture_locations = renderer.shared.surface.samples.map(sample => this.sample_textureLocationGroup.get(sample) as Material_Texture_Location<VolumeLocationT>)
         const texture_location_interpolator = new VertexInterpolatingTexture(

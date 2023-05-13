@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsMapped, groups } from "../../../../fields/multi-objects-fields-point.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups } from "../../../../fields/multi-objects-fields-point.js";
 import { Material_Groups, Material_Groups_Template } from "./groups.js";
 import { Cost_Space, MaterialSemanticImplementation, MaterialSemanticImplementationStorageClass, MaterialSemanticImplementationStorageClassInstanceIndividual, MaterialSemanticImplementationStorageClassInstanceShared, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { MaterialSemanticImplementationStorageClass_Constant } from "./storage-classes/constant.js";
@@ -99,7 +99,8 @@ function* flattenImplementationMulti(implementations: Generator<MaterialSemantic
 }
 
 export class MaterialRendererShared<
-        VolumeLocationT extends VolumeLocation = VolumeLocation
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
     readonly groups: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Shared> = {} as typeof this.groups
     readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceShared[]
@@ -107,13 +108,13 @@ export class MaterialRendererShared<
 
     implementation?: StandardMaterial = new StandardMaterial()
 
-    readonly textureContexts: MultiObjectsGroupsMapped<
+    readonly textureContexts = {} as MultiObjectsGroupsMapped<
         Material_Groups,
         Material_Texture_Context<VolumeLocationT>
     >
 
     constructor(
-        public readonly renderer: SurfaceRendererShared,
+        public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
         public value_thresholds: {
             implement: number,
             change: number
@@ -123,7 +124,7 @@ export class MaterialRendererShared<
         }
     ) {
         material_groups.forEach(group => {
-            const stage_max = opaqueStagedTexture(group.get<Texture>(renderer.surface.textures))[0]
+            const stage_max = opaqueStagedTexture(group.get<Texture>(renderer.surface.material.textures))[0]
 
             group.set(
                 this.groups,
@@ -146,12 +147,15 @@ export class MaterialRendererShared<
         this.storageClassInstances = storageClasses.map($class => $class.instance(renderer))
     }
 
-    individualize(renderer: SurfaceRendererIndividual) {
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>): MaterialRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup> {
         return new MaterialRendererIndividual(this, renderer)
     }
 }
 
-export class MaterialRendererIndividual {
+export class MaterialRendererIndividual<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    > {
     private readonly current: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Individual> = {} as typeof this.current
     readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceIndividual[]
 
@@ -164,11 +168,11 @@ export class MaterialRendererIndividual {
     readonly individuality = new RefCount()
 
     constructor(
-        public readonly shared: MaterialRendererShared,
-        public readonly renderer: SurfaceRendererIndividual
+        public readonly shared: MaterialRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
+        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
     ) {
         this.storageClassInstances = shared.storageClassInstances.map(storageClassInstance => storageClassInstance.individualize(renderer))
-        this._implementation = shared.implementation
+        this._implementation = shared.implementation ??= new StandardMaterial()
 
         material_groups.forEach(group => group.set<Material_Group_Implementation_Internal_Individual>(this.current, {
             implementation: undefined,
@@ -245,7 +249,7 @@ export class MaterialRendererIndividual {
 
         let space_available: Cost_Space = field_point_sum(this.shared.storageClassInstances.map(storageClassInstance => storageClassInstance.$class.startingSpace(this.renderer)))
 
-        function value(implementation: MaterialSemanticImplementation): number {
+        const value = (implementation: MaterialSemanticImplementation): number => {
             const a = 0.9 // [0, 1]
             const b = 0.002 // [0, \infty]
             const c = 0.5 // [0, \infty]
@@ -263,7 +267,7 @@ export class MaterialRendererIndividual {
              * ```
              */
             return (
-                (1 - (a * (1 - implementation.quality(this.surface)))) -
+                (1 - (a * (1 - implementation.quality(this.renderer.mesh.LOD.info)))) -
                 (1 - Math.exp(-b * (
                     (c * implementation.cost.time) +
                     (d * field_point_primitives_sum(field_point_fraction(implementation.cost.space, space_available))) +
@@ -377,7 +381,7 @@ export class MaterialRendererIndividual {
                                 remove_implementations.some(implementation =>
                                     implementation.equals(renderedBuffer.implementation)
                                 )
-                        )
+                        ) ?? []
 
                     const kept_renderedBuffers =
                         implementation_internal_individual.renderedBuffers?.filter(
@@ -385,7 +389,7 @@ export class MaterialRendererIndividual {
                                 kept_implementations.some(implementation =>
                                     implementation.equals(renderedBuffer.implementation)
                                 )
-                        )
+                        ) ?? []
                     
                     total.add.push(...add_renderedBuffers)
                     total.remove.push(...remove_renderedBuffers)

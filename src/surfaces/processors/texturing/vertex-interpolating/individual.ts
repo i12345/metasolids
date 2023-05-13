@@ -157,7 +157,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesProcessor<
                     SurfaceSampleProcessingContextT
                 >
         > {
-    private _dependencies: PropertyPath[]
+    private _dependencies!: PropertyPath[]
     
     get dependencies() {
         return this._dependencies
@@ -178,7 +178,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesProcessor<
         >): void {
         const { group: surfaceTextureLocationGroup } =
             onlyOne(groupKinds(
-                    context,
+                    context.sample,
                     SurfaceIndividualTextureLocationsGroupKindsTemplate,
                     this.surfaceTextureLocationGroup
                 ))
@@ -213,7 +213,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesProcessor<
         ): void {
         const { group: surfaceTextureLocationGroup } =
             onlyOne(groupKinds(
-                    context,
+                    context.sample,
                     SurfaceIndividualTextureLocationsGroupKindsTemplate,
                     this.surfaceTextureLocationGroup
                 ))

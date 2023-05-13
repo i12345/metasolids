@@ -8,7 +8,7 @@ export class CachedTexture<
             TextureSamplingContext<Location>
     > implements
     Texture<Location, Sample, Context> {
-    private cache: Sample[]
+    private cache: Sample[] = new Array(0)
     
     get field() {
         return this.inner.field

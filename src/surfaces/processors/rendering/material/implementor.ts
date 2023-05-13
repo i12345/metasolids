@@ -109,7 +109,7 @@ interface Material_Group_Implementations {
     /**
      * ??
      * 
-     * @default 0.05
+     * @default EFFECTIVE_TEXEL_DIFF_DEFAULT = 0.05
      */
     effectiveTexelDiff?: number
 
@@ -122,6 +122,8 @@ interface Material_Group_Implementations {
         vertexColors?: keyof StandardMaterial | typeof MaterialGroup_ImplementationType_NotSupported
     }
 }
+
+export const EFFECTIVE_TEXEL_DIFF_DEFAULT = 0.05
 
 const Material_Groups_Implementations: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementations> = {
     diffuse: {
@@ -191,8 +193,10 @@ const Material_Groups_Implementations: MultiObjectsGroupsMapped<Material_Groups,
             vertexColors: MaterialGroup_ImplementationType_NotSupported,
         },
         sideEffects: [
-            ({ buffer }, surface) => {
+            ({ buffer, implementation }, surface) => {
                 let normalMap: RenderedBufferForSemanticWithImplementation["buffer"]
+
+                throw new Error('not implemented')
 
                 //TODO: compute normal map
 
@@ -211,7 +215,7 @@ const Material_Groups_Implementations: MultiObjectsGroupsMapped<Material_Groups,
                     channels: 3,
                     semantic: 'normalMap',
                     storageClass: MaterialSemanticImplementationStorageClass_Texture.$class,
-                    implementation: undefined
+                    implementation
                 }]
             }
         ]
@@ -346,13 +350,14 @@ const Material_Groups_Implementations: MultiObjectsGroupsMapped<Material_Groups,
         },
 
         height: {
-            name: undefined,
+            name: "height",
             channels: 1,
             sideEffects: [
                 //TODO: compute clear coat normal map
             ],
             semantics: {
                 constant: MaterialGroup_ImplementationType_NotSupported,
+                texture: "clearCoatHeightMap" as unknown as keyof StandardMaterial,
                 vertexColors: MaterialGroup_ImplementationType_NotSupported,
             }
         },
@@ -449,7 +454,7 @@ function qualityMetrics_compute<
         return undefined
     }
 
-    function perfect_triangleMonotonicity(texture: Texture) {
+    function perfect_triangleMonotonicity(texture: Texture): boolean {
         if (texture instanceof VertexInterpolatingTexture ||
             texture instanceof ConstantSampleDomain)
             return true
@@ -491,14 +496,14 @@ function qualityMetrics_compute<
     function vertex_texture_info(vertex: number) {
         if (vertex_texture_samples.has(vertex)) {
             return {
-                sample: vertex_texture_samples.get(vertex),
-                location: vertex_texture_locations.get(vertex)
+                sample: vertex_texture_samples.get(vertex)!,
+                location: vertex_texture_locations.get(vertex)!
             }
         }
 
         const vertex_sample = surface.samples[vertex]
         const texture_location = sample_textureLocationGroup.get(vertex_sample)
-        const texture_sample = this.texture.sample(texture_location, textureContext)
+        const texture_sample = texture.sample(texture_location, textureContext)
         
         samples.push(texture_sample)
         vertex_texture_locations.set(vertex, texture_location)
@@ -514,7 +519,7 @@ function qualityMetrics_compute<
     const interpolator_values_samples: TexelTypeT[] = []
     const interpolator_triangles = []
 
-    let meanValue: TexelTypeT = undefined
+    let meanValue: TexelTypeT | undefined = undefined
 
     for (const tri_i of tri_i_s) {
         for (let index_i = 0; index_i < 3; index_i++) {
@@ -527,7 +532,7 @@ function qualityMetrics_compute<
         }
     }
 
-    meanValue = field_point_divide(meanValue, interpolator_values_samples.length)
+    meanValue = field_point_divide(meanValue!, interpolator_values_samples.length)
 
     if (perfect_triangleMonotonicity(texture)) {
         return {
@@ -548,8 +553,8 @@ function qualityMetrics_compute<
     let triangleInterpolating_error_eval = 0
 
     for (const tri of tri_i_s) {
-        let texture_location_prev: Material_Texture_Location<VolumeLocationT> = undefined
-        let texture_sample_prev: TexelTypeT = undefined
+        let texture_location_prev: Material_Texture_Location<VolumeLocationT> | undefined = undefined
+        let texture_sample_prev: TexelTypeT | undefined = undefined
         for (let w = 0; w < 0.5; w += 0.02) {
             const texture_location_interpolated = interpolator_texture_location.interpolate(tri, w, w)
             const texture_sample_interpolated = interpolator_texture_sample.interpolate(tri, w, w)
@@ -559,7 +564,7 @@ function qualityMetrics_compute<
 
             if (texture_location_prev) {
                 const textureValuePerUV =
-                    texture.field.distance(texture_sample_prev, texture_sample_real) /
+                    texture.field.distance(texture_sample_prev!, texture_sample_real) /
                     texture_location_prev.uv.distance(texture_location_interpolated.uv)
                 
                 textureValuePerUV_dist.push(textureValuePerUV)
@@ -578,9 +583,9 @@ function qualityMetrics_compute<
 
     const triangleMonotonicity = Math.exp(-(triangleInterpolating_error_total / triangleInterpolating_error_eval))
     const constancy = Math.exp(-field_point_stdDev(samples))
-    const textureValuePerUV_q3 = textureValuePerUV_dist.sort((a, b) => a - b).at(Math.floor(0.75 * textureValuePerUV_dist.length))
+    const textureValuePerUV_q3 = textureValuePerUV_dist.sort((a, b) => a - b).at(Math.floor(0.75 * textureValuePerUV_dist.length))!
 
-    let effectiveTexelSizeUV = implementation.effectiveTexelDiff / textureValuePerUV_q3
+    let effectiveTexelSizeUV = (implementation.effectiveTexelDiff ?? EFFECTIVE_TEXEL_DIFF_DEFAULT) / textureValuePerUV_q3
     if (isNaN(effectiveTexelSizeUV) ||
         effectiveTexelSizeUV > 1)
         effectiveTexelSizeUV = 1
@@ -629,11 +634,11 @@ export function* material_group_implementations<
     type TextureT = Texture<TextureLocationT, TexelTypeT, TextureContextT>
     type StageAndTextureT = StageAndTexture<TextureLocationT, TexelTypeT, TextureContextT, TextureT>
     
-    const texture = group.get<TextureT>(surface.textures)
-    const textureContext = group.get<TextureContextT>(context.textures)
+    const texture = group.get<TextureT>(surface.material.textures)
+    const textureContext = group.get<TextureContextT>(context.material.textures)
     const implementation = group.get<Material_Group_Implementations>(Material_Groups_Implementations)
     
-    const texture_hdr = implementation.effectiveTexelDiff < (1 / 256)
+    const texture_hdr = (implementation.effectiveTexelDiff ?? EFFECTIVE_TEXEL_DIFF_DEFAULT) < (1 / 256)
 
     const sideEffects_texture = implementation.sideEffects?.filter(sideEffect => typeof sideEffect === 'function') as MaterialSemanticImplementation_Texture_SideEffect[]
     const sideEffects_general = (implementation.sideEffects?.filter(sideEffect => typeof sideEffect !== 'function') as [keyof StandardMaterial, boolean][]).map(([key, value]) => new MaterialSemanticImplementation_Setting(key, value, 0))
@@ -687,7 +692,7 @@ export function* material_group_implementations<
 
         const retval: StageAndTexture[] = []
         for (let i = 0; i < components - 1; i++)
-            retval[i] = componentsIntoTexture(sorted_stages_components.shift())
+            retval[i] = componentsIntoTexture(sorted_stages_components.shift()!)
         retval[components - 1] = componentsIntoTexture(sorted_stages_components.flatMap(textures => textures))
 
         return retval
@@ -707,9 +712,9 @@ export function* material_group_implementations<
      */
 
     const semantics = {
-        constant: <keyof StandardMaterial>(implementation.semantics.constant === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics.constant ?? implementation.name),
-        texture: <keyof StandardMaterial>(implementation.semantics.texture === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics.texture ?? `${implementation.name}Map`),
-        vertexColors: <keyof StandardMaterial>(implementation.semantics.vertexColors === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics.vertexColors ?? `${implementation.name}VertexColor`),
+        constant: <keyof StandardMaterial>((implementation.semantics?.constant === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.constant) ?? implementation.name),
+        texture: <keyof StandardMaterial>((implementation.semantics?.texture === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.texture) ?? `${implementation.name}Map`),
+        vertexColors: <keyof StandardMaterial>((implementation.semantics?.vertexColors === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.vertexColors) ?? `${implementation.name}VertexColor`),
     }
 
     if (implementation.mixing?.products ||
@@ -766,7 +771,7 @@ export function* material_group_implementations<
                         qualityMetrics[factor_index_vertexColors].triangleMonotonicity
                     )
 
-                    const factor_index_texture = [1, 2, 3].find(x => !([factor_index_constant, factor_index_vertexColors].includes(x)))
+                    const factor_index_texture = [1, 2, 3].find(x => !([factor_index_constant, factor_index_vertexColors].includes(x)))!
                     for (const texture_resolution of texture_resolutions) {
                         const implementation_texture = new MaterialSemanticImplementation_Texture(
                             semantics.texture,
@@ -781,6 +786,7 @@ export function* material_group_implementations<
                             sideEffects_texture
                         )
 
+                        ///@ts-ignore
                         yield new MaterialSemanticImplementation_Multi([
                             implementation_tint,
                             implementation_constant,

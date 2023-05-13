@@ -13,7 +13,7 @@ export class ColorRGBAClampedCurveInterpolationType implements FieldInterpolatio
 
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, Color>[]
-        ): Interpolator<Location, Color> {
+        ): Interpolator<Location, Color> | undefined {
         if (!(keypoints[0].value instanceof Color))
             return undefined
         
