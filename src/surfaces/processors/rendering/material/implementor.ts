@@ -1,6 +1,6 @@
 import { Texture, TextureLocation, TextureSample } from "../../../../textures/texture.js";
 import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from "../../../../textures/index.js";
-import { GeneratorType, onlyOne } from "../../../../utils/index.js";
+import { GeneratorType, Reflect_entries, onlyOne } from "../../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../../volumes/index.js";
 import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, MultiObjectsGroupsMapped, groupKinds, groups, field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator } from "../../../../fields/index.js";
@@ -679,7 +679,7 @@ export function* material_group_implementations<
             stages_components[stage].push([stage, component])
         }
 
-        const sorted_stages_components = Object.entries(stages_components).sort((a, b) => +a[0] - +b[0]).map(([stage, stageAndTextures]) => stageAndTextures)
+        const sorted_stages_components = Reflect_entries(stages_components).sort((a, b) => +a[0] - +b[0]).map(([stage, stageAndTextures]) => stageAndTextures)
 
         function componentsIntoTexture(components: StageAndTextureT[]): StageAndTextureT {
             if (components.length === 1)

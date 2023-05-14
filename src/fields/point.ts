@@ -1,6 +1,7 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
 import { mat4_from_mat3, trs } from "../utils/matrix.js";
 import { PropertyPath } from "../utils/property-path.js";
+import { Reflect_fromEntries } from "../utils/index.js";
 
 export type Vector = Array<number>
     | Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array
@@ -183,8 +184,8 @@ export const field_point_map =
         path: PropertyPath = []
     ): FieldPointMapped<Point, R> =>
         leafDeterminer(point as T) ?
-            action(point as T, []) :
-            Object.fromEntries(
+            action(point as T, []) as FieldPointMapped<Point, R> :
+            Reflect_fromEntries(
                 Reflect.ownKeys(point as FieldsPointMapped<FieldsPoint, T>)
                     .map(key => {
                         const value = (point as any)[key]
@@ -197,7 +198,7 @@ export const field_point_map =
                             action,
                             newpath
                         )]
-                    })
+                    }) as any[]
             )
 
 export const fields_point_map =
@@ -207,7 +208,7 @@ export const fields_point_map =
         action: (value: T, path: PropertyPath) => R,
         path: PropertyPath = []
     ): FieldsPointMapped<Point, R> =>
-        Object.fromEntries(
+        Reflect_fromEntries(
             Reflect.ownKeys(point)
                 .map(key => {
                     const value = point[key]
@@ -220,7 +221,7 @@ export const fields_point_map =
                         action,
                         newpath
                     )]
-                })
+                }) as any[]
         )
 
 export function field_point_identity<Point extends FieldPoint>(p: Point): Point {

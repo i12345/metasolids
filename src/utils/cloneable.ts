@@ -1,3 +1,5 @@
+import { Reflect_entries, Reflect_fromEntries } from "./reflect-entries.js"
+
 export const clone = Symbol('clone')
 
 export interface Cloneable {
@@ -10,8 +12,8 @@ export function makeClone<T>(o: T): T {
     const cloneable = o as any as Cloneable
     return ((clone in cloneable) ?
         cloneable[clone]() :
-        Object.fromEntries(
-            Object.entries(o)
+        Reflect_fromEntries(
+            Reflect_entries(o)
                 .map(([k, v]) => [k, makeClone(v)])
         )) as T
 }

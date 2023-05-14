@@ -1,3 +1,4 @@
+import { Reflect_entries } from "../utils/index.js"
 import { ExtraFields, FieldsPoint } from "./point.js"
 
 export function change<Final, Start, Subtract>(
@@ -10,7 +11,7 @@ export function change<Final, Start, Subtract>(
     for (const key of subtract) delete subtracted[key]
     
     const added = subtracted as unknown as Final
-    for (const [key, value] of Object.entries(add)) (added as any)[key] = value
+    for (const [key, value] of Reflect_entries(add)) (added as any)[key] = value
     
     return added
 }
@@ -28,7 +29,7 @@ export function extraFields<Base extends FieldsPoint, Real extends Base = Base>(
 //     for (const key of subtract) delete subtracted[key]
     
 //     const added = subtracted as Omit<Start, keyof Subtract> & Add
-//     for (const [key, value] of Object.entries(add)) added[key] = value
+//     for (const [key, value] of Reflect_entries(add)) added[key] = value
     
 //     return added
 // }

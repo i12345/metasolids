@@ -79,14 +79,17 @@ export function* pathsToNodeWithKey(
         tree: any,
         leaf: PropertyKey
     ): Generator<PropertyPath> {
-    let nodeHasKeys = false
-    for (const key of Reflect.ownKeys(tree)) {
-        if (!nodeHasKeys && leaf === key) {
-            nodeHasKeys = true
-            yield []
+    if (tree) {
+        let nodeHasKeys = false
+        for (const key of Reflect.ownKeys(tree)) {
+            if (!nodeHasKeys && leaf === key) {
+                nodeHasKeys = true
+                yield []
+            }
+            else if (typeof tree[key] === 'object' && tree[key] !== null)
+                for (const subpath of pathsToNodeWithKey(tree[key], leaf))
+                    yield [key, ...subpath]
         }
-        else for (const subpath of pathsToNodeWithKey(tree[key], leaf))
-            yield [key, ...subpath]
     }
 }
 
@@ -100,14 +103,17 @@ export function* pathsToNodeWithKeys(
         tree: any,
         leaves: PropertyKey[]
     ): Generator<PropertyPath> {
-    let nodeHasKeys = false
-    for (const key of Reflect.ownKeys(tree)) {
-        if (!nodeHasKeys && leaves.includes(key)) {
-            yield []
-            nodeHasKeys = true
+    if (tree) {
+        let nodeHasKeys = false
+        for (const key of Reflect.ownKeys(tree)) {
+            if (!nodeHasKeys && leaves.includes(key)) {
+                yield []
+                nodeHasKeys = true
+            }
+            else if (typeof tree[key] === 'object' && tree[key] !== null)
+                for (const subpath of pathsToNodeWithKeys(tree[key], leaves))
+                    yield [key, ...subpath]
         }
-        else for (const subpath of pathsToNodeWithKeys(tree[key], leaves))
-            yield [key, ...subpath]
     }
 }
 
@@ -118,11 +124,13 @@ export function* pathsToValue<
         tree: Tree,
         leaf: Leaf
     ): Generator<PropertyPath> {
-    for (const key of Reflect.ownKeys(tree))
-        if (tree[key] === leaf)
-            yield [key]
-        else for (const subpath of pathsToValue<any, any>(tree[key], leaf))
-            yield [key, ...subpath]
+    if (tree)
+        for (const key of Reflect.ownKeys(tree))
+            if (tree[key] === leaf)
+                yield [key]
+            else if (typeof tree[key] === 'object' && tree[key] !== null)
+                for (const subpath of pathsToValue<any, any>(tree[key], leaf))
+                    yield [key, ...subpath]
 }
 
 export function* pathsToValues<
@@ -132,11 +140,13 @@ export function* pathsToValues<
         tree: Tree,
         leaves: Leaf[]
     ): Generator<PropertyPath> {
-    for (const key of Reflect.ownKeys(tree))
-        if (leaves.includes(tree[key] as Leaf))
-            yield [key]
-        else for (const subpath of pathsToValue<any, any>(tree[key], leaves))
-            yield [key, ...subpath]
+    if (tree)
+        for (const key of Reflect.ownKeys(tree))
+            if (leaves.includes(tree[key] as Leaf))
+                yield [key]
+            else if (typeof tree[key] === 'object' && tree[key] !== null)
+                for (const subpath of pathsToValues<any, any>(tree[key], leaves))
+                    yield [key, ...subpath]
 }
 
 export interface LeafInterface<T = any> {

@@ -23,7 +23,7 @@ export class TransformVolume<
                     Location,
                     Sample,
                     Context
-            >
+                >
         >,
         public transform: Mat4
     ) {

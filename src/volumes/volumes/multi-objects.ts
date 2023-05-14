@@ -1,8 +1,8 @@
 import { BoundingBox } from 'playcanvas-extended'
-import { FieldPoint, MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsSampleDomain, MultiObjectsLeafContext, MultiObjectsSample, MultiObjectsContext, groups, groupKinds, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsInfluencesGroupKinds, MultiObjectsGroupsOmitted } from '../../fields/index.js'
-import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume.js'
-import { GeneratorType } from '../../utils/generator-type.js'
-import { onlyOne } from '../../utils/only-one.js'
+import { FieldPoint, MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsSampleDomain, MultiObjectsSample, MultiObjectsContext, groups, groupKinds, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsProcessingContext } from '../../fields/index.js'
+import { Volume, VolumeLocation, VolumeSample } from '../volume.js'
+import { GeneratorType, onlyOne } from '../../utils/index.js'
+import { VolumeSampleKey } from '../processor.js'
 
 export class MultiObjectsVolume<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -80,7 +80,10 @@ export class MultiObjectsVolume<
         }
 
         this.influenceGroupRef = onlyOne(groupKinds(
-            context as any,
+            (context as any)[VolumeSampleKey] as MultiObjectsGroupsProcessingContext<
+                MultiObjectsGroupsTemplate,
+                MultiObjectsInfluencesGroupKinds
+            >,
             MultiObjectsInfluencesGroupKindsTemplate,
             this.influenceGroup
         )).group

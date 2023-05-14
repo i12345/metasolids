@@ -11,6 +11,7 @@ import { MultiObjectsGroupsTemplate } from "../fields/multi-objects-fields-point
 import { makeClone } from "../utils/cloneable.js";
 import { MultiObjectsGroupedObjectsKey } from "../fields/multi-objects-fields-point.js";
 import { intract, pathsToNodeWithKey } from "../utils/tree.js";
+import { Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 
 const _schema = ['enabled']
 
@@ -68,7 +69,7 @@ export class VolumeComponent extends Component {
                 return children[0][1]
             else {
                 return new volumes.MultiObjectsVolume(
-                    Object.fromEntries(children),
+                    Reflect_fromEntries<Record<string, VolumeT>>(children),
                     undefined as unknown as MultiObjectsInfluencesGroupKinds & MultiObjectsGroupsKindsTemplate,
                     Sample_MultiObjectsMappedGroups_Template,
                     MultiObjectsInfluencesGroupsDefaultTemplate
@@ -79,7 +80,7 @@ export class VolumeComponent extends Component {
         const compositeVolume_final = compositeVolume(this.entity, true)!
         function objectsTemplate_populate(volume: Volume): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
             if (volume instanceof MultiObjectsVolume)
-                return Object.fromEntries(Object.entries(volume.children as any).map(([key, child]) =>
+                return Reflect_fromEntries(Reflect_entries(volume.children as any).map(([key, child]) =>
                     [key, objectsTemplate_populate(child as Volume) as ReturnType<typeof objectsTemplate_populate>])
                 ) as MultiObjectsTemplate
             return MultiObjectsTemplate_Leaf
