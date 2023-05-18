@@ -549,11 +549,29 @@ function qualityMetrics_compute<
     meanValue = field_point_divide(meanValue!, interpolator_values_samples.length)
 
     if (perfect_triangleMonotonicity(texture)) {
+        const effectiveTexelSizeUV_dist: number[] = []
+
+        for (const tri_i of tri_i_s) {
+            for (let i0 = 0; i0 < 3; i0++) {
+                const i1 = (i0 + 1) % 3
+
+                const v0 = (tri_i * 3) + i0
+                const v1 = (tri_i * 3) + i1
+
+                const uv0 = UVunwrapping.UVs[v0]
+                const uv1 = UVunwrapping.UVs[v1]
+
+                const val0 = vertex_texture_info(v0).sample
+                const val1 = vertex_texture_info(v1).sample
+
+                effectiveTexelSizeUV_dist.push(texture.field.distance(val0, val1) / uv0.distance(uv1))
+            }
+        }
+
         return {
             constancy: Math.exp(-field_point_stdDev(samples)),
             triangleMonotonicity: 1,
-            //TODO: put 3rd quartile of UV distance per edge between vertices
-            effectiveTexelSizeUV: NaN,
+            effectiveTexelSizeUV: effectiveTexelSizeUV_dist.at(Math.floor(0.75 * effectiveTexelSizeUV_dist.length))!,
             meanValue
         }
     }
