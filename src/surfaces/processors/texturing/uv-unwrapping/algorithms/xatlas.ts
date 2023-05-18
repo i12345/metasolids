@@ -1,10 +1,11 @@
-import { XAtlasAPI } from 'xatlasjs-esm'
+import type { XAtlasAPI } from 'xatlasjs-esm'
 import { SurfaceUVUnwrappingAlgorithm } from '../algorithm.js';
 import { Vec2 } from 'playcanvas-extended';
 import { indicesArrayType } from '../../../../../utils/indices-array.js';
 
 const promise_xAtlas = new Promise<XAtlasAPI>(resolve => {
-    const xAtlas: XAtlasAPI = new XAtlasAPI(
+    const XAtlasAPIClass = (globalThis as any)["XAtlasAPI"] as typeof XAtlasAPI
+    const xAtlas: XAtlasAPI = new XAtlasAPIClass(
         () => resolve(xAtlas),
         (path, dir) => {
             if (path === "xatlas.wasm") return "libs/" + path;
