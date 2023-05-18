@@ -6,16 +6,15 @@ import { Cost, MaterialSemanticImplementation, RenderedBufferForSemanticWithImpl
 
 export class MaterialSemanticImplementation_Multi<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        Component extends MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup> = MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     >
     implements MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly cost: Cost
     readonly stage: number
 
-    constructor(public readonly components: Component[]) {
-        this.cost = field_point_sum(components.map(({ cost }) => cost))
-        this.stage = Math.max(...components.map(({ stage }) => stage))
+    constructor(public readonly components: MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>[]) {
+        this.cost = field_point_sum(components.map<Cost>(({ cost }) => cost))
+        this.stage = Math.max(...components.map<number>(({ stage }) => stage))
     }
 
     quality(info: LevelOfDetailInfo): number {
