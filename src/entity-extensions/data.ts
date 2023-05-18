@@ -1,5 +1,5 @@
-// //TODO: include volume and other properties
+//TODO: include volume and other properties
 
-// export class VolumeComponentData {
-//     enabled = true
-// }
+export class VolumeComponentData {
+    enabled = true
+}
