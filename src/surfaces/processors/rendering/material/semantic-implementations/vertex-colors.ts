@@ -36,7 +36,6 @@ export class MaterialSemanticImplementation_VertexColors<
         public readonly surface_textureGroup: GeneratorType<ReturnType<typeof groups>>,
         public readonly channels: number,
         public readonly vertices: number,
-        public readonly sample_textureLocationGroup: GeneratorType<ReturnType<typeof groups>>,
         public readonly triangleMonotonicity: number
     ) {
         this.cost = {
@@ -74,10 +73,13 @@ export class MaterialSemanticImplementation_VertexColors<
         
         const textureContext = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>
         
+        const UVs = renderer.mesh.shared.UVUnwrapping!.UVs
+
         /** original vertices */
-        const sample_texture_values = renderer.shared.surface.samples.map(sample =>
+        const sample_texture_values = renderer.shared.surface.samples.map((sample, i) =>
             this.texture.sample(
-                this.sample_textureLocationGroup.get(sample) as Material_Texture_Location<VolumeLocationT>,
+                //TODO: integrate other location fields
+                { uv: UVs[i] } as Material_Texture_Location<VolumeLocationT>,
                 textureContext
             )
         )

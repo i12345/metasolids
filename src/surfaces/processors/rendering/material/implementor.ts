@@ -8,7 +8,7 @@ import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation
 import { Material_Groups } from "./groups.js";
 import { Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial } from "playcanvas-extended";
 import { FormatChannelQuality } from "./texture-formats.js";
-import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";
+import { SurfaceTextureLocationsGroupKindsTemplate, SurfaceUVUnwrapping } from "../../texturing/index.js";
 import { MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors, MaterialSemanticImplementationStorageClass_Constant, MaterialSemanticImplementationStorageClass_Texture } from "./storage-classes/index.js";
 import { Material_Texture_Context, Material_Texture_Location } from "./material-texture.js";
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "../surface.js";
@@ -433,7 +433,7 @@ function qualityMetrics_compute<
                 Material_Texture_Context<VolumeLocationT>
             >,
         textureContext: Material_Texture_Context<VolumeLocationT>,
-        sample_textureLocationGroup: GeneratorType<ReturnType<typeof groups>>,
+        UVunwrapping: SurfaceUVUnwrapping,
         implementation: Material_Group_Implementations
     ): QualityMetrics {
     
@@ -480,8 +480,17 @@ function qualityMetrics_compute<
         be a metric of triangular monotonicity (1 = perfect fit). 
     */
 
+    function vertex_original(vertex: number) {
+        return (vertex < surface.mesh.vertices.length) ? vertex :
+            UVunwrapping.duplicatedVerts[vertex - surface.mesh.vertices.length]
+    }
+    
+    /** indices in UV-unwrapped, not decimated vertices */
+    const indices = UVunwrapping.finalIndices ?? surface.mesh.triangles
+
+    /** indices in UV-unwrapped, not decimated vertices, divided by 3 */
     const tri_i_s = new Set<number>()
-    const tri_n = surface.mesh.triangles.length / 3
+    const tri_n = UVunwrapping.finalIndices.length / 3
     for (let i = 0; i < Math.min(5, tri_n); i++) {
         let tri_i: number
         do tri_i = Math.min(tri_n - 1, tri_n * Math.random())
@@ -491,27 +500,32 @@ function qualityMetrics_compute<
 
     const samples: TexelTypeT[] = []
 
-    const vertex_texture_locations = new Map<number, TextureLocation>()
+    /** indexed by UV-unwrapped (potentially duplicated) vertex index */
+    const vertex_texture_locations = new Map<number, Material_Texture_Location<VolumeLocationT>>()
+
+    /** indexed by original (not UV unwrapped) vertex index */
     const vertex_texture_samples = new Map<number, TexelTypeT>()
+
     function vertex_texture_info(vertex: number) {
-        if (vertex_texture_samples.has(vertex)) {
-            return {
-                sample: vertex_texture_samples.get(vertex)!,
-                location: vertex_texture_locations.get(vertex)!
-            }
+        const vertex_original_ = vertex_original(vertex)
+
+        if (!vertex_texture_locations.has(vertex)) {
+            const uv = UVunwrapping.UVs[vertex]
+            //TODO: integrate extra fields for material texture location
+            const texture_location = { uv } as Material_Texture_Location<VolumeLocationT>
+            vertex_texture_locations.set(vertex, texture_location)
         }
 
-        const vertex_sample = surface.samples[vertex]
-        const texture_location = sample_textureLocationGroup.get(vertex_sample)
-        const texture_sample = texture.sample(texture_location, textureContext)
+        if (!vertex_texture_samples.has(vertex_original_)) {
+            const texture_location = vertex_texture_locations.get(vertex)!
+            const texture_sample = texture.sample(texture_location, textureContext)
+            samples.push(texture_sample)
+            vertex_texture_samples.set(vertex_original_, texture_sample)
+        }
         
-        samples.push(texture_sample)
-        vertex_texture_locations.set(vertex, texture_location)
-        vertex_texture_samples.set(vertex, texture_sample)
-
         return {
-            location: texture_location,
-            sample: texture_sample
+            sample: vertex_texture_samples.get(vertex)!,
+            location: vertex_texture_locations.get(vertex)!
         }
     }
 
@@ -523,7 +537,7 @@ function qualityMetrics_compute<
 
     for (const tri_i of tri_i_s) {
         for (let index_i = 0; index_i < 3; index_i++) {
-            const vertex_i = surface.mesh.triangles[(tri_i * 3) + index_i]
+            const vertex_i = indices[(tri_i * 3) + index_i]
             const { location, sample } = vertex_texture_info(vertex_i)
             interpolator_values_locations.push(location)
             interpolator_values_samples.push(sample)
@@ -627,7 +641,8 @@ export function* material_group_implementations<
     >(
         group: GeneratorType<ReturnType<typeof groups>>,
         surface: SurfaceWithRendering,
-        context: SurfaceProcessingContextWithRendering
+        context: SurfaceProcessingContextWithRendering,
+        UVunwrapping: SurfaceUVUnwrapping
     ): Generator<MaterialSemanticImplementation> {
     type TextureLocationT = Material_Texture_Location<VolumeLocationT>
     type TextureContextT = Material_Texture_Context<VolumeLocationT>
@@ -642,9 +657,6 @@ export function* material_group_implementations<
 
     const sideEffects_texture = implementation.sideEffects?.filter(sideEffect => typeof sideEffect === 'function') as MaterialSemanticImplementation_Texture_SideEffect[]
     const sideEffects_general = (implementation.sideEffects?.filter(sideEffect => typeof sideEffect !== 'function') as [keyof StandardMaterial, boolean][]).map(([key, value]) => new MaterialSemanticImplementation_Setting(key, value, 0))
-
-    const sample_textureLocationGroup =
-        onlyOne(groupKinds(context.sample, SurfaceTextureLocationsGroupKindsTemplate)).group
 
     const texture_resolutions = [64, 128, 256, 512, 1024, 2048]
 
@@ -732,13 +744,16 @@ export function* material_group_implementations<
             components => new CompositeHadamardProductSampleDomain(components)
         )
 
-        const qualityMetrics = factors.map(([, texture]) => qualityMetrics_compute(
-            surface,
-            texture,
-            textureContext,
-            sample_textureLocationGroup,
-            implementation
-        ))
+        const qualityMetrics = factors.map(([, texture]) =>
+            ///@ts-ignore
+            qualityMetrics_compute(
+                surface,
+                texture,
+                textureContext,
+                UVunwrapping,
+                implementation
+            )
+        )
         
         const implementation_tint = implementation.mixing?.products?.tint_flag ?
             new MaterialSemanticImplementation_Setting(
@@ -767,7 +782,6 @@ export function* material_group_implementations<
                         group,
                         implementation.channels,
                         surface.mesh.vertices.length,
-                        sample_textureLocationGroup,
                         qualityMetrics[factor_index_vertexColors].triangleMonotonicity
                     )
 
@@ -780,7 +794,6 @@ export function* material_group_implementations<
                             group,
                             texture_resolution,
                             implementation.channels,
-                            sample_textureLocationGroup,
                             qualityMetrics[factor_index_texture].effectiveTexelSizeUV,
                             texture_hdr,
                             sideEffects_texture
@@ -841,7 +854,6 @@ export function* material_group_implementations<
                             group,
                             implementation.channels,
                             surface.mesh.vertices.length,
-                            sample_textureLocationGroup,
                             qualityMetrics[factor_index_other].triangleMonotonicity
                         )
 
@@ -860,7 +872,6 @@ export function* material_group_implementations<
                                 group,
                                 resolution,
                                 implementation.channels,
-                                sample_textureLocationGroup,
                                 qualityMetrics[factor_index_other].effectiveTexelSizeUV,
                                 texture_hdr,
                                 sideEffects_texture
@@ -898,7 +909,6 @@ export function* material_group_implementations<
                             group,
                             implementation.channels,
                             surface.mesh.vertices.length,
-                            sample_textureLocationGroup,
                             qualityMetrics[factor_index_vertexColors].triangleMonotonicity
                         )
 
@@ -910,7 +920,6 @@ export function* material_group_implementations<
                                 group,
                                 resolution,
                                 implementation.channels,
-                                sample_textureLocationGroup,
                                 qualityMetrics[factor_index_texture].effectiveTexelSizeUV,
                                 texture_hdr,
                                 sideEffects_texture
@@ -953,7 +962,6 @@ export function* material_group_implementations<
                         group,
                         resolution_0,
                         implementation.channels,
-                        sample_textureLocationGroup,
                         qualityMetrics_0.effectiveTexelSizeUV,
                         texture_hdr,
                         sideEffects_texture
@@ -967,7 +975,6 @@ export function* material_group_implementations<
                             group,
                             resolution_1,
                             implementation.channels,
-                            sample_textureLocationGroup,
                             qualityMetrics_1.effectiveTexelSizeUV,
                             texture_hdr,
                             sideEffects_texture
@@ -998,7 +1005,7 @@ export function* material_group_implementations<
                 surface,
                 texture,
                 textureContext,
-                sample_textureLocationGroup,
+                UVunwrapping,
                 implementation
             ))
 
@@ -1020,7 +1027,6 @@ export function* material_group_implementations<
                     group,
                     resolution_0,
                     implementation.channels,
-                    sample_textureLocationGroup,
                     qualityMetrics[0].effectiveTexelSizeUV,
                     texture_hdr,
                     sideEffects_texture
@@ -1034,7 +1040,6 @@ export function* material_group_implementations<
                         group,
                         resolution_1,
                         implementation.channels,
-                        sample_textureLocationGroup,
                         qualityMetrics[1].effectiveTexelSizeUV,
                         texture_hdr,
                         sideEffects_texture
@@ -1057,7 +1062,7 @@ export function* material_group_implementations<
             surface,
             texture,
             textureContext,
-            sample_textureLocationGroup,
+            UVunwrapping,
             implementation
         )
 
@@ -1080,7 +1085,6 @@ export function* material_group_implementations<
                 group,
                 implementation.channels,
                 surface.mesh.vertices.length,
-                sample_textureLocationGroup,
                 qualityMetrics.triangleMonotonicity,
             ),
         ...sideEffects_general
@@ -1095,7 +1099,6 @@ export function* material_group_implementations<
                     group,
                     resolution,
                     implementation.channels,
-                    sample_textureLocationGroup,
                     qualityMetrics.effectiveTexelSizeUV,
                     texture_hdr,
                     sideEffects_texture

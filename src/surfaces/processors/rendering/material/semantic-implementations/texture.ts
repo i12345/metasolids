@@ -5,14 +5,13 @@ import { textures } from "../../../../../index.js"
 import { TextureSample } from "../../../../../textures/texture.js"
 import { GeneratorType } from "../../../../../utils/generator-type.js"
 import { VolumeLocation } from "../../../../../volumes/volume.js"
-import { MaterialSemanticImplementation, Cost_Space_Texture, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
+import { Cost_Space_Texture, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
 import { MaterialSemanticImplementationStorageClass_Texture } from "../storage-classes/texture.js"
 import { SurfaceRendererIndividual } from "../../renderer.js"
 import { FieldPoint } from "../../../../../fields/point.js"
 import { Material_Texture_Context, Material_Texture_Location } from "../material-texture.js"
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
-import { Triangles2DMesh, Triangles2DMeshInterpolator } from "../../../../../fields/triangles-2D-mesh.js"
 import { VertexInterpolatingTexture } from "../../../../../textures/index.js"
 
 export type MaterialSemanticImplementation_Texture_SideEffect = (
@@ -49,7 +48,6 @@ export class MaterialSemanticImplementation_Texture<
          */
         public readonly resolution: number,
         public readonly channels: number,
-        public readonly sample_textureLocationGroup: GeneratorType<ReturnType<typeof groups>>,
         public readonly effectiveTexelSizeUV: number,
         public readonly hdr = false,
         public readonly sideEffects: MaterialSemanticImplementation_Texture_SideEffect[] = []
@@ -93,11 +91,13 @@ export class MaterialSemanticImplementation_Texture<
 
         const texture_context = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>
 
-        const texture_locations = renderer.shared.surface.samples.map(sample => this.sample_textureLocationGroup.get(sample) as Material_Texture_Location<VolumeLocationT>)
+        const { UVs, finalIndices } = renderer.mesh.shared.UVUnwrapping!
+        
         const texture_location_interpolator = new VertexInterpolatingTexture(
-            texture_locations,
-            texture_locations.map(({ uv }) => uv),
-            renderer.shared.surface.mesh.triangles
+            //TODO: integrate other location fields
+            UVs.map(uv => ({ uv }) as Material_Texture_Location<VolumeLocationT>),
+            UVs,
+            finalIndices
         )
 
         const sample_texture_values = new Array<FieldPoint>(this.resolution ** 2)
