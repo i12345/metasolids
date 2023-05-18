@@ -1,11 +1,15 @@
-import { field_point_sum } from "../../../../../fields/index.js";
+import { MultiObjectsGroupsTemplate, field_point_sum } from "../../../../../fields/index.js";
+import { VolumeLocation } from "../../../../../volumes/volume.js";
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js";
 import { SurfaceRendererIndividual } from "../../renderer.js";
 import { Cost, MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 
-export class MaterialSemanticImplementation_Multi
-    <Component extends MaterialSemanticImplementation = MaterialSemanticImplementation>
-    implements MaterialSemanticImplementation {
+export class MaterialSemanticImplementation_Multi<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Component extends MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup> = MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    >
+    implements MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly cost: Cost
     readonly stage: number
 
@@ -21,7 +25,7 @@ export class MaterialSemanticImplementation_Multi
         )
     }
 
-    implement(renderer: SurfaceRendererIndividual): RenderedBufferForSemanticWithImplementation[] {
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
         return this.components.flatMap(component => component.implement(renderer))
     }
 }

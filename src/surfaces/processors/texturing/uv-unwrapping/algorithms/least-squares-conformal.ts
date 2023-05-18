@@ -1,4 +1,4 @@
-import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js"
+import { SurfaceUVUnwrappingAlgorithm } from "../algorithm.js"
 
 export const leastSquaresConformal: SurfaceUVUnwrappingAlgorithm = {
     init() {

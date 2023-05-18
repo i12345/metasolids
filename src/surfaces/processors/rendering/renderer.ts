@@ -7,20 +7,21 @@ import { MultiObjectsGroupsTemplate } from "../../../fields/index.js"
 
 export class SurfaceRendererShared<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
-    readonly mesh: MeshRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>
-    readonly material: MaterialRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>
+    readonly mesh: MeshRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    readonly material: MaterialRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
 
     constructor(
-        readonly surface: SurfaceWithRendering<VolumeLocationT, SurfaceTextureLocationGroup>,
-        readonly context: SurfaceProcessingContextWithRendering<VolumeLocationT, SurfaceTextureLocationGroup>
+        public readonly surface: SurfaceWithRendering<VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        public readonly context: SurfaceProcessingContextWithRendering<VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        public readonly surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup
     ) {
-        this.mesh = new MeshRendererShared(this)
-        this.material = new MaterialRendererShared(this)
+        this.mesh = new MeshRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(this)
+        this.material = new MaterialRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(this)
     }
 
-    individualize(entity: Entity): SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup> {
+    individualize(entity: Entity): SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup> {
         ///@ts-ignore
         return new SurfaceRendererIndividual(this, entity)
     }
@@ -28,14 +29,14 @@ export class SurfaceRendererShared<
 
 export class SurfaceRendererIndividual<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
-    readonly mesh: MeshRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
-    readonly material: MaterialRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
+    readonly mesh: MeshRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    readonly material: MaterialRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
     readonly implementation!: MeshInstance
 
     constructor(
-            public readonly shared: SurfaceRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
+            public readonly shared: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>,
             public readonly entity: Entity
         ) {
         this.mesh = shared.mesh.individualize(this)

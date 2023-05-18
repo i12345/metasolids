@@ -80,28 +80,35 @@ export class LevelOfDetailInfoComputerShared {
         const isFirst = this.renderer.implementation_cache.size === 0
         const surface = this.renderer.renderer.surface
         const meshData = surface.mesh
-        
-        const render2samples = isFirst ?
-            new Array(meshData.vertices.length) :
-            this.renderer.decimation.cached(quality).render2samples
+        const UVunwrapping = this.renderer.UVUnwrapping
 
-        if (isFirst)
-            for (let i = 0; i < render2samples.length; i++)
-                render2samples[i] = i
-        
-        const sample_textureLocationGroup =
-            onlyOne(groupKinds(this.renderer.renderer.context.sample as any, SurfaceIndividualTextureLocationsGroupKindsTemplate)).group
+        /** decimated? UV-unwrapped-duplicated? vertex index -> original mesh data vertex index */
+        const vertices_original = isFirst ?
+            new Array(meshData.vertices.length + (UVunwrapping?.duplicatedVerts.length ?? 0)) :
+            this.renderer.decimation.cached(quality).vertices_original
 
-        const positions = isFirst ?
-            meshData.vertices :
-            new Array<Vec3>(render2samples!.length)
+        /** decimated? UV-unwrapped? vertex index -> UV-unwrapped? vertex index */
+        const vertices_unwrapped = isFirst ?
+            new Array(meshData.vertices.length + (UVunwrapping?.duplicatedVerts.length ?? 0)) :
+            this.renderer.decimation.cached(quality).vertices_final
         
-        if (!isFirst)
-            for (let i = 0; i < positions.length; i++)
-                positions[i] = meshData.vertices[render2samples![i]]
-        
+        if (isFirst) {
+            for (let i = 0; i < meshData.vertices.length; i++) {
+                vertices_original[i] = i
+                vertices_unwrapped[i] = i
+            }
+
+            if (UVunwrapping) {
+                for (let i = 0; i < UVunwrapping.duplicatedVerts.length; i++) {
+                    vertices_original[i + meshData.vertices.length] = UVunwrapping.duplicatedVerts[i]
+                    vertices_unwrapped[i + meshData.vertices.length] = i + meshData.vertices.length
+                }
+            }
+        }
+
+        /** indices within decimated? UV-unwrapped-duplicated? vertices */
         const indices = isFirst ?
-            meshData.triangles :
+            (UVunwrapping?.finalIndices ?? meshData.triangles) :
             this.renderer.decimation.cached(quality).triangles
         
         const edges: LevelOfDetailInfo_Edge_Cached[] = []
@@ -111,16 +118,22 @@ export class LevelOfDetailInfoComputerShared {
             const i0 = Math.min(indices.length - 1, Math.floor(indices.length * Math.random()))
             const i1 = (((i0 % 3) + 1) % 3) + (3 * Math.floor(i0 / 3))
             
-            const v0 = indices[i0]
-            const v1 = indices[i1]
+            const v0_decimated = indices[i0]
+            const v1_decimated = indices[i1]
 
-            const world_0 = isFirst ? meshData.vertices[v0] : meshData.vertices[render2samples[v0]]
-            const world_1 = isFirst ? meshData.vertices[v1] : meshData.vertices[render2samples[v1]]
+            const v0_UVunwrapped = vertices_unwrapped[v0_decimated]
+            const v1_UVunwrapped = vertices_unwrapped[v1_decimated]
+
+            const v0_original = vertices_original[v0_decimated]
+            const v1_original = vertices_original[v1_decimated]
+
+            const world_0 = meshData.vertices[v0_original]
+            const world_1 = meshData.vertices[v1_original]
             const world_dist = world_0.distance(world_1)
 
-            const uv_0 = sample_textureLocationGroup.get<TextureLocation>(surface.samples[isFirst ? v0 : render2samples[v0]]).uv
-            const uv_1 = sample_textureLocationGroup.get<TextureLocation>(surface.samples[isFirst ? v1 : render2samples[v1]]).uv
-            const uv_dist = uv_0.distance(uv_1)
+            const uv_dist = UVunwrapping ?
+                UVunwrapping.UVs[v0_UVunwrapped].distance(UVunwrapping?.UVs[v1_UVunwrapped]) :
+                NaN
 
             edges.push({
                 absolute: {

@@ -59,29 +59,33 @@ const groups_priorities: MultiObjectsGroupsMapped<Material_Groups, number> = {
     }
 }
 
-const storageClasses: MaterialSemanticImplementationStorageClass[] = [
-    MaterialSemanticImplementationStorageClass_Constant.instance,
-    MaterialSemanticImplementationStorageClass_VertexColors.instance,
-    MaterialSemanticImplementationStorageClass_Texture.instance,
-]
-
 const material_groups = [...groups(Material_Groups_Template)]
 
-interface Material_Group_Implementation_Internal_Shared {
+interface Material_Group_Implementation_Internal_Shared<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    > {
     readonly stage_max: number
-    readonly options: () => Generator<MaterialSemanticImplementation_Multi<MaterialSemanticImplementation_Immediate>>
-    readonly implementations_rendered_stage0_cache: Material_Group_Implementation_Internal_Individual[]
+    readonly options: () => Generator<MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>>>
+    readonly implementations_rendered_stage0_cache: Material_Group_Implementation_Internal_Individual<VolumeLocationT, SurfaceUVUnwrappingGroup>[]
 }
 
-interface Material_Group_Implementation_Internal_Individual {
-    shareable?: MaterialSemanticImplementation_Multi<MaterialSemanticImplementation_Shared>
-    implementation?: MaterialSemanticImplementation_Multi<MaterialSemanticImplementation_Immediate>
+interface Material_Group_Implementation_Internal_Individual<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    > {
+    shareable?: MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>>
+    implementation?: MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>>
     renderedBuffers?: RenderedBufferForSemanticWithImplementation[]
 }
 
-function* flattenImplementationMulti(implementations: Generator<MaterialSemanticImplementation>): Generator<MaterialSemanticImplementation_Multi<MaterialSemanticImplementation_Immediate>> {
+function* flattenImplementationMulti<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    >(implementations: Generator<MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>>): Generator<MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>>> {
     function* flattenMultiTerms(implementation: MaterialSemanticImplementation): Generator<MaterialSemanticImplementation_Immediate> {
         if (implementation instanceof MaterialSemanticImplementation_Multi)
+            ///@ts-ignore
             for (const component of implementation.components)
                 yield* flattenMultiTerms(component)
         else if (implementation instanceof MaterialSemanticImplementation_Constant ||
@@ -89,6 +93,7 @@ function* flattenImplementationMulti(implementations: Generator<MaterialSemantic
             implementation instanceof MaterialSemanticImplementation_VertexColors ||
             implementation instanceof MaterialSemanticImplementation_Setting ||
             implementation instanceof MaterialSemanticImplementation_Shared)
+            ///@ts-ignore
             yield implementation
         else if (implementation instanceof MaterialSemanticImplementation_None) { }
         else throw new Error("unimplemented implementation type")
@@ -100,11 +105,11 @@ function* flattenImplementationMulti(implementations: Generator<MaterialSemantic
 
 export class MaterialRendererShared<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
-    readonly groups: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Shared> = {} as typeof this.groups
-    readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceShared[]
-    readonly computeBackingCallbacks: ((individual: MaterialRendererIndividual) => void)[] = []
+    readonly groups: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>> = {} as typeof this.groups
+    readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup>[]
+    readonly computeBackingCallbacks: ((individual: MaterialRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) => void)[] = []
 
     implementation?: StandardMaterial = new StandardMaterial()
 
@@ -114,7 +119,7 @@ export class MaterialRendererShared<
     >
 
     constructor(
-        public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
+        public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>,
         public value_thresholds: {
             implement: number,
             change: number
@@ -131,8 +136,9 @@ export class MaterialRendererShared<
                 {
                     stage_max,
                     implementations_rendered_stage0_cache: [],
-                    options: cacheGenerator<MaterialSemanticImplementation_Multi<MaterialSemanticImplementation_Immediate>>(
-                        flattenImplementationMulti(
+                    options: cacheGenerator<MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Immediate>>(
+                        flattenImplementationMulti<VolumeLocationT, SurfaceUVUnwrappingGroup>(
+                            ///@ts-ignore
                             material_group_implementations(
                                 group,
                                 renderer.surface,
@@ -140,21 +146,25 @@ export class MaterialRendererShared<
                             )
                         )
                     )
-                } as Material_Group_Implementation_Internal_Shared
+                } as Material_Group_Implementation_Internal_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>
             )
         })
 
-        this.storageClassInstances = storageClasses.map($class => $class.instance(renderer))
+        this.storageClassInstances = [
+            new MaterialSemanticImplementationStorageClass_Constant<VolumeLocationT, SurfaceUVUnwrappingGroup>(),
+            new MaterialSemanticImplementationStorageClass_VertexColors<VolumeLocationT, SurfaceUVUnwrappingGroup>(),
+            new MaterialSemanticImplementationStorageClass_Texture<VolumeLocationT, SurfaceUVUnwrappingGroup>(),
+        ].map($class => $class.instance(renderer))
     }
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>): MaterialRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup> {
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): MaterialRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup> {
         return new MaterialRendererIndividual(this, renderer)
     }
 }
 
 export class MaterialRendererIndividual<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
     private readonly current: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Individual> = {} as typeof this.current
     readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceIndividual[]
@@ -168,8 +178,8 @@ export class MaterialRendererIndividual<
     readonly individuality = new RefCount()
 
     constructor(
-        public readonly shared: MaterialRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
+        public readonly shared: MaterialRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
     ) {
         this.storageClassInstances = shared.storageClassInstances.map(storageClassInstance => storageClassInstance.individualize(renderer))
         this._implementation = shared.implementation ??= new StandardMaterial()
@@ -249,7 +259,7 @@ export class MaterialRendererIndividual<
 
         let space_available: Cost_Space = field_point_sum(this.shared.storageClassInstances.map(storageClassInstance => storageClassInstance.$class.startingSpace(this.renderer)))
 
-        const value = (implementation: MaterialSemanticImplementation): number => {
+        const value = (implementation: MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>): number => {
             const a = 0.9 // [0, 1]
             const b = 0.002 // [0, \infty]
             const c = 0.5 // [0, \infty]
@@ -309,7 +319,7 @@ export class MaterialRendererIndividual<
             for (const group of potential_implementations) {
                 const implementation_internal_shared = group.get<Material_Group_Implementation_Internal_Shared>(this.shared.groups)
                 const implementation_internal_individual = group.get<Material_Group_Implementation_Internal_Individual>(this.current)
-                const candidates: [value: number, implementation: MaterialSemanticImplementation_Multi<MaterialSemanticImplementation_Immediate>][] = []
+                const candidates: [value: number, implementation: MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Immediate>][] = []
 
                 if (implementation_internal_shared.stage_max < stage)
                     continue
@@ -368,6 +378,7 @@ export class MaterialRendererIndividual<
                                         cached
                                             .implementation
                                             ?.components
+                                            ///@ts-ignore
                                             .some(cached_component => implementation.equals(cached_component))
                                         ?? false
                                     )?.shareable!.components.find(shared => shared.implementation.equals(implementation))
@@ -397,14 +408,14 @@ export class MaterialRendererIndividual<
                     add_implementations.forEach(add => space_available = field_point_subtract(space_available, add.cost.space))
                     remove_implementations.forEach(remove => space_available = field_point_add_inplace(space_available, remove.cost.space))
                     
-                    implementation_internal_individual.implementation = new MaterialSemanticImplementation_Multi([
+                    implementation_internal_individual.implementation = new MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>>([
                         ...kept_implementations,
                         ...add_implementations
                     ])
                     implementation_internal_individual.renderedBuffers = [...kept_renderedBuffers, ...add_renderedBuffers]
-                    implementation_internal_individual.shareable = new MaterialSemanticImplementation_Multi([
+                    implementation_internal_individual.shareable = new MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup, MaterialSemanticImplementation_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>>([
                         ...add_implementations.map(implementation =>
-                            new MaterialSemanticImplementation_Shared(
+                            new MaterialSemanticImplementation_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>(
                                 implementation,
                                 add_renderedBuffers.filter(renderedBuffer =>
                                     implementation.equals(renderedBuffer.implementation)
@@ -412,7 +423,7 @@ export class MaterialRendererIndividual<
                             )
                         ),
                         ...kept_implementations.map(implementation =>
-                            new MaterialSemanticImplementation_Shared(
+                            new MaterialSemanticImplementation_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>(
                                 implementation,
                                 kept_renderedBuffers.filter(renderedBuffer =>
                                     implementation.equals(renderedBuffer.implementation)

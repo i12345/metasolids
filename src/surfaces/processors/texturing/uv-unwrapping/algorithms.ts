@@ -1,5 +1,4 @@
-import { leastSquaresConformal } from "./least-squares-conformal.js"
-import { xAtlas } from './xatlas.js'
+import { leastSquaresConformal, xAtlas } from "./algorithms/index.js"
 
 export const SurfaceUVUnwrappingAlgorithms = {
     leastSquaresConformal,

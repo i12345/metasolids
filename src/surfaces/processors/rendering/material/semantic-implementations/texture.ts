@@ -1,5 +1,5 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial } from "playcanvas-extended"
-import { groups } from "../../../../../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsTemplate, groups } from "../../../../../fields/multi-objects-fields-point.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../../fields/range.js"
 import { textures } from "../../../../../index.js"
 import { TextureSample } from "../../../../../textures/texture.js"
@@ -22,10 +22,10 @@ export type MaterialSemanticImplementation_Texture_SideEffect = (
 
 export class MaterialSemanticImplementation_Texture<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SampleContextTemplate = any,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
     > implements
-    MaterialSemanticImplementation_Immediate {
+    MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly cost: {
         time: number
         space: Cost_Space_Texture
@@ -77,8 +77,9 @@ export class MaterialSemanticImplementation_Texture<
         return Math.max(information_per_pixel_mean, effectiveFit) ** 2
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean {
         return that instanceof MaterialSemanticImplementation_Texture &&
+            ///@ts-ignore
             this.texture === that.texture &&
             this.channels === that.channels &&
             this.stage === that.stage &&
@@ -87,7 +88,7 @@ export class MaterialSemanticImplementation_Texture<
             this.resolution === that.resolution
     }
 
-    implement(renderer: SurfaceRendererIndividual): RenderedBufferForSemanticWithImplementation[] {
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
         const buffer = new (this.hdr ? Float32Array : Uint8Array)(this.channels * (this.resolution ** 2))
 
         const texture_context = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>

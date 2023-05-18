@@ -4,7 +4,6 @@ import { PropertyPath } from "../../../utils/property-path.js";
 import { Material_Groups_Template } from "./material/groups.js";
 import { VolumeLocation } from "../../../volumes/volume.js";
 import { Field, FieldsField, FieldsPointMapped, FieldsPoint_Omit_Leaf, MultiObjectsGroupsTemplate, SampleDomainLocationField, Vec2Field, groups } from "../../../fields/index.js";
-import { SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations } from "../texturing/index.js";
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./surface.js";
 import { SurfaceRendererShared } from "./renderer.js";
 import { Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js";
@@ -12,18 +11,18 @@ import { ParallelizedContextParallelInfo } from "../../../processor/index.js";
 
 export class SurfaceWithRenderingProcessor<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > implements
     SurfaceProcessor<
-        SurfaceSampleWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
-        SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup>,
+        SurfaceSample,
+        any,
         SurfaceWithRendering<
                 VolumeLocationT,
-                SurfaceTextureLocationGroup
+                SurfaceUVUnwrappingGroup
             >,
         SurfaceProcessingContextWithRendering<
                 VolumeLocationT,
-                SurfaceTextureLocationGroup
+                SurfaceUVUnwrappingGroup
             >
     > {
     readonly dependencies: PropertyPath[] = [['material', 'textures']]
@@ -31,11 +30,11 @@ export class SurfaceWithRenderingProcessor<
     process(
             surface: SurfaceWithRendering<
                 VolumeLocationT,
-                SurfaceTextureLocationGroup
+                SurfaceUVUnwrappingGroup
             >,
             context: SurfaceProcessingContextWithRendering<
                 VolumeLocationT,
-                SurfaceTextureLocationGroup
+                SurfaceUVUnwrappingGroup
             >
         ): void {
         ///@ts-ignore
@@ -44,7 +43,7 @@ export class SurfaceWithRenderingProcessor<
 
     init(context: SurfaceProcessingContextWithRendering<
                 VolumeLocationT,
-                SurfaceTextureLocationGroup
+                SurfaceUVUnwrappingGroup
             >): void {
         type TextureLocationT = Material_Texture_Location<VolumeLocationT>
         

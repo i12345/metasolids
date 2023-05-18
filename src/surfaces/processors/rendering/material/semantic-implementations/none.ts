@@ -1,7 +1,12 @@
+import { MultiObjectsGroupsTemplate } from "../../../../../fields/multi-objects-fields-point.js";
+import { VolumeLocation } from "../../../../../volumes/volume.js";
 import { Cost, MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 
-export class MaterialSemanticImplementation_None
-    implements MaterialSemanticImplementation {
+export class MaterialSemanticImplementation_None<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    >
+    implements MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly cost: Cost = { space: { elements: 0 }, time: 0 }
     readonly stage = 0
 

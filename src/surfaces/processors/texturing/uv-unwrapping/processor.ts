@@ -5,25 +5,25 @@ import { MultiObjectsGroupsTemplate, groupKinds } from "../../../../fields/index
 import { onlyOne } from "../../../../utils/only-one.js";
 import { SurfaceUVUnwrappingAlgorithms } from "./algorithms.js";
 import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js";
-import { SurfaceProcessingContextWithUVUnwrapping, SurfaceWithUVUnwrapping } from "./surface.js";
+import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
 
 export class SurfaceUVUnwrappingProcessor<
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        Sample extends SurfaceSample = SurfaceSample,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        SampleT extends SurfaceSample = SurfaceSample,
         SampleProcessingContextT = any
     > implements
     SurfaceProcessor<
-            Sample,
+            SampleT,
             SampleProcessingContextT,
-            SurfaceWithUVUnwrapping<Sample, SurfaceTextureLocationGroup>,
-            SurfaceProcessingContextWithUVUnwrapping<SampleProcessingContextT, SurfaceTextureLocationGroup>
+            SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleT>,
+            SurfaceProcessingContextWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleProcessingContextT>
         > {
     readonly dependencies = [['samples']]
     readonly algorithm: SurfaceUVUnwrappingAlgorithm
 
     constructor(
         algorithm: SurfaceUVUnwrappingAlgorithm | keyof typeof SurfaceUVUnwrappingAlgorithms,
-        public readonly surfaceTextureLocationGroup?: SurfaceTextureLocationGroup
+        public readonly surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup
     ) {
         if (typeof algorithm === 'string')
             this.algorithm = SurfaceUVUnwrappingAlgorithms[algorithm]
@@ -31,26 +31,25 @@ export class SurfaceUVUnwrappingProcessor<
     }
 
     process(
-            surface: SurfaceWithUVUnwrapping<Sample, SurfaceTextureLocationGroup>,
+            surface: SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleT>,
             context: SurfaceProcessingContextWithUVUnwrapping<
-                SampleProcessingContextT,
-                SurfaceTextureLocationGroup
-            >
-        ): void {
-        const surfaceTextureLocationGroup = onlyOne(groupKinds(
+                    SurfaceUVUnwrappingGroup,
+                    SampleProcessingContextT
+                >): void {
+        const surfaceUVUnwrappingGroup = onlyOne(groupKinds(
             context,
-            SurfaceIndividualTextureLocationsGroupKindsTemplate,
-            this.surfaceTextureLocationGroup
+            SurfaceUVUnwrappingGroupKindsTemplate,
+            this.surfaceUVUnwrappingGroup
         )).group
 
         const unwrapping = this.algorithm.unwrap(surface.mesh)
 
-        surfaceTextureLocationGroup.set(surface, unwrapping)
+        surfaceUVUnwrappingGroup.set(surface, unwrapping)
     }
 
     init(context: SurfaceProcessingContextWithUVUnwrapping<
-            SampleProcessingContextT,
-            SurfaceTextureLocationGroup
+            SurfaceUVUnwrappingGroup,
+            SampleProcessingContextT
         >): void {
         this.algorithm.init()
     }

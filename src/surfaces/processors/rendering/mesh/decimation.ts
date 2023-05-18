@@ -20,16 +20,29 @@ export class MeshDecimationShared {
 
     private computeCache(quality: number) {
         const meshData = this.renderer.renderer.surface.mesh
+        const UVunwrapping = this.renderer.UVUnwrapping
+
         if (quality === 1) {
+            const n_original = meshData.vertices.length
+            const n_unwrapped = n_original + (UVunwrapping?.duplicatedVerts.length ?? 0)
+            const n_final = n_unwrapped
+
             const indices: MeshDecimationIndividual["indices"] = {
-                render2samples: new (indicesArrayType(meshData.vertices.length))(),
-                samples2render: new (indicesArrayType(meshData.vertices.length))(),
-                triangles: meshData.triangles
+                vertices_final: new (indicesArrayType(n_unwrapped))(n_final),
+                vertices_original: new (indicesArrayType(n_original))(n_final),
+                triangles: UVunwrapping?.finalIndices ?? meshData.triangles
             }
 
-            for (let i = 0; i < meshData.vertices.length; i++) {
-                indices.render2samples[i] = i
-                indices.samples2render[i] = i
+            for (let i = 0; i < n_original; i++) {
+                indices.vertices_final[i] = i
+                indices.vertices_original[i] = i
+            }
+            
+            if (UVunwrapping) {
+                for (let i = 0; i < UVunwrapping.duplicatedVerts.length; i++) {
+                    indices.vertices_final[n_original + i] = n_original + i
+                    indices.vertices_original[n_original + i] = UVunwrapping.duplicatedVerts[i]
+                }
             }
 
             return indices
@@ -525,8 +538,21 @@ export class MeshDecimationIndividual {
     private _quality: number = NaN
 
     private _indices!: {
-        readonly samples2render: IndiciesArray
-        readonly render2samples: IndiciesArray
+        /**
+         * Array of original vertex indices (before UV unwrapping)
+         * 
+         * Equal to {@link vertices_final} except duplicated vertex indices are
+         * mapped to their original vertex indices.
+         */
+        readonly vertices_original: IndiciesArray
+
+        /**
+         * Array of final vertex indices (after considering duplicated
+         * vertices from UV unwrapping)
+         */
+        readonly vertices_final: IndiciesArray
+
+        /** triples of indices within the decimated vertices */
         readonly triangles: IndiciesArray
     }
 
@@ -535,7 +561,7 @@ export class MeshDecimationIndividual {
     }
 
     get numRenderVerts() {
-        return this.indices.render2samples.length
+        return this.indices.vertices_final.length
     }
 
     get quality() {

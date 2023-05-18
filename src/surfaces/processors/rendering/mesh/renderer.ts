@@ -5,35 +5,42 @@ import { MeshDecimationIndividual, MeshDecimationShared } from "./decimation.js"
 import { RefCount } from "../../../../utils/ref-count.js";
 import { MultiObjectsGroupsTemplate, RANGE_MAX, RANGE_MIN, groupKinds } from "../../../../fields/index.js";
 import { onlyOne } from "../../../../utils/index.js";
-import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";
+import { SurfaceTextureLocationsGroupKindsTemplate, SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../texturing/index.js";
 import { TextureLocation } from "../../../../textures/texture.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 
 export class MeshRendererShared<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
     readonly decimation: MeshDecimationShared
     readonly LOD: LevelOfDetailInfoComputerShared
-    
+    readonly UVUnwrapping?: SurfaceUVUnwrapping
+
     /** quality -> implementation */
     readonly implementation_cache = new Map<number, Mesh>()
-    readonly computeBackingCallbacks: ((individual: MeshRendererIndividual) => void)[] = []
+    readonly computeBackingCallbacks: ((individual: MeshRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) => void)[] = []
 
-    constructor(public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>) {
+    constructor(public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
         ///@ts-ignore
         this.decimation = new MeshDecimationShared(this)
+        ///@ts-ignore
         this.LOD = new LevelOfDetailInfoComputerShared(this)
+        this.UVUnwrapping = onlyOne(groupKinds(
+            renderer.context,
+            SurfaceUVUnwrappingGroupKindsTemplate,
+            renderer.surfaceUVUnwrappingGroup
+        )).group?.get<SurfaceUVUnwrapping>(renderer.surface)
     }
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>) {
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
         return new MeshRendererIndividual(this, renderer)
     }
 }
 
 export class MeshRendererIndividual<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
     readonly decimation: MeshDecimationIndividual
     readonly LOD: LevelOfDetailInfoComputerIndividual
@@ -46,8 +53,8 @@ export class MeshRendererIndividual<
     }
 
     constructor(
-        public readonly shared: MeshRendererShared<VolumeLocationT, SurfaceTextureLocationGroup>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceTextureLocationGroup>
+        public readonly shared: MeshRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
     ) {
         this.decimation = shared.decimation.individualize()
         this.LOD = shared.LOD.individualize(this)
@@ -141,19 +148,18 @@ export class MeshRendererIndividual<
     }
 
     private computeBacking() {
-        const { render2samples, triangles } = this.decimation.indices
+        const n_decimated = this.decimation.numRenderVerts
+        const UVunwrapping = this.shared.UVUnwrapping
+        const { vertices_original, vertices_final, triangles } = this.decimation.indices
         const mesh = this.implementation
         const surface = this.renderer.shared.surface
         const surface_meshData_vertices = surface.mesh.vertices
-        const surface_samples = surface.samples
-        const sample_textureLocationGroup =
-            onlyOne(groupKinds(this.renderer.shared.context.sample, SurfaceTextureLocationsGroupKindsTemplate)).group
         
-        const positions = new Float32Array(3 * render2samples.length)
-        const UVs = new Float32Array(2 * render2samples.length)
-        for (let i = 0; i < render2samples.length; i++) {
-            const position = surface_meshData_vertices[render2samples[i]]
-            const uv = sample_textureLocationGroup.get<TextureLocation>(surface_samples[render2samples[i]]).uv
+        const positions = new Float32Array(3 * n_decimated)
+        const UVs = new Float32Array(2 * n_decimated)
+        for (let i = 0; i < n_decimated; i++) {
+            const position = surface_meshData_vertices[vertices_original[i]]
+            const uv = UVunwrapping?.UVs[vertices_final[i]]!
 
             positions[(3 * i) + 0] = position.x
             positions[(3 * i) + 1] = position.y

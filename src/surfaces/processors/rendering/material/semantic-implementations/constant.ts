@@ -5,11 +5,15 @@ import { MaterialSemanticImplementationStorageClass_Constant } from "../storage-
 import { SurfaceRendererIndividual } from "../../renderer.js"
 import { FieldPoint, field_point_equal } from "../../../../../fields/point.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
+import { MultiObjectsGroupsTemplate } from "../../../../../fields/multi-objects-fields-point.js"
+import { VolumeLocation } from "../../../../../volumes/volume.js"
 
 export class MaterialSemanticImplementation_Constant<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
     >
-    implements MaterialSemanticImplementation_Immediate {
+    implements MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly cost: {
         time: 0,
         space: Cost_Space
@@ -34,15 +38,16 @@ export class MaterialSemanticImplementation_Constant<
         return this.constancy
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean {
         return that instanceof MaterialSemanticImplementation_Constant &&
+            ///@ts-ignore
             field_point_equal(this.meanValue, that.meanValue) &&
             this.channels === that.channels &&
             this.stage === that.stage &&
             this.semantic === that.semantic
     }
     
-    implement(renderer: SurfaceRendererIndividual): RenderedBufferForSemanticWithImplementation[] {
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
         let buffer: Float32Array
 
         if (typeof this.meanValue === 'number')

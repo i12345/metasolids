@@ -1,5 +1,5 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial } from "playcanvas-extended"
-import { groups, RANGE_MIN, RANGE_MAX } from "../../../../../fields/index.js"
+import { groups, RANGE_MIN, RANGE_MAX, MultiObjectsGroupsTemplate } from "../../../../../fields/index.js"
 import { Texture, TextureSample } from "../../../../../textures/texture.js"
 import { GeneratorType } from "../../../../../utils/generator-type.js"
 import { VolumeLocation } from "../../../../../volumes/volume.js"
@@ -12,10 +12,10 @@ import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 
 export class MaterialSemanticImplementation_VertexColors<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SampleContextTemplate = any,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
     >
-    implements MaterialSemanticImplementation_Immediate {
+    implements MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly cost: {
         time: number
         space: Cost_Space_VertexColors
@@ -58,8 +58,9 @@ export class MaterialSemanticImplementation_VertexColors<
         return interpolating_fit_definite + ((1 - interpolating_fit_definite) * this.triangleMonotonicity)
     }
     
-    equals(that: MaterialSemanticImplementation_Immediate): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean {
         return that instanceof MaterialSemanticImplementation_VertexColors &&
+            ///@ts-ignore    
             this.texture === that.texture &&
             this.channels === that.channels &&
             this.stage === that.stage &&
@@ -68,11 +69,12 @@ export class MaterialSemanticImplementation_VertexColors<
             this.vertices === that.vertices
     }
 
-    implement(renderer: SurfaceRendererIndividual): RenderedBufferForSemanticWithImplementation[] {
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
         const buffer = new Float32Array(this.channels * renderer.shared.surface.samples.length)
         
         const textureContext = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>
         
+        /** original vertices */
         const sample_texture_values = renderer.shared.surface.samples.map(sample =>
             this.texture.sample(
                 this.sample_textureLocationGroup.get(sample) as Material_Texture_Location<VolumeLocationT>,

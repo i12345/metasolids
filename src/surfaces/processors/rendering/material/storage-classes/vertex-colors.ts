@@ -4,6 +4,8 @@ import { PackedRenderedBufferForSemantic, PackedRenderedBufferForSemanticWithRef
 import { colorChannelsString } from "../color-channels.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { Mesh } from "playcanvas-extended";
+import { MultiObjectsGroupsTemplate } from "../../../../../fields/multi-objects-fields-point.js";
+import { VolumeLocation } from "../../../../../volumes/volume.js";
 
 interface PackedRenderedBufferForSemanticWithMixedBuffer
     extends PackedRenderedBufferForSemanticWithRefCount<RenderedBufferForSemanticWithImplementation> {
@@ -12,11 +14,14 @@ interface PackedRenderedBufferForSemanticWithMixedBuffer
     renderedMeshes?: Mesh[]
 }
 
-export class MaterialSemanticImplementationStorageClass_VertexColors
-    implements MaterialSemanticImplementationStorageClass {
+export class MaterialSemanticImplementationStorageClass_VertexColors<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    >
+    implements MaterialSemanticImplementationStorageClass<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly $class = MaterialSemanticImplementationStorageClass_VertexColors.$class
     
-    startingSpace(renderer: SurfaceRendererIndividual): Cost_Space {
+    startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): Cost_Space {
         return {
             // elements: renderer.mesh.decimation.numRenderVerts * 4,
             elements: renderer.shared.surface.mesh.vertices.length * 4,
@@ -24,26 +29,25 @@ export class MaterialSemanticImplementationStorageClass_VertexColors
         } as Cost_Space_VertexColors
     }
 
-    instance(renderer: SurfaceRendererShared) {
-        return new MaterialSemanticImplementationStorageClassInstanceShared_VertexColors(renderer)
+    instance(renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
+        return new MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<VolumeLocationT, SurfaceUVUnwrappingGroup>(this, renderer)
     }
 
-    private constructor() { }
-
-    static readonly instance = new this()
     static readonly $class = Symbol("material-semantic-implementation-storage-class:vertex-colors")
 }
 
-export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColors
-    implements MaterialSemanticImplementationStorageClassInstanceShared {
+export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    >
+    implements MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly packs_stage0: PackedRenderedBufferForSemanticWithMixedBuffer[] = []
     
-    get $class() {
-        return MaterialSemanticImplementationStorageClass_VertexColors.instance
-    }
-    
-    constructor(public readonly renderer: SurfaceRendererShared) {
-        const callback = (renderer: SurfaceRendererIndividual) => {
+    constructor(
+        public readonly $class: MaterialSemanticImplementationStorageClass_VertexColors<VolumeLocationT, SurfaceUVUnwrappingGroup>,    
+        public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    ) {
+        const callback = (renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) => {
             renderer
                 .material
                 .storageClassInstances
@@ -55,20 +59,23 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColo
         renderer.material.computeBackingCallbacks.push(({ renderer }) => callback(renderer))
     }
 
-    individualize(renderer: SurfaceRendererIndividual) {
-        return new MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors(this, renderer)
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
+        return new MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors<VolumeLocationT, SurfaceUVUnwrappingGroup>(this, renderer)
     }
 }
 
-export class MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors
-    implements MaterialSemanticImplementationStorageClassInstanceIndividual {
+export class MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors<
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    >
+    implements MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly rendered: RenderedBufferForSemanticWithImplementation[] = []
     private _renderedPacked?: PackedRenderedBufferForSemanticWithMixedBuffer
     private _hasRequestedIndividual_material = false
     
     constructor(
-        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_VertexColors,
-        public readonly renderer: SurfaceRendererIndividual
+        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
     ) { }
 
     preoptimize(
@@ -127,25 +134,15 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
             const useHdr = !this.rendered.every(buffer => buffer.buffer instanceof Uint8Array)
             const packed = onlyOne(pack(this.rendered, useHdr ? [1, 2, 3, 4] : [4]))
         
-            let buffer: NonNullable<typeof this._renderedPacked>["buffer"]
-
-            if ((packed.sources.length === 1 && decimation.quality === 1) &&
-                (packed.sources[0].buffer instanceof Float32Array ||
-                    (packed.sources[0].buffer instanceof Uint8Array && packed.sources[0].channels === 4))) {
-                buffer = packed.sources[0].buffer
-            }
-            else {
-                const elements = packed.channels * decimation.numRenderVerts
-
-                if (useHdr)
-                    buffer = new Float32Array(elements)
-                else buffer = new Uint8Array(elements)
-            }
+            const elements = packed.channels * decimation.numRenderVerts
+            const buffer = useHdr ?
+                new Float32Array(elements) :
+                new Uint8Array(elements)
 
             renderPack(
                 buffer,
                 packed,
-                decimation.indices.render2samples
+                decimation.indices.vertices_original
             )
 
             if (this._renderedPacked) {
