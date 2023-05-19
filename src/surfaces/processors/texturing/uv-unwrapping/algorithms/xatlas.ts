@@ -3,12 +3,13 @@ import { SurfaceUVUnwrappingAlgorithm } from '../algorithm.js';
 import { Vec2 } from 'playcanvas-extended';
 import { indicesArrayType } from '../../../../../utils/indices-array.js';
 
-const promise_xAtlas = new Promise<XAtlasAPI>(resolve => {
-    const XAtlasAPIClass = (globalThis as any)["XAtlasAPI"] as typeof XAtlasAPI
+const promise_xAtlas = new Promise<XAtlasAPI>(async resolve => {
+    const { XAtlasAPI: XAtlasAPIClass } = await (eval(`import` + `('/xatlasjs-esm/index.js')`) as PromiseLike<{ XAtlasAPI: typeof XAtlasAPI }>)
+    
     const xAtlas: XAtlasAPI = new XAtlasAPIClass(
         () => resolve(xAtlas),
         (path, dir) => {
-            if (path === "xatlas.wasm") return "libs/" + path;
+            if (path === "xatlas.wasm") return "xatlasjs-esm/" + path;
             return dir + path;
         },
         (mode: any, progress: any) => {
@@ -23,7 +24,8 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
     init() {
         promise_xAtlas.then(xatlas => xAtlasAPI = xatlas)
         //TODO: investigate how well this works
-        while (!xAtlasAPI) { }
+        while (!xAtlasAPI)
+            console.log('waiting for loading xatlas api')
     },
 
     unwrap(mesh) {
