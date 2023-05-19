@@ -1,4 +1,5 @@
 export * from './surface.js'
 export * from './algorithm.js'
 export * from './algorithms.js'
+export * from './algorithms/index.js'
 export * from './processor.js'

@@ -404,6 +404,6 @@ export class VolumeSurfaceMeshingProcessor<
         }
 
         const samples = mesh.vertices.map(v => interpolateSample(v))
-        volume[VolumeSurfacesKey] = [{ mesh, samples }]
+        volume[VolumeSurfacesKey].push({ mesh, samples })
     }
 }

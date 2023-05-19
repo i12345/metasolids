@@ -6,7 +6,7 @@ import { VolumeComponentSystem } from "./system.js";
 import { ProcessorGraph } from "../processor/index.js";
 import { MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
 import { MultiObjectsVolume, TransformVolume } from "../volumes/index.js";
-import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeT } from "./types.js";
+import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeT } from "./types.js";
 import { MultiObjectsGroupsTemplate } from "../fields/multi-objects-fields-point.js";
 import { makeClone } from "../utils/cloneable.js";
 import { MultiObjectsGroupedObjectsKey } from "../fields/multi-objects-fields-point.js";
@@ -148,7 +148,10 @@ export class VolumeComponent extends Component {
             ...volume_multiObjectsContext
         }
 
-        const processing = {} as VolumeProcessingT
+        const processing = {
+            [surfaces.VolumeSurfacesKey]: [] as SurfaceT[],
+            [solids.VolumeSolidsKey]: [] as SolidT[],
+        } as VolumeProcessingT
 
         const graph = new ProcessorGraph(system.processors)
         graph.init(volume_context)

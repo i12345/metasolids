@@ -3,11 +3,13 @@ import { SurfaceUVUnwrappingAlgorithm } from '../algorithm.js';
 import { Vec2 } from 'playcanvas-extended';
 import { indicesArrayType } from '../../../../../utils/indices-array.js';
 
-const promise_xAtlas = new Promise<XAtlasAPI>(async resolve => {
+let xAtlasAPI: XAtlasAPI
+
+export const XAtlasAPI_promise = new Promise<void>(async resolve => {
     const { XAtlasAPI: XAtlasAPIClass } = await (eval(`import` + `('/xatlasjs-esm/index.js')`) as PromiseLike<{ XAtlasAPI: typeof XAtlasAPI }>)
     
-    const xAtlas: XAtlasAPI = new XAtlasAPIClass(
-        () => resolve(xAtlas),
+    xAtlasAPI = new XAtlasAPIClass(
+        () => resolve(),
         (path, dir) => {
             if (path === "xatlas.wasm") return "xatlasjs-esm/" + path;
             return dir + path;
@@ -18,20 +20,17 @@ const promise_xAtlas = new Promise<XAtlasAPI>(async resolve => {
     )
 })
 
-let xAtlasAPI: XAtlasAPI
 
 export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
     init() {
-        promise_xAtlas.then(xatlas => xAtlasAPI = xatlas)
-        //TODO: investigate how well this works
-        while (!xAtlasAPI)
-            console.log('waiting for loading xatlas api')
+        if (!xAtlasAPI)
+            throw new Error("load XAtlasAPI before using the xatlas unwrapper")
     },
 
     unwrap(mesh) {
         const indices_start = mesh.triangles instanceof Uint16Array ? mesh.triangles : new Uint16Array(mesh.triangles)
         const vertices_start = new Float32Array(3 * mesh.vertices.length)
-        for (let i = 0; i < vertices_start.length; i++) {
+        for (let i = 0; i < mesh.vertices.length; i++) {
             const vertex = mesh.vertices[i]
             vertices_start[(3 * i) + 0] = vertex.x
             vertices_start[(3 * i) + 1] = vertex.y
@@ -78,7 +77,7 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
             throw new Error("element not found. If this is raised, implement nearest neighbor lookup")
         }
 
-        for (let i_atlas = n_atlas; i_atlas > 0; i_atlas--) {
+        for (let i_atlas = n_atlas - 1; i_atlas >= 0; i_atlas--) {
             const i_original = original_vert_index(
                 atlas.vertex.vertices[(3 * i_atlas) + 0],
                 atlas.vertex.vertices[(3 * i_atlas) + 1],
