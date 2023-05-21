@@ -723,10 +723,13 @@ export class MultiObjectsCombiningProcessor<
             MultiObjectsInfluenceCombiningProcessingContext<Objects, InfluenceGroup, ValueGroups, ValueGroupKind, ObjectsGrouped> =
             MultiObjectsInfluenceCombiningProcessingContext<Objects, InfluenceGroup, ValueGroups, ValueGroupKind, ObjectsGrouped>,
     > implements Processor<Result, Context> {
-    private _dependencies!: PropertyPath[]
+    private _connections!: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
+    }
 
-    get dependencies() {
-        return this._dependencies
+    get connections() {
+        return this._connections
     }
     
     constructor(
@@ -750,11 +753,20 @@ export class MultiObjectsCombiningProcessor<
     init(context: Context): void {
         const infuenceGroup = onlyOne(groupKinds(context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroup)).group
         const valueGroups = [...groupKinds(context, this.valueGroupKinds, this.valueGroups)]
+        
+        //TODO: currently, any processor depending on the combined value would
+        // be satisfied by this processor's input requirements, thus it may not
+        // receive the real combined value.
 
-        this._dependencies = [
-            infuenceGroup.path,
-            ...valueGroups.map(({ group: { path } }) => path)
-        ]
+        this._connections = {
+            inputs: [
+                infuenceGroup.path,
+                ...valueGroups.map(({ group: { path } }) => path)
+            ],
+            outputs: [
+                ...valueGroups.map(({ group: { path } }) => [...path, MultiObjectsCombinedValue])
+            ]
+        }
     }
 
     process(result: Result, context: Context): void {

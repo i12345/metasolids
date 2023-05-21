@@ -32,7 +32,10 @@ export class TextureableProcessor<
             TextureContextT
         >
     > {
-    dependencies!: PropertyPath[]
+    get connections() {
+        return this.graph.connections
+    }
+    
     private graph!: ProcessorGraph<
         TextureableT,
         TextureableProcessingContext<
@@ -64,7 +67,7 @@ export class TextureableProcessor<
                 >
         ): void {
         this.graph = new ProcessorGraph(context[TexturersKey])
-        this.dependencies = this.graph.dependencies
+        this.graph.init(context)
     }
 }
 
@@ -96,7 +99,9 @@ export abstract class Texturer<
                     TextureLocationT,
                     TextureContextT
                 >
-    > implements Processor<
+    >
+    implements
+    Processor<
         TextureableT,
         TextureableProcessingContext<
                 TextureableT,
@@ -105,7 +110,10 @@ export abstract class Texturer<
                 TextureContextT
             >
     > {
-    readonly dependencies: PropertyPath[] = []
+    connections!: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
+    }
 
     readonly mappings: {
         inputs: MultiObjectsGroupsMapped<Inputs, PropertyPath>,
@@ -137,6 +145,9 @@ export abstract class Texturer<
     }
 
     init(): void {
-        this.dependencies.splice(0, this.dependencies.length, ...[...groups(this.templates.inputs)].map(input => input.get<PropertyPath>(this.mappings.inputs)))
+        this.connections = {
+            inputs: [...groups(this.templates.inputs)].map(input => input.get<PropertyPath>(this.mappings.inputs)),
+            outputs: [...groups(this.templates.outputs)].map(output => output.get<PropertyPath>(this.mappings.outputs)),
+        }
     }
 }

@@ -3,7 +3,7 @@ import { defaultVolumeLocationField, VolumeLocation, VolumeSample, VolumeSamplin
 import { VolumeSampler, VolumeSamplingRequest, VolumeSamplingResult } from "./sampling.js";
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processor/index.js";
 import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_isPrimitive, SampleDomainLocationField } from "../fields/index.js";
-import { PropertyPath } from "../utils/property-path.js";
+import { PROPERTYKEY_ALL, PropertyPath } from "../utils/property-path.js";
 
 export const VolumeSampleKey = Symbol('volume.sample')
 export const VolumeSamplingKey = Symbol("volume-sampling")
@@ -50,7 +50,10 @@ export class VolumeSamplingProcessor<
             VolumeProcessing<Sample>,
             VolumeProcessingContext<Location, Sample, SampleContextTemplate>
         > {
-    readonly dependencies: PropertyPath[] = []
+    readonly connections = {
+        inputs: [],
+        outputs: [[VolumeSamplingKey]]
+    }
 
     init(): void {
     }
@@ -139,7 +142,7 @@ export class VolumeSampleParallelizer<
             >,
             SampleProcessor
         > {
-    readonly dependencyPrefix = [VolumeSamplingKey]
+    readonly parallelizedPath = [VolumeSamplingKey, 'voxels', PROPERTYKEY_ALL, PROPERTYKEY_ALL, PROPERTYKEY_ALL]
     
     init(
             context: VolumeProcessingContextT,

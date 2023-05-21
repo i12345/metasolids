@@ -221,10 +221,13 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             ObjectsValueTexturesGrouped
         >
     > {
-    private _dependencies!: PropertyPath[]
+    private _connections!: {
+        inputs: PropertyPath[]
+        outputs: PropertyPath[]
+    }
     
-    get dependencies() {
-        return this._dependencies
+    get connections() {
+        return this._connections
     }
 
     constructor(
@@ -273,11 +276,20 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             valueTextureLocationGroups.path,
         ]
         
-        this._dependencies = [
-            surfaceUVUnwrappingGroup.path,
-            ...sampleDependencies.map(path => ['samples', PROPERTYKEY_ALL, ...path]),
-            ...valueTextureGroups.map(({ group: { path } }) => path)
-        ]
+        //TODO: currently, any processor depending on the combined value would
+        // be satisfied by this processor's input requirements, thus it may not
+        // receive the real combined value.
+
+        this._connections = {
+            inputs: [
+                surfaceUVUnwrappingGroup.path,
+                ...sampleDependencies.map(path => ['samples', PROPERTYKEY_ALL, ...path]),
+                ...valueTextureGroups.map(({ group: { path } }) => path)
+            ],
+            outputs: [
+                ...valueTextureGroups.map(({ group: { path } }) => [...path, MultiObjectsCombinedValue])
+            ]
+        }
     }
 
     process(

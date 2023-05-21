@@ -25,7 +25,14 @@ export class SurfaceWithRenderingProcessor<
                 SurfaceUVUnwrappingGroup
             >
     > {
-    readonly dependencies: PropertyPath[] = [['material', 'textures']]
+    readonly connections = {
+        inputs: [
+            ['material', 'textures']
+        ],
+        outputs: [
+            ['renderer']
+        ]
+    }
 
     process(
             surface: SurfaceWithRendering<

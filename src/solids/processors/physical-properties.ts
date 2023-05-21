@@ -1,9 +1,10 @@
 import { FieldPoint, FieldsPoint, fields_point_add_inplace, field_point_divide, field_point_multiply } from "../../fields/point.js"
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js"
-import { makeExtractor, iterTreeByLeavesValues, TreeByValue, TreeByValueMapped } from "../../utils/tree.js"
+import { PropertyPath } from "../../utils/property-path.js"
+import { makeExtractor, iterTreeByLeavesValues, TreeByValue, TreeByValueMapped, leavesByValues } from "../../utils/tree.js"
 import { VolumeSample } from "../../volumes/index.js"
 import { SolidProcessingContext, SolidProcessor } from "../processor.js"
-import { SolidWithEnclosingVolume, SolidWithEnclosingVolumeProcessor } from "./enclosing-volume.js"
+import { SolidWithEnclosingVolume } from "./enclosing-volume.js"
 
 export const PhysicalPropertiesTemplate_Leaf_Intensive = Symbol('physical-property:intensive')
 export const PhysicalPropertiesTemplate_Leaf_Extensive = Symbol('physical-property:extensive')
@@ -80,12 +81,29 @@ export class SolidWithPhysicalPropertiesProcessor<
             SolidT,
             SolidProcessingContextT
         > {
-    readonly dependencies = [['voxels']]
+    private _connections!: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
+    }
+
+    get connections() {
+        return this._connections
+    }
 
     constructor(
             public physicalPropertiesTemplate: PhysicalPropertiesTemplateT
         ) { }
+    
     init(context: SolidProcessingContextT): void {
+        const properties = [...leavesByValues(
+            this.physicalPropertiesTemplate,
+            [PhysicalPropertiesTemplate_Leaf_Extensive, PhysicalPropertiesTemplate_Leaf_Intensive]
+        )]
+
+        this._connections = {
+            inputs: properties.map(({ path }) => ['voxels', ...path]),
+            outputs: properties.map(({ path }) => path),
+        }
     }
 
     process(solid: SolidT): void {

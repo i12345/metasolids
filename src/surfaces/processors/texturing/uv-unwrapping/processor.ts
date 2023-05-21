@@ -1,11 +1,11 @@
 import { SurfaceProcessor } from "../../../processor.js";
 import { SurfaceSample } from "../../../surface.js";
-import { SurfaceIndividualTextureLocationsGroupKindsTemplate } from "../types.js";
 import { MultiObjectsGroupsTemplate, groupKinds } from "../../../../fields/index.js";
 import { onlyOne } from "../../../../utils/only-one.js";
 import { SurfaceUVUnwrappingAlgorithms } from "./algorithms.js";
 import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
+import { PropertyPath } from "../../../../utils/property-path.js";
 
 export class SurfaceUVUnwrappingProcessor<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -17,8 +17,16 @@ export class SurfaceUVUnwrappingProcessor<
             SampleProcessingContextT,
             SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleT>,
             SurfaceProcessingContextWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleProcessingContextT>
-        > {
-    readonly dependencies = [['samples']]
+    > {
+    private _connections!: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
+    }
+
+    get connections() {
+        return this._connections
+    }
+
     readonly algorithm: SurfaceUVUnwrappingAlgorithm
 
     constructor(
@@ -52,5 +60,16 @@ export class SurfaceUVUnwrappingProcessor<
             SampleProcessingContextT
         >): void {
         this.algorithm.init()
+
+        const surfaceUVUnwrappingGroup = onlyOne(groupKinds(
+            context,
+            SurfaceUVUnwrappingGroupKindsTemplate,
+            this.surfaceUVUnwrappingGroup
+        )).group
+
+        this._connections = {
+            inputs: [['samples']],
+            outputs: [surfaceUVUnwrappingGroup.path],
+        }
     }
 }

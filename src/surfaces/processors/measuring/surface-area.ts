@@ -24,7 +24,14 @@ export class SurfaceWithSurfaceAreaProcessor<
         SurfaceT,
         SurfaceProcessingContextT
     > {
-    readonly dependencies = [['mesh']]
+    readonly connections = {
+        inputs: [
+            ['mesh']
+        ],
+        outputs: [
+            ['surfaceArea']
+        ]
+    }
 
     init(): void {
     }

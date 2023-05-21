@@ -37,7 +37,7 @@ export interface Parallelizer<
             ParallelizedProcessor<Item, Context, ParallelizedItem, ParallelizedItemContext> =
             ParallelizedProcessor<Item, Context, ParallelizedItem, ParallelizedItemContext>
     > {
-    readonly dependencyPrefix: PropertyPath
+    readonly parallelizedPath: PropertyPath
     
     init(
             context: Context,
@@ -72,14 +72,13 @@ export class ParallelizingProcessor<
             Parallelizer<Item, Context, ParallelizedItem, ParallelizedItemContext, ParallelizedItemProcessor>
     >
     implements Processor<Item, Context> {
-    get dependencies() {
-        return [
-            ...this.itemProcessor.dependencies.map(dependencies => [
-                ...this.parallelizer.dependencyPrefix,
-                ...dependencies
-            ]),
-            ...this.otherDependencies
-        ]
+    private _connections!: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
+    }
+
+    get connections() {
+        return this._connections
     }
 
     constructor(
@@ -90,6 +89,11 @@ export class ParallelizingProcessor<
     
     init(context: Context): void {
         this.parallelizer.init(context, this.itemProcessor)
+
+        this._connections = {
+            inputs: this.itemProcessor.connections.inputs.map(input => [...this.parallelizer.parallelizedPath, ...input]),
+            outputs: this.itemProcessor.connections.outputs.map(output => [...this.parallelizer.parallelizedPath, ...output]),
+        }
     }
 
     process(item: Item, context: Context): void {

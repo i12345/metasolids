@@ -4,6 +4,7 @@ import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
 import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingKey, VolumeSamplingProcessor } from "../volumes/processor.js";
 import { Surface, SurfaceSample } from "./surface.js";
 import { Vec3 } from "playcanvas-extended";
+import { PROPERTYKEY_ALL } from "../utils/property-path.js";
 
 export interface SurfaceProcessingContext<
         SampleContextTemplate = any
@@ -74,7 +75,7 @@ export class SurfaceSampleParallelizer<
                 SurfaceProcessingContextT
             >
         > {
-    readonly dependencyPrefix = ['samples']
+    readonly parallelizedPath = ['samples', PROPERTYKEY_ALL]
     
     init(
             context: SurfaceProcessingContextT,
@@ -250,7 +251,7 @@ export class VolumeSurfacesParallelizer<
             VolumeProcessingContextT
         >
     > {
-    readonly dependencyPrefix = [VolumeSurfacesKey]
+    readonly parallelizedPath = [VolumeSurfacesKey, PROPERTYKEY_ALL]
     
     init(
             context: VolumeProcessingContextT,
@@ -362,9 +363,14 @@ export class VolumeSurfaceMeshingProcessor<
         VolumeSurfaceMeshingProcessing<Sample>,
         VolumeSurfaceMeshingProcessingContext<Location, Sample, SampleContextTemplate>
     > {
-    readonly dependencies = [
-        [VolumeSamplingKey]
-    ]
+    readonly connections = {
+        inputs: [
+            [VolumeSamplingKey]
+        ],
+        outputs: [
+            [VolumeSurfacesKey]
+        ]
+    }
 
     constructor() { }
 

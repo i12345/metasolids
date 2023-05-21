@@ -6,7 +6,10 @@ export interface Processor<
         Context = any
     > extends
     ContextWorker<Context> {
-    readonly dependencies: PropertyPath[]    
+    readonly connections: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
+    }
 
     process(
             item: Item,

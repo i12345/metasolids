@@ -216,10 +216,13 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                     SurfaceSampleProcessingContextT
                 >
         > {
-    private _dependencies!: PropertyPath[]
+    private _connections!: {
+        inputs: PropertyPath[]
+        outputs: PropertyPath[]
+    }
     
-    get dependencies() {
-        return this._dependencies
+    get connections() {
+        return this._connections
     }
     
     constructor(
@@ -245,16 +248,21 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                 ))
 
         const interpolatingGroups =
-            groupKinds(
+            [...groupKinds(
                     context.sample,
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
-                )
+                )]
         
-        this._dependencies = [
-            surfaceUVUnwrappingGroup.path,
-            ...[...interpolatingGroups].map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
-        ]
+        this._connections = {
+            inputs: [
+                surfaceUVUnwrappingGroup.path,
+                ...interpolatingGroups.map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
+            ],
+            outputs: [
+                ...interpolatingGroups.map(({ group: { path } }) => path)
+            ]
+        }
     }
 
     process(

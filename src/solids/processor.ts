@@ -55,8 +55,9 @@ export class SolidSurfaceProcessor<
         SolidT,
         SolidProcessingContextT
     > {
-    get dependencies() {
-        return this.processor.dependencies.map(dependencies => ["surface", ...dependencies])
+    connections!: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
     }
 
     constructor(public processor: SurfaceProcessor<
@@ -68,6 +69,11 @@ export class SolidSurfaceProcessor<
     
     init(context: SolidProcessingContextT): void {
         this.processor.init(context.surface)
+        
+        this.connections = {
+            inputs: this.processor.connections.inputs.map(input => ['surface', ...input]),
+            outputs: this.processor.connections.outputs.map(output => ['surface', ...output])
+        }
     }
 
     process(item: SolidT, context: SolidProcessingContextT): void {
@@ -254,7 +260,7 @@ export class VolumeSolidsParallelizer<
             VolumeProcessingContextT
         >
     > {
-    readonly dependencyPrefix = [VolumeSolidsKey]
+    readonly parallelizedPath = [VolumeSolidsKey]
     
     init(
             context: VolumeProcessingContextT,
@@ -382,7 +388,12 @@ export class VolumeSurfaceSolidifyingProcessor<
         VolumeProcessingT,
         VolumeProcessingContextT
     > {
-    readonly dependencies = []
+    readonly connections = {
+        inputs: [
+        ],
+        outputs: [
+        ],
+    }
     
     init(context: VolumeSurfaceProcessingContext<
             Location,

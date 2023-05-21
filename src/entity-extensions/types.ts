@@ -84,24 +84,26 @@ export type OtherInterpolatingValuesGrouped = {
 
 export type ObjectsOtherInterpolatingGrouped = MultiObjectsGrouped<Objects, OtherInterpolatingGroupsT>
 
+export const OtherInterpolatingGroupsKindsKey = Symbol('group-kind:other-interpolating')
+
 /**
  * Customizeable
  */
 export type OtherInterpolatingGroupsKindsT = {
-    interpolating: typeof MultiObjectsGroupsKindsTemplate_Leaf
+    [OtherInterpolatingGroupsKindsKey]: typeof MultiObjectsGroupsKindsTemplate_Leaf
 }
 
 /**
  * Customizeable
  */
 export const OtherInterpolatingGroupsKindsTemplate: OtherInterpolatingGroupsKindsT = {
-    interpolating: MultiObjectsGroupsKindsTemplate_Leaf
+    [OtherInterpolatingGroupsKindsKey]: MultiObjectsGroupsKindsTemplate_Leaf
 }
 
 export type OtherInterpolatingGroupsKindsMappedGroups = MultiObjectsGroupsKindsTemplateMapped<OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT>
 
 export const OtherInterpolatingGroupsKindsMappedGroupsTemplate: OtherInterpolatingGroupsKindsMappedGroups = {
-    interpolating: OtherInterpolatingGroupsTemplate
+    [OtherInterpolatingGroupsKindsKey]: OtherInterpolatingGroupsTemplate
 }
 
 export type InterpolatingGroupsT =
@@ -474,15 +476,15 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
         //     () => ({ [MultiObjectsGroupedObjectsKey]: {} as Objects })
         // ) as ObjectsInfluencesGrouped),
 
-        ...({
-            ...({
-                hair: {
-                    density: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
-                    length: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
-                },
-                rigidity: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
-            } as MultiObjectsGrouped<Objects, OtherInterpolatingGroupsT>),
-        } as MultiObjectsGrouped<Objects, SurfaceObjectsTexturesGroupsT>),
+        // ...({
+        //     ...({
+        //         hair: {
+        //             density: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
+        //             length: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
+        //         },
+        //         rigidity: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
+        //     } as MultiObjectsGrouped<Objects, OtherInterpolatingGroupsT>),
+        // } as MultiObjectsGrouped<Objects, SurfaceObjectsTexturesGroupsT>),
     },
 
     [MultiObjectsProcessingContextGroupKinds]: {
