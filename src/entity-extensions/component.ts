@@ -4,14 +4,15 @@ import { fields, meshing, solids, surfaces, textures, volumes } from "../index.j
 import { Volume } from "../volumes/volume.js";
 import { VolumeComponentSystem } from "./system.js";
 import { ProcessorGraph } from "../processor/index.js";
-import { MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
+import { mergeGroups, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
 import { MultiObjectsVolume, TransformVolume } from "../volumes/index.js";
-import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeT } from "./types.js";
+import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeT } from "./types.js";
 import { MultiObjectsGroupsTemplate } from "../fields/multi-objects-fields-point.js";
 import { makeClone } from "../utils/cloneable.js";
 import { MultiObjectsGroupedObjectsKey } from "../fields/multi-objects-fields-point.js";
 import { intract, pathsToNodeWithKey } from "../utils/tree.js";
 import { Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
+import { Texturer } from "../textures/texturer.js";
 
 const _schema = ['enabled']
 
@@ -19,8 +20,11 @@ export class VolumeComponent extends Component {
     volume?: Volume
     makeRoot: boolean = false
     extraLocationParameters?: FieldsPoint
-    samplingSettings = { ...volumes.defaultVolumeSamplerSettings }
-    meshingSettings = { ...meshing.defaultMeshingSettings }
+    samplerSettings?: volumes.VolumeSamplerSettings
+    meshingSettings?: meshing.MeshingSettings
+    interpolatingGroups?: MultiObjectsGroupsTemplate[]
+    texturers?: Texturer[]
+    customProcessors?: VolumeProcessorT[]
 
     get root() {
         return this.findRoot().entity
@@ -49,6 +53,8 @@ export class VolumeComponent extends Component {
         if (!this.volume)
             return
 
+        const customized_Sample_MultiObjectsMappedGroups_Template = [...(this.interpolatingGroups ?? []), Sample_MultiObjectsMappedGroups_Template].reduce(mergeGroups) as Sample_MultiObjectsMappedGroups
+        
         const system = this.system as VolumeComponentSystem
         
         function compositeVolume(node: GraphNode, require_multiObjects = false): VolumeT | undefined {
@@ -71,7 +77,7 @@ export class VolumeComponent extends Component {
                 return new volumes.MultiObjectsVolume(
                     Reflect_fromEntries<Record<string, VolumeT>>(children),
                     undefined as unknown as MultiObjectsInfluencesGroupKinds & MultiObjectsGroupsKindsTemplate,
-                    Sample_MultiObjectsMappedGroups_Template,
+                    customized_Sample_MultiObjectsMappedGroups_Template,
                     MultiObjectsInfluencesGroupsDefaultTemplate
                 ) as any as VolumeT
             }
@@ -131,19 +137,21 @@ export class VolumeComponent extends Component {
             [volumes.VolumeSamplingKey]: {
                 volume: compositeVolume_final,
                 extraLocationParameters: this.extraLocationParameters,
-                settings: this.samplingSettings,
+                settings: this.samplerSettings ?? volumes.defaultVolumeSamplerSettings,
             },
 
             [surfaces.VolumeSurfacesKey]: surface_context,
             [surfaces.VolumeSurfaceMeshingKey]: {
                 algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
-                settings: this.meshingSettings,
+                settings: this.meshingSettings ?? meshing.defaultMeshingSettings,
             },
 
             [solids.VolumeSolidsKey]: {
                 sample: sample_context,
                 surface: surface_context,
             },
+
+            [textures.TexturersKey]: (this.texturers ?? []) as any,
 
             ...volume_multiObjectsContext
         }
@@ -153,7 +161,11 @@ export class VolumeComponent extends Component {
             [solids.VolumeSolidsKey]: [] as SolidT[],
         } as VolumeProcessingT
 
-        const graph = new ProcessorGraph(system.processors)
+        const graph = new ProcessorGraph<VolumeProcessingT, VolumeProcessingContextT>([
+            ...system.processors,
+            new textures.TextureableProcessor<VolumeProcessingT, SurfaceCombinedTextureLocationT>(),
+            ...(this.customProcessors ?? [])
+        ])
         graph.init(volume_context)
         graph.process(processing, volume_context)
 
@@ -162,29 +174,10 @@ export class VolumeComponent extends Component {
         if (surface.mesh.triangles.length === 0)
             return
 
-        const mesh = new Mesh(this.system.app.graphicsDevice)
-        
-        const positions = new Float32Array(surface.mesh.vertices.length * 3)
-        const indices = new Uint32Array(surface.mesh.triangles)
-
-        for (let position_i = 0; position_i < surface.mesh.vertices.length; position_i++) {
-            const position = surface.mesh.vertices[position_i]
-            positions[(position_i * 3) + 0] = position.x
-            positions[(position_i * 3) + 1] = position.y
-            positions[(position_i * 3) + 2] = position.z
-        }
-
-        mesh.setPositions(positions)
-        mesh.setIndices(indices)
-        mesh.setNormals(calculateNormals(positions as unknown as number[], indices as unknown as number[]))
-        mesh.update(PRIMITIVE_TRIANGLES)
-
-        const material = new StandardMaterial()
-        material.diffuse.set(0.2, 0.4, 0.23)
-        material.update()
+        const renderer = surface.renderer.individualize(this.entity)
 
         this.entity.addComponent('render', {
-            meshInstances: [new MeshInstance(mesh, material, this.entity)]
+            meshInstances: [renderer.implementation]
         })
     }
 

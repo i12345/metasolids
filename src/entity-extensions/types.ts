@@ -44,44 +44,22 @@ export const SurfaceUVUnwrappingGroupsKindsMappedGroupsTemplate: SurfaceUVUnwrap
  * Customizeable
  */
 export type OtherInterpolatingGroupsT = {
-    rigidity: MultiObjectsGroupsTemplateLeaf
-    hair: {
-        density: MultiObjectsGroupsTemplateLeaf
-        length: MultiObjectsGroupsTemplateLeaf
-    }
+    // rigidity: MultiObjectsGroupsTemplateLeaf
+    // hair: {
+    //     density: MultiObjectsGroupsTemplateLeaf
+    //     length: MultiObjectsGroupsTemplateLeaf
+    // }
 }
 
 /**
  * Customizeable
  */
 export const OtherInterpolatingGroupsTemplate: OtherInterpolatingGroupsT = {
-    rigidity: MultiObjectsGroupsTemplate_Leaf,
-    hair: {
-        density: MultiObjectsGroupsTemplate_Leaf,
-        length: MultiObjectsGroupsTemplate_Leaf,
-    }
-}
-
-export type ObjectsOtherInterpolatingGrouped = MultiObjectsGrouped<Objects, OtherInterpolatingGroupsT>
-
-/**
- * Customizeable
- */
-export type OtherInterpolatingGroupsKindsT = {
-    factors: typeof MultiObjectsGroupsKindsTemplate_Leaf
-}
-
-/**
- * Customizeable
- */
-export const OtherInterpolatingGroupsKindsTemplate: OtherInterpolatingGroupsKindsT = {
-    factors: MultiObjectsGroupsKindsTemplate_Leaf
-}
-
-export type OtherInterpolatingGroupsKindsMappedGroups = MultiObjectsGroupsKindsTemplateMapped<OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT>
-
-export const OtherInterpolatingGroupsKindsMappedGroupsTemplate: OtherInterpolatingGroupsKindsMappedGroups = {
-    factors: OtherInterpolatingGroupsTemplate
+    // rigidity: MultiObjectsGroupsTemplate_Leaf,
+    // hair: {
+    //     density: MultiObjectsGroupsTemplate_Leaf,
+    //     length: MultiObjectsGroupsTemplate_Leaf,
+    // }
 }
 
 /**
@@ -97,11 +75,33 @@ export type OtherInterpolatingValuesT = FieldPoint
  * The values are applied per object
  */
 export type OtherInterpolatingValuesGrouped = {
-    rigidity: number
-    hair: {
-        density: number
-        length: number
-    }
+    // rigidity: number
+    // hair: {
+    //     density: number
+    //     length: number
+    // }
+}
+
+export type ObjectsOtherInterpolatingGrouped = MultiObjectsGrouped<Objects, OtherInterpolatingGroupsT>
+
+/**
+ * Customizeable
+ */
+export type OtherInterpolatingGroupsKindsT = {
+    interpolating: typeof MultiObjectsGroupsKindsTemplate_Leaf
+}
+
+/**
+ * Customizeable
+ */
+export const OtherInterpolatingGroupsKindsTemplate: OtherInterpolatingGroupsKindsT = {
+    interpolating: MultiObjectsGroupsKindsTemplate_Leaf
+}
+
+export type OtherInterpolatingGroupsKindsMappedGroups = MultiObjectsGroupsKindsTemplateMapped<OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT>
+
+export const OtherInterpolatingGroupsKindsMappedGroupsTemplate: OtherInterpolatingGroupsKindsMappedGroups = {
+    interpolating: OtherInterpolatingGroupsTemplate
 }
 
 export type InterpolatingGroupsT =
@@ -447,10 +447,10 @@ export type SurfaceProcessingContext_MultiObjects =
 // type A2 = SurfaceProcessingContext_MultiObjects
 // let a1!: A1
 // let a2!: A2
-// a1[MultiObjectsProcessingContextGroupKinds].factors
-// a2[MultiObjectsProcessingContextGroupKinds].factors
-// a1.factors.hair.density
-// a2.factors.hair.density
+// a1[MultiObjectsProcessingContextGroupKinds].interpolating
+// a2[MultiObjectsProcessingContextGroupKinds].interpolating
+// a1.interpolating.hair.density
+// a2.interpolating.hair.density
 // a1 = a2 // error
 // a2 = a1 // works
 // type A_diff = Omit<A1, keyof A2>
@@ -553,6 +553,10 @@ export type VolumeProcessingContextT =
             SampleProcessingContextT,
             SurfaceProcessingContextT,
             SolidProcessingContextT
+        > &
+    textures.TextureableProcessingContext<
+            VolumeProcessingT,
+            SurfaceCombinedTextureLocationT
         >
 
 export type VolumeProcessingContext_MultiObjects =

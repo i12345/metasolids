@@ -38,7 +38,7 @@ export class SurfaceWithRenderingProcessor<
             >
         ): void {
         ///@ts-ignore
-        surface.renderer = new SurfaceRendererShared(surface, context)
+        surface.renderer = new SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(surface, context)
     }
 
     init(context: SurfaceProcessingContextWithRendering<

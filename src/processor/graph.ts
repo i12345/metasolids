@@ -1,5 +1,4 @@
 import { PropertyPath, pathExists } from "../utils/property-path.js";
-import { extract } from "../utils/tree.js";
 import { Processor } from "./processor.js";
 
 export class ProcessorGraph<Object, Context> implements Processor<Object, Context> {

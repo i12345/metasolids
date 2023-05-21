@@ -23,7 +23,7 @@ export class SurfaceRendererShared<
 
     individualize(entity: Entity): SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup> {
         ///@ts-ignore
-        return new SurfaceRendererIndividual(this, entity)
+        return new SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>(this, entity)
     }
 }
 
