@@ -244,6 +244,7 @@ export class MetaSplineSegment<
             this.t = 0
             this.t_iterations = NaN
             this.transform_relative_root.setIdentity()
+            this.transform_relative_root_inv.setIdentity()
             this.spline = undefined
         }
         else {
@@ -251,11 +252,9 @@ export class MetaSplineSegment<
             this.t = this.t_offset + parent.segment.t
             this.t_iterations = Math.log2(this.t_offset) + 15
             this.transform_relative_root.mul2(parent.segment.transform_relative_root, parent.transform_to_parent)
+            this.transform_relative_root_inv.copy(this.transform_relative_root).invert()
             this.init_spline_potential(new MetaSpline([...(parent.segment.spline?.segments ?? [parent.segment]), this]), context)
         }
-
-        this.transform_relative_root.copy(this.transform_relative_root_inv)
-        this.transform_relative_root_inv.invert()
         
         this.field = FieldsField.merge<Sample>(
             (this.figure.field as FieldsField<MetaSplineSegmentFigureSample<Sample>>) as FieldsField<Sample>,
@@ -434,14 +433,14 @@ export class MetaSplineSegment<
 
         for (let t_i = 0; t_i <= this.t_offset * resolution.t; t_i++) {
             const t = t0 + (t_i / resolution.t)
-            const m = this.spline!.planeAt(t)
+            const m = new Mat4().mul2(this.transform_relative_root_inv, this.spline!.planeAt(t))
 
             sample_theta(t, m)
         }
 
         if (segment_first) {
             const t = t0
-            const m = this.spline!.planeAt(t)
+            const m = new Mat4().mul2(this.transform_relative_root_inv, this.spline!.planeAt(t))
             
             for (let phi_i = 1; phi_i <= resolution.phi; phi_i++)
                 sample_theta(t, m, phi_i * -PiOver2 / resolution.phi)
@@ -449,7 +448,7 @@ export class MetaSplineSegment<
 
         if (segment_last) {
             const t = this.t
-            const m = this.spline!.planeAt(t)
+            const m = new Mat4().mul2(this.transform_relative_root_inv, this.spline!.planeAt(t))
             
             for (let phi_i = 1; phi_i <= resolution.phi; phi_i++)
                 sample_theta(t, m, phi_i * PiOver2 / resolution.phi)
