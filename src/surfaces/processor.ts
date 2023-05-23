@@ -2,8 +2,8 @@ import { MeshingAlgorithm, MeshingSettings } from "../meshing/meshing-algorithm.
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js";
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
 import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingKey, VolumeSamplingProcessor } from "../volumes/processor.js";
-import { Surface, SurfaceSample } from "./surface.js";
-import { Vec3 } from "playcanvas-extended";
+import { MeshDataWithNormals, Surface, SurfaceSample } from "./surface.js";
+import { Vec3, calculateNormals } from "playcanvas-extended";
 import { PROPERTYKEY_ALL } from "../utils/property-path.js";
 
 export interface SurfaceProcessingContext<
@@ -392,6 +392,23 @@ export class VolumeSurfaceMeshingProcessor<
             context[VolumeSurfaceMeshingKey].settings
         )
 
+        const vertices = new Float32Array(3 * mesh.vertices.length)
+        for (let i = 0; i < mesh.vertices.length; i++) {
+            vertices[(3 * i) + 0] = mesh.vertices[i].x
+            vertices[(3 * i) + 1] = mesh.vertices[i].y
+            vertices[(3 * i) + 2] = mesh.vertices[i].z
+        }
+
+        const normals = new Float32Array(calculateNormals(
+            vertices as ArrayLike<number> as number[],
+            mesh.triangles as ArrayLike<number> as number[]
+        ))
+
+        const meshWithNormals: MeshDataWithNormals = {
+            ...mesh,
+            normals
+        }
+
         const box_min = sampling.boundingBox.getMin()
         const box_size = sampling.boundingBox.halfExtents.clone().mulScalar(2)
         const voxels = sampling.voxels
@@ -410,6 +427,9 @@ export class VolumeSurfaceMeshingProcessor<
         }
 
         const samples = mesh.vertices.map(v => interpolateSample(v))
-        volume[VolumeSurfacesKey].push({ mesh, samples })
+        volume[VolumeSurfacesKey].push({
+            mesh: meshWithNormals,
+            samples
+        })
     }
 }

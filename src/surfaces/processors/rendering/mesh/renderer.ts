@@ -157,25 +157,28 @@ export class MeshRendererIndividual<
         const { vertices_original, vertices_final, triangles } = this.decimation.indices
         const mesh = this.implementation
         const surface = this.renderer.shared.surface
-        const surface_meshData_vertices = surface.mesh.vertices
+        const surface_meshData = surface.mesh
         
         const positions = new Float32Array(3 * n_decimated)
         const UVs = new Float32Array(2 * n_decimated)
-        for (let i = 0; i < n_decimated; i++) {
-            const position = surface_meshData_vertices[vertices_original[i]]
-            const uv = UVunwrapping?.UVs[vertices_final[i]]!
+        const normals = new Float32Array(3 * n_decimated)
 
-            positions[(3 * i) + 0] = position.x
-            positions[(3 * i) + 1] = position.y
-            positions[(3 * i) + 2] = position.z
-            UVs[(2 * i) + 0] = uv.x
-            UVs[(2 * i) + 1] = uv.y
+        for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {
+            const i_original = vertices_original[i_decimated]
+            const i_UVunwrapped = vertices_final[i_decimated]
+
+            const position = surface_meshData.vertices[i_original]
+            const uv = UVunwrapping?.UVs[i_UVunwrapped]!
+
+            positions[(3 * i_decimated) + 0] = position.x
+            positions[(3 * i_decimated) + 1] = position.y
+            positions[(3 * i_decimated) + 2] = position.z
+            UVs[(2 * i_decimated) + 0] = uv.x
+            UVs[(2 * i_decimated) + 1] = uv.y
+            normals[(3 * i_decimated) + 0] = surface_meshData.normals[(3 * i_original) + 0]
+            normals[(3 * i_decimated) + 1] = surface_meshData.normals[(3 * i_original) + 1]
+            normals[(3 * i_decimated) + 2] = surface_meshData.normals[(3 * i_original) + 2]
         }
-        
-        const normals = calculateNormals(
-            positions as ArrayLike<number> as number[],
-            triangles as ArrayLike<number> as number[]
-        )
 
         mesh.setPositions(positions)
         mesh.setIndices(triangles)
