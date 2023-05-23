@@ -115,6 +115,11 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
 
         this.rendered.push(...add)
         
+        if (this.rendered.length === 0) {
+            mesh.setColors32(new Uint8Array(4 * decimation.numRenderVerts).fill(0))
+            return
+        }
+
         const isShareable = this.rendered.every(rendered => rendered.implementation.stage === 0)
 
         const shared_renderedPack =

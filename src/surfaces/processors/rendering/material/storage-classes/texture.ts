@@ -100,8 +100,8 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
         for (const remove_buffer of remove) {
             this.rendered.splice(this.rendered.indexOf(remove_buffer), 1);
 
-            (this.renderer.implementation.material as any)[remove_buffer.semantic] = undefined;
-            (this.renderer.implementation.material as any)[`${remove_buffer.semantic}Channel`] = undefined;
+            (this.renderer.implementation.material as any)[remove_buffer.semantic] = null;
+            // (this.renderer.implementation.material as any)[`${remove_buffer.semantic}Channel`] = null;
 
             const pack_index = this.rendered_packs.findIndex(pack => pack.sources.includes(remove_buffer))
             if (pack_index !== -1) {

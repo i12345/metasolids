@@ -108,7 +108,7 @@ export class MaterialRendererShared<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > {
     readonly groups: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>> = {} as typeof this.groups
-    readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup>[]
+    storageClassInstances!: MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup>[]
     readonly computeBackingCallbacks: ((individual: MaterialRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) => void)[] = []
 
     implementation?: StandardMaterial = new StandardMaterial()
@@ -127,9 +127,14 @@ export class MaterialRendererShared<
             implement: 0.7,
             change: 0.25
         }
-    ) {
+    ) { }
+    
+    init() {
         material_groups.forEach(group => {
-            const stage_max = opaqueStagedTexture(group.get<Texture>(renderer.surface.material.textures))[0]
+            const texture = group.get<Texture>(this.renderer.surface.material.textures)
+            if (!texture) return
+
+            const stage_max = opaqueStagedTexture(texture)[0]
 
             group.set(
                 this.groups,
@@ -141,8 +146,9 @@ export class MaterialRendererShared<
                             ///@ts-ignore
                             material_group_implementations(
                                 group,
-                                renderer.surface,
-                                renderer.context
+                                this.renderer.surface,
+                                this.renderer.context,
+                                this.renderer.mesh.UVUnwrapping!
                             )
                         )
                     )
@@ -154,7 +160,7 @@ export class MaterialRendererShared<
             new MaterialSemanticImplementationStorageClass_Constant<VolumeLocationT, SurfaceUVUnwrappingGroup>(),
             new MaterialSemanticImplementationStorageClass_VertexColors<VolumeLocationT, SurfaceUVUnwrappingGroup>(),
             new MaterialSemanticImplementationStorageClass_Texture<VolumeLocationT, SurfaceUVUnwrappingGroup>(),
-        ].map($class => $class.instance(renderer))
+        ].map($class => $class.instance(this.renderer))
     }
 
     individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): MaterialRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup> {
@@ -183,12 +189,19 @@ export class MaterialRendererIndividual<
     ) {
         this.storageClassInstances = shared.storageClassInstances.map(storageClassInstance => storageClassInstance.individualize(renderer))
         this._implementation = shared.implementation ??= new StandardMaterial()
+    }
 
-        material_groups.forEach(group => group.set<Material_Group_Implementation_Internal_Individual>(this.current, {
-            implementation: undefined,
-            shareable: undefined,
-            renderedBuffers: []
-        }))
+    init() {
+        material_groups.forEach(group => {
+            if (group.get<Material_Group_Implementation_Internal_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>>(this.shared.groups) === undefined)
+                return
+
+            group.set<Material_Group_Implementation_Internal_Individual>(this.current, {
+                implementation: undefined,
+                shareable: undefined,
+                renderedBuffers: []
+            })
+        })
 
         this.update()
     }
@@ -207,7 +220,8 @@ export class MaterialRendererIndividual<
             this.shared.computeBackingCallbacks.forEach(callback => callback(this))
         }
         
-        if (this.renderer.implementation.material !== this.implementation)
+        if (this.renderer.implementation &&
+            this.renderer.implementation.material !== this.implementation)
             this.renderer.implementation.material = this.implementation
     }
 
@@ -236,7 +250,7 @@ export class MaterialRendererIndividual<
          *     - quality > threshhold
          *   - Then keep current implementation unchanged
          *   - Else:
-         *     - Add this group to the set of groups that can change
+         *     - Add this group to the set of groups that can change, H
          * 
          * ## Then consider how to implement the groups that can change:
          * 
@@ -257,6 +271,7 @@ export class MaterialRendererIndividual<
          */
         const notes = "see comment above";
 
+        ///@ts-ignore
         let space_available: Cost_Space = field_point_sum(this.shared.storageClassInstances.map(storageClassInstance => storageClassInstance.$class.startingSpace(this.renderer)))
 
         type MaterialSemanticImplementation_ImmediateT = MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>
@@ -293,6 +308,8 @@ export class MaterialRendererIndividual<
 
         material_groups.forEach(group => {
             const current = group.get<Material_Group_Implementation_Internal_Individual<VolumeLocationT, SurfaceUVUnwrappingGroup>>(this.current)
+            if (current === undefined) return
+
             const { stage_max } = group.get<Material_Group_Implementation_Internal_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>>(this.shared.groups)
             if (!current.implementation ||
                 stage_max >= invalidateStagesSince ||

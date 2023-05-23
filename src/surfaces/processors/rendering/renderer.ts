@@ -19,6 +19,8 @@ export class SurfaceRendererShared<
     ) {
         this.mesh = new MeshRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(this)
         this.material = new MaterialRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(this)
+        
+        this.material.init()
     }
 
     individualize(entity: Entity): SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup> {
@@ -41,6 +43,10 @@ export class SurfaceRendererIndividual<
         ) {
         this.mesh = shared.mesh.individualize(this)
         this.material = shared.material.individualize(this)
+
+        this.material.init()
+
+        this.implementation = new MeshInstance(this.mesh.implementation, this.material.implementation)
     }
 
     update(invalidateStagesSince = 1) {

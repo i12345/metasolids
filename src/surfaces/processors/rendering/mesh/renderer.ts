@@ -34,7 +34,7 @@ export class MeshRendererShared<
     }
 
     individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
-        return new MeshRendererIndividual(this, renderer)
+        return new MeshRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>(this, renderer)
     }
 }
 
@@ -98,10 +98,12 @@ export class MeshRendererIndividual<
                 // if it was using a shared mesh (of a different quality)
                 // then it will have to make a new shared mesh
                 // otherwise it could reuse and share its individual mesh
+                // (if it had one; at the start it will have to make one)
                 // but it will have to compute the shared mesh either way
 
                 if (currentlyShared)
                     this._implementation = new Mesh()
+                else this._implementation ??= new Mesh()
                 this.computeBacking()
                 this.shared.implementation_cache.set(this.decimation.quality, this.implementation)
             }
@@ -130,14 +132,16 @@ export class MeshRendererIndividual<
             this._individualImplimentationQuality = this.decimation.quality
         }
 
-        const oldMesh = this.renderer.implementation.mesh
-        this.renderer.implementation.mesh = this.implementation
+        if (this.renderer.implementation) {
+            const oldMesh = this.renderer.implementation.mesh
+            this.renderer.implementation.mesh = this.implementation
         
-        if (oldMesh.refCount === 0) {
-            for (const [key, mesh] of this.shared.implementation_cache.entries()) {
-                if (mesh === oldMesh) {
-                    this.shared.implementation_cache.delete(key)
-                    break
+            if (oldMesh?.refCount === 0) {
+                for (const [key, mesh] of this.shared.implementation_cache.entries()) {
+                    if (mesh === oldMesh) {
+                        this.shared.implementation_cache.delete(key)
+                        break
+                    }
                 }
             }
         }
