@@ -1,5 +1,5 @@
 import { FieldPoint, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsCombined, MultiObjectsInfluencesProcessingContext, MultiObjectsGrouped, MultiObjectsInfluencesGroupsDefault, MultiObjectsTemplate, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsGroupsCombinedMapped, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsDomainInternalPreservedGroupsKinds, mergeGroupsInplace, MultiObjectsDomainInternalPreservedGroupsKindsKey } from "../fields/index.js"
-import { textures, volumes, surfaces, solids } from "../index.js"
+import { textures, volumes, surfaces, solids, metashapes } from "../index.js"
 import { MetaShapeVolumeMultiObjectsInternalPreservedGroups, MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate } from "../metashapes/metashape.js"
 
 export type VolumeLocationT = volumes.VolumeLocation
@@ -132,11 +132,13 @@ export const InterpolatingGroupsKindsTemplate: InterpolatingGroupsKindsT = {
 }
 
 export type Volume_Context_PreservedGroupsT =
-    MetaShapeVolumeMultiObjectsInternalPreservedGroups &
+    metashapes.MetaShapeVolumeMultiObjectsInternalPreservedGroups &
+    metashapes.MetaSplineSegmentMultiObjectsInternalPreservedGroups &
     {}
 
 export const Volume_Context_PreservedGroupsTemplate = [
-    MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate,
+    metashapes.MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate,
+    metashapes.MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate,
 ].reduce(mergeGroupsInplace, {}) as Volume_Context_PreservedGroupsT
 
 export type Volume_Context_PreservedGroupsKinds =

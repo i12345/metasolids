@@ -1,5 +1,5 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
-import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField, FieldsPoint } from "../fields/index.js";
+import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField, FieldsPoint, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../fields/index.js";
 import { Pi, PiOver2, TwoPi } from "../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../textures/texture.js";
 import { MultiObjectsVolume } from "../volumes/volumes/multi-objects.js";
@@ -23,7 +23,7 @@ export type MetaSplineSegmentFigure<
         MetaSplineSegmentFigureSample<Sample>
     >
 
-export const MetaSplineSegmentSamplingContext_Figure = Symbol('metaspline-segment:radial-figure')
+export const MetaSplineSegmentSamplingContext_Figure = Symbol('metaspline.segment:radial-figure')
 export interface MetaSplineSegmentSamplingContext<
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaShapeTxSample = MetaShapeTxSample,
@@ -43,6 +43,14 @@ export interface MetaSplineSegmentSamplingContext<
         VolumeContext
     > {
     [MetaSplineSegmentSamplingContext_Figure]: SamplingContext<MetaSplineSegmentFigureLocation<Location>>
+}
+
+export type MetaSplineSegmentMultiObjectsInternalPreservedGroups = {
+    [MetaSplineSegmentSamplingContext_Figure]: MultiObjectsGroupsTemplateLeaf
+}
+
+export const MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate: MetaSplineSegmentMultiObjectsInternalPreservedGroups = {
+    [MetaSplineSegmentSamplingContext_Figure]: MultiObjectsGroupsTemplate_Leaf
 }
 
 class MetaSpline<

@@ -31,8 +31,7 @@ export class TransformVolume<
     }
     
     init(context: Context) {
-        this.transform.copy(this.transformInverse)
-        this.transformInverse.invert()
+        this.transformInverse.copy(this.transform).invert()
 
         super.init(context)
 
@@ -42,7 +41,7 @@ export class TransformVolume<
     protected transformLocation(location: Location) {
         return {
             ...location,
-            p: this.transformInverse!.transformPoint(location.p)
+            p: this.transformInverse.transformPoint(location.p)
         }
     }
 
