@@ -1,10 +1,10 @@
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js"
 import { Surface } from "../surfaces/surface.js"
-import { SurfaceProcessingContext, SurfaceProcessor, VolumeSurfaceProcessingContext, VolumeSurfaceProcessor, VolumeSurfacesProcessing, VolumeSurfacesProcessingContext } from "../surfaces/processor.js"
+import { SurfaceProcessingContext, SurfaceProcessor, VolumeSurfaceProcessingContext, VolumeSurfaceProcessor, VolumeSurfacesKey, VolumeSurfacesProcessing, VolumeSurfacesProcessingContext } from "../surfaces/processor.js"
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js"
 import { VolumeProcessing, VolumeProcessingContext } from "../volumes/processor.js"
 import { Solid } from "./solid.js"
-import { PropertyPath } from "../utils/property-path.js"
+import { PROPERTYKEY_ALL, PropertyPath } from "../utils/property-path.js"
 
 export interface SolidProcessingContext<
         SampleContextTemplate = any,
@@ -260,7 +260,7 @@ export class VolumeSolidsParallelizer<
             VolumeProcessingContextT
         >
     > {
-    readonly parallelizedPath = [VolumeSolidsKey]
+    readonly parallelizedPath = [VolumeSolidsKey, PROPERTYKEY_ALL]
     
     init(
             context: VolumeProcessingContextT,
@@ -390,8 +390,10 @@ export class VolumeSurfaceSolidifyingProcessor<
     > {
     readonly connections = {
         inputs: [
+            []
         ],
         outputs: [
+            // [VolumeSolidsKey, PROPERTYKEY_ALL, "surface" as keyof Solid]
         ],
     }
     

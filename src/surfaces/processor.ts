@@ -317,8 +317,8 @@ export class VolumeSurfacesParallelizer<
             [ParallelizedContextParallelInfo]: { item, context }
         }
 
-        for (const solid of item[VolumeSurfacesKey])
-            itemProcessor.process(solid, parallelizedContext)
+        for (const surface of item[VolumeSurfacesKey])
+            itemProcessor.process(surface, parallelizedContext)
     }
 
     static readonly instance = new this()

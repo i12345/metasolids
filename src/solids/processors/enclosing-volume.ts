@@ -76,6 +76,8 @@ export class SolidWithEnclosingVolumeProcessor<
 
         const mesh = solid.surface.mesh
 
+        solid.voxels = []
+
         const xy = mesh.vertices.map(v => new Vec2(v.x, v.y))
         const z = mesh.vertices.map(v => v.z)
 

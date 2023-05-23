@@ -1,5 +1,6 @@
-import { FieldPoint, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate_Leaf, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsCombined, MultiObjectsInfluencesProcessingContext, MultiObjectsGrouped, MultiObjectsInfluencesGroupsDefault, MultiObjectsTemplate, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsGroupsCombinedMapped, MultiObjectsInfluencesGroupsKindsMappedGroupsDefault, MultiObjectsInfluencesGroupKinds } from "../fields/index.js"
+import { FieldPoint, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsCombined, MultiObjectsInfluencesProcessingContext, MultiObjectsGrouped, MultiObjectsInfluencesGroupsDefault, MultiObjectsTemplate, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsGroupsCombinedMapped, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsDomainInternalPreservedGroupsKinds, mergeGroupsInplace, MultiObjectsDomainInternalPreservedGroupsKindsKey } from "../fields/index.js"
 import { textures, volumes, surfaces, solids } from "../index.js"
+import { MetaShapeVolumeMultiObjectsInternalPreservedGroups, MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate } from "../metashapes/metashape.js"
 
 export type VolumeLocationT = volumes.VolumeLocation
 
@@ -130,6 +131,60 @@ export const InterpolatingGroupsKindsTemplate: InterpolatingGroupsKindsT = {
     ...OtherInterpolatingGroupsKindsTemplate,
 }
 
+export type Volume_Context_PreservedGroupsT =
+    MetaShapeVolumeMultiObjectsInternalPreservedGroups &
+    {}
+
+export const Volume_Context_PreservedGroupsTemplate = [
+    MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate,
+].reduce(mergeGroupsInplace, {}) as Volume_Context_PreservedGroupsT
+
+export type Volume_Context_PreservedGroupsKinds =
+    MultiObjectsDomainInternalPreservedGroupsKinds
+
+export const Volume_Context_PreservedGroupsKindsTemplate: Volume_Context_PreservedGroupsKinds = {
+    ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate
+}
+
+export type Volume_Context_PreservedGroupsKindsMappedGroupsT =
+    MultiObjectsGroupsKindsTemplateMapped<
+            MultiObjectsDomainInternalPreservedGroupsKinds,
+            Volume_Context_PreservedGroupsT
+        >
+
+export const Volume_Context_PreservedGroupsKindsMappedGroupsTemplate: Volume_Context_PreservedGroupsKindsMappedGroupsT = {
+    [MultiObjectsDomainInternalPreservedGroupsKindsKey]: Volume_Context_PreservedGroupsTemplate
+}
+
+export type Volume_Sample_PreservedGroupsT =
+    {}
+
+export const Volume_Sample_PreservedGroupsTemplate = [
+].reduce(mergeGroupsInplace, {}) as Volume_Sample_PreservedGroupsT
+
+export type Volume_Sample_PreservedGroupsKindsT =
+    MultiObjectsInfluencesGroupKinds &
+    surfaces.SurfaceTextureLocationsGroupKinds &
+    OtherInterpolatingGroupsKindsT &
+    MultiObjectsDomainInternalPreservedGroupsKinds
+
+export const Volume_Sample_PreservedGroupsKindsTemplate: Volume_Sample_PreservedGroupsKindsT = {
+    ...MultiObjectsInfluencesGroupKindsTemplate,
+    ...surfaces.SurfaceTextureLocationsGroupKindsTemplate,
+    ...OtherInterpolatingGroupsKindsTemplate,
+    ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
+}
+
+export type Volume_Sample_PreservedGroupsKindsMappedGroupsT =
+    MultiObjectsGroupsKindsTemplateMapped<
+            MultiObjectsDomainInternalPreservedGroupsKinds,
+            Volume_Sample_PreservedGroupsT
+        >
+
+export const Volume_Sample_PreservedGroupsKindsMappedGroupsTemplate: Volume_Sample_PreservedGroupsKindsMappedGroupsT = {
+    [MultiObjectsDomainInternalPreservedGroupsKindsKey]: Volume_Sample_PreservedGroupsTemplate
+}
+
 export type SampleT = volumes.VolumeSample &
     surfaces.SurfaceSampleForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
             Objects,
@@ -146,8 +201,6 @@ export type SampleT = volumes.VolumeSample &
         > &
     {}
 
-export type VolumeT = volumes.Volume<VolumeLocationT, SampleT>
-
 export type SampleProcessingContextT = {} &
     surfaces.SurfaceSampleProcessingContextForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
             Objects,
@@ -160,6 +213,12 @@ export type SampleProcessingContextT = {} &
             OtherInterpolatingGroupsT,
             ObjectsOtherInterpolatingGrouped,
             OtherInterpolatingGroupsKindsT
+        > &
+    MultiObjectsProcessingContext<
+            Objects,
+            Volume_Sample_PreservedGroupsT,
+            MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
+            MultiObjectsDomainInternalPreservedGroupsKinds
         > &
     {}
 
@@ -187,6 +246,12 @@ export type SampleProcessingContext_MultiObjects =
         ObjectsOtherInterpolatingGrouped,
         OtherInterpolatingGroupsKindsT
     > &
+    MultiObjectsProcessingContext<
+        Objects,
+        Volume_Sample_PreservedGroupsT,
+        MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
+        MultiObjectsDomainInternalPreservedGroupsKinds
+    > &
     {}
 
 export const SampleProcessingContext_MultiObjects_Template: SampleProcessingContext_MultiObjects = {
@@ -195,6 +260,8 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
     ...SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsTemplate,
 
     ...OtherInterpolatingGroupsKindsMappedGroupsTemplate,
+
+    ...Volume_Sample_PreservedGroupsKindsMappedGroupsTemplate,
 
     [MultiObjectsProcessingContextObjectsGrouped]: {
         // [MultiObjectsInfluencesGroupsDefaultKey]: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
@@ -205,13 +272,18 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
 
         [surfaces.SurfaceObjectsTextureLocationsGroupsDefaultKey]: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
 
-        ...({
-            hair: {
-                density: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
-                length: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
-            },
-            rigidity: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
-        } as MultiObjectsGrouped<Objects, OtherInterpolatingGroupsT>),
+        ...(mapGroups(
+            Volume_Sample_PreservedGroupsTemplate,
+            () => ({ [MultiObjectsGroupedObjectsKey]: {} as Objects })
+        ) as MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>),
+
+        // ...({
+        //     hair: {
+        //         density: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
+        //         length: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
+        //     },
+        //     rigidity: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
+        // } as MultiObjectsGrouped<Objects, OtherInterpolatingGroupsT>),
     },
 
     [MultiObjectsProcessingContextGroupKinds]: {
@@ -222,22 +294,24 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
         ...surfaces.SurfaceTextureLocationsGroupKindsTemplate,
         
         ...OtherInterpolatingGroupsKindsTemplate,
+
+        ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
     }
 }
 
-export type Sample_MultiObjectsMappedGroups =
-    InfluenceGroup &
-    SurfaceObjectsTextureLocationsGroupsT &
-    OtherInterpolatingGroupsT &
-    {}
+// export type Sample_MultiObjectsMappedGroups =
+//     InfluenceGroup &
+//     SurfaceObjectsTextureLocationsGroupsT &
+//     OtherInterpolatingGroupsT &
+//     {}
 
-export const Sample_MultiObjectsMappedGroups_Template: Sample_MultiObjectsMappedGroups = mergeGroups(
-    mergeGroups(
-        InfluenceGroupTemplate,
-        SurfaceObjectsTextureLocationsGroupsTemplate
-    ),
-    OtherInterpolatingGroupsTemplate
-)
+// export const Sample_MultiObjectsMappedGroups_Template: Sample_MultiObjectsMappedGroups = mergeGroups(
+//     mergeGroups(
+//         InfluenceGroupTemplate,
+//         SurfaceObjectsTextureLocationsGroupsTemplate
+//     ),
+//     OtherInterpolatingGroupsTemplate
+// )
 
 // let a!: SampleProcessingContext_MultiObjects
 // let b!: SampleProcessingContextT
@@ -406,6 +480,12 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
             OtherInterpolatingGroupsKindsT,
             SampleProcessingContextT
         > &
+    textures.TextureableProcessingContext<
+            SurfaceT,
+            SurfaceCombinedTextureLocationT,
+            SurfaceCombinedTextureSampleT,
+            textures.TextureSamplingContext<SurfaceCombinedTextureLocationT>
+        > &
     surfaces.SurfaceProcessingContextWithRendering<
             VolumeLocationT,
             SurfaceUVUnwrappingGroupT
@@ -556,19 +636,37 @@ export type VolumeProcessingContextT =
             SurfaceProcessingContextT,
             SolidProcessingContextT
         > &
-    textures.TextureableProcessingContext<
-            VolumeProcessingT,
-            SurfaceCombinedTextureLocationT
-        >
+    MultiObjectsProcessingContext<
+            Objects,
+            Volume_Context_PreservedGroupsT,
+            MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>,
+            MultiObjectsDomainInternalPreservedGroupsKinds
+        > &
+    {}
+
+export type VolumeT = volumes.Volume<VolumeLocationT, SampleT, VolumeProcessingContextT>
 
 export type VolumeProcessingContext_MultiObjects =
+    MultiObjectsProcessingContext<
+            Objects,
+            Volume_Context_PreservedGroupsT,
+            MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>,
+            MultiObjectsDomainInternalPreservedGroupsKinds
+        > &
     {}
 
 export const VolumeProcessingContext_MultiObjects_Template: VolumeProcessingContext_MultiObjects = {
-    [MultiObjectsGroupedObjectsKey]: {
+    ...Volume_Context_PreservedGroupsKindsMappedGroupsTemplate,
+
+    [MultiObjectsProcessingContextObjectsGrouped]: {
+        ...(mapGroups(
+            Volume_Context_PreservedGroupsTemplate,
+            () => ({ [MultiObjectsGroupedObjectsKey]: {} as Objects })
+        ) as MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>),
     },
 
     [MultiObjectsProcessingContextGroupKinds]: {
+        ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
     },
 }
 

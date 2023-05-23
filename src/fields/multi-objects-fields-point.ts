@@ -129,6 +129,16 @@ export function mergeGroups<
     >(g1: G1, g2: G2): G1 & G2 {
     const result = {} as G1 & G2
 
+    mergeGroupsInplace(result, g1)
+    mergeGroupsInplace(result, g2)
+    
+    return result
+}
+
+export function mergeGroupsInplace<
+        Addend extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Result extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+    >(result: Result, addend: Addend): Result {
     function insertLeafNode(path: PropertyPath) {
         /**
          * The leaf node can be inserted as a leaf value or a leaf key.
@@ -174,10 +184,7 @@ export function mergeGroups<
         intract(result, path, MultiObjectsGroupsTemplate_Leaf)
     }
 
-    for (const path of groupPaths(g1))
-        insertLeafNode(path)
-    
-    for (const path of groupPaths(g2))
+    for (const path of groupPaths(addend))
         insertLeafNode(path)
 
     return result
@@ -471,15 +478,14 @@ export function* groupKindObjectsGrouped<
         groupsFilter?: Groups
     ) {
     for (const { group, kind } of groupKinds(context, kindsTemplate, groupsFilter)) {
-        const objectsTemplate = group.get<Objects>(context)
-        const objects = group.get<MultiObjectsMapped<Objects, T>>(result)
-
         yield {
             kind,
             group,
             objects: {
-                template: objectsTemplate,
-                value: objects
+                template: group.get<{ [MultiObjectsGroupedObjectsKey]: Objects }>(
+                    context[MultiObjectsProcessingContextObjectsGrouped]
+                )[MultiObjectsGroupedObjectsKey],
+                value: group.get<MultiObjectsMapped<Objects, T>>(result)
             }
         }
     }

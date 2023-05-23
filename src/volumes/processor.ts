@@ -3,7 +3,7 @@ import { defaultVolumeLocationField, VolumeLocation, VolumeSample, VolumeSamplin
 import { VolumeSampler, VolumeSamplingRequest, VolumeSamplingResult } from "./sampling.js";
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processor/index.js";
 import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_isPrimitive, SampleDomainLocationField } from "../fields/index.js";
-import { PROPERTYKEY_ALL, PropertyPath } from "../utils/property-path.js";
+import { PROPERTYKEY_ALL } from "../utils/property-path.js";
 
 export const VolumeSampleKey = Symbol('volume.sample')
 export const VolumeSamplingKey = Symbol("volume-sampling")
@@ -71,7 +71,10 @@ export class VolumeSamplingProcessor<
             )) as FieldsField<Location>
         )
 
-        item[VolumeSamplingKey] = VolumeSampler.sample({ context, ...context[VolumeSamplingKey] })
+        item[VolumeSamplingKey] = VolumeSampler.sample({
+            context,
+            ...context[VolumeSamplingKey]
+        })
     }
 }
 

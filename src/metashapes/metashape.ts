@@ -1,10 +1,11 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field } from "../fields/index.js";
+import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field, field_point_invalid, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../fields/index.js";
 import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../textures/texture.js";
 import { extract } from "../utils/tree.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volumes/volume.js";
 import { MeshingSettings } from "../meshing/meshing-algorithm.js";
+import { SurfaceObjectsTextureLocationsGroupsDefaultKey } from "../surfaces/index.js";
 
 export interface MetaShapeLocation extends VolumeLocation {
 }
@@ -82,14 +83,20 @@ export type MetaShapeTxLocation<
 
 export type MetaShapeTxSample = FieldsPoint & FieldsPointOptional<MetaShapeParametersIn>
 
+export type MetaShapeSampleExtraFields<Sample extends MetaShapeSample = MetaShapeSample> =
+    Omit<Sample, keyof MetaShapeSample>
+
+let extraFields1: MetaShapeSampleExtraFields<MetaShapeSample> = {}
+
 export type MetaShapeVolumeSample<
         TxSample extends MetaShapeTxSample = MetaShapeTxSample,
         InnerSample extends MetaShapeSample = MetaShapeSample
     > =
-    VolumeSample & TxSample & InnerSample
-
-export type MetaShapeSampleExtraFields<Sample extends MetaShapeSample = MetaShapeSample> =
-    Omit<Sample, keyof MetaShapeSample>
+    VolumeSample &
+    Omit<TxSample, keyof MetaShapeParametersIn> &
+    MetaShapeSampleExtraFields<InnerSample> & {
+        [SurfaceObjectsTextureLocationsGroupsDefaultKey]: TextureLocation
+    }
 
 export type MetaShapeTextureLocation<
         Location extends MetaShapeLocation = MetaShapeLocation,
@@ -132,6 +139,14 @@ export interface MetaShapeVolumeSamplingContext<
     [MetaShapeSamplingContext_Texture]: TextureContext
 }
 
+export type MetaShapeVolumeMultiObjectsInternalPreservedGroups = {
+    [MetaShapeSamplingContext_Texture]: MultiObjectsGroupsTemplateLeaf
+}
+
+export const MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate: MetaShapeVolumeMultiObjectsInternalPreservedGroups = {
+    [MetaShapeSamplingContext_Texture]: MultiObjectsGroupsTemplate_Leaf
+}
+
 export interface MetaShapeSamplingContext<
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaShapeTxSample = MetaShapeTxSample,
@@ -157,8 +172,8 @@ export interface MetaShape<
         Location extends MetaShapeLocation = MetaShapeLocation,
         Sample extends MetaShapeSample = MetaShapeSample,
         TextureContext extends
-            TextureSamplingContext<MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>> =
-            TextureSamplingContext<MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>>,
+            TextureSamplingContext<MetaShapeTxLocation<Location, TxLocation>> =
+            TextureSamplingContext<MetaShapeTxLocation<Location, TxLocation>>,
         VolumeContext extends
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext> =
             MetaShapeVolumeSamplingContext<TxLocation, Location, TextureContext>,
@@ -257,7 +272,13 @@ export class MetaShapeVolume<
         context[MetaShapeSamplingContext_Texture] = {
             [SampleDomainLocationField]: FieldsField.merge(
                 (context[MetaShapeSamplingContext_Texture][SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>),
-                this.inner.field as any as FieldsField<MetaShapeTxLocation<Location, TxLocation>>
+                (this.inner.field as any as FieldsField<MetaShapeSample>).omit({
+                    distance: FieldsPoint_Omit_Leaf,
+                    gradient: FieldsPoint_Omit_Leaf,
+                    falloff: FieldsPoint_Omit_Leaf,
+                    unit: FieldsPoint_Omit_Leaf,
+                    uv: FieldsPoint_Omit_Leaf,
+                } as any as FieldsPointMapped<MetaShapeSample, typeof FieldsPoint_Omit_Leaf>) as any as FieldsField<MetaShapeTxLocation<Location, TxLocation>>
             )
         } as any as TextureContext
         this.texture?.init(context[MetaShapeSamplingContext_Texture])
@@ -269,21 +290,28 @@ export class MetaShapeVolume<
         outerContext[MetaShapeSamplingContext_Texture] = innerContext[MetaShapeSamplingContext_Texture].context
     }
 
-    protected override init_make_field(innerField: Field<InnerSample>): Field<MetaShapeVolumeSample<TxSample, InnerSample>> {
-        const presenceField = new FieldsField<{ presence: number }>({
+    protected override init_make_field(innerField: Field<InnerSample>, context: { inner: Context }): Field<MetaShapeVolumeSample<TxSample, InnerSample>> {
+        const presenceField = new FieldsField({
             presence: new ScalarField()
+        })
+
+        const textureLocationField = new FieldsField({
+            [SurfaceObjectsTextureLocationsGroupsDefaultKey]: context.inner[MetaShapeSamplingContext_Texture].context[SampleDomainLocationField]
         })
 
         return FieldsField.merge<MetaShapeVolumeSample<TxSample, InnerSample>>(
             presenceField as FieldsField<MetaShapeVolumeSample<TxSample, InnerSample>>,
+            textureLocationField as FieldsField<MetaShapeVolumeSample<TxSample, InnerSample>>,
             ((innerField as FieldsField<InnerSample>).omit({
+                distance: FieldsPoint_Omit_Leaf,
+                uv: FieldsPoint_Omit_Leaf,
                 falloff: FieldsPoint_Omit_Leaf,
                 unit: FieldsPoint_Omit_Leaf,
             } as FieldsPointMapped<InnerSample, typeof FieldsPoint_Omit_Leaf>)) as FieldsField<MetaShapeVolumeSample<TxSample, InnerSample>>,
             ((this.texture?.field as FieldsField<TxSample>)?.omit({
                 falloff: FieldsPoint_Omit_Leaf,
                 unit: FieldsPoint_Omit_Leaf,
-            } as FieldsPointMapped<InnerSample, typeof FieldsPoint_Omit_Leaf>)) as FieldsField<MetaShapeVolumeSample<TxSample, InnerSample>>
+            } as FieldsPointMapped<TxSample, typeof FieldsPoint_Omit_Leaf>)) as FieldsField<MetaShapeVolumeSample<TxSample, InnerSample>>,
         )
     }
 
@@ -306,37 +334,50 @@ export class MetaShapeVolume<
             context: { outer: VolumeContext, inner: Context }
         ): MetaShapeVolumeSample<TxSample, InnerSample> {
         const texture_location_field =
-            this.texture ?
-                (context.inner[MetaShapeSamplingContext_Texture].context[SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>) :
-                undefined
+            context.inner[MetaShapeSamplingContext_Texture]
+                .context[SampleDomainLocationField] as FieldsField<MetaShapeTxLocation<Location, TxLocation>>
+        
+        if (sample === undefined) {
+            return {
+                presence: 0,
+                gradient: Vec3.ZERO,
+                [SurfaceObjectsTextureLocationsGroupsDefaultKey]: {
+                    uv: field_point_invalid(Vec2.ZERO)
+                },
+            } as MetaShapeVolumeSample<TxSample, InnerSample>
+        }
+
         const texture_location =
-            this.texture ?
-                fields_point_map<MetaShapeTxLocation<Location, TxLocation>, Field, FieldPoint>(
-                    texture_location_field!.fields,
-                    leaf =>
-                        leaf.interpolationType !== undefined &&
-                        leaf.interpolationType[makeInterpolator] !== undefined,
-                    (_, path) => extract(location, path) ?? extract(sample, path)
-                ) as any as MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>> :
-                undefined
-        const texture_sample = this.texture?.sample(texture_location!, context.outer[MetaShapeSamplingContext_Texture])
+            fields_point_map<MetaShapeTxLocation<Location, TxLocation>, Field, FieldPoint>(
+                texture_location_field.fields,
+                leaf =>
+                    leaf.interpolationType !== undefined &&
+                    leaf.interpolationType[makeInterpolator] !== undefined,
+                (_, path) => extract(location, path) ?? extract(sample, path)
+            ) as any as MetaShapeTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>
+        const texture_sample = this.texture?.sample(texture_location, context.outer[MetaShapeSamplingContext_Texture])
 
         const parameters = MetaShapeVolume.combineParameters(sample, texture_sample)
-        const is_valid = MetaShapeVolume.parametersValid(parameters) && sample !== undefined
+        const is_valid = MetaShapeVolume.parametersValid(parameters)
         
         const surface_distance = !is_valid ? NaN : (sample.distance - parameters.unit.height) / parameters.unit.length
         const presence = !is_valid ? 0 : Math.min(1, Math.exp((surface_distance + parameters.falloff.bias) * -parameters.falloff.rate))
 
-        return change<MetaShapeVolumeSample<TxSample, InnerSample>, InnerSample & TxSample, MetaShapeParametersIn>({
-            ...(texture_sample ?? {} as NonNullable<typeof texture_sample>),
+        return change<
+                MetaShapeVolumeSample<TxSample, InnerSample>,
+                InnerSample & TxSample & { presence: number },
+                Omit<MetaShapeSample, keyof { gradient: Vec3 }>
+            >({
+            ...(texture_sample ?? {} as TxSample),
             ...(sample ?? {
                 distance: 0,
                 uv: Vec2.ZERO,
                 gradient: Vec3.ZERO,
                 ...MetaShapeVolume.defaultParameters
-            } as typeof sample),
+            } as InnerSample),
             presence,
-        }, ['falloff', 'unit'], {})
+            [SurfaceObjectsTextureLocationsGroupsDefaultKey]: texture_location
+        }, ['falloff', 'unit', 'uv', 'distance'], {})
     }
 
     static readonly defaultParameters: MetaShapeParametersIn = {

@@ -3,10 +3,18 @@ import { SampleDomain, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { makeInterpolator } from "../interpolation.js"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues } from "../multi-objects-fields-point.js"
-
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf } from "../multi-objects-fields-point.js"
 import { FieldPoint, FieldsPoint, fields_point_map, field_point_add_inplace } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
+
+export const MultiObjectsDomainInternalPreservedGroupsKindsKey = Symbol("groups-kind:multi-objects-domain:internal-preserved")
+export type MultiObjectsDomainInternalPreservedGroupsKinds = {
+    [MultiObjectsDomainInternalPreservedGroupsKindsKey]: typeof MultiObjectsGroupsKindsTemplate_Leaf
+}
+
+export const MultiObjectsDomainInternalPreservedGroupsKindsTemplate: MultiObjectsDomainInternalPreservedGroupsKinds = {
+    [MultiObjectsDomainInternalPreservedGroupsKindsKey]: MultiObjectsGroupsKindsTemplate_Leaf
+}
 
 export const MultiObjectsSamplingContextParent = Symbol("parent")
 
@@ -35,7 +43,7 @@ export type MultiObjectsSample<
 export type MultiObjectsContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        GroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
+        GroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
         Location extends FieldPoint = FieldPoint,
         LeafContext extends
             SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any> =
@@ -61,15 +69,21 @@ export type MultiObjectsContext<
 
 export type MultiObjectsLeafContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        GroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        SampleGroupKinds extends
+            MultiObjectsDomainInternalPreservedGroupsKinds =
+            MultiObjectsDomainInternalPreservedGroupsKinds,
+        ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ContextGroupKinds extends
+            MultiObjectsDomainInternalPreservedGroupsKinds =
+            MultiObjectsDomainInternalPreservedGroupsKinds,
         Location extends FieldPoint = FieldPoint,
         LeafSample extends
-            MultiObjectsGroupsMapped<Groups, FieldPoint> =
-            MultiObjectsGroupsMapped<Groups, FieldPoint>,
+            MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
+            MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
         LeafContext extends
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any> =
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any>,
+            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
         LeafDomain extends
             SampleDomain<
                 Location,
@@ -85,26 +99,28 @@ export type MultiObjectsLeafContext<
     LeafContext &
     EncapsulatingDomainSamplingContext<
         Location, Location,
-        MultiObjectsSample<Objects, Groups, LeafSample>,
-        MultiObjectsContext<Objects, Groups, GroupKinds, Location, LeafContext>
+        MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+        MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
     > &
     {
         [MultiObjectsSamplingContextParent]: {
             item: MultiObjectsSampleDomain<
                 Objects,
-                Groups,
-                GroupKinds,
+                SampleGroups,
+                SampleGroupKinds,
+                ContextGroups,
+                ContextGroupKinds,
                 Location,
                 LeafSample,
                 LeafContext,
                 LeafDomain
             >,
             context: MultiObjectsGroupsOmitted<
-                Groups,
+                ContextGroups,
                 MultiObjectsContext<
                     Objects,
-                    Groups,
-                    GroupKinds,
+                    ContextGroups,
+                    ContextGroupKinds,
                     LeafContext
                 >
             >
@@ -125,42 +141,83 @@ export type MultiObjectsLeafContext<
 
 export class MultiObjectsSampleDomain<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        GroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        SampleGroupKinds extends
+            MultiObjectsDomainInternalPreservedGroupsKinds =
+            MultiObjectsDomainInternalPreservedGroupsKinds,
+        ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ContextGroupKinds extends
+            MultiObjectsDomainInternalPreservedGroupsKinds =
+            MultiObjectsDomainInternalPreservedGroupsKinds,
         Location extends FieldPoint = FieldPoint,
         LeafSample extends
-            MultiObjectsGroupsMapped<Groups, FieldPoint> =
-            MultiObjectsGroupsMapped<Groups, FieldPoint>,
+            MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
+            MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
         LeafContext extends
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any> =
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any>,
+            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
         LeafDomain extends
             SampleDomain<
                     Location,
                     LeafSample,
-                    MultiObjectsLeafContext<Objects, Groups, GroupKinds, Location, LeafSample, LeafContext>
+                    MultiObjectsLeafContext<
+                            Objects,
+                            SampleGroups,
+                            SampleGroupKinds,
+                            ContextGroups,
+                            ContextGroupKinds,
+                            Location,
+                            LeafSample,
+                            LeafContext
+                        >
                 > =
             SampleDomain<
                     Location,
                     LeafSample,
-                    MultiObjectsLeafContext<Objects, Groups, GroupKinds, Location, LeafSample, LeafContext>
+                    MultiObjectsLeafContext<
+                            Objects,
+                            SampleGroups,
+                            SampleGroupKinds,
+                            ContextGroups,
+                            ContextGroupKinds,
+                            Location,
+                            LeafSample,
+                            LeafContext
+                        >
                 >,
         Sample extends
-            MultiObjectsSample<Objects, Groups, LeafSample> =
-            MultiObjectsSample<Objects, Groups, LeafSample>
+            MultiObjectsSample<Objects, SampleGroups, LeafSample> =
+            MultiObjectsSample<Objects, SampleGroups, LeafSample>
     > implements
     SampleDomain<
         Location,
         Sample,
-        MultiObjectsContext<Objects, Groups, GroupKinds, Location, LeafContext>
+        MultiObjectsContext<
+            Objects,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LeafContext
+        >
     > {
     field!: Field<Sample>
-    private groupsMemoized!: GeneratorType<ReturnType<typeof groupKinds>>[]
+    private groupsMemoized!: {
+        context: GeneratorType<ReturnType<typeof groupKinds>>[]
+        sample: GeneratorType<ReturnType<typeof groupKinds>>[]
+    }
 
     constructor(
         public children: { [Object in keyof Objects]: LeafDomain },
-        public groupKindsTemplate: GroupKinds,
-        public groupsTemplate?: Groups,
+        public readonly multiObj: {
+            sample: {
+                groupKindsTemplate: SampleGroupKinds,
+                groupsTemplate?: SampleGroups
+            }
+            context: {
+                groupKindsTemplate: ContextGroupKinds,
+                groupsTemplate?: ContextGroups
+            }
+        }
     ) { }
 
     /**
@@ -170,14 +227,14 @@ export class MultiObjectsSampleDomain<
      * @param residual the residual of the child's sample that wasn't combined by a group
      */
     protected combineResidualLeafSample(
-            accumulator: MultiObjectsSample<Objects, Groups, LeafSample>,
+            accumulator: MultiObjectsSample<Objects, SampleGroups, LeafSample>,
             key: PropertyKey,
-            residual: MultiObjectsGroupsOmitted<Groups, LeafSample>
-        ): MultiObjectsSample<Objects, Groups, LeafSample> {
+            residual: MultiObjectsGroupsOmitted<SampleGroups, LeafSample>
+        ): MultiObjectsSample<Objects, SampleGroups, LeafSample> {
         return field_point_add_inplace(
-            accumulator as any as MultiObjectsGroupsOmitted<Groups, LeafSample>,
+            accumulator as any as MultiObjectsGroupsOmitted<SampleGroups, LeafSample>,
             residual
-        ) as any as MultiObjectsSample<Objects, Groups, LeafSample>
+        ) as any as MultiObjectsSample<Objects, SampleGroups, LeafSample>
     }
 
     /**
@@ -186,12 +243,24 @@ export class MultiObjectsSampleDomain<
      * @param sample the sample to finalize combinations
      * @returns the final sample
      */
-    protected finalizeSample(sample: MultiObjectsSample<Objects, Groups, LeafSample>): Sample {
+    protected finalizeSample(sample: MultiObjectsSample<Objects, SampleGroups, LeafSample>): Sample {
         return sample as Sample
     }
 
-    init(context: MultiObjectsContext<Objects, Groups, GroupKinds, Location, LeafContext>): void {
-        this.groupsMemoized = [...groupKinds(context, this.groupKindsTemplate, this.groupsTemplate)]
+    /**
+     * Extracts the sample context for this domain's context
+     * @param context the domain context
+     * @returns the sample context
+     */
+    protected sampleContext(context: MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds> {
+        return context as unknown as MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds>
+    }
+
+    init(context: MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): void {
+        this.groupsMemoized = {
+            context: [...groupKinds(context, this.multiObj.context.groupKindsTemplate, this.multiObj.context.groupsTemplate)],
+            sample: [...groupKinds(this.sampleContext(context), this.multiObj.sample.groupKindsTemplate, this.multiObj.sample.groupsTemplate)],
+        }
         
         const fields: FieldsField<Sample>[] = []
 
@@ -206,12 +275,22 @@ export class MultiObjectsSampleDomain<
                 },
                 [EncapsulatingDomainSamplingContextParentContext]: context,
                 [EncapsulatingDomainSamplingContextParentDomain]: this
-            } as any as MultiObjectsLeafContext<Objects, Groups, GroupKinds, Location, LeafSample, LeafContext, LeafDomain>
+            } as any as MultiObjectsLeafContext<
+                Objects,
+                SampleGroups,
+                SampleGroupKinds,
+                ContextGroups,
+                ContextGroupKinds,
+                Location,
+                LeafSample,
+                LeafContext,
+                LeafDomain
+            >
 
             const context_original_groups =
-                {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, Groups, LeafContext>
+                {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
 
-            for (const { group } of this.groupsMemoized) {
+            for (const { group } of this.groupsMemoized.context) {
                 const context_original_group = group.get(child_context)
                 group.set(context_original_groups, context_original_group)
                 group.set(child_context, undefined)
@@ -228,7 +307,7 @@ export class MultiObjectsSampleDomain<
                     field => field
                 )
 
-            for (const { group } of this.groupsMemoized) {
+            for (const { group } of this.groupsMemoized.context) {
                 const context_original_group = group.get(context_original_groups, true)
                 const context_child_group = group.get(child_context)
                 context_original_group[key] = context_child_group
@@ -236,7 +315,7 @@ export class MultiObjectsSampleDomain<
                 group.set(child_context, undefined)
                 
                 const child_field = group.get(child_fields)
-                group.get(child_fields)[key] = child_field
+                group.get(child_fields, true)[key] = child_field
                 // const child_field_container = extract(child_fields, group.path.slice(0, -1))
                 // child_field_container[group.path.at(-1)] = { [key]: child_field }
             }
@@ -249,9 +328,9 @@ export class MultiObjectsSampleDomain<
 
     sample(
             location: Location,
-            context: MultiObjectsContext<Objects, Groups, GroupKinds, Location, LeafContext>
+            context: MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
         ): Sample {
-        let sample = {} as MultiObjectsSample<Objects, Groups, LeafSample>
+        let sample = {} as MultiObjectsSample<Objects, SampleGroups, LeafSample>
         
         const child_context = {
             ...context,
@@ -261,16 +340,26 @@ export class MultiObjectsSampleDomain<
             },
             [EncapsulatingDomainSamplingContextParentContext]: context,
             [EncapsulatingDomainSamplingContextParentDomain]: this
-        } as any as MultiObjectsLeafContext<Objects, Groups, GroupKinds, Location, LeafSample, LeafContext, LeafDomain>
+        } as any as MultiObjectsLeafContext<
+            Objects,
+            SampleGroups,
+            SampleGroupKinds,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LeafSample,
+            LeafContext,
+            LeafDomain
+        >
 
         const context_original_groups =
-            {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, Groups, LeafContext>
+            {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
         
-        for (const { group } of this.groupsMemoized)
+        for (const { group } of this.groupsMemoized.context)
             group.set(context_original_groups, group.get(context))
         
         for (const key of Reflect.ownKeys(this.children)) {
-            for (const { group } of this.groupsMemoized) {
+            for (const { group } of this.groupsMemoized.context) {
                 const context_original_group = group.get(context_original_groups)
                 const context_child_group = context_original_group[key]
                 group.set(child_context, context_child_group)
@@ -278,7 +367,7 @@ export class MultiObjectsSampleDomain<
 
             const child_sample = this.children[key].sample(location, child_context as any)
 
-            for (const { group } of this.groupsMemoized) {
+            for (const { group } of this.groupsMemoized.sample) {
                 const child_sample_group = group.get(child_sample)
                 const final_sample_group = group.get(sample)
                 if (final_sample_group === undefined)
@@ -288,10 +377,10 @@ export class MultiObjectsSampleDomain<
                 group.delete(child_sample)
             }
 
-            sample = this.combineResidualLeafSample(sample, key, child_sample as MultiObjectsGroupsOmitted<Groups, LeafSample>)
+            sample = this.combineResidualLeafSample(sample, key, child_sample as MultiObjectsGroupsOmitted<SampleGroups, LeafSample>)
         }
 
-        for (const { group } of this.groupsMemoized) {
+        for (const { group } of this.groupsMemoized.context) {
             const context_original_group = group.get(context_original_groups)
             group.set(context, context_original_group)
         }

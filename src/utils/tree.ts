@@ -56,7 +56,7 @@ export const makeExtractor =
     <TDefault = any>(path: PropertyPath) =>
     <T = TDefault>(tree: any, makeEmptyObjects = false) =>
         makeEmptyObjects ?
-            path.reduce((obj, key) => obj ? (obj[key] ??= {}) : undefined, tree) as T :
+            path.reduce((obj, key) => obj[key] ??= {}, tree) as T :
             path.reduce((obj, key) => obj ? obj[key] : undefined, tree) as T
 
 export const makeIntractor =

@@ -1,29 +1,23 @@
-import { calculateNormals, Component, Entity, GraphNode, Mesh, MeshInstance, PRIMITIVE_TRIANGLES, StandardMaterial } from "playcanvas-extended";
-import { FieldsPoint } from "../fields/point.js";
-import { fields, meshing, solids, surfaces, textures, volumes } from "../index.js";
-import { Volume } from "../volumes/volume.js";
-import { VolumeComponentSystem } from "./system.js";
-import { ProcessorGraph } from "../processor/index.js";
-import { mergeGroups, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
+import { Component, Entity, GraphNode } from "playcanvas-extended";
+import { fields, meshing, processors, solids, surfaces, textures, volumes } from "../index.js";
+import { mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
 import { MultiObjectsVolume, TransformVolume } from "../volumes/index.js";
-import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsT, Sample_MultiObjectsMappedGroups, Sample_MultiObjectsMappedGroups_Template, SampleProcessingContext_MultiObjects, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeT } from "./types.js";
-import { MultiObjectsGroupsTemplate } from "../fields/multi-objects-fields-point.js";
+import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
-import { MultiObjectsGroupedObjectsKey } from "../fields/multi-objects-fields-point.js";
 import { intract, pathsToNodeWithKey } from "../utils/tree.js";
-import { Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
-import { Texturer } from "../textures/texturer.js";
+import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
+import { VolumeComponentSystem } from "./system.js";
 
 const _schema = ['enabled']
 
 export class VolumeComponent extends Component {
-    volume?: Volume
+    volume?: VolumeT
     makeRoot: boolean = false
-    extraLocationParameters?: FieldsPoint
+    extraLocationParameters?: fields.FieldsPoint
     samplerSettings?: volumes.VolumeSamplerSettings
     meshingSettings?: meshing.MeshingSettings
     interpolatingGroups?: MultiObjectsGroupsTemplate[]
-    texturers?: Texturer[]
+    texturers?: textures.Texturer[]
     customProcessors?: VolumeProcessorT[]
 
     get root() {
@@ -52,8 +46,6 @@ export class VolumeComponent extends Component {
 
         if (!this.volume)
             return
-
-        const customized_Sample_MultiObjectsMappedGroups_Template = [...(this.interpolatingGroups ?? []), Sample_MultiObjectsMappedGroups_Template].reduce(mergeGroups) as Sample_MultiObjectsMappedGroups
         
         const system = this.system as VolumeComponentSystem
         
@@ -65,7 +57,13 @@ export class VolumeComponent extends Component {
                 ...(component?.volume ? [['$$main', component.volume]] : []),
                 ...node.children
                     .filter(child => !child.name.startsWith("$$"))
-                    .map(child => [child.name, new volumes.TransformVolume(compositeVolume(child)!, child.getLocalTransform())] as [string, TransformVolume])
+                    .map(child => [
+                            child.name,
+                            new volumes.TransformVolume(
+                                compositeVolume(child)!,
+                                child.getLocalTransform()
+                            )
+                        ] as [string, TransformVolume<VolumeLocationT, SampleT, VolumeProcessingContextT>])
                     .filter(([, { inner }]) => inner !== undefined)
             ] as [string, VolumeT][]
 
@@ -76,18 +74,24 @@ export class VolumeComponent extends Component {
             else {
                 return new volumes.MultiObjectsVolume(
                     Reflect_fromEntries<Record<string, VolumeT>>(children),
-                    undefined as unknown as MultiObjectsInfluencesGroupKinds & MultiObjectsGroupsKindsTemplate,
-                    customized_Sample_MultiObjectsMappedGroups_Template,
+                    {
+                        context: {
+                            groupKindsTemplate: Volume_Context_PreservedGroupsKindsTemplate
+                        },
+                        sample: {
+                            groupKindsTemplate: Volume_Sample_PreservedGroupsKindsTemplate
+                        }
+                    },
                     MultiObjectsInfluencesGroupsDefaultTemplate
                 ) as any as VolumeT
             }
         }
 
         const compositeVolume_final = compositeVolume(this.entity, true)!
-        function objectsTemplate_populate(volume: Volume): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
+        function objectsTemplate_populate(volume: VolumeT): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
             if (volume instanceof MultiObjectsVolume)
                 return Reflect_fromEntries(Reflect_entries(volume.children as any).map(([key, child]) =>
-                    [key, objectsTemplate_populate(child as Volume) as ReturnType<typeof objectsTemplate_populate>])
+                    [key, objectsTemplate_populate(child as VolumeT) as ReturnType<typeof objectsTemplate_populate>])
                 ) as MultiObjectsTemplate
             return MultiObjectsTemplate_Leaf
         }
@@ -112,9 +116,27 @@ export class VolumeComponent extends Component {
             }
         }
 
+        function multiObjectsContext_insertGroups<
+                Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+                GroupsKind extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
+            >(
+                context: MultiObjectsGroupsProcessingContext<Groups, GroupsKind>,
+                kind: GroupsKind,
+                groups: Groups
+            ) {
+            const kindPath = onlyOne(groupKindPaths(kind))
+            intract(context[MultiObjectsProcessingContextGroupKinds], kindPath, MultiObjectsGroupsKindsTemplate_Leaf)
+            intract(context, kindPath, groups)
+            mergeGroupsInplace(context, groups)
+        }
+
         const sample_multiObjectsContext = makeClone(SampleProcessingContext_MultiObjects_Template)
         const surface_multiObjectsContext = makeClone(SurfaceProcessingContext_MultiObjects_Template)
         const volume_multiObjectsContext = makeClone(VolumeProcessingContext_MultiObjects_Template)
+
+        multiObjectsContext_insertGroups(sample_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, (this.interpolatingGroups ?? []).reduce(mergeGroups, {}))
+        multiObjectsContext_insertGroups(surface_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, (this.interpolatingGroups ?? []).reduce(mergeGroups, {}))
+
         multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext)
         multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
         multiObjectsContext_insertObjects(volume_multiObjectsContext as any)
@@ -125,6 +147,7 @@ export class VolumeComponent extends Component {
 
         const surface_context: SurfaceProcessingContextT = {
             sample: sample_context,
+            [textures.TexturersKey]: (this.texturers ?? []) as any,
             material: { },
             
             ...surface_multiObjectsContext
@@ -151,8 +174,6 @@ export class VolumeComponent extends Component {
                 surface: surface_context,
             },
 
-            [textures.TexturersKey]: (this.texturers ?? []) as any,
-
             ...volume_multiObjectsContext
         }
 
@@ -161,9 +182,13 @@ export class VolumeComponent extends Component {
             [solids.VolumeSolidsKey]: [] as SolidT[],
         } as VolumeProcessingT
 
-        const graph = new ProcessorGraph<VolumeProcessingT, VolumeProcessingContextT>([
+        const graph = new processors.GraphProcessor<VolumeProcessingT, VolumeProcessingContextT>([
             ...system.processors,
-            new textures.TextureableProcessor<VolumeProcessingT, SurfaceCombinedTextureLocationT>(),
+            new processors.ParallelizingProcessor(
+                surfaces.VolumeSurfacesParallelizer.instance,
+                ///@ts-ignore
+                new textures.TextureableProcessor<SurfaceT, SurfaceCombinedTextureLocationT>() as VolumeSurfaceProcessorT
+            ),
             ...(this.customProcessors ?? [])
         ])
         graph.init(volume_context)

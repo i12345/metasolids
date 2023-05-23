@@ -1,6 +1,5 @@
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groupPaths, groups, mapGroups } from "../fields/multi-objects-fields-point.js";
-import { ProcessorGraph } from "../processor/graph.js";
-import { Processor } from "../processor/processor.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../fields/multi-objects-fields-point.js";
+import { Processor, GraphProcessor } from "../processor/index.js";
 import { PropertyPath } from "../utils/property-path.js";
 import { extract, intract } from "../utils/tree.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "./texture.js";
@@ -36,7 +35,7 @@ export class TextureableProcessor<
         return this.graph.connections
     }
     
-    private graph!: ProcessorGraph<
+    private graph!: GraphProcessor<
         TextureableT,
         TextureableProcessingContext<
             TextureableT,
@@ -66,7 +65,7 @@ export class TextureableProcessor<
                     TextureContextT
                 >
         ): void {
-        this.graph = new ProcessorGraph(context[TexturersKey])
+        this.graph = new GraphProcessor(context[TexturersKey])
         this.graph.init(context)
     }
 }

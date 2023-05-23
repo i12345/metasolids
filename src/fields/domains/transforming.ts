@@ -52,7 +52,10 @@ export abstract class TransformingSampleDomain<
         const innerContext = this.transformContext(context)
         this.inner.init(innerContext)
         this.init_transfer_context(innerContext, context)
-        this.field = this.init_make_field(this.inner.field)
+        this.field = this.init_make_field(this.inner.field, {
+            inner: innerContext,
+            outer: context
+         })
     }
 
     protected transformContext(context: OuterContext): InnerContext {
@@ -81,7 +84,7 @@ export abstract class TransformingSampleDomain<
             .forEach(key => (outerContext as any)[key] = (innerContext as any)[key])
     }
 
-    protected init_make_field(innerField: Field<InnerSample>): Field<OuterSample> {
+    protected init_make_field(innerField: Field<InnerSample>, context: { inner: InnerContext, outer: OuterContext }): Field<OuterSample> {
         return innerField as any as Field<OuterSample>
     }
     

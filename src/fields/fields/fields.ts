@@ -1,8 +1,8 @@
 import { Field } from "../field.js";
 import { FieldsInterpolationType } from "../interpolators/fields.js";
-import { FieldInterpolationType, InterpolationType, makeInterpolator } from "../interpolation.js";
+import { FieldInterpolationType, makeInterpolator } from "../interpolation.js";
 import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
-import { extract, iterTreeByLeavesValue } from "../../utils/tree.js";
+import { deletePath, extract, pathsToValue } from "../../utils/tree.js";
 
 export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     implements Field<Point> {
@@ -76,15 +76,18 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     omit<Subtract extends FieldsPoint = FieldsPoint>(
             subtract: FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>
         ): FieldsField<FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>> {
-        return new FieldsField(fields_point_map(
+        const omitted = fields_point_map(
             this.fields,
             leaf =>
                 leaf.interpolationType !== undefined &&
                 leaf.interpolationType[makeInterpolator] !== undefined,
-            (field, path) =>
-                extract(subtract, path) !== FieldsPoint_Omit_Leaf ?
-                    field : undefined
-        ) as any as FieldsPointMapped<FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>, Field>)
+            field => field
+        ) as any as FieldsPointMapped<FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>, Field>
+
+        for (const group of pathsToValue(subtract as any, FieldsPoint_Omit_Leaf))
+            deletePath(omitted, group)
+
+        return new FieldsField(omitted)
     }
 
     static readonly empty = new FieldsField({})

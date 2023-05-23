@@ -1,7 +1,7 @@
-import { PropertyPath, pathExists, pathSubsumes } from "../utils/property-path.js";
-import { Processor } from "./processor.js";
+import { PropertyPath, pathExists, pathSubsumes } from "../../utils/property-path.js";
+import { Processor } from "../processor.js";
 
-export class ProcessorGraph<Object, Context> implements Processor<Object, Context> {
+export class GraphProcessor<Object, Context> implements Processor<Object, Context> {
     readonly connections: Processor<Object, Context>["connections"] = {
         inputs: [],
         outputs: []
@@ -89,10 +89,10 @@ export class ProcessorGraph<Object, Context> implements Processor<Object, Contex
 
     process(object: Object, context: Context): void {
         const toProcess = [...this.processors]
-        for (let lastLength = 0;
-            toProcess.length > 0 &&
-            toProcess.length !== lastLength;
-            lastLength = toProcess.length) {
+        let lastLength = 0
+        
+        do {
+            lastLength = toProcess.length
             for (let i = 0; i < toProcess.length; i++) {
                 const processor = toProcess[i]
 
@@ -102,7 +102,7 @@ export class ProcessorGraph<Object, Context> implements Processor<Object, Contex
                     i--
                 }
             }
-        }
+        } while (toProcess.length !== lastLength)
 
         if (toProcess.length > 0) {
             console.warn(`Some processors never had dependencies met:`)
