@@ -11,7 +11,32 @@ import { VolumeComponentSystem } from "./system.js";
 const _schema = ['enabled']
 
 export class VolumeComponent extends Component {
-    volume?: VolumeT
+    private _volume?: VolumeT
+    private _processed?: VolumeProcessingT
+    
+    get volume() {
+        return this._volume
+    }
+
+    set volume(volume) {
+        this._volume = volume
+        this.update()
+    }
+
+    get processed() {
+        return this._processed
+    }
+
+    set processed(processed) {
+        if (!this.makeRoot)
+            throw new Error("processed volume can only be set on the root entity")
+
+        this._processed = processed
+
+        this.removeVolume()
+        this.renderVolume()
+    }
+
     makeRoot: boolean = false
     extraLocationParameters?: fields.FieldsPoint
     samplerSettings?: volumes.VolumeSamplerSettings
@@ -34,13 +59,14 @@ export class VolumeComponent extends Component {
      */
     update() {
         this.removeVolume()
-        this.renderVolume()
+        this.computeVolume()
+        // this.renderVolume() will be called by computeVolume()
     }
 
-    private renderVolume() {
+    private computeVolume() {
         const root = this.findRoot()
         if (root !== this) {
-            root.renderVolume()
+            root.computeVolume()
             return
         }
 
@@ -58,12 +84,12 @@ export class VolumeComponent extends Component {
                 ...node.children
                     .filter(child => !child.name.startsWith("$$"))
                     .map(child => [
-                            child.name,
-                            new volumes.TransformVolume(
-                                compositeVolume(child)!,
-                                child.getLocalTransform()
-                            )
-                        ] as [string, TransformVolume<VolumeLocationT, SampleT, VolumeProcessingContextT>])
+                        child.name,
+                        new volumes.TransformVolume(
+                            compositeVolume(child)!,
+                            child.getLocalTransform()
+                        )
+                    ] as [string, TransformVolume<VolumeLocationT, SampleT, VolumeProcessingContextT>])
                     .filter(([, { inner }]) => inner !== undefined)
             ] as [string, VolumeT][]
 
@@ -99,14 +125,14 @@ export class VolumeComponent extends Component {
         const objectsTemplate = <MultiObjectsTemplate>objectsTemplate_populate(compositeVolume_final)
 
         function multiObjectsContext_insertObjects<
-                Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-                ObjectsGrouped extends
-                    MultiObjectsGrouped<Objects, Groups> =
-                    MultiObjectsGrouped<Objects, Groups>,
-                GroupsKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
-            >({
-                [MultiObjectsProcessingContextObjectsGrouped]: objectsGrouped
-            }: MultiObjectsProcessingContext<Objects, Groups, ObjectsGrouped, GroupsKinds>) {
+            Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+            ObjectsGrouped extends
+            MultiObjectsGrouped<Objects, Groups> =
+            MultiObjectsGrouped<Objects, Groups>,
+            GroupsKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
+        >({
+            [MultiObjectsProcessingContextObjectsGrouped]: objectsGrouped
+        }: MultiObjectsProcessingContext<Objects, Groups, ObjectsGrouped, GroupsKinds>) {
             for (const path of pathsToNodeWithKey(objectsGrouped, MultiObjectsGroupedObjectsKey)) {
                 intract(
                     objectsGrouped,
@@ -117,13 +143,13 @@ export class VolumeComponent extends Component {
         }
 
         function multiObjectsContext_insertGroups<
-                Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-                GroupsKind extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
-            >(
-                context: MultiObjectsGroupsProcessingContext<Groups, GroupsKind>,
-                kind: GroupsKind,
-                groups: Groups
-            ) {
+            Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+            GroupsKind extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
+        >(
+            context: MultiObjectsGroupsProcessingContext<Groups, GroupsKind>,
+            kind: GroupsKind,
+            groups: Groups
+        ) {
             const kindPath = onlyOne(groupKindPaths(kind))
             intract(context[MultiObjectsProcessingContextGroupKinds], kindPath, MultiObjectsGroupsKindsTemplate_Leaf)
             intract(context, kindPath, groups)
@@ -148,7 +174,7 @@ export class VolumeComponent extends Component {
         const surface_context: SurfaceProcessingContextT = {
             sample: sample_context,
             [textures.TexturersKey]: (this.texturers ?? []) as any,
-            material: { },
+            material: {},
             
             ...surface_multiObjectsContext
         }
@@ -194,15 +220,25 @@ export class VolumeComponent extends Component {
         graph.init(volume_context)
         graph.process(processing, volume_context)
 
-        const surface = processing[surfaces.VolumeSurfacesKey][0]
+        this.processed = processing
+    }
+
+    private renderVolume() {
+        const root = this.findRoot()
+        if (root !== this) {
+            root.renderVolume()
+            return
+        }
+
+        const render_surfaces = this.processed![surfaces.VolumeSurfacesKey] as SurfaceT[]
         
-        if (surface.mesh.triangles.length === 0)
+        if (render_surfaces.length === 0)
             return
 
-        const renderer = surface.renderer.individualize(this.entity)
+        const renderers = render_surfaces.map(surface => surface.renderer.individualize(this.entity))
 
         this.entity.addComponent('render', {
-            meshInstances: [renderer.implementation]
+            meshInstances: renderers.map(renderer => renderer.implementation)
         })
     }
 
