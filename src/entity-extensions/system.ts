@@ -11,26 +11,26 @@ export class VolumeComponentSystem extends ComponentSystem {
     
     readonly processors: VolumeProcessorT[] = [
         new volumes.VolumeSamplingProcessor(),
-        new surfaces.VolumeSurfaceMeshingProcessor(),
+        new surfaces.meshing.VolumeSurfaceMeshingProcessor(),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
-            new surfaces.SurfaceWithSurfaceAreaProcessor()
+            new surfaces.measuring.SurfaceWithSurfaceAreaProcessor()
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
-            new surfaces.SurfaceUVUnwrappingProcessor(
+            new surfaces.texturing.SurfaceUVUnwrappingProcessor(
                 "xAtlas"
             ) as VolumeSurfaceProcessorT
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
-            new surfaces.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
+            new surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
                 InterpolatingGroupsKindsTemplate
             ) as unknown as VolumeSurfaceProcessorT
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
-            new surfaces.SurfaceWithRenderingProcessor() as unknown as VolumeSurfaceProcessorT
+            new surfaces.rendering.SurfaceWithRenderingProcessor() as unknown as VolumeSurfaceProcessorT
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,

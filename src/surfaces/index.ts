@@ -1,3 +1,6 @@
 export * from './surface.js'
 export * from './processor.js'
-export * from './processors/index.js'
+export * as meshing from './meshing/index.js'
+export * as measuring from './measuring/index.js'
+export * as texturing from './texturing/index.js'
+export * as rendering from './rendering/index.js'

@@ -1,5 +1,5 @@
 import { Component, Entity, GraphNode } from "playcanvas-extended";
-import { fields, meshing, processors, solids, surfaces, textures, volumes } from "../index.js";
+import { fields, processors, solids, surfaces, textures, volumes } from "../index.js";
 import { mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
 import { MultiObjectsVolume, TransformVolume } from "../volumes/index.js";
 import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
@@ -28,7 +28,7 @@ export class VolumeComponent extends Component {
     }
 
     set processed(processed) {
-        if (!this.makeRoot)
+        if (this.findRoot() !== this)
             throw new Error("processed volume can only be set on the root entity")
 
         this._processed = processed
@@ -40,7 +40,7 @@ export class VolumeComponent extends Component {
     makeRoot: boolean = false
     extraLocationParameters?: fields.FieldsPoint
     samplerSettings?: volumes.VolumeSamplerSettings
-    meshingSettings?: meshing.MeshingSettings
+    meshingSettings?: surfaces.meshing.MeshingSettings
     interpolatingGroups?: MultiObjectsGroupsTemplate[]
     texturers?: textures.Texturer[]
     customProcessors?: VolumeProcessorT[]
@@ -164,7 +164,7 @@ export class VolumeComponent extends Component {
         multiObjectsContext_insertGroups(surface_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, (this.interpolatingGroups ?? []).reduce(mergeGroups, {}))
 
         multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext)
-        multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
+        multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.texturing.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
         multiObjectsContext_insertObjects(volume_multiObjectsContext as any)
 
         const sample_context: SampleProcessingContextT = {
@@ -190,9 +190,9 @@ export class VolumeComponent extends Component {
             },
 
             [surfaces.VolumeSurfacesKey]: surface_context,
-            [surfaces.VolumeSurfaceMeshingKey]: {
-                algorithm: new meshing.SurfaceNetsMeshingAlgorithm(),
-                settings: this.meshingSettings ?? meshing.defaultMeshingSettings,
+            [surfaces.meshing.VolumeSurfaceMeshingKey]: {
+                algorithm: new surfaces.meshing.SurfaceNetsMeshingAlgorithm(),
+                settings: this.meshingSettings ?? surfaces.meshing.defaultMeshingSettings,
             },
 
             [solids.VolumeSolidsKey]: {

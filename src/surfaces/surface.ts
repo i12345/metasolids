@@ -1,4 +1,4 @@
-import { MeshData } from "../meshing/types.js";
+import { MeshData } from "./meshing/types.js";
 import { VolumeSample } from "../volumes/volume.js";
 
 export type SurfaceSample = VolumeSample
