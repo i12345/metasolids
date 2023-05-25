@@ -58,15 +58,9 @@ export class VolumeComponent extends Component {
      * entities with {@link VolumeComponent}'s.
      */
     update() {
-        this.removeVolume()
-        this.computeVolume()
-        // this.renderVolume() will be called by computeVolume()
-    }
-
-    private computeVolume() {
         const root = this.findRoot()
         if (root !== this) {
-            root.computeVolume()
+            root.update()
             return
         }
 
@@ -235,7 +229,9 @@ export class VolumeComponent extends Component {
         if (render_surfaces.length === 0)
             return
 
-        const renderers = render_surfaces.map(surface => surface.renderer.individualize(this.entity))
+        const renderers = render_surfaces
+            .filter(surface => surface.renderer)
+            .map(surface => surface.renderer.individualize(this.entity))
 
         this.entity.addComponent('render', {
             meshInstances: renderers.map(renderer => renderer.implementation)
