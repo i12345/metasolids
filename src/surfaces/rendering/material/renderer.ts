@@ -1,4 +1,4 @@
-import { StandardMaterial } from "playcanvas-extended"
+import { BasicMaterial, StandardMaterial } from "playcanvas-extended"
 import { MultiObjectsGroupsMapped, groups, MultiObjectsGroupsTemplate } from "../../../fields/multi-objects-fields-point.js"
 import { field_point_sum, field_point_primitives_sum, field_point_fraction, field_point_subtract, field_point_compare_gte, field_point_add_inplace } from "../../../fields/point.js"
 import { Texture, opaqueStagedTexture } from "../../../textures/index.js"
@@ -25,6 +25,7 @@ import { MaterialSemanticImplementationStorageClass_VertexColors } from "./stora
 
 
 const groups_priorities: MultiObjectsGroupsMapped<Material_Groups, number> = {
+    color: 5,
     diffuse: 5,
     emissive: 4,
     specular: 3,
@@ -107,8 +108,9 @@ export class MaterialRendererShared<
     readonly groups: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Shared<VolumeLocationT, SurfaceUVUnwrappingGroup>> = {} as typeof this.groups
     storageClassInstances!: MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup>[]
     readonly computeBackingCallbacks: ((individual: MaterialRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) => void)[] = []
+    readonly materialType: typeof StandardMaterial | typeof BasicMaterial
 
-    implementation?: StandardMaterial = new StandardMaterial()
+    implementation?: StandardMaterial | BasicMaterial
 
     readonly textureContexts = {} as MultiObjectsGroupsMapped<
         Material_Groups,
@@ -124,7 +126,10 @@ export class MaterialRendererShared<
             implement: 0.7,
             change: 0.25
         }
-    ) { }
+    ) {
+        this.materialType = renderer.surface.material.textures.color ? BasicMaterial : StandardMaterial
+        this.implementation = new this.materialType()
+    }
     
     init() {
         material_groups.forEach(group => {
@@ -172,8 +177,8 @@ export class MaterialRendererIndividual<
     private readonly current: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementation_Internal_Individual> = {} as typeof this.current
     readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceIndividual[]
 
-    private _implementation: StandardMaterial
-
+    private _implementation: StandardMaterial | BasicMaterial
+    
     get implementation() {
         return this._implementation
     }
@@ -185,7 +190,7 @@ export class MaterialRendererIndividual<
         public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
     ) {
         this.storageClassInstances = shared.storageClassInstances.map(storageClassInstance => storageClassInstance.individualize(renderer))
-        this._implementation = shared.implementation ??= new StandardMaterial()
+        this._implementation = shared.implementation ??= new this.shared.materialType()
     }
 
     init() {
@@ -208,12 +213,12 @@ export class MaterialRendererIndividual<
             if (this.shared.implementation)
                 this._implementation = this.shared.implementation
             else {
-                this._implementation = this.shared.implementation = new StandardMaterial()
+                this._implementation = this.shared.implementation = new this.shared.materialType()
                 this.shared.computeBackingCallbacks.forEach(callback => callback(this))
             }
         }
         else if (this.implementation === this.shared.implementation) {
-            this._implementation = new StandardMaterial()
+            this._implementation = new this.shared.materialType()
             this.shared.computeBackingCallbacks.forEach(callback => callback(this))
         }
         

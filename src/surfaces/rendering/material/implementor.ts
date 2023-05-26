@@ -6,7 +6,7 @@ import { VolumeLocation } from "../../../volumes/index.js";
 import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, MultiObjectsGroupsMapped, groupKinds, groups, field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator } from "../../../fields/index.js";
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
 import { Material_Groups } from "./groups.js";
-import { Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial } from "playcanvas-extended";
+import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial } from "playcanvas-extended";
 import { FormatChannelQuality } from "./texture-formats.js";
 import { SurfaceTextureLocationsGroupKindsTemplate, SurfaceUVUnwrapping } from "../../texturing/index.js";
 import { MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors, MaterialSemanticImplementationStorageClass_Constant, MaterialSemanticImplementationStorageClass_Texture } from "./storage-classes/index.js";
@@ -17,7 +17,7 @@ const MaterialGroup_ImplementationType_NotSupported = Symbol("not supported")
 
 interface Material_Group_Implementations {
     name: keyof StandardMaterial | string
-    channels: 1 | 3
+    channels: 1 | 3 | 4
     mixing?: {
         /**
          * If this is set then the texture can be decomposed into a primary
@@ -117,15 +117,26 @@ interface Material_Group_Implementations {
      * These will be filled out by default using the {@link name} field.
      */
     semantics?: {
-        constant?: keyof StandardMaterial | typeof MaterialGroup_ImplementationType_NotSupported
-        texture?: keyof StandardMaterial | typeof MaterialGroup_ImplementationType_NotSupported
-        vertexColors?: keyof StandardMaterial | typeof MaterialGroup_ImplementationType_NotSupported
+        constant?: keyof StandardMaterial | keyof BasicMaterial | typeof MaterialGroup_ImplementationType_NotSupported
+        texture?: keyof StandardMaterial | keyof BasicMaterial| typeof MaterialGroup_ImplementationType_NotSupported
+        vertexColors?: keyof StandardMaterial | keyof BasicMaterial | typeof MaterialGroup_ImplementationType_NotSupported
     }
 }
 
 export const EFFECTIVE_TEXEL_DIFF_DEFAULT = 0.05
 
 const Material_Groups_Implementations: MultiObjectsGroupsMapped<Material_Groups, Material_Group_Implementations> = {
+    color: {
+        name: "color",
+        channels: 4,
+        texture_formatChannelQuality: FormatChannelQuality.float16,
+        semantics: {
+            constant: "color",
+            texture: "colorMap",
+            vertexColors: "vertexColors"
+        }
+    },
+
     diffuse: {
         name: "diffuse",
         channels: 3,
@@ -745,9 +756,9 @@ export function* material_group_implementations<
      */
 
     const semantics = {
-        constant: <keyof StandardMaterial>((implementation.semantics?.constant === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.constant) ?? implementation.name),
-        texture: <keyof StandardMaterial>((implementation.semantics?.texture === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.texture) ?? `${implementation.name}Map`),
-        vertexColors: <keyof StandardMaterial>((implementation.semantics?.vertexColors === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.vertexColors) ?? `${implementation.name}VertexColor`),
+        constant: <keyof StandardMaterial | keyof BasicMaterial>((implementation.semantics?.constant === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.constant) ?? implementation.name),
+        texture: <keyof StandardMaterial | keyof BasicMaterial>((implementation.semantics?.texture === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.texture) ?? `${implementation.name}Map`),
+        vertexColors: <keyof StandardMaterial | keyof BasicMaterial>((implementation.semantics?.vertexColors === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.vertexColors) ?? `${implementation.name}VertexColor`),
     }
 
     if (implementation.mixing?.products ||

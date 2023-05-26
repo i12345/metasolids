@@ -1,4 +1,4 @@
-import { Color, Vec3, Vec2, Vec4, StandardMaterial } from "playcanvas-extended"
+import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
 import { groups, RANGE_MIN, RANGE_MAX, MultiObjectsGroupsTemplate } from "../../../../fields/index.js"
 import { Texture, TextureSample } from "../../../../textures/texture.js"
 import { GeneratorType } from "../../../../utils/generator-type.js"
@@ -26,7 +26,7 @@ export class MaterialSemanticImplementation_VertexColors<
     }
 
     constructor(
-        public readonly semantic: keyof StandardMaterial,
+        public readonly semantic: keyof StandardMaterial | keyof BasicMaterial,
         public readonly texture: Texture<
                 Material_Texture_Location<VolumeLocationT>,
                 TexelTypeT,
@@ -87,7 +87,7 @@ export class MaterialSemanticImplementation_VertexColors<
         if (typeof sample_texture_values[0] === 'number') {
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as number
-                buffer[i] = sample_texture_value
+                buffer[i * this.channels] = sample_texture_value
             }
         }
         else if (sample_texture_values[0] instanceof Color) {
@@ -120,25 +120,25 @@ export class MaterialSemanticImplementation_VertexColors<
         else if (sample_texture_values[0] instanceof Vec3) {
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as Vec3
-                buffer[(i * 3) + 0] = sample_texture_value.x
-                buffer[(i * 3) + 1] = sample_texture_value.y
-                buffer[(i * 3) + 2] = sample_texture_value.z
+                buffer[(i * this.channels) + 0] = sample_texture_value.x
+                buffer[(i * this.channels) + 1] = sample_texture_value.y
+                buffer[(i * this.channels) + 2] = sample_texture_value.z
             }
         }
         else if (sample_texture_values[0] instanceof Vec2) {
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as Vec2
-                buffer[(i * 2) + 0] = sample_texture_value.x
-                buffer[(i * 2) + 1] = sample_texture_value.y
+                buffer[(i * this.channels) + 0] = sample_texture_value.x
+                buffer[(i * this.channels) + 1] = sample_texture_value.y
             }
         }
         else if (sample_texture_values[0] instanceof Vec4) {
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as Vec4
-                buffer[(i * 4) + 0] = sample_texture_value.x
-                buffer[(i * 4) + 1] = sample_texture_value.y
-                buffer[(i * 4) + 2] = sample_texture_value.z
-                buffer[(i * 4) + 3] = sample_texture_value.w
+                buffer[(i * this.channels) + 0] = sample_texture_value.x
+                buffer[(i * this.channels) + 1] = sample_texture_value.y
+                buffer[(i * this.channels) + 2] = sample_texture_value.z
+                buffer[(i * this.channels) + 3] = sample_texture_value.w
             }
         }
         else throw new Error("unsupported type")

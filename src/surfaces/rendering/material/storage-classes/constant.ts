@@ -1,4 +1,4 @@
-import { StandardMaterial, Color, Vec3, Vec2, Vec4 } from "playcanvas-extended";
+import { StandardMaterial, Color, Vec3, Vec2, Vec4, Material } from "playcanvas-extended";
 import { Cost_Space, MaterialSemanticImplementationStorageClass, MaterialSemanticImplementationStorageClassInstanceIndividual, MaterialSemanticImplementationStorageClassInstanceShared, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { VolumeLocation } from "../../../../volumes/index.js";
@@ -10,6 +10,18 @@ export class MaterialSemanticImplementationStorageClass_Constant<
     >
     implements MaterialSemanticImplementationStorageClass<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly $class = MaterialSemanticImplementationStorageClass_Constant.$class
+    
+    private readonly _defaultMaterials = new Map<typeof Material, Material>()
+
+    defaultMaterial(materialType: typeof Material) {
+        if (this._defaultMaterials.has(materialType))
+            return this._defaultMaterials.get(materialType)
+        else {
+            const defaultMaterial = new materialType()
+            this._defaultMaterials.set(materialType, defaultMaterial)
+            return defaultMaterial
+        }
+    }
 
     startingSpace(): Cost_Space {
         return { elements: 16 }
@@ -83,19 +95,32 @@ class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
             add: RenderedBufferForSemanticWithImplementation[],
             remove: RenderedBufferForSemanticWithImplementation[]
         ): void {
-        if (!defaultMaterial)
-            defaultMaterial = new StandardMaterial()
-        
         for (const { semantic } of remove)
-            (this.renderer.implementation.material as any)[semantic as string] = defaultMaterial[semantic]
+            (this.renderer.implementation.material as any)[semantic as string] = (this.$class.$class.defaultMaterial(this.$class.renderer.material.materialType) as any)[semantic]
         
         for (const { semantic, buffer } of add) {
-            const mat_semantic = this.renderer.material.implementation[semantic]
+            const mat_semantic = (this.renderer.material.implementation as any)[semantic]
 
             if (typeof mat_semantic === 'number')
                 (this.renderer.material.implementation as any)[semantic] = buffer[0]
-            else if (mat_semantic instanceof Color)
-                mat_semantic.set(buffer[0], buffer[1], buffer[2], buffer[3])
+            else if (mat_semantic instanceof Color) {
+                switch (buffer.length) {
+                    case 1:
+                        mat_semantic.set(buffer[0], buffer[0], buffer[0])
+                        break
+                    case 2:
+                        mat_semantic.set(buffer[0], buffer[1], 0)
+                        break
+                    case 3:
+                        mat_semantic.set(buffer[0], buffer[1], buffer[2])
+                        break
+                    case 4:
+                        mat_semantic.set(buffer[0], buffer[1], buffer[2], buffer[3])
+                        break
+                    default:
+                        break
+                }
+            }
             else if (mat_semantic instanceof Vec3)
                 mat_semantic.set(buffer[0], buffer[1], buffer[2])
             else if (mat_semantic instanceof Vec2)

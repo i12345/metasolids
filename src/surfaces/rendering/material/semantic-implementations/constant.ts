@@ -1,4 +1,4 @@
-import { Vec3, Vec2, Vec4, Color, StandardMaterial } from "playcanvas-extended"
+import { Vec3, Vec2, Vec4, Color, StandardMaterial, BasicMaterial } from "playcanvas-extended"
 import { TextureSample } from "../../../../textures/texture.js"
 import { Cost_Space, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
 import { MaterialSemanticImplementationStorageClass_Constant } from "../storage-classes/constant.js"
@@ -9,10 +9,10 @@ import { MultiObjectsGroupsTemplate } from "../../../../fields/multi-objects-fie
 import { VolumeLocation } from "../../../../volumes/volume.js"
 
 export class MaterialSemanticImplementation_Constant<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        TexelTypeT extends TextureSample = TextureSample
-    >
+    VolumeLocationT extends VolumeLocation = VolumeLocation,
+    SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+    TexelTypeT extends TextureSample = TextureSample
+>
     implements MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
     readonly cost: {
         time: 0,
@@ -20,12 +20,12 @@ export class MaterialSemanticImplementation_Constant<
     }
     
     constructor(
-        public readonly semantic: keyof StandardMaterial,
+        public readonly semantic: keyof StandardMaterial | keyof BasicMaterial,
         public readonly meanValue: TexelTypeT,
         public readonly channels: number,
         public readonly stage: number,
         public readonly constancy: number,
-    ) { 
+    ) {
         this.cost = {
             time: 0,
             space: {
@@ -48,18 +48,31 @@ export class MaterialSemanticImplementation_Constant<
     }
     
     implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
-        let buffer: Float32Array
+        const buffer = new Float32Array(this.channels)
 
         if (typeof this.meanValue === 'number')
-            buffer = new Float32Array([this.meanValue])
-        else if (this.meanValue instanceof Vec3)
-            buffer = new Float32Array([this.meanValue.x, this.meanValue.y, this.meanValue.z])
-        else if (this.meanValue instanceof Vec2)
-            buffer = new Float32Array([this.meanValue.x, this.meanValue.y])
-        else if (this.meanValue instanceof Vec4)
-            buffer = new Float32Array([this.meanValue.x, this.meanValue.y, this.meanValue.z, this.meanValue.w])
-        else if (this.meanValue instanceof Color)
-            buffer = new Float32Array([this.meanValue.r, this.meanValue.g, this.meanValue.b, this.meanValue.a])
+            buffer[0] = this.meanValue
+        else if (this.meanValue instanceof Vec3) {
+            buffer[0] = this.meanValue.x
+            buffer[1] = this.meanValue.y
+            buffer[2] = this.meanValue.z
+        }
+        else if (this.meanValue instanceof Vec2) {
+            buffer[0] = this.meanValue.x
+            buffer[1] = this.meanValue.y
+        }
+        else if (this.meanValue instanceof Vec4) {
+            buffer[0] = this.meanValue.x
+            buffer[1] = this.meanValue.y
+            buffer[2] = this.meanValue.z
+            buffer[3] = this.meanValue.w
+        }
+        else if (this.meanValue instanceof Color) {
+            buffer[0] = this.meanValue.r
+            buffer[1] = this.meanValue.g
+            buffer[2] = this.meanValue.b
+            buffer[3] = this.meanValue.a
+        }
         else throw new Error("unsupported type")
         
         return [{

@@ -1,4 +1,4 @@
-import { StandardMaterial, math } from "playcanvas-extended"
+import { BasicMaterial, StandardMaterial, math } from "playcanvas-extended"
 import { ColorChannelIndex, ColorChannels } from "./color-channels.js"
 import { IndiciesArray } from "../../../utils/indices-array.js"
 
@@ -17,7 +17,7 @@ export interface RenderedBufferForSemantic extends RenderedBuffer {
      * For vertex colors, reference the `*VertexColors` property and the
      * `*VertexColorChannels` will be automatically set.
      */
-    semantic: keyof StandardMaterial
+    semantic: keyof StandardMaterial | keyof BasicMaterial
 }
 
 export const CHANNELS_MAX = 4

@@ -1,7 +1,19 @@
-import { Color, StandardMaterial } from "playcanvas-extended"
+import { Color, StandardMaterial, BasicMaterial, BLEND_NORMAL } from "playcanvas-extended"
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../fields/multi-objects-fields-point.js"
 
 export type Material_Groups = {
+    /**
+     * The color for a {@link BasicMaterial}.
+     * 
+     * If this field is set, then all other fields will be ignored, and a
+     * {@link BasicMaterial} implementation will be used instead of
+     * {@link StandardMaterial}.
+     * 
+     * If this field is set, then the {@link BasicMaterial} will have
+     * {@link BasicMaterial.blendType} = {@link BLEND_NORMAL}.
+     */
+    color?: MultiObjectsGroupsTemplateLeaf
+
     /**
      * "The diffuse color of the material. This color value is 3-component
      * (RGB), where each component is between 0 and 1. Defines basic surface
@@ -441,6 +453,8 @@ export type Material_Groups = {
 }
 
 export const Material_Groups_Template: Material_Groups = {
+    color: MultiObjectsGroupsTemplate_Leaf,  
+
     diffuse: MultiObjectsGroupsTemplate_Leaf,
 
     specular: MultiObjectsGroupsTemplate_Leaf,
@@ -483,6 +497,8 @@ export const Material_Groups_Template: Material_Groups = {
 }
 
 export type Material_Groups_Textures_TexelTypes = {
+    color?: Color
+
     /**
      * "The diffuse color of the material. This color value is 3-component
      * (RGB), where each component is between 0 and 1. Defines basic surface
