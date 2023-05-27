@@ -1,4 +1,4 @@
-import { Entity, MeshInstance } from "playcanvas-extended"
+import { AppBase, Application, Entity, MeshInstance } from "playcanvas-extended"
 import { VolumeLocation } from "../../volumes/volume.js"
 import { MaterialRendererIndividual, MaterialRendererShared } from "./material/renderer.js"
 import { SurfaceWithRendering, SurfaceProcessingContextWithRendering } from "./surface.js"
@@ -15,7 +15,8 @@ export class SurfaceRendererShared<
     constructor(
         public readonly surface: SurfaceWithRendering<VolumeLocationT, SurfaceUVUnwrappingGroup>,
         public readonly context: SurfaceProcessingContextWithRendering<VolumeLocationT, SurfaceUVUnwrappingGroup>,
-        public readonly surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup
+        public readonly app: AppBase,
+        public readonly surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup,
     ) {
         this.mesh = new MeshRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(this)
         this.material = new MaterialRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(this)
@@ -39,7 +40,7 @@ export class SurfaceRendererIndividual<
 
     constructor(
             public readonly shared: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>,
-            public readonly entity: Entity
+            public readonly entity: Entity,
         ) {
         this.mesh = shared.mesh.individualize(this)
         this.material = shared.material.individualize(this)

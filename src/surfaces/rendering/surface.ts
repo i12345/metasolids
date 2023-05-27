@@ -43,6 +43,7 @@ export interface SurfaceProcessingContextWithRendering<
         SurfaceWithRendering_TextureGroups
     > {
     material: {
+        surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup
         textures?: MultiObjectsGroupsMapped<
             Material_Groups,
             Material_Texture_Context<VolumeLocationT>

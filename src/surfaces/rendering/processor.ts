@@ -7,6 +7,7 @@ import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./s
 import { SurfaceRendererShared } from "./renderer.js";
 import { Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js";
 import { ParallelizedContextParallelInfo } from "../../processor/index.js";
+import { AppBase } from "playcanvas-extended";
 
 export class SurfaceWithRenderingProcessor<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -33,6 +34,8 @@ export class SurfaceWithRenderingProcessor<
         ]
     }
 
+    constructor(public readonly app: AppBase) { }
+
     process(
             surface: SurfaceWithRendering<
                 VolumeLocationT,
@@ -44,7 +47,12 @@ export class SurfaceWithRenderingProcessor<
             >
         ): void {
         ///@ts-ignore
-        surface.renderer = new SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(surface, context)
+        surface.renderer = new SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>(
+            surface,
+            context,
+            this.app,
+            context.material.surfaceUVUnwrappingGroup
+        )
     }
 
     init(context: SurfaceProcessingContextWithRendering<

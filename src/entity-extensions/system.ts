@@ -30,7 +30,7 @@ export class VolumeComponentSystem extends ComponentSystem {
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
-            new surfaces.rendering.SurfaceWithRenderingProcessor() as unknown as VolumeSurfaceProcessorT
+            new surfaces.rendering.SurfaceWithRenderingProcessor(this.app) as unknown as VolumeSurfaceProcessorT
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,

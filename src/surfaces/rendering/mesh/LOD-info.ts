@@ -1,4 +1,4 @@
-import { Application, Vec2, Vec3 } from "playcanvas-extended"
+import { AppBase, Application, CameraComponent, Entity, LightComponent, RenderComponent, Vec2, Vec3 } from "playcanvas-extended"
 import { FieldPointRange, FieldPointVectorized, RANGE_MAX, RANGE_MIN, field_point_mean, field_point_range_compute, groupKinds } from "../../../fields/index.js"
 import { MeshDecimationIndividual } from "./decimation.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
@@ -170,7 +170,7 @@ export class LevelOfDetailInfoComputerIndividual {
     }
 
     update() {
-        const camera = Application.getApplication()!.systems.camera!.cameras[0]
+        const camera = this.renderer.renderer.shared.app.systems.camera!.cameras[0]
         const distance = this.renderer.renderer.entity.getPosition().distance(camera.entity.getPosition())
 
         const edge_distance_calc_world_0 = camera.entity.forward.clone().mulScalar(distance).add(camera.entity.getPosition())
