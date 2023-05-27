@@ -25,7 +25,7 @@ export function keypoint_index<T = any>(t: number, keypoints: InterpolationKeypo
             return mid
     }
 
-    if (keypoints[low].location < t)
+    if (keypoints[low].location <= t)
         return low
     return low - 1
 }

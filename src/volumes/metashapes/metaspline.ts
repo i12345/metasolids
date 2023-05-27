@@ -247,7 +247,7 @@ export class MetaSplineSegment<
             this.spline = undefined
         }
         else {
-            this.spline_segment_index = (parent.segment.spline?.segments.length ?? 0) + 1
+            this.spline_segment_index = parent.segment.spline?.segments.length ?? 1
             this.t = this.t_offset + parent.segment.t
             this.t_iterations = Math.log2(this.t_offset) + 15
             this.transform_relative_root.mul2(parent.segment.transform_relative_root, parent.transform_to_parent)
