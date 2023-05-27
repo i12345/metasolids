@@ -1,5 +1,5 @@
 import { Vec2 } from "playcanvas-extended";
-import { Field, FieldPoint, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, defaultField } from "../../fields/index.js";
+import { Field, FieldPoint, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, defaultField, field_point_identity } from "../../fields/index.js";
 import { Texture, TextureLocation } from "../texture.js";
 import { IndiciesArray } from "../../utils/indices-array.js";
 
@@ -40,7 +40,7 @@ export class VertexInterpolatingTexture
     }
 
     sample(location: TextureLocation): VertexSample {
-        let interpolated = { sample: undefined! as VertexSample }
+        let interpolated = { sample: field_point_identity(this.vertices[0]) }
 
         this.collider!.collide(
             location.uv,

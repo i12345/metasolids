@@ -31,7 +31,7 @@ export type SurfaceWithRendering<
     > =
     texturing.SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup> &
     SurfaceWithRender_TexturesTemplated<VolumeLocationT> & {
-    renderer: SurfaceRendererShared
+    renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
 }
 
 export interface SurfaceProcessingContextWithRendering<

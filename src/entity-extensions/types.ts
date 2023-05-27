@@ -1,5 +1,6 @@
-import { FieldPoint, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsCombined, MultiObjectsInfluencesProcessingContext, MultiObjectsGrouped, MultiObjectsInfluencesGroupsDefault, MultiObjectsTemplate, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsGroupsCombinedMapped, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsDomainInternalPreservedGroupsKinds, mergeGroupsInplace, MultiObjectsDomainInternalPreservedGroupsKindsKey } from "../fields/index.js"
+import { FieldPoint, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsGroupsCombined, MultiObjectsInfluencesProcessingContext, MultiObjectsGrouped, MultiObjectsInfluencesGroupsDefault, MultiObjectsTemplate, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsGroupsCombinedMapped, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsDomainInternalPreservedGroupsKinds, mergeGroupsInplace, MultiObjectsDomainInternalPreservedGroupsKindsKey, groupPaths } from "../fields/index.js"
 import { textures, volumes, surfaces, solids } from "../index.js"
+import { onlyOne } from "../utils/only-one.js"
 import { MetaShapeVolumeMultiObjectsInternalPreservedGroups, MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate } from "../volumes/metashapes/metashape.js"
 
 export type VolumeLocationT = volumes.VolumeLocation
@@ -31,6 +32,8 @@ export type SurfaceCombinedTextureLocationT = textures.TextureLocation
 
 export type SurfaceUVUnwrappingGroupT = surfaces.texturing.SurfaceUVUnwrappingGroupsDefault
 export const SurfaceUVUnwrappingGroupTemplate: SurfaceUVUnwrappingGroupT = surfaces.texturing.SurfaceUVUnwrappingGroupsDefaultTemplate
+export const SurfaceUVUnwrappingGroup_Path = onlyOne(groupPaths(SurfaceUVUnwrappingGroupTemplate))
+
 export type SurfaceUVUnwrappingGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
         surfaces.texturing.SurfaceUVUnwrappingGroupKinds,

@@ -5,7 +5,7 @@ import { MultiObjectsVolume, TransformVolume } from "../volumes/index.js";
 import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
 import { intract, pathsToNodeWithKey } from "../utils/tree.js";
-import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
+import { onlyOne, PropertyPath, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 import { VolumeComponentSystem } from "./system.js";
 
 const _schema = ['enabled']
@@ -13,7 +13,8 @@ const _schema = ['enabled']
 export class VolumeComponent extends Component {
     private _volume?: VolumeT
     private _processed?: VolumeProcessingT
-    
+    private _multiObjPath?: PropertyPath
+
     get volume() {
         return this._volume
     }
@@ -37,6 +38,10 @@ export class VolumeComponent extends Component {
         this.renderVolume()
     }
 
+    get multiObjPath() {
+        return this._multiObjPath
+    }
+
     makeRoot: boolean = false
     extraLocationParameters?: fields.FieldsPoint
     samplerSettings?: volumes.VolumeSamplerSettings
@@ -47,6 +52,10 @@ export class VolumeComponent extends Component {
 
     get root() {
         return this.findRoot().entity
+    }
+
+    get isRoot() {
+        return this.root === this.entity
     }
 
     constructor(system: VolumeComponentSystem, entity: Entity) { 
@@ -69,10 +78,14 @@ export class VolumeComponent extends Component {
         
         const system = this.system as VolumeComponentSystem
         
+        const map_volume_component = new Map<VolumeT, VolumeComponent>()
         function compositeVolume(node: GraphNode, require_multiObjects = false): VolumeT | undefined {
             const entity = node as Entity
             const component = entity?.findComponent('volume') as VolumeComponent
             
+            if (component?.volume)
+                map_volume_component.set(component.volume, component)
+
             const children = [
                 ...(component?.volume ? [['$$main', component.volume]] : []),
                 ...node.children
@@ -108,6 +121,18 @@ export class VolumeComponent extends Component {
         }
 
         const compositeVolume_final = compositeVolume(this.entity, true)!
+
+        function assignMultiObjPaths(volume: VolumeT, path: PropertyPath) {
+            const component = map_volume_component.get(volume)
+            if (component)
+                component._multiObjPath = path
+            if (volume instanceof MultiObjectsVolume)
+                for (const [key, child] of Reflect_entries(volume.children))
+                    assignMultiObjPaths(child as unknown as VolumeT, [...path, key])
+        }
+
+        assignMultiObjPaths(compositeVolume_final, [])
+
         function objectsTemplate_populate(volume: VolumeT): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
             if (volume instanceof MultiObjectsVolume)
                 return Reflect_fromEntries(Reflect_entries(volume.children as any).map(([key, child]) =>

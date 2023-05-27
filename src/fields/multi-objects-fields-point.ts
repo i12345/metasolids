@@ -200,6 +200,52 @@ export type MultiObjectsGroupsMapped<
             T
 }
 
+export type MultiObjectsGroupsMappedOptional<
+        Groups extends MultiObjectsGroupsTemplate,
+        T,
+        TGrouped extends
+            MultiObjectsGroupsMapped<Groups, T> =
+            MultiObjectsGroupsMapped<Groups, T>
+    > = {
+    [K in keyof Groups]?:
+        Groups[K] extends MultiObjectsGroupsTemplate ?
+            TGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], T> ?
+                MultiObjectsGroupsMappedOptional<Groups[K], T, TGrouped[K]> :
+                never :
+            T
+}
+
+// type MyGroups = {
+//     a: {
+//         x: MultiObjectsGroupsTemplateLeaf
+//         y: MultiObjectsGroupsTemplateLeaf
+//         z: MultiObjectsGroupsTemplateLeaf
+//     }
+//     b: MultiObjectsGroupsTemplateLeaf
+//     c: MultiObjectsGroupsTemplateLeaf
+// }
+
+// type MyGroupsNumbers = MultiObjectsGroupsMapped<MyGroups, number>
+
+// let numberRequired: MyGroupsNumbers = {
+//     a: {
+//         x: 1,
+//         y: 2,
+//         z: 3
+//     },
+//     b: 10,
+//     c: 20,
+// }
+
+// type MyGroupsNumbersOptional = MultiObjectsGroupsMappedOptional<MyGroups, number, MyGroupsNumbers>
+
+// let numbersOptional: MyGroupsNumbersOptional = {
+//     a: {
+//         y: 2
+//     },
+//     c: 10
+// }
+
 export function mapByGroups<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         T = any,

@@ -12,7 +12,7 @@ export type Material_Groups = {
      * If this field is set, then the {@link BasicMaterial} will have
      * {@link BasicMaterial.blendType} = {@link BLEND_NORMAL}.
      */
-    color?: MultiObjectsGroupsTemplateLeaf
+    color: MultiObjectsGroupsTemplateLeaf
 
     /**
      * "The diffuse color of the material. This color value is 3-component
@@ -497,7 +497,7 @@ export const Material_Groups_Template: Material_Groups = {
 }
 
 export type Material_Groups_Textures_TexelTypes = {
-    color?: Color
+    color: Color
 
     /**
      * "The diffuse color of the material. This color value is 3-component

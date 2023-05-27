@@ -1,5 +1,5 @@
-import { FieldPoint, ExtraFields } from "../../../fields/point.js"
-import { TextureLocation, TextureSamplingContext, TexturesTemplated } from "../../../textures/texture.js"
+import { FieldPoint, ExtraFields, MultiObjectsGroupsMappedOptional } from "../../../fields/index.js"
+import { Texture, TextureLocation, TextureSamplingContext, TexturesTemplated } from "../../../textures/texture.js"
 import { VolumeLocation } from "../../../volumes/volume.js"
 import { Material_Groups, Material_Groups_Textures_TexelTypes } from "./groups.js"
 
@@ -19,10 +19,14 @@ export type Material_Texture_Context<
 export type Material_Groups_Textures<
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > =
-    TexturesTemplated<
-            Material_Groups,
-            FieldPoint,
-            Material_Groups_Textures_TexelTypes,
-            Material_Texture_Location<VolumeLocationT>,
-            Material_Texture_Context<VolumeLocationT>
+    MultiObjectsGroupsMappedOptional<
+        Material_Groups,
+        Texture,
+        TexturesTemplated<
+                Material_Groups,
+                FieldPoint,
+                Material_Groups_Textures_TexelTypes,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Context<VolumeLocationT>
         >
+    >

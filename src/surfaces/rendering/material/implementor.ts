@@ -3,7 +3,7 @@ import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from
 import { GeneratorType, Reflect_entries, onlyOne } from "../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
-import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, MultiObjectsGroupsMapped, groupKinds, groups, field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator } from "../../../fields/index.js";
+import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, MultiObjectsGroupsMapped, groupKinds, groups, field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator, MultiObjectsGroupsTemplate } from "../../../fields/index.js";
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
 import { Material_Groups } from "./groups.js";
 import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial } from "playcanvas-extended";
@@ -435,9 +435,10 @@ interface QualityMetrics<
 
 function qualityMetrics_compute<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
     >(
-        surface: SurfaceWithRendering,
+        surface: SurfaceWithRendering<VolumeLocationT, SurfaceUVUnwrappingGroup>,
         texture: Texture<
                 Material_Texture_Location<VolumeLocationT>,
                 TexelTypeT,
@@ -504,7 +505,7 @@ function qualityMetrics_compute<
     const tri_n = UVunwrapping.finalIndices.length / 3
     for (let i = 0; i < Math.min(5, tri_n); i++) {
         let tri_i: number
-        do tri_i = Math.min(tri_n - 1, tri_n * Math.random())
+        do tri_i = Math.min(tri_n - 1, Math.floor(tri_n * Math.random()))
         while (tri_i_s.has(tri_i))
         tri_i_s.add(tri_i)
     }
@@ -566,8 +567,8 @@ function qualityMetrics_compute<
             for (let i0 = 0; i0 < 3; i0++) {
                 const i1 = (i0 + 1) % 3
 
-                const v0 = (tri_i * 3) + i0
-                const v1 = (tri_i * 3) + i1
+                const v0 = indices[(tri_i * 3) + i0]
+                const v1 = indices[(tri_i * 3) + i1]
 
                 const uv0 = UVunwrapping.UVs[v0]
                 const uv1 = UVunwrapping.UVs[v1]
@@ -666,13 +667,14 @@ function qualityMetrics_combine<
  */
 export function* material_group_implementations<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
     >(
         group: GeneratorType<ReturnType<typeof groups>>,
-        surface: SurfaceWithRendering,
-        context: SurfaceProcessingContextWithRendering,
+        surface: SurfaceWithRendering<VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        context: SurfaceProcessingContextWithRendering<VolumeLocationT, SurfaceUVUnwrappingGroup>,
         UVunwrapping: SurfaceUVUnwrapping
-    ): Generator<MaterialSemanticImplementation> {
+    ): Generator<MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>> {
     type TextureLocationT = Material_Texture_Location<VolumeLocationT>
     type TextureContextT = Material_Texture_Context<VolumeLocationT>
     type TextureT = Texture<TextureLocationT, TexelTypeT, TextureContextT>
@@ -778,8 +780,7 @@ export function* material_group_implementations<
 
         if (factors.length >= 2) {
             const qualityMetrics = factors.map(([, texture]) =>
-                ///@ts-ignore
-                qualityMetrics_compute(
+                qualityMetrics_compute<VolumeLocationT, SurfaceUVUnwrappingGroup>(
                     surface,
                     texture,
                     textureContext,
@@ -1035,7 +1036,7 @@ export function* material_group_implementations<
         )
 
         if (terms.length === 2) {
-            const qualityMetrics = terms.map(([, texture]) => qualityMetrics_compute(
+            const qualityMetrics = terms.map(([, texture]) => qualityMetrics_compute<VolumeLocationT, SurfaceUVUnwrappingGroup>(
                 surface,
                 texture,
                 textureContext,

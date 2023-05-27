@@ -136,6 +136,8 @@ export class MaterialRendererShared<
             const texture = group.get<Texture>(this.renderer.surface.material.textures)
             if (!texture) return
 
+            texture.init(group.get<Material_Texture_Context<VolumeLocationT>>(this.renderer.context.material.textures))
+
             const stage_max = opaqueStagedTexture(texture)[0]
 
             group.set(
@@ -145,8 +147,7 @@ export class MaterialRendererShared<
                     implementations_rendered_stage0_cache: [],
                     options: cacheGenerator<MaterialSemanticImplementation_Multi<VolumeLocationT, SurfaceUVUnwrappingGroup/* , MaterialSemanticImplementation_Immediate */>>(
                         flattenImplementationMulti<VolumeLocationT, SurfaceUVUnwrappingGroup>(
-                            ///@ts-ignore
-                            material_group_implementations(
+                            material_group_implementations<VolumeLocationT, SurfaceUVUnwrappingGroup>(
                                 group,
                                 this.renderer.surface,
                                 this.renderer.context,
