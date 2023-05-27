@@ -23,4 +23,6 @@ export class VectorField implements Field<Vector> {
         
         return distance
     }
+
+    static readonly instance = new this()
 }

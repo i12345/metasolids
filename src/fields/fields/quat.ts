@@ -8,4 +8,6 @@ export class QuatField implements Field<Quat> {
     distance(x: Quat, y: Quat): number {
         return x.distance(y)
     }
+
+    static readonly instance = new this()
 }

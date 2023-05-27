@@ -14,4 +14,6 @@ export class ColorField implements Field<Color> {
             ((x.a - y.a) ** 2)
         )
     }
+
+    static readonly instance = new this()
 }

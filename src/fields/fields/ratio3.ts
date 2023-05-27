@@ -14,4 +14,6 @@ export class Ratio3Field implements Field<Vec3> {
             Math.log(x.z / y.z)
         )
     }
+
+    static readonly instance = new this()
 }

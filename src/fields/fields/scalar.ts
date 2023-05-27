@@ -45,4 +45,6 @@ export class ScalarField implements Field<number> {
         }
         else return Math.abs(x - y)
     }
+
+    static readonly instance = new this()
 }

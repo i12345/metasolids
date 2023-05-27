@@ -8,4 +8,6 @@ export class SignField implements Field<Sign> {
     distance(x: Sign, y: Sign): number {
         return x === y ? 0 : 1
     }
+
+    static readonly instance = new this()
 }

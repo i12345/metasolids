@@ -21,4 +21,6 @@ export class Vec4Field implements Field<Vec4> {
             (ScalarField.distance(x.w, y.w, [this.range[0].w, this.range[1].w]) ** 2)
         )
     }
+
+    static readonly instance = new this()
 }

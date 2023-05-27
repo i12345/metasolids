@@ -20,4 +20,6 @@ export class Vec3Field implements Field<Vec3> {
             (ScalarField.distance(x.z, y.z, [this.range[0].z, this.range[1].z]) ** 2)
         )
     }
+
+    static readonly instance = new this()
 }

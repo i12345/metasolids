@@ -21,8 +21,10 @@ export class Mat4Field implements Field<Mat4> {
     }
 
     static readonly fields = {
-        translation: new Vec3Field(),
-        rotation: new QuatField(),
-        scale: new Ratio3Field()
+        translation: Vec3Field.instance,
+        rotation: QuatField.instance,
+        scale: Ratio3Field.instance
     }
+
+    static readonly instance = new this()
 }
