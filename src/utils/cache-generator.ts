@@ -9,8 +9,10 @@ export function cacheGenerator<T = unknown, TReturn = any, TNext = unknown>(gene
         while (currentGenerator) {
             const { value, done } = generator.next()
             if (done) currentGenerator = undefined
-            cache.push(value)
-            yield value
+            else {
+                cache.push(value)
+                yield value
+            }
         }
     }
 }
