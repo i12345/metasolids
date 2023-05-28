@@ -123,12 +123,16 @@ export class VolumeComponent extends Component {
         const compositeVolume_final = compositeVolume(this.entity, true)!
 
         function assignMultiObjPaths(volume: VolumeT, path: PropertyPath) {
-            const component = map_volume_component.get(volume instanceof volumes.TransformVolume ? volume.inner as unknown as VolumeT : volume)
-            if (component)
-                component._multiObjPath = path
-            if (volume instanceof MultiObjectsVolume)
-                for (const [key, child] of Reflect_entries(volume.children))
-                    assignMultiObjPaths(child as unknown as VolumeT, [...path, key])
+            if (volume instanceof volumes.TransformVolume)
+                assignMultiObjPaths(volume.inner as any as VolumeT, path)
+            else {
+                const component = map_volume_component.get(volume)
+                if (component)
+                    component._multiObjPath = path
+                if (volume instanceof MultiObjectsVolume)
+                    for (const [key, child] of Reflect_entries(volume.children))
+                        assignMultiObjPaths(child as unknown as VolumeT, [...path, key])
+            }
         }
 
         assignMultiObjPaths(compositeVolume_final, [])
