@@ -116,7 +116,9 @@ export class MultiObjectsVolume<
         const influenceGroup = this.influenceGroupRef!.get(accumulator)
         if (influenceGroup === undefined)
             this.influenceGroupRef!.set(accumulator, { [key]: presence })
-        else influenceGroup[key] = presence
+        else if (influenceGroup[key] === undefined)
+            influenceGroup[key] = presence
+        // if key were in influenceGroup already, then it may've been set by a nested multi-objects volume
         
         return super.combineResidualLeafSample(accumulator, key, residual)
     }
