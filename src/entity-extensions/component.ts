@@ -1,7 +1,6 @@
 import { Component, Entity, GraphNode } from "playcanvas-extended";
 import { fields, processors, solids, surfaces, textures, volumes } from "../index.js";
 import { mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
-import { MultiObjectsVolume, TransformVolume } from "../volumes/index.js";
 import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
 import { intract, pathsToNodeWithKey } from "../utils/tree.js";
@@ -96,7 +95,7 @@ export class VolumeComponent extends Component {
                             compositeVolume(child)!,
                             child.getLocalTransform()
                         )
-                    ] as [string, TransformVolume<VolumeLocationT, SampleT, VolumeProcessingContextT>])
+                    ] as [string, volumes.TransformVolume<VolumeLocationT, SampleT, VolumeProcessingContextT>])
                     .filter(([, { inner }]) => inner !== undefined)
             ] as [string, VolumeT][]
 
@@ -129,7 +128,7 @@ export class VolumeComponent extends Component {
                 const component = map_volume_component.get(volume)
                 if (component)
                     component._multiObjPath = path
-                if (volume instanceof MultiObjectsVolume)
+                if (volume instanceof volumes.MultiObjectsVolume)
                     for (const [key, child] of Reflect_entries(volume.children))
                         assignMultiObjPaths(child as unknown as VolumeT, [...path, key])
             }
@@ -138,10 +137,12 @@ export class VolumeComponent extends Component {
         assignMultiObjPaths(compositeVolume_final, [])
 
         function objectsTemplate_populate(volume: VolumeT): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
-            if (volume instanceof MultiObjectsVolume)
+            if (volume instanceof volumes.MultiObjectsVolume)
                 return Reflect_fromEntries(Reflect_entries(volume.children as any).map(([key, child]) =>
                     [key, objectsTemplate_populate(child as VolumeT) as ReturnType<typeof objectsTemplate_populate>])
                 ) as MultiObjectsTemplate
+            else if (volume instanceof volumes.TransformVolume)
+                return objectsTemplate_populate(volume.inner as unknown as VolumeT)
             return MultiObjectsTemplate_Leaf
         }
 
