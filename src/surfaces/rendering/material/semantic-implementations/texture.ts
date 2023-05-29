@@ -100,6 +100,8 @@ export class MaterialSemanticImplementation_Texture<
             finalIndices
         )
 
+        texture_location_interpolator.init()
+
         const sample_texture_values = new Array<FieldPoint>(this.resolution ** 2)
         
         for (let y = this.resolution - 1; y >= 0; y--) {

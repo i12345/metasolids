@@ -171,12 +171,12 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
         if (this._renderedPacked!.renderedMeshes &&
             !this._renderedPacked!.renderedMeshes.includes(mesh)) {
             if (this._renderedPacked!.buffer instanceof Float32Array) {
-                mesh.setColors(this._renderedPacked!.buffer, this._renderedPacked!.channels)
                 mesh.setColors32([])
+                mesh.setColors(this._renderedPacked!.buffer, this._renderedPacked!.channels)
             }
             else {
-                mesh.setColors32(this._renderedPacked!.buffer, this._renderedPacked!.channels)
                 mesh.setColors([])
+                mesh.setColors32(this._renderedPacked!.buffer, this._renderedPacked!.channels)
             }
             this._renderedPacked!.renderedMeshes?.push(mesh)
         }

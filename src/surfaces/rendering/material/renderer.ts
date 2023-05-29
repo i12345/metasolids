@@ -123,8 +123,8 @@ export class MaterialRendererShared<
             implement: number,
             change: number
         } = {
-            implement: 0.7,
-            change: 0.25
+            implement: 0.85,
+            change: 0.75
         }
     ) {
         this.materialType = renderer.surface.material.textures.color ? BasicMaterial : StandardMaterial
@@ -282,8 +282,8 @@ export class MaterialRendererIndividual<
 
         const value = (implementation: MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>): number => {
             const a = 0.9 // [0, 1]
-            const b = 0.002 // [0, \infty]
-            const c = 0.5 // [0, \infty]
+            const b = 0.0001 // [0, \infty]
+            const c = 0.01 // [0, \infty]
             const d = 0.03 // [0, \infty]
             const e = 0.1 // [0, \infty]
 

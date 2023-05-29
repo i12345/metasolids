@@ -13,11 +13,14 @@ export class MaterialSemanticImplementation_Multi<
     readonly stage: number
 
     constructor(public readonly components: MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup>[]) {
-        this.cost = field_point_sum(components.map<Cost>(({ cost }) => cost))
-        this.stage = Math.max(...components.map<number>(({ stage }) => stage))
+        this.cost = components.length === 0 ?
+            { time: 0, space: { elements: 0 } } :
+            field_point_sum(components.map<Cost>(({ cost }) => cost))
+        this.stage = Math.max(0, ...components.map<number>(({ stage }) => stage))
     }
 
     quality(info: LevelOfDetailInfo): number {
+        ///@ts-ignore
         return this.components.reduce(
             (prod, component) => prod * component.quality(info),
             1

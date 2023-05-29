@@ -143,7 +143,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
 
             for (const packed of pack(final_filtered, [1, 2, 3, 4])) {
                 const resolution = Math.sqrt(packed.sources[0].buffer.length / packed.sources[0].channels)
-                const texture = new Texture(this.renderer.implementation.mesh.device, {
+                const texture = new Texture(this.renderer.mesh.implementation.device, {
                     width: resolution,
                     height: resolution,
                     format: format_selector(
@@ -170,8 +170,8 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
         for (const pack of this.rendered_packs) {
             for (const { source, channels } of pack.targets) {
                 if (this.rendered.includes(source)) {
-                    (this.renderer.implementation.material as any)[source.semantic] = pack.texture;
-                    (this.renderer.implementation.material as any)[`${source.semantic}Channel`] = colorChannelsString(channels);
+                    (this.renderer.material.implementation as any)[source.semantic] = pack.texture;
+                    (this.renderer.material.implementation as any)[`${source.semantic}Channel`] = colorChannelsString(channels);
                 }
             }
         }

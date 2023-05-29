@@ -48,8 +48,8 @@ export class MaterialSemanticImplementation_VertexColors<
     }
 
     quality(info: LevelOfDetailInfo) {
-        const information_per_pixel_min = 1 / Math.max(0.2, info.edge.distances.absolute.screen[RANGE_MIN])
-        const information_per_pixel_max = 1 / Math.max(0.2, info.edge.distances.absolute.screen[RANGE_MAX])
+        const information_per_pixel_min = 1 / Math.max(0.2, info.edge.distances.absolute.screen[RANGE_MAX])
+        const information_per_pixel_max = 1 / Math.max(0.2, info.edge.distances.absolute.screen[RANGE_MIN])
         const information_per_pixel_mean = (information_per_pixel_min + information_per_pixel_max) / 2
 
         const interpolating_fit_definite = Math.max(1, information_per_pixel_mean)

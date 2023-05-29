@@ -113,7 +113,7 @@ export class LevelOfDetailInfoComputerShared {
         
         const edges: LevelOfDetailInfo_Edge_Cached[] = []
         
-        const EDGES_COUNT = 100
+        const EDGES_COUNT = Math.min(100, indices.length / 3)
         for (let i = 0; i < EDGES_COUNT; i++) {
             const i0 = Math.min(indices.length - 1, Math.floor(indices.length * Math.random()))
             const i1 = (((i0 % 3) + 1) % 3) + (3 * Math.floor(i0 / 3))
@@ -155,7 +155,6 @@ export class LevelOfDetailInfoComputerShared {
 }
 
 export class LevelOfDetailInfoComputerIndividual {
-    private readonly edge_distance_world_mean!: number
     private _info!: LevelOfDetailInfo
 
     get info(): LevelOfDetailInfo {
@@ -173,17 +172,19 @@ export class LevelOfDetailInfoComputerIndividual {
         const camera = this.renderer.renderer.shared.app.systems.camera!.cameras[0]
         const distance = this.renderer.renderer.entity.getPosition().distance(camera.entity.getPosition())
 
+        const cache = this.shared.cached(this.renderer.decimation.quality)
+        const edge_distance_world = cache.edge.distances.absolute.world
+        const edge_distance_world_mean = (edge_distance_world[RANGE_MIN] +  edge_distance_world[RANGE_MAX]) / 2
+
         const edge_distance_calc_world_0 = camera.entity.forward.clone().mulScalar(distance).add(camera.entity.getPosition())
-        const edge_distance_calc_world_1 = camera.entity.right.clone().mulScalar(this.edge_distance_world_mean).add(edge_distance_calc_world_0)
+        const edge_distance_calc_world_1 = camera.entity.right.clone().mulScalar(edge_distance_world_mean).add(edge_distance_calc_world_0)
         const edge_distance_calc_screen_0 = camera.worldToScreen(edge_distance_calc_world_0)
         const edge_distance_calc_screen_1 = camera.worldToScreen(edge_distance_calc_world_1)
         const edge_distance_calc_screen_0_v2 = new Vec2(edge_distance_calc_screen_0.x, edge_distance_calc_screen_0.y)
         const edge_distance_calc_screen_1_v2 = new Vec2(edge_distance_calc_screen_1.x, edge_distance_calc_screen_1.y)
         const edge_distance_screen_mean = edge_distance_calc_screen_0_v2.distance(edge_distance_calc_screen_1_v2)
 
-        const ratio_screen_per_world = edge_distance_screen_mean / this.edge_distance_world_mean
-
-        const cache = this.shared.cached(this.renderer.decimation.quality)
+        const ratio_screen_per_world = edge_distance_screen_mean / edge_distance_world_mean
 
         this._info = {
             distance,
