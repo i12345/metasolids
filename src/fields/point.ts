@@ -1255,7 +1255,7 @@ export function fields_point_add<Point extends FieldsPoint>(a: Point, b: Point):
     let c: any = {}
 
     for (const key of Reflect.ownKeys(a)) {
-        if (a[key] !== undefined)
+        if (b[key] !== undefined)
             c[key] = field_point_add(a[key], b[key])
         else c[key] = field_point_clone(a[key])
     }
@@ -1271,7 +1271,7 @@ export function fields_point_subtract<Point extends FieldsPoint>(a: Point, b: Po
     let c: any = {}
 
     for (const key of Reflect.ownKeys(a)) {
-        if (a[key] !== undefined)
+        if (b[key] !== undefined)
             c[key] = field_point_subtract(a[key], b[key])
         else c[key] = field_point_clone(a[key])
     }
@@ -1345,8 +1345,8 @@ export function fields_point_add_inplace_weighted<
 export function fields_point_sum<Point extends FieldsPoint = FieldsPoint>(points: Point[]): Point {
     let sum = {} as Point
 
-    for (const key of Reflect.ownKeys(points[0])) {
-        const extracted = points.map(point => point[key])
+    for (const key of new Set(points.flatMap(point => Reflect.ownKeys(point)))) {
+        const extracted = points.filter(point => key in point).map(point => point[key])
         sum[key as keyof Point] = field_point_sum(extracted) as Point[typeof key]
     }
     
@@ -1415,7 +1415,7 @@ export function fields_point_equal<Point extends FieldsPoint>(a: Point, b: Point
         keys_a.some(key => !keys_b.includes(key)))
         return false
 
-    for (const key of keys_a)
+    for (const key of new Set([...keys_a, ...keys_b]))
         if (!field_point_equal(a[key], b[key]))
             return false
     
