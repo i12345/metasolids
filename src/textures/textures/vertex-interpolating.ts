@@ -40,19 +40,13 @@ export class VertexInterpolatingTexture
     }
 
     sample(location: TextureLocation): VertexSample {
-        let interpolated = { sample: field_point_identity(this.vertices[0]) }
+        const collision = this.collider!.collision_first(location.uv)
 
-        this.collider!.collide(
-            location.uv,
-            (tri, w1, w2) =>
-                this.interpolator!.interpolate_add(
-                    interpolated,
-                    'sample',
-                    tri, w1, w2
-                )
-        )
-
-        return interpolated.sample
+        if (collision === undefined)
+            return field_point_identity(this.vertices[0])
+        
+        const { tri, w1, w2 } = collision
+        return this.interpolator!.interpolate(tri, w1, w2)
     }
 
     init(): void {

@@ -1,8 +1,8 @@
 import { AppBase, ComponentSystem, Entity } from "playcanvas-extended"
-import { processors, solids, surfaces, volumes } from "../index.js"
+import { fields, processors, solids, surfaces, volumes } from "../index.js"
 import { VolumeComponent } from "./component.js"
 import { VolumeComponentData } from "./data.js"
-import { InterpolatingGroupsKindsTemplate, InterpolatingGroupsTemplate, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
+import { InterpolatingGroupsKindsTemplate, InterpolatingGroupsTemplate, SampleProcessingContextT, SampleT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
 
 export class VolumeComponentSystem extends ComponentSystem {
     id: 'volume'
@@ -15,6 +15,13 @@ export class VolumeComponentSystem extends ComponentSystem {
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
             new surfaces.measuring.SurfaceWithSurfaceAreaProcessor()
+        ),
+        new processors.ParallelizingProcessor(
+            surfaces.VolumeSurfacesParallelizer.instance,
+            new processors.ParallelizingProcessor(
+                surfaces.SurfaceSampleParallelizer.instance,
+                fields.MultiObjectsInfluencesNormalizingProcessor.instance as any
+            ) as unknown as VolumeSurfaceProcessorT
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,

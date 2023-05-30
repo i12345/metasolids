@@ -1,5 +1,5 @@
 import { Vec2 } from "playcanvas-extended"
-import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
+import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace, field_point_clone } from "./point.js"
 import { IndiciesArray } from "../utils/indices-array.js"
 
 export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> {
@@ -31,7 +31,7 @@ export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> 
             w1: number,
             w2: number
         ): Point {
-        let result = { value: this.v0[tri] }
+        let result = { value: field_point_clone(this.v0[tri]) }
 
         fields_point_add_inplace_weighted(
             result,
@@ -114,6 +114,18 @@ export class Triangles2DMeshCollider {
             return
         
         this.cells[cell.x + (cell.y * this.resolution)].collide(p, collisionHandler)
+    }
+
+    collision_first(p: Vec2): { tri: number, w1: number, w2: number } | undefined {
+        const cell = new Vec2()
+            .sub2(p, this.mesh.bounds.origin)
+            .div(this.mesh.bounds.size).floor()
+        
+        if (cell.x < 0 || cell.x >= this.resolution ||
+            cell.y < 0 || cell.y >= this.resolution)
+            return undefined
+        
+        return this.cells[cell.x + (cell.y * this.resolution)].collision_first(p)
     }
 }
 
@@ -223,10 +235,37 @@ class Triangles2DMeshQuad {
             const w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
             const w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
-            if (w1 < 0 || w2 < 0 || w1 + w2 > 1)
+            if (w1 < 0 || w2 < 0 || w1 + w2 >= 1)
                 continue
             
             collisionHandler(tri, w1, w2)
         }
+    }
+
+    collision_first(point: Vec2): { tri: number, w1: number, w2: number } | undefined {
+        const { v0, tri_vec_inv } = this.mesh
+
+        for (let tri of this.filtered_triangles) {
+            const v0_x = v0[(2 * tri) + 0]
+            const v0_y = v0[(2 * tri) + 1]
+
+            const x = point.x - v0_x
+            const y = point.y - v0_y
+
+            const tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
+            const tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
+            const tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
+            const tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+
+            const w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+            const w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+
+            if (w1 < 0 || w2 < 0 || w1 + w2 >= 1)
+                continue
+            
+            return { tri, w1, w2 }
+        }
+
+        return undefined
     }
 }

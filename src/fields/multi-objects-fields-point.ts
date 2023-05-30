@@ -608,64 +608,73 @@ export type MultiObjectsInfluencesProcessingContext<
             MultiObjectsInfluencesGroupKinds
         >
 
-// export class MultiObjectsInfluencesNormalizingProcessor<
-//         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-//         InfluenceGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-//         Result extends
-//             MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups> =
-//             MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups>,
-//         Context extends
-//             MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups> =
-//             MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups>
-//     >
-//     implements Processor<Result, Context> {
-//     init(context: Context): void {
-//         throw new Error("Method not implemented.");
-//     }
+export class MultiObjectsInfluencesNormalizingProcessor<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        InfluenceGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Result extends
+            MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups> =
+            MultiObjectsInfluencesProcessingResult<Objects, InfluenceGroups>,
+        Context extends
+            MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups> =
+            MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups>
+    >
+    implements Processor<Result, Context> {
+    connections!: {
+        readonly inputs: PropertyPath[]
+        readonly outputs: PropertyPath[]
+    }
+    
+    constructor(
+        public readonly influenceGroups?: InfluenceGroups
+    ) {
+    }
 
-//     readonly dependencies = []
+    init(context: Context): void {
+        const influenceGroups = groupKinds(
+            context,
+            MultiObjectsInfluencesGroupKindsTemplate,
+            this.influenceGroups
+        )
 
-//     /**
-//      * The influence groups to normalize.
-//      * 
-//      * If undefined or null, all influence groups will be normalized.
-//      * 
-//      * @default undefined
-//      */
-//     influenceGroups?: InfluenceGroups
+        const paths = [...influenceGroups].map(({ group: { path } }) => path)
 
-//     process(result: Result, context: Context): void {
-//         for (const influenceGroup of groupKindObjectsGrouped(result, context, MultiObjectsInfluencesGroupKindsTemplate)) {
-//             if (this.influenceGroups &&
-//                 !influenceGroup.group.get(this.influenceGroups))
-//                 continue
+        this.connections = {
+            inputs: paths,
+            outputs: paths.map(path => [...path, MultiObjectsCombinedValue])
+        }
+    }
 
-//             const influences = influenceGroup.objects.value as MultiObjectsInfluences<Objects>
-//             const objects_template = influenceGroup.objects.template
+    process(result: Result, context: Context): void {
+        for (const { objects } of groupKindObjectsGrouped(result, context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroups)) {
+            const influences = objects.value as MultiObjectsInfluences<Objects>
+            const objects_template = objects.template
 
-//             let sum = 0
-//             mapObjects(
-//                 influences,
-//                 objects_template,
-//                 (influences, key) =>
-//                     sum += influences[key]
-//             )
+            let sum = 0
             
-//             if (sum > 0) {
-//                 mapObjects(
-//                     influences,
-//                     objects_template,
-//                     (influences, key) =>
-//                         influences[key] /= sum
-//                 )
+            iterObjects(
+                influences,
+                objects_template,
+                (influences, key) =>
+                    sum += influences[key]
+            )
+            
+            if (sum > 0) {
+                iterObjects(
+                    influences,
+                    objects_template,
+                    (influences, key) =>
+                        influences[key] /= sum
+                )
 
-//                 sum = 1
-//             }
+                sum = 1
+            }
 
-//             influences[MultiObjectsCombinedValue] = sum
-//         }
-//     }
-// }
+            influences[MultiObjectsCombinedValue] = sum
+        }
+    }
+
+    public static readonly instance = new this()
+}
 
 export const influences = <
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

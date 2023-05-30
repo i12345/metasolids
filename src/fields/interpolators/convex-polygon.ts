@@ -55,10 +55,7 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
 
         return (location: Location) => {
             const p = extractor(location)
-
-            let inside = false
-            collider.collide(p, () => inside = true)
-
+            const inside = undefined !== collider.collision_first(p)
             if (!inside)
                 return invalid
 

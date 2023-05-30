@@ -503,7 +503,7 @@ function qualityMetrics_compute<
     /** indices in UV-unwrapped, not decimated vertices, divided by 3 */
     const tri_i_s = new Set<number>()
     const tri_n = UVunwrapping.finalIndices.length / 3
-    for (let i = 0; i < Math.min(5, tri_n); i++) {
+    for (let i = 0; i < Math.min(64, tri_n); i++) {
         let tri_i: number
         do tri_i = Math.min(tri_n - 1, Math.floor(tri_n * Math.random()))
         while (tri_i_s.has(tri_i))
@@ -536,7 +536,7 @@ function qualityMetrics_compute<
         }
         
         return {
-            sample: vertex_texture_samples.get(vertex)!,
+            sample: vertex_texture_samples.get(vertex_original_)!,
             location: vertex_texture_locations.get(vertex)!
         }
     }
@@ -580,8 +580,10 @@ function qualityMetrics_compute<
             }
         }
 
+        const constancy = (1 - field_point_stdDev(samples)) ** 10
+
         return {
-            constancy: Math.exp(-field_point_stdDev(samples)),
+            constancy,
             triangleMonotonicity: 1,
             effectiveTexelSizeUV: effectiveTexelSizeUV_dist.at(Math.floor(0.75 * effectiveTexelSizeUV_dist.length))!,
             meanValue
@@ -626,7 +628,7 @@ function qualityMetrics_compute<
     }
 
     const triangleMonotonicity = Math.exp(-(triangleInterpolating_error_total / triangleInterpolating_error_eval))
-    const constancy = Math.exp(-field_point_stdDev(samples))
+    const constancy = (1 - field_point_stdDev(samples)) ** 10
     const textureValuePerUV_q3 = textureValuePerUV_dist.sort((a, b) => a - b).at(Math.floor(0.75 * textureValuePerUV_dist.length))!
 
     let effectiveTexelSizeUV = (implementation.effectiveTexelDiff ?? EFFECTIVE_TEXEL_DIFF_DEFAULT) / textureValuePerUV_q3

@@ -228,7 +228,7 @@ export function iterTreeByLeavesValue(
         template: any,
         path: PropertyPath = []
     ) {
-        for (const key in Reflect.ownKeys(template)) {
+        for (const key of Reflect.ownKeys(template)) {
             const nextPath = [...path, key]
             
             if (template[key] === leaf)
@@ -260,7 +260,7 @@ export function iterTreeByLeavesValues(
         template: any,
         path: PropertyPath = []
     ) {
-        for (const key in Reflect.ownKeys(template)) {
+        for (const key of Reflect.ownKeys(template)) {
             const nextPath = [...path, key]
 
             if (leaves.includes(template[key]))

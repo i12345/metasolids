@@ -118,7 +118,8 @@ export class SolidWithEnclosingVolumeProcessor<
                     local_space,
                     (tri, w1, w2) => {
                         const z = z_interpolator.interpolate(tri, w1, w2)
-                        z_intercepts.push(z)
+                        if (z_intercepts.length === 0 || z_intercepts.every(z_ => Math.abs(z - z_) > 0.01))
+                            z_intercepts.push(z)
                     }
                 )
 

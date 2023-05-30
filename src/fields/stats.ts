@@ -23,7 +23,7 @@ export function field_point_stdDev<Point extends FieldPoint = FieldPoint>(points
         for (let i = 0; i < points.length; i++)
             diffSquares += ((points[i] as number) - mean) ** 2
         
-        return Math.sqrt(diffSquares) / (points.length - 1)
+        return Math.sqrt(diffSquares / (points.length - 1))
     }
     else if (points[0] instanceof Vec2)
         return fields_point_stdDev(points as FieldsPoint[])

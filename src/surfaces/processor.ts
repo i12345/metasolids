@@ -116,6 +116,8 @@ export class SurfaceSampleParallelizer<
         for (const sample of surface.samples)
             sampleProcessor.process(sample, parallelizedContext)
     }
+
+    static readonly instance = new this()
 }
 
 

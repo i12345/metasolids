@@ -68,7 +68,7 @@ export class SurfaceUVUnwrappingProcessor<
         )).group
 
         this._connections = {
-            inputs: [['samples']],
+            inputs: [['mesh']],
             outputs: [surfaceUVUnwrappingGroup.path],
         }
     }
