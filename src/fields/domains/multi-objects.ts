@@ -208,6 +208,7 @@ export class MultiObjectsSampleDomain<
 
     constructor(
         public children: { [Object in keyof Objects]: LeafDomain },
+        //TODO: this can be moved to the context object
         public readonly multiObj: {
             sample: {
                 groupKindsTemplate: SampleGroupKinds,
