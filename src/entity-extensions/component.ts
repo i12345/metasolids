@@ -50,7 +50,7 @@ export class VolumeComponent extends Component {
     customProcessors?: VolumeProcessorT[]
 
     get root() {
-        return this.findRoot().entity
+        return this.findRoot()?.entity
     }
 
     get isRoot() {
@@ -68,7 +68,7 @@ export class VolumeComponent extends Component {
     update() {
         const root = this.findRoot()
         if (root !== this) {
-            root.update()
+            root?.update()
             return
         }
 
@@ -250,7 +250,7 @@ export class VolumeComponent extends Component {
     private renderVolume() {
         const root = this.findRoot()
         if (root !== this) {
-            root.renderVolume()
+            root?.renderVolume()
             return
         }
 
@@ -271,7 +271,7 @@ export class VolumeComponent extends Component {
     private removeVolume() {
         const root = this.findRoot()
         if (root !== this) {
-            root.removeVolume()
+            root?.removeVolume()
             return
         }
 
@@ -281,9 +281,9 @@ export class VolumeComponent extends Component {
         if (this.entity.multibody) this.entity.removeComponent('multibody')
     }
 
-    private findRoot(node: GraphNode = this.entity): VolumeComponent {
+    private findRoot(node: GraphNode = this.entity): VolumeComponent | undefined {
         if (node.root === node)
-            return undefined!
+            return undefined
         
         const e = node as Entity
         if (!e.findComponent)
