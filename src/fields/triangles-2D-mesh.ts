@@ -79,6 +79,9 @@ export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> 
     }
 }
 
+export type TriangleCollisionHandler = (tri: number, w1: number, w2: number) => void
+export type TriangleCollision = { tri: number, w1: number, w2: number }
+
 export class Triangles2DMeshCollider {
     private cells: Triangles2DMeshQuad[]
 
@@ -104,7 +107,7 @@ export class Triangles2DMeshCollider {
         }
     }
 
-    collide(p: Vec2, collisionHandler: (tri: number, w1: number, w2: number) => void) {
+    collide(p: Vec2, collisionHandler: TriangleCollisionHandler) {
         const cell = new Vec2()
             .sub2(p, this.mesh.bounds.origin)
             .div(this.mesh.bounds.size).floor()
@@ -116,7 +119,7 @@ export class Triangles2DMeshCollider {
         this.cells[cell.x + (cell.y * this.resolution)].collide(p, collisionHandler)
     }
 
-    collision_first(p: Vec2): { tri: number, w1: number, w2: number } | undefined {
+    collision_first(p: Vec2): TriangleCollision | undefined {
         const cell = new Vec2()
             .sub2(p, this.mesh.bounds.origin)
             .div(this.mesh.bounds.size).floor()
@@ -217,7 +220,7 @@ class Triangles2DMeshQuad {
         }
     }
 
-    collide(point: Vec2, collisionHandler: (tri: number, w1: number, w2: number) => void) {
+    collide(point: Vec2, collisionHandler: TriangleCollisionHandler) {
         const { v0, tri_vec_inv } = this.mesh
 
         for (let tri of this.filtered_triangles) {
@@ -242,7 +245,7 @@ class Triangles2DMeshQuad {
         }
     }
 
-    collision_first(point: Vec2): { tri: number, w1: number, w2: number } | undefined {
+    collision_first(point: Vec2): TriangleCollision | undefined {
         const { v0, tri_vec_inv } = this.mesh
 
         for (let tri of this.filtered_triangles) {
