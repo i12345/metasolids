@@ -2,6 +2,7 @@ import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKind
 import { Texture, TextureLocation, TextureSample } from "../../textures/index.js";
 import { SurfaceProcessingContext } from "../processor.js";
 import { Surface, SurfaceSample } from "../surface.js";
+import { SurfaceProcessingContextWithUVUnwrapping, SurfaceWithUVUnwrapping } from "../uv-unwrapping/index.js";
 
 //TODO: this could be abstracted to be more generic and usable for solids
 
@@ -309,3 +310,87 @@ export type SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTexture
         ObjectsTexturesGrouped,
         SampleProcessingContextT
     >
+
+
+export type SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationT extends TextureLocation = TextureLocation,
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureT extends
+            Texture<TextureLocationT, TextureSampleT> =
+            Texture<TextureLocationT, TextureSampleT>,
+        TexturesGrouped extends
+            MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT> =
+            MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
+        Sample extends SurfaceSample = SurfaceSample
+    > =
+    SurfaceWithUVUnwrapping<
+            SurfaceUVUnwrappingGroup,
+            Sample
+        > &
+    TexturesGrouped
+
+export type SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationT extends TextureLocation = TextureLocation,
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureT extends
+            Texture<TextureLocationT, TextureSampleT> =
+            Texture<TextureLocationT, TextureSampleT>,
+        TexturesGrouped extends
+            MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT> =
+            MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
+        Sample extends SurfaceSample = SurfaceSample
+    > =
+    SurfaceWithUVUnwrapping<
+            SurfaceUVUnwrappingGroup,
+            Sample
+        > &
+    MultiObjectsMappedAgainGrouped<Objects, ObjectsTextureGroups, TextureT, TexturesGrouped>
+
+export type SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        SampleProcessingContextT = any
+    > =
+    SurfaceProcessingContextWithUVUnwrapping<
+        SurfaceUVUnwrappingGroup,
+        SampleProcessingContextT
+    > &
+    MultiObjectsGroupsProcessingContext<
+        IndividualTextureGroups,
+        SurfaceIndividualTexturesGroupKinds
+    > &
+    MultiObjectsGroupsProcessingContext<
+        IndividualTextureGroups,
+        SurfaceTexturesGroupKinds
+    >
+
+export type SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ObjectsTexturesGrouped extends
+            MultiObjectsGrouped<Objects, ObjectsTextureGroups> =
+            MultiObjectsGrouped<Objects, ObjectsTextureGroups>,
+        SampleProcessingContextT = any
+    > =
+    SurfaceProcessingContextWithUVUnwrapping<
+            SurfaceUVUnwrappingGroup,
+            SampleProcessingContextT
+        > &
+    MultiObjectsProcessingContext<
+            Objects,
+            ObjectsTextureGroups,
+            ObjectsTexturesGrouped,
+            SurfaceObjectsTexturesGroupKinds
+        > &
+    MultiObjectsProcessingContext<
+            Objects,
+            ObjectsTextureGroups,
+            ObjectsTexturesGrouped,
+            SurfaceTexturesGroupKinds
+        >

@@ -25,7 +25,7 @@ export class VolumeComponentSystem extends ComponentSystem {
         ),
         new processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
-            new surfaces.texturing.SurfaceUVUnwrappingProcessor(
+            new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
                 "xAtlas"
             ) as VolumeSurfaceProcessorT
         ),

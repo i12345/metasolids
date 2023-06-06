@@ -1,11 +1,11 @@
-import { SurfaceProcessor } from "../../processor.js";
-import { SurfaceSample } from "../../surface.js";
-import { MultiObjectsGroupsTemplate, groupKinds } from "../../../fields/index.js";
-import { onlyOne } from "../../../utils/only-one.js";
+import { SurfaceProcessor } from "../processor.js";
+import { SurfaceSample } from "../surface.js";
+import { MultiObjectsGroupsTemplate, groupKinds } from "../../fields/index.js";
+import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrappingAlgorithms } from "./algorithms.js";
 import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
-import { PropertyPath } from "../../../utils/property-path.js";
+import { PropertyPath } from "../../utils/property-path.js";
 
 export class SurfaceUVUnwrappingProcessor<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,

@@ -3,7 +3,9 @@ import { Processor } from "../../../processor/processor.js";
 import { TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { onlyOne, PROPERTYKEY_ALL, PropertyPath } from "../../../utils/index.js";
 import { SurfaceSample } from "../../surface.js";
-import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceUVUnwrapping } from "../uv-unwrapping/index.js"
+import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
+import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
+import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 
 // type A = {
 //     a: {

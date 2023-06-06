@@ -8,7 +8,8 @@ import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation
 import { Material_Groups } from "./groups.js";
 import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial } from "playcanvas-extended";
 import { FormatChannelQuality } from "./texture-formats.js";
-import { SurfaceTextureLocationsGroupKindsTemplate, SurfaceUVUnwrapping } from "../../texturing/index.js";
+import { SurfaceUVUnwrapping } from "../../uv-unwrapping/index.js";
+import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";
 import { MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors, MaterialSemanticImplementationStorageClass_Constant, MaterialSemanticImplementationStorageClass_Texture } from "./storage-classes/index.js";
 import { Material_Texture_Context, Material_Texture_Location } from "./material-texture.js";
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "../surface.js";

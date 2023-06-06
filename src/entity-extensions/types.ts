@@ -30,18 +30,18 @@ export const SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsTemplate: Surf
 export type SurfaceObjectsTextureLocationsT = textures.TextureLocation
 export type SurfaceCombinedTextureLocationT = textures.TextureLocation
 
-export type SurfaceUVUnwrappingGroupT = surfaces.texturing.SurfaceUVUnwrappingGroupsDefault
-export const SurfaceUVUnwrappingGroupTemplate: SurfaceUVUnwrappingGroupT = surfaces.texturing.SurfaceUVUnwrappingGroupsDefaultTemplate
+export type SurfaceUVUnwrappingGroupT = surfaces.UVunwrapping.SurfaceUVUnwrappingGroupsDefault
+export const SurfaceUVUnwrappingGroupTemplate: SurfaceUVUnwrappingGroupT = surfaces.UVunwrapping.SurfaceUVUnwrappingGroupsDefaultTemplate
 export const SurfaceUVUnwrappingGroup_Path = onlyOne(groupPaths(SurfaceUVUnwrappingGroupTemplate))
 
 export type SurfaceUVUnwrappingGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
-        surfaces.texturing.SurfaceUVUnwrappingGroupKinds,
+        surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds,
         SurfaceUVUnwrappingGroupT
     >
 
 export const SurfaceUVUnwrappingGroupsKindsMappedGroupsTemplate: SurfaceUVUnwrappingGroupsKindsMappedGroupsT = {
-    [surfaces.texturing.SurfaceUVUnwrappingGroupKindKey]: SurfaceUVUnwrappingGroupTemplate
+    [surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindKey]: SurfaceUVUnwrappingGroupTemplate
 }
 
 /**
@@ -500,7 +500,7 @@ export type SurfaceProcessingContext_MultiObjects =
     // SampleProcessingContext_MultiObjects &
     MultiObjectsGroupsProcessingContext<
         SurfaceUVUnwrappingGroupT,
-        surfaces.texturing.SurfaceUVUnwrappingGroupKinds
+        surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds
     > &
     MultiObjectsProcessingContext<
         Objects,
@@ -575,7 +575,7 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
     [MultiObjectsProcessingContextGroupKinds]: {
         // ...MultiObjectsInfluencesGroupKindsTemplate,
         
-        ...surfaces.texturing.SurfaceUVUnwrappingGroupKindsTemplate,
+        ...surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindsTemplate,
 
         ...surfaces.texturing.SurfaceObjectsTexturesGroupKindsTemplate,
         ...surfaces.texturing.SurfaceIndividualTexturesGroupKindsTemplate,

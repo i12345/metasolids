@@ -4,7 +4,8 @@ import { LevelOfDetailInfoComputerShared, LevelOfDetailInfoComputerIndividual } 
 import { MeshDecimationIndividual, MeshDecimationShared } from "./decimation.js";
 import { MultiObjectsGroupsTemplate, RANGE_MAX, RANGE_MIN, groupKinds } from "../../../fields/index.js";
 import { RefCount, onlyOne } from "../../../utils/index.js";
-import { SurfaceTextureLocationsGroupKindsTemplate, SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../texturing/index.js";
+import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
+import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";
 import { TextureLocation } from "../../../textures/texture.js";
 import { VolumeLocation } from "../../../volumes/volume.js";
 

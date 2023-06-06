@@ -1,10 +1,11 @@
 import { FieldPoint, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped } from "../../../fields/index.js";
 import { Processor } from "../../../processor/processor.js";
-import { Texture, TextureLocation, TextureSample, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
+import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { onlyOne, PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL } from "../../../utils/index.js";
-import { Surface, SurfaceSample } from "../../surface.js";
-import { SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping, SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping, SurfaceWithUVUnwrapping } from "../index.js";
-import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations } from "../types.js";
+import { SurfaceSample } from "../../surface.js";
+import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
+import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
+import { SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 
 // type A = {
 //     a: {

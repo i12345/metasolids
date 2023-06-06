@@ -1,6 +1,6 @@
 import { Vec2 } from "playcanvas-extended";
-import { MeshData } from "../../meshing/types.js";
-import { IndiciesArray } from "../../../utils/indices-array.js";
+import { MeshData } from "../meshing/types.js";
+import { IndiciesArray } from "../../utils/indices-array.js";
 
 export interface SurfaceUVUnwrapping {
     /**

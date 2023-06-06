@@ -3,7 +3,7 @@ import { VolumeLocation } from "../../volumes/volume.js";
 import { SurfaceRendererShared } from "./renderer.js";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../fields/multi-objects-fields-point.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
-import { texturing } from "../index.js";
+import { UVunwrapping, texturing } from "../index.js";
 
 export type SurfaceWithRendering_TextureGroups = {
     material: {
@@ -29,7 +29,7 @@ export type SurfaceWithRendering<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > =
-    texturing.SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup> &
+    UVunwrapping.SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup> &
     SurfaceWithRender_TexturesTemplated<VolumeLocationT> & {
     renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
 }
