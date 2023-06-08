@@ -16,5 +16,5 @@ export * from './domains/index.js'
 export * from './curve.js'
 
 export * from './object-algebra.js'
-export * from './multi-objects-fields-point.js'
+export * from './multi-objects.js'
 export * from './triangles-2D-mesh.js'

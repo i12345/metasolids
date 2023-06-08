@@ -1,5 +1,5 @@
 import { Color, StandardMaterial, BasicMaterial, BLEND_NORMAL } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../paradigm/multi-objects.js"
 
 export type Material_Groups = {
     /**

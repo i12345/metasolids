@@ -7,8 +7,10 @@ export class ConstantInterpolationType<T> implements InterpolationType<T> {
         if (typeof keypoints[0].location !== 'number')
             return undefined
         
+        const t_keypoints = keypoints.map(({ location }) => <number>location)
+        
         return t => {
-            const index = keypoint_index(t as number, keypoints as InterpolationKeypoint<number, T>[])
+            const index = keypoint_index(t as number, t_keypoints)
             if (index < 0) return keypoints[0].value
             else if (index >= keypoints.length) return keypoints[keypoints.length - 1].value
             else return keypoints[index].value

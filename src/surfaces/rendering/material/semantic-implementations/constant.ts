@@ -5,7 +5,7 @@ import { MaterialSemanticImplementationStorageClass_Constant } from "../storage-
 import { SurfaceRendererIndividual } from "../../renderer.js"
 import { FieldPoint, field_point_equal } from "../../../../fields/point.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
-import { MultiObjectsGroupsTemplate } from "../../../../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"
 
 export class MaterialSemanticImplementation_Constant<

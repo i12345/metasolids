@@ -1,5 +1,6 @@
 import { AppBase, Application, CameraComponent, Entity, LightComponent, RenderComponent, Vec2, Vec3 } from "playcanvas-extended"
-import { FieldPointRange, FieldPointVectorized, RANGE_MAX, RANGE_MIN, field_point_mean, field_point_range_compute, groupKinds } from "../../../fields/index.js"
+import { groupKinds } from "../../../paradigm/index.js";
+import { FieldPointRange, FieldPointVectorized, RANGE_MAX, RANGE_MIN, field_point_mean, field_point_range_compute } from "../../../fields/index.js"
 import { MeshDecimationIndividual } from "./decimation.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
 import { IndiciesArray, indicesArrayType } from "../../../utils/indices-array.js"

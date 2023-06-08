@@ -1,6 +1,6 @@
 import { Color } from "playcanvas-extended";
-import { FieldPoint, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf } from "../../../fields/index.js";
-import { Processor } from "../../../processor/processor.js";
+import { Processor, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf } from "../../../paradigm/index.js";
+import { FieldPoint } from "../../../fields/index.js";
 import { Texture, TextureLocation, TextureSample, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { onlyOne, PROPERTYKEY_ALL, PropertyPath } from "../../../utils/index.js";
 import { Surface, SurfaceSample } from "../../surface.js";

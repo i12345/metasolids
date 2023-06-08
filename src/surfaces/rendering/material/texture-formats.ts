@@ -71,11 +71,11 @@ export function format_selector(channels: number, hdr: boolean) {
         },
         [3]: {
             [VALUE_RESOLUTION_LDR]: PIXELFORMAT_RGB8,
-            [VALUE_RESOLUTION_LDR]: PIXELFORMAT_RGB16F,
+            [VALUE_RESOLUTION_HDR]: PIXELFORMAT_RGB16F,
         },
         [4]: {
             [VALUE_RESOLUTION_LDR]: PIXELFORMAT_RGBA8,
-            [VALUE_RESOLUTION_LDR]: PIXELFORMAT_RGBA16F,
+            [VALUE_RESOLUTION_HDR]: PIXELFORMAT_RGBA16F,
         }
     }
 

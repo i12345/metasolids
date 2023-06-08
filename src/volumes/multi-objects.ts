@@ -1,6 +1,7 @@
-import { FieldPoint, MultiObjectsGrouped, MultiObjectsGroupsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesProcessingResult, MultiObjectsProcessingResult, MultiObjectsTemplate } from "../fields/index.js";
-import { ParallelizedContext } from "../processor/index.js";
+import { MultiObjectsGrouped, MultiObjectsGroupsTemplate, MultiObjectsProcessingResult, MultiObjectsTemplate } from "../paradigm/index.js";
+import { FieldPoint, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesProcessingResult } from "../fields/index.js";
 import { VolumeSample } from "./volume.js";
+import { ParallelizedContext } from "../paradigm/processors/parallel.js";
 
 export type MultiObjectsVolumeSample<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

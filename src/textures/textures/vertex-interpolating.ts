@@ -1,5 +1,6 @@
 import { Vec2 } from "playcanvas-extended";
-import { Field, FieldPoint, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, defaultField, field_point_identity } from "../../fields/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../paradigm/index.js";
+import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, defaultField, field_point_identity } from "../../fields/index.js";
 import { Texture, TextureLocation } from "../texture.js";
 import { IndiciesArray } from "../../utils/indices-array.js";
 

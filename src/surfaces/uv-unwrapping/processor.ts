@@ -1,6 +1,6 @@
 import { SurfaceProcessor } from "../processor.js";
 import { SurfaceSample } from "../surface.js";
-import { MultiObjectsGroupsTemplate, groupKinds } from "../../fields/index.js";
+import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/index.js";
 import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrappingAlgorithms } from "./algorithms.js";
 import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js";

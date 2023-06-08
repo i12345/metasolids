@@ -2,7 +2,8 @@ import { Mesh, PRIMITIVE_TRIANGLES, calculateNormals } from "playcanvas-extended
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js";
 import { LevelOfDetailInfoComputerShared, LevelOfDetailInfoComputerIndividual } from "./LOD-info.js";
 import { MeshDecimationIndividual, MeshDecimationShared } from "./decimation.js";
-import { MultiObjectsGroupsTemplate, RANGE_MAX, RANGE_MIN, groupKinds } from "../../../fields/index.js";
+import { MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/index.js";
+import { RANGE_MAX, RANGE_MIN } from "../../../fields/index.js";
 import { RefCount, onlyOne } from "../../../utils/index.js";
 import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
 import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";

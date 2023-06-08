@@ -1,5 +1,6 @@
 import { Vec2 } from "playcanvas-extended";
-import { FieldPoint, MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedGrouped, MultiObjectsTemplate, SampleDomain, SamplingContext } from "../fields/index.js";
+import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedGrouped, MultiObjectsTemplate } from "../paradigm/index.js";
+import { FieldPoint, SampleDomain, SamplingContext } from "../fields/index.js";
 
 export type TextureUV = Vec2
 

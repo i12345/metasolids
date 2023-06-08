@@ -1,5 +1,6 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { groups, RANGE_MIN, RANGE_MAX, MultiObjectsGroupsTemplate } from "../../../../fields/index.js"
+import { groups, MultiObjectsGroupsTemplate } from "../../../../paradigm/index.js";
+import { RANGE_MIN, RANGE_MAX } from "../../../../fields/index.js"
 import { Texture, TextureSample } from "../../../../textures/texture.js"
 import { GeneratorType } from "../../../../utils/generator-type.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"

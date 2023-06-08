@@ -3,7 +3,7 @@ import { VolumeLocation } from "../../volumes/volume.js"
 import { MaterialRendererIndividual, MaterialRendererShared } from "./material/renderer.js"
 import { SurfaceWithRendering, SurfaceProcessingContextWithRendering } from "./surface.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./mesh/renderer.js"
-import { MultiObjectsGroupsTemplate } from "../../fields/index.js"
+import { MultiObjectsGroupsTemplate } from "../../paradigm/index.js"
 
 export class SurfaceRendererShared<
         VolumeLocationT extends VolumeLocation = VolumeLocation,

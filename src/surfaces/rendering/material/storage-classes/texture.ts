@@ -4,7 +4,7 @@ import { PackedRenderedBufferForSemanticWithRefCount, pack, renderPack } from ".
 import { format_selector } from "../texture-formats.js";
 import { colorChannelsString } from "../color-channels.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
-import { MultiObjectsGroupsTemplate } from "../../../../fields/multi-objects-fields-point.js";
+import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 
 interface PackedRenderedBufferForSemanticWithTexture

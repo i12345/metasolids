@@ -3,7 +3,7 @@ import { SampleDomain, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { makeInterpolator } from "../interpolation.js"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf } from "../multi-objects-fields-point.js"
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf } from "../../paradigm/multi-objects.js"
 import { FieldPoint, FieldsPoint, fields_point_map, field_point_add_inplace } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
 

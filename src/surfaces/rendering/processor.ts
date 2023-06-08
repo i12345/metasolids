@@ -2,11 +2,12 @@ import { SurfaceProcessor, VolumeSurfaceProcessingContext } from "../processor.j
 import { SurfaceSample } from "../surface.js";
 import { Material_Groups_Template } from "./material/groups.js";
 import { VolumeLocation } from "../../volumes/volume.js";
-import { Field, FieldsField, FieldsPointMapped, FieldsPoint_Omit_Leaf, MultiObjectsGroupsTemplate, SampleDomainLocationField, Vec2Field, groups } from "../../fields/index.js";
+import { MultiObjectsGroupsTemplate, groups } from "../../paradigm/index.js";
+import { Field, FieldsField, FieldsPointMapped, FieldsPoint_Omit_Leaf, SampleDomainLocationField, Vec2Field } from "../../fields/index.js";
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./surface.js";
 import { SurfaceRendererShared } from "./renderer.js";
 import { Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js";
-import { ParallelizedContextParallelInfo } from "../../processor/index.js";
+import { ParallelizedContextParallelInfo } from "../../paradigm/processors/parallel.js";
 import { AppBase } from "playcanvas-extended";
 
 export class SurfaceWithRenderingProcessor<

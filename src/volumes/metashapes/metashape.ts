@@ -1,5 +1,6 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field, field_point_invalid, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../fields/index.js";
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/multi-objects.js"
+import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field, field_point_invalid } from "../../fields/index.js";
 import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/texture.js";
 import { extract } from "../../utils/tree.js";

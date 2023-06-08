@@ -1,7 +1,7 @@
 import { Material_Groups_Textures, Material_Texture_Context } from "./material/material-texture.js";
 import { VolumeLocation } from "../../volumes/volume.js";
 import { SurfaceRendererShared } from "./renderer.js";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../fields/multi-objects-fields-point.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../paradigm/multi-objects.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
 import { UVunwrapping, texturing } from "../index.js";
 

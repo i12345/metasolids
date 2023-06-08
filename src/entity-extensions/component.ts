@@ -1,6 +1,6 @@
 import { Component, Entity, GraphNode } from "playcanvas-extended";
-import { fields, processors, solids, surfaces, textures, volumes } from "../index.js";
-import { mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../fields/multi-objects-fields-point.js";
+import { fields, paradigm, solids, surfaces, textures, volumes } from "../index.js";
+import { mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/multi-objects.js";
 import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
 import { intract, pathsToNodeWithKey } from "../utils/tree.js";
@@ -114,7 +114,7 @@ export class VolumeComponent extends Component {
                             groupKindsTemplate: Volume_Sample_PreservedGroupsKindsTemplate
                         }
                     },
-                    MultiObjectsInfluencesGroupsDefaultTemplate
+                    fields.MultiObjectsInfluencesGroupsDefaultTemplate
                 ) as any as VolumeT
             }
         }
@@ -232,9 +232,9 @@ export class VolumeComponent extends Component {
             [solids.VolumeSolidsKey]: [] as SolidT[],
         } as VolumeProcessingT
 
-        const graph = new processors.GraphProcessor<VolumeProcessingT, VolumeProcessingContextT>([
+        const graph = new paradigm.processors.GraphProcessor<VolumeProcessingT, VolumeProcessingContextT>([
             ...system.processors,
-            new processors.ParallelizingProcessor(
+            new paradigm.processors.ParallelizingProcessor(
                 surfaces.VolumeSurfacesParallelizer.instance,
                 ///@ts-ignore
                 new textures.TextureableProcessor<SurfaceT, SurfaceCombinedTextureLocationT>() as VolumeSurfaceProcessorT

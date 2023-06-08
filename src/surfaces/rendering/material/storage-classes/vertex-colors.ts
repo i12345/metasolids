@@ -4,7 +4,7 @@ import { PackedRenderedBufferForSemantic, PackedRenderedBufferForSemanticWithRef
 import { colorChannelsString } from "../color-channels.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { Mesh } from "playcanvas-extended";
-import { MultiObjectsGroupsTemplate } from "../../../../fields/multi-objects-fields-point.js";
+import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 
 interface PackedRenderedBufferForSemanticWithMixedBuffer

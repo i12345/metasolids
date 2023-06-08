@@ -3,7 +3,8 @@ import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from
 import { GeneratorType, Reflect_entries, onlyOne } from "../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
-import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, MultiObjectsGroupsMapped, groupKinds, groups, field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator, MultiObjectsGroupsTemplate } from "../../../fields/index.js";
+import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate } from "../../../paradigm/index.js";
+import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator } from "../../../fields/index.js";
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
 import { Material_Groups } from "./groups.js";
 import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial } from "playcanvas-extended";

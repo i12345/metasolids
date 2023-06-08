@@ -1,5 +1,6 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
-import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField, FieldsPoint, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../fields/index.js";
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/index.js";
+import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, extraFields, ExtraFields, Field, FieldInterpolator, FieldsField, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationField, SamplingContext, ScalarField, FieldsPoint } from "../../fields/index.js";
 import { Pi, PiOver2, TwoPi } from "../../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../../textures/texture.js";
 import { MultiObjectsVolume } from "../volumes/multi-objects.js";

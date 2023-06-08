@@ -1,6 +1,6 @@
 import { Vec2 } from "playcanvas-extended";
 import { Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../processor/index.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../paradigm/processors/parallel.js";
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingKey } from "../../volumes/index.js";
 import { SolidProcessingContext, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../processor.js";

@@ -1,5 +1,6 @@
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../fields/multi-objects-fields-point.js";
-import { Processor, GraphProcessor } from "../processor/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../paradigm/index.js";
+import { Processor } from "../paradigm/index.js";
+import { GraphProcessor } from "../paradigm/processors/graph.js";
 import { PropertyPath } from "../utils/property-path.js";
 import { extract, intract } from "../utils/tree.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "./texture.js";

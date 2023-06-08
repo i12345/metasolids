@@ -1,5 +1,5 @@
 import { BasicMaterial, StandardMaterial } from "playcanvas-extended"
-import { MultiObjectsGroupsMapped, groups, MultiObjectsGroupsTemplate } from "../../../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsMapped, groups, MultiObjectsGroupsTemplate } from "../../../paradigm/multi-objects.js"
 import { field_point_sum, field_point_primitives_sum, field_point_fraction, field_point_subtract, field_point_compare_gte, field_point_add_inplace } from "../../../fields/point.js"
 import { Texture, opaqueStagedTexture } from "../../../textures/index.js"
 import { cacheGenerator } from "../../../utils/cache-generator.js"

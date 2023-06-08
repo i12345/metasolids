@@ -1,4 +1,4 @@
-import { ContextWorker } from "../processor/context-worker.js"
+import { ContextWorker } from "../paradigm/context-worker.js"
 import { Field } from "./field.js"
 import { FieldPoint } from "./point.js"
 

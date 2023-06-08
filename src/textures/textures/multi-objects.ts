@@ -1,4 +1,5 @@
-import { Field, FieldPoint, FieldPointCombiner, FieldsField, iterObjects, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues, SampleDomainLocationField, SamplingContext } from "../../fields/index.js";
+import { iterObjects, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues } from "../../paradigm/index.js";
+import { Field, FieldPoint, FieldPointCombiner, FieldsField, SampleDomainLocationField, SamplingContext } from "../../fields/index.js";
 import { extract, intract } from "../../utils/tree.js";
 import { Texture, TextureLocation, TextureSample } from "../texture.js";
 

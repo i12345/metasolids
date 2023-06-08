@@ -1,4 +1,5 @@
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js"
+import { Processor } from "../paradigm/index.js"
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../paradigm/processors/parallel.js";
 import { Surface } from "../surfaces/surface.js"
 import { SurfaceProcessingContext, SurfaceProcessor, VolumeSurfaceProcessingContext, VolumeSurfaceProcessor, VolumeSurfacesKey, VolumeSurfacesProcessing, VolumeSurfacesProcessingContext } from "../surfaces/processor.js"
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js"

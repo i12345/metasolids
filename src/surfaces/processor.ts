@@ -1,5 +1,6 @@
 import { MeshingAlgorithm, MeshingSettings } from "./meshing/meshing-algorithm.js";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer, Processor } from "../processor/index.js";
+import { Processor } from "../paradigm/index.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../paradigm/processors/parallel.js";
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
 import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingKey, VolumeSamplingProcessor } from "../volumes/processor.js";
 import { MeshDataWithNormals, Surface, SurfaceSample } from "./surface.js";

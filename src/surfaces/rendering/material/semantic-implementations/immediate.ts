@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsTemplate } from "../../../../fields/multi-objects-fields-point.js";
+import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 import { MaterialSemanticImplementation } from "../implementation.js";
 

@@ -1,5 +1,6 @@
 import { BoundingBox } from 'playcanvas-extended'
-import { FieldPoint, MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsSampleDomain, MultiObjectsSample, MultiObjectsContext, groups, groupKinds, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsProcessingContext, MultiObjectsDomainInternalPreservedGroupsKinds } from '../../fields/index.js'
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, groups, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsProcessingContext } from "../../paradigm/index.js"
+import { FieldPoint, MultiObjectsSampleDomain, MultiObjectsSample, MultiObjectsContext, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKinds } from '../../fields/index.js'
 import { Volume, VolumeLocation, VolumeSample } from '../volume.js'
 import { GeneratorType, onlyOne } from '../../utils/index.js'
 import { VolumeSampleKey } from '../processor.js'

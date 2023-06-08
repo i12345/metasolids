@@ -1,5 +1,5 @@
 import { AppBase, ComponentSystem, Entity } from "playcanvas-extended"
-import { fields, processors, solids, surfaces, volumes } from "../index.js"
+import { fields, paradigm, solids, surfaces, volumes } from "../index.js"
 import { VolumeComponent } from "./component.js"
 import { VolumeComponentData } from "./data.js"
 import { InterpolatingGroupsKindsTemplate, InterpolatingGroupsTemplate, SampleProcessingContextT, SampleT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
@@ -12,38 +12,38 @@ export class VolumeComponentSystem extends ComponentSystem {
     readonly processors: VolumeProcessorT[] = [
         new volumes.VolumeSamplingProcessor(),
         new surfaces.meshing.VolumeSurfaceMeshingProcessor(),
-        new processors.ParallelizingProcessor(
+        new paradigm.processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
             new surfaces.measuring.SurfaceWithSurfaceAreaProcessor()
         ),
-        new processors.ParallelizingProcessor(
+        new paradigm.processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
-            new processors.ParallelizingProcessor(
+            new paradigm.processors.ParallelizingProcessor(
                 surfaces.SurfaceSampleParallelizer.instance,
-                fields.MultiObjectsInfluencesNormalizingProcessor.instance as any
+                new fields.MultiObjectsInfluencesNormalizingProcessor() as any
             ) as unknown as VolumeSurfaceProcessorT
         ),
-        new processors.ParallelizingProcessor(
+        new paradigm.processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
             new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
                 "xAtlas"
             ) as VolumeSurfaceProcessorT
         ),
-        new processors.ParallelizingProcessor(
+        new paradigm.processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
             new surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
                 InterpolatingGroupsKindsTemplate
             ) as unknown as VolumeSurfaceProcessorT
         ),
-        new processors.ParallelizingProcessor(
+        new paradigm.processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
             new surfaces.rendering.SurfaceWithRenderingProcessor(this.app) as unknown as VolumeSurfaceProcessorT
         ),
-        new processors.ParallelizingProcessor(
+        new paradigm.processors.ParallelizingProcessor(
             surfaces.VolumeSurfacesParallelizer.instance,
             new solids.VolumeSurfaceSolidifyingProcessor() as VolumeSurfaceProcessorT,
         ),
-        new processors.ParallelizingProcessor(
+        new paradigm.processors.ParallelizingProcessor(
             solids.VolumeSolidsParallelizer.instance,
             new solids.SolidWithEnclosingVolumeProcessor() as VolumeSolidProcessorT
         ),

@@ -1,5 +1,5 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate, groups } from "../../../../fields/multi-objects-fields-point.js"
+import { MultiObjectsGroupsTemplate, groups } from "../../../../paradigm/multi-objects.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../fields/range.js"
 import { textures } from "../../../../index.js"
 import { TextureSample } from "../../../../textures/texture.js"

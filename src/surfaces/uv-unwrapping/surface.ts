@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../fields/multi-objects-fields-point.js";
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/multi-objects.js";
 import { SurfaceProcessingContext } from "../processor.js";
 import { Surface, SurfaceSample } from "../surface.js";
 import { SurfaceUVUnwrapping } from "./algorithm.js";

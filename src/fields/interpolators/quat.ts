@@ -13,9 +13,11 @@ export class QuatInterpolationType implements FieldInterpolationType<Quat> {
         if (typeof keypoints[0].location !== 'number')
             return undefined
         
+        const t_keypoints = keypoints.map(({ location }) => <number>location)
+        
         return location => {
             const t = location as number
-            const i = keypoint_index(t, keypoints as FieldInterpolationKeypoint<number, Quat>[])
+            const i = keypoint_index(t, t_keypoints)
             if (keypoints[i].location === t)
                 return keypoints[i].value
             else if (i >= 0 && i + 1 < keypoints.length)
