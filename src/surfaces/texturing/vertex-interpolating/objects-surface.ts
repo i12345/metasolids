@@ -1,6 +1,6 @@
 import { objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped } from "../../../paradigm/index.js";
 import { FieldPoint } from "../../../fields/index.js";
-import { Processor } from "../../../paradigm/processor.js";
+import { Processor } from "../../../processing/processor.js";
 import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { onlyOne, PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL } from "../../../utils/index.js";
 import { SurfaceSample } from "../../surface.js";

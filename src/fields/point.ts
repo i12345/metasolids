@@ -1,6 +1,6 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
 import { mat4_from_mat3, trs } from "../utils/matrix.js";
-import { PropertyPath } from "../utils/property-path.js";
+import { PropertyPath } from "../paradigm/property-path.js";
 import { Reflect_fromEntries } from "../utils/index.js";
 
 export type Vector = Array<number>

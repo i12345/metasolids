@@ -1,7 +1,7 @@
 import { ConstantSampleDomain, defaultField } from "../../fields/index.js";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/index.js";
 import { FieldPoint } from "../../fields/point.js";
-import { PropertyPath } from "../../utils/property-path.js";
+import { PropertyPath } from "../../paradigm/property-path.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "../texture.js";
 import { TextureableProcessingContext, Texturer } from "../texturer.js";
 

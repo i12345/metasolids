@@ -1,11 +1,11 @@
 import { MeshingAlgorithm, MeshingSettings } from "./meshing/meshing-algorithm.js";
-import { Processor } from "../paradigm/index.js";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../paradigm/processors/parallel.js";
+import { Processor } from "../processing/index.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processing/processors/parallel.js";
 import { VolumeLocation, VolumeSample } from "../volumes/volume.js";
 import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor, VolumeSamplingKey, VolumeSamplingProcessor } from "../volumes/processor.js";
 import { MeshDataWithNormals, Surface, SurfaceSample } from "./surface.js";
 import { Vec3, calculateNormals } from "playcanvas-extended";
-import { PROPERTYKEY_ALL } from "../utils/property-path.js";
+import { PROPERTYKEY_ALL } from "../paradigm/property-path.js";
 
 export interface SurfaceProcessingContext<
         SampleContextTemplate = any
@@ -117,6 +117,8 @@ export class SurfaceSampleParallelizer<
         for (const sample of surface.samples)
             sampleProcessor.process(sample, parallelizedContext)
     }
+
+    private constructor() { }
 
     static readonly instance = new this()
 }
@@ -323,6 +325,8 @@ export class VolumeSurfacesParallelizer<
         for (const surface of item[VolumeSurfacesKey])
             itemProcessor.process(surface, parallelizedContext)
     }
+
+    private constructor() { }
 
     static readonly instance = new this()
 }

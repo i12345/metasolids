@@ -3,7 +3,7 @@ import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from 
 import { change, ExtraFields, Field, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, ScalarField, TransformingSampleDomain, Vec2Field, Vec3Field, field_point_invalid } from "../../fields/index.js";
 import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/texture.js";
-import { extract } from "../../utils/tree.js";
+import { extract } from "../../paradigm/tree.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js";
 import { meshing, texturing } from "../../surfaces/index.js";
 

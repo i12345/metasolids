@@ -2,7 +2,7 @@ import { FieldPoint } from '../point.js'
 import { SampleDomain, SampleDomainLocationField, SamplingContext } from '../domain.js'
 import { Field } from '../field.js'
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from './encapsulating.js'
-import { PropertyPath } from '../../utils/property-path.js'
+import { PropertyPath } from '../../paradigm/property-path.js'
 
 export type TransformingDefaultInnerSamplingContext<
         OuterLocation extends FieldPoint = FieldPoint,

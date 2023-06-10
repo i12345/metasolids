@@ -1,7 +1,7 @@
 import { FieldPoint, field_point_add_inplace_weighted, field_point_clone, field_point_identity, field_point_invalid, field_point_path } from "../point.js";
 import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { Vec2 } from "playcanvas-extended";
-import { makeExtractor } from "../../utils/tree.js";
+import { makeExtractor } from "../../paradigm/tree.js";
 import { Triangles2DMesh, Triangles2DMeshCollider } from "../triangles-2D-mesh.js";
 import { Pi, TwoPi } from "../../utils/pi.js";
 

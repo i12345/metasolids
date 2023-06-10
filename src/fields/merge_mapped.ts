@@ -1,5 +1,5 @@
-import { PropertyPath } from "../utils/property-path.js";
-import { extract, intract } from "../utils/tree.js";
+import { PropertyPath } from "../paradigm/property-path.js";
+import { extract, intract } from "../paradigm/tree.js";
 import { FieldPoint } from "./point.js";
 
 export interface FieldPointMapping {

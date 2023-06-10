@@ -1,6 +1,6 @@
 import { MeshData } from "./meshing/types.js";
 import { VolumeSample } from "../volumes/volume.js";
-import { Instance } from "../paradigm/instance.js";
+import { Instance } from "../processing/instance.js";
 import { Mat4 } from "playcanvas-extended";
 
 export type SurfaceSample = VolumeSample

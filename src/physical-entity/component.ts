@@ -1,86 +1,40 @@
-import { Component, Entity, GraphNode } from "playcanvas-extended";
-import { fields, paradigm, solids, surfaces, textures, volumes } from "../index.js";
+import { Entity, GraphNode } from "playcanvas-extended";
+import { fields, processing, solids, surfaces, textures, volumes } from "../index.js";
 import { mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/multi-objects.js";
 import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
-import { intract, pathsToNodeWithKey } from "../utils/tree.js";
+import { intract, pathsToNodeWithKey } from "../paradigm/tree.js";
 import { onlyOne, PropertyPath, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
-import { VolumeComponentSystem } from "./system.js";
+import { ComponentSystem, SYSTEM_ID } from "./system.js";
 
-const _schema = ['enabled']
-
-export class VolumeComponent extends Component {
-    private _volume?: VolumeT
-    private _processed?: VolumeProcessingT
+export class Component<ID = string> extends processing.Component<
+        VolumeProcessingT,
+        VolumeProcessingInstanceT,
+        VolumeProcessingContextT,
+        ID
+    > {
     private _multiObjPath?: PropertyPath
-
-    get volume() {
-        return this._volume
-    }
-
-    set volume(volume) {
-        this._volume = volume
-        this.update()
-    }
-
-    get processed() {
-        return this._processed
-    }
-
-    set processed(processed) {
-        if (this.findRoot() !== this)
-            throw new Error("processed volume can only be set on the root entity")
-
-        this._processed = processed
-
-        this.removeVolume()
-        this.renderVolume()
-    }
 
     get multiObjPath() {
         return this._multiObjPath
     }
 
-    makeRoot: boolean = false
+    volume?: VolumeT
+    texturers?: textures.Texturer[]
+    interpolatingGroups?: MultiObjectsGroupsTemplate[]
     extraLocationParameters?: fields.FieldsPoint
     samplerSettings?: volumes.VolumeSamplerSettings
     meshingSettings?: surfaces.meshing.MeshingSettings
-    interpolatingGroups?: MultiObjectsGroupsTemplate[]
-    texturers?: textures.Texturer[]
-    customProcessors?: VolumeProcessorT[]
 
-    get root() {
-        return this.findRoot()?.entity
-    }
-
-    get isRoot() {
-        return this.root === this.entity
-    }
-
-    constructor(system: VolumeComponentSystem, entity: Entity) { 
+    constructor(system: ComponentSystem<ID>, entity: Entity) { 
         super(system, entity)
     }
 
-    /**
-     * Updates the mesh, texture, and other attributes for this and child
-     * entities with {@link VolumeComponent}'s.
-     */
-    update() {
-        const root = this.findRoot()
-        if (root !== this) {
-            root?.update()
-            return
-        }
-
-        if (!this.volume)
-            return
-        
-        const system = this.system as VolumeComponentSystem
-        
-        const map_volume_component = new Map<VolumeT, VolumeComponent>()
+    protected initializeProcessingFromRaw() {
+        const map_volume_component = new Map<VolumeT, Component<ID>>()
         function compositeVolume(node: GraphNode, require_multiObjects = false): VolumeT | undefined {
             const entity = node as Entity
-            const component = entity?.findComponent('volume') as VolumeComponent
+            const component = entity?.findComponent(SYSTEM_ID) as Component<ID>
             
             if (component?.volume)
                 map_volume_component.set(component.volume, component)
@@ -227,89 +181,14 @@ export class VolumeComponent extends Component {
             ...volume_multiObjectsContext
         }
 
-        const processing = {
+        const volume_processing = {
             [surfaces.VolumeSurfacesKey]: [] as SurfaceT[],
             [solids.VolumeSolidsKey]: [] as SolidT[],
         } as VolumeProcessingT
 
-        const graph = new paradigm.processors.GraphProcessor<VolumeProcessingT, VolumeProcessingContextT>([
-            ...system.processors,
-            new paradigm.processors.ParallelizingProcessor(
-                surfaces.VolumeSurfacesParallelizer.instance,
-                ///@ts-ignore
-                new textures.TextureableProcessor<SurfaceT, SurfaceCombinedTextureLocationT>() as VolumeSurfaceProcessorT
-            ),
-            ...(this.customProcessors ?? [])
-        ])
-        graph.init(volume_context)
-        graph.process(processing, volume_context)
-
-        this.processed = processing
-    }
-
-    private renderVolume() {
-        const root = this.findRoot()
-        if (root !== this) {
-            root?.renderVolume()
-            return
+        return {
+            processing: volume_processing,
+            context: volume_context
         }
-
-        const render_surfaces = this.processed![surfaces.VolumeSurfacesKey] as SurfaceT[]
-        
-        if (render_surfaces.length === 0)
-            return
-
-        const renderers = render_surfaces
-            .filter(surface => surface.renderer)
-            .map(surface => surface.renderer.individualize(this.entity))
-
-        this.entity.addComponent('render', {
-            meshInstances: renderers.map(renderer => renderer.implementation)
-        })
-    }
-
-    private removeVolume() {
-        const root = this.findRoot()
-        if (root !== this) {
-            root?.removeVolume()
-            return
-        }
-
-        if (this.entity.render) this.entity.removeComponent('render')
-        if (this.entity.collision) this.entity.removeComponent('collision')
-        if (this.entity.physics) this.entity.removeComponent('physics')
-        if (this.entity.multibody) this.entity.removeComponent('multibody')
-    }
-
-    private findRoot(node: GraphNode = this.entity): VolumeComponent | undefined {
-        if (node.root === node)
-            return undefined
-        
-        const e = node as Entity
-        if (!e.findComponent)
-            return this.findRoot(node.parent)
-
-        const component = e.findComponent('volume') as VolumeComponent
-        if (component.makeRoot) return component
-        else return this.findRoot(e.parent) ?? component
-    }
-
-    onEnable() {
-        if (this.volume)
-            this.renderVolume()
-    }
-
-    onDisable() {
-        this.removeVolume()
-    }
-
-    // private _onBeforeRemove() {
-    //     this.fire('remove')
-    // }
-
-    private _onRemove() {
-        this.removeVolume()
     }
 }
-
-Component._buildAccessors(VolumeComponent.prototype, _schema)

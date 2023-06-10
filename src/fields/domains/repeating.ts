@@ -1,4 +1,4 @@
-import { extract, intract } from "../../utils/tree.js";
+import { extract, intract } from "../../paradigm/tree.js";
 import { SampleDomain, SamplingContext } from "../domain.js";
 import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_equal, field_point_map, field_point_modulo, field_point_multiply } from "../point.js";
 import { TransformingSampleDomain } from "./transforming.js";

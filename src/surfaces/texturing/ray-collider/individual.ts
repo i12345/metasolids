@@ -5,7 +5,7 @@ import { Texture, TextureLocation, TextureSample, TextureSamplingContext, Textur
 import { RayCollider, RayCollision } from "../../ray-collider.js";
 import { SurfaceIndividualTexturesGroupKindsTemplate, SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 import { SurfaceUVRayCollider, SurfaceUVRayColliderProcessingContext, SurfaceUVRayCollision } from "../../uv-unwrapping/ray-collider.js";
-import { makeIntractor } from "../../../utils/tree.js";
+import { makeIntractor } from "../../../paradigm/tree.js";
 import { change } from "../../../fields/object-algebra.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContext } from "../../processor.js";

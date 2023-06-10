@@ -5,7 +5,7 @@ import { VolumeSurfacesProcessing, SurfaceProcessingContext, VolumeSurfacesProce
 import { MeshDataWithNormals } from "../surface.js"
 import { MeshingAlgorithm, MeshingSettings } from "./meshing-algorithm.js"
 import { indicesArrayType, IndiciesArray } from "../../utils/indices-array.js"
-import { PROPERTYKEY_ALL } from "../../utils/property-path.js"
+import { PROPERTYKEY_ALL } from "../../paradigm/property-path.js"
 
 export const VolumeSurfaceMeshingKey = Symbol("volume.surface-meshing")
 
@@ -54,8 +54,6 @@ export class VolumeSurfaceMeshingProcessor<
             [VolumeSurfacesKey, PROPERTYKEY_ALL, "mesh"]
         ]
     }
-
-    constructor() { }
 
     init(): void {
     }
@@ -259,4 +257,8 @@ export class VolumeSurfaceMeshingProcessor<
             })
         }
     }
+
+    private constructor() { }
+
+    static readonly instance = new this()
 }

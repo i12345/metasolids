@@ -1,8 +1,8 @@
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../paradigm/index.js";
-import { Processor } from "../paradigm/index.js";
-import { GraphProcessor } from "../paradigm/processors/graph.js";
-import { PropertyPath } from "../utils/property-path.js";
-import { extract, intract } from "../utils/tree.js";
+import { Processor } from "../processing/index.js";
+import { GraphProcessor } from "../processing/processors/graph.js";
+import { PropertyPath } from "../paradigm/property-path.js";
+import { extract, intract } from "../paradigm/tree.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "./texture.js";
 
 export const TexturersKey = Symbol('texturers')
@@ -69,6 +69,10 @@ export class TextureableProcessor<
         this.graph = new GraphProcessor(context[TexturersKey])
         this.graph.init(context)
     }
+
+    private constructor() { }
+
+    static readonly instance = new this()
 }
 
 export abstract class Texturer<

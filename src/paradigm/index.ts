@@ -1,5 +1,3 @@
-export * from './context-worker.js'
-export * from './processor.js'
-export * as processors from './processors/index.js'
+export * from './property-path.js'
+export * from './tree.js'
 export * from './multi-objects.js'
-export * from './instance.js'

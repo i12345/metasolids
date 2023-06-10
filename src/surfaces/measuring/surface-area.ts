@@ -53,4 +53,8 @@ export class SurfaceWithSurfaceAreaProcessor<
 
         surface.surfaceArea = surfaceArea / 2
     }
+
+    private constructor() { }
+
+    static readonly instance = new this()
 }

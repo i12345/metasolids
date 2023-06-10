@@ -1,9 +1,9 @@
-import { Processor } from "../paradigm/processor.js";
+import { Processor } from "../processing/processor.js";
 import { defaultVolumeLocationField, VolumeLocation, VolumeSample, VolumeSamplingContext } from "./volume.js";
 import { VolumeSampler, VolumeSamplingRequest, VolumeSamplingResult } from "./sampling.js";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../paradigm/processors/parallel.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processing/processors/parallel.js";
 import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_isPrimitive, SampleDomainLocationField } from "../fields/index.js";
-import { PROPERTYKEY_ALL } from "../utils/property-path.js";
+import { PROPERTYKEY_ALL } from "../paradigm/property-path.js";
 
 export const VolumeSampleKey = Symbol('volume.sample')
 export const VolumeSamplingKey = Symbol("volume-sampling")
@@ -76,6 +76,10 @@ export class VolumeSamplingProcessor<
             ...context[VolumeSamplingKey]
         })
     }
+
+    private constructor() { }
+
+    static readonly instance = new this()
 }
 
 export type VolumeSampleProcessingContext<

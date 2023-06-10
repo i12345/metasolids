@@ -1,4 +1,4 @@
-import { PropertyPath } from "../../utils/property-path.js";
+import { PropertyPath } from "../../paradigm/property-path.js";
 import { Processor } from "../processor.js";
 
 export const ParallelizedContextParallelInfo = Symbol("parallel")

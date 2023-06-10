@@ -1,11 +1,11 @@
 import { Vec2 } from "playcanvas-extended";
 import { Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator } from "../../fields/index.js";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../paradigm/processors/parallel.js";
+import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../processing/processors/parallel.js";
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingKey } from "../../volumes/index.js";
 import { SolidProcessingContext, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../processor.js";
 import { Solid } from "../solid.js";
-import { PROPERTYKEY_ALL } from "../../utils/property-path.js";
+import { PROPERTYKEY_ALL } from "../../paradigm/property-path.js";
 
 export interface SolidWithEnclosingVolume<
         Sample extends VolumeSample = VolumeSample,
@@ -160,6 +160,10 @@ export class SolidWithEnclosingVolumeProcessor<
             (local_space_size.x * local_space_size.y) /
             (sampling.size.x * sampling.size.y)
     }
+
+    private constructor() { }
+
+    static readonly instance = new this()
 }
 
 export type SolidEnclosingVolumeSampleProcessingContext<

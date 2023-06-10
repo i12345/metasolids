@@ -1,4 +1,4 @@
-import { PropertyPath, pathExists, pathSubsumes } from "../../utils/property-path.js";
+import { PropertyPath, pathExists, pathSubsumes } from "../../paradigm/property-path.js";
 import { Processor } from "../processor.js";
 
 export class GraphProcessor<Object, Context> implements Processor<Object, Context> {

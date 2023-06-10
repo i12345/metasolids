@@ -7,7 +7,7 @@ import { Field, FieldsField, FieldsPointMapped, FieldsPoint_Omit_Leaf, SampleDom
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./surface.js";
 import { SurfaceRendererShared } from "./renderer.js";
 import { Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js";
-import { ParallelizedContextParallelInfo } from "../../paradigm/processors/parallel.js";
+import { ParallelizedContextParallelInfo } from "../../processing/processors/parallel.js";
 import { AppBase } from "playcanvas-extended";
 
 export class SurfaceWithRenderingProcessor<
@@ -34,8 +34,6 @@ export class SurfaceWithRenderingProcessor<
             ['renderer']
         ]
     }
-
-    constructor(public readonly app: AppBase) { }
 
     process(
             surface: SurfaceWithRendering<
@@ -83,6 +81,10 @@ export class SurfaceWithRenderingProcessor<
         context.material.textures = {} as typeof context.material.textures
         for (const group of groups(Material_Groups_Template))
             group.set(context.material.textures, { ...sharedContext })
-    }    
+    }
+
+    private constructor() { }
+
+    static readonly instance = new this()
 }
 
