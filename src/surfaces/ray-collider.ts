@@ -3,7 +3,7 @@ import { Triangles2DMesh } from "../fields/triangles-2D-mesh.js";
 import { Triangles2DMeshCollider } from "../fields/triangles-2D-mesh.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "./surface.js";
 import { TriangleCollision } from "../fields/triangles-2D-mesh.js";
-import { SurfaceProcessingContext } from "./processor.js";
+import { SurfaceProcessingContext } from "./surface-samples.js";
 
 export interface RayCollision {
     /**

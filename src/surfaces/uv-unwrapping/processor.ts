@@ -1,4 +1,4 @@
-import { SurfaceProcessor } from "../processor.js";
+import { SurfaceProcessor } from "../surface-samples.js";
 import { SurfaceSample } from "../surface.js";
 import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/index.js";
 import { onlyOne } from "../../utils/only-one.js";
@@ -18,15 +18,6 @@ export class SurfaceUVUnwrappingProcessor<
             SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleT>,
             SurfaceProcessingContextWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleProcessingContextT>
     > {
-    private _connections!: {
-        readonly inputs: PropertyPath[]
-        readonly outputs: PropertyPath[]
-    }
-
-    get connections() {
-        return this._connections
-    }
-
     readonly algorithm: SurfaceUVUnwrappingAlgorithm
 
     constructor(
@@ -58,7 +49,7 @@ export class SurfaceUVUnwrappingProcessor<
     init(context: SurfaceProcessingContextWithUVUnwrapping<
             SurfaceUVUnwrappingGroup,
             SampleProcessingContextT
-        >): void {
+        >) {
         this.algorithm.init()
 
         const surfaceUVUnwrappingGroup = onlyOne(groupKinds(
@@ -67,9 +58,11 @@ export class SurfaceUVUnwrappingProcessor<
             this.surfaceUVUnwrappingGroup
         )).group
 
-        this._connections = {
-            inputs: [['mesh']],
-            outputs: [surfaceUVUnwrappingGroup.path],
+        return {
+            connections: {
+                inputs: [['mesh']],
+                outputs: [surfaceUVUnwrappingGroup.path],
+            }
         }
     }
 }

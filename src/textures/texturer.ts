@@ -1,25 +1,43 @@
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../paradigm/index.js";
 import { Processor } from "../processing/index.js";
-import { GraphProcessor } from "../processing/processors/graph.js";
+import { GraphProcessor, GraphProcessorContext } from "../processing/processors/graph.js";
 import { PropertyPath } from "../paradigm/property-path.js";
 import { extract, intract } from "../paradigm/tree.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "./texture.js";
 
 export const TexturersKey = Symbol('texturers')
 export interface TextureableProcessingContext<
-        Textureable = any,
-        Location extends TextureLocation = TextureLocation,
-        Sample extends TextureSample = TextureSample,
-        Context extends TextureSamplingContext<Location> = TextureSamplingContext<Location>
-    > {
-    [TexturersKey]: Texturer<Textureable, Location, Sample, Context>[]
+        TextureableT = any,
+        TextureLocationT extends TextureLocation = TextureLocation,
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT> =
+            TextureSamplingContext<TextureLocationT>
+    > extends GraphProcessorContext {
+    [TexturersKey]: {
+        texturers: Texturer<
+            TextureableT,
+            TextureLocationT,
+            TextureSampleT,
+            TextureSamplingContextT
+        >[]
+        graph?: GraphProcessor<
+            TextureableT,
+            TextureableProcessingContext<
+                TextureableT,
+                TextureLocationT,
+                TextureSampleT,
+                TextureSamplingContextT
+            >
+        >
+    }
 }
 
 export class TextureableProcessor<
         TextureableT = any,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureSampleT extends TextureSample = TextureSample,
-        TextureContextT extends
+        TextureSamplingContextT extends
             TextureSamplingContext<TextureLocationT> =
             TextureSamplingContext<TextureLocationT>
     > implements
@@ -29,33 +47,19 @@ export class TextureableProcessor<
             TextureableT,
             TextureLocationT,
             TextureSampleT,
-            TextureContextT
+            TextureSamplingContextT
         >
     > {
-    get connections() {
-        return this.graph.connections
-    }
-    
-    private graph!: GraphProcessor<
-        TextureableT,
-        TextureableProcessingContext<
-            TextureableT,
-            TextureLocationT,
-            TextureSampleT,
-            TextureContextT
-        >
-    >
-    
     process(
             textureable: TextureableT,
             context: TextureableProcessingContext<
                 TextureableT,
                 TextureLocationT,
                 TextureSampleT,
-                TextureContextT
+                TextureSamplingContextT
                 >
         ): void {
-        this.graph.process(textureable, context)
+        context[TexturersKey].graph!.process(textureable, context)
     }
 
     init(
@@ -63,11 +67,11 @@ export class TextureableProcessor<
                     TextureableT,
                     TextureLocationT,
                     TextureSampleT,
-                    TextureContextT
+                    TextureSamplingContextT
                 >
-        ): void {
-        this.graph = new GraphProcessor(context[TexturersKey])
-        this.graph.init(context)
+        ) {
+        context[TexturersKey].graph = new GraphProcessor(context[TexturersKey].texturers)
+        return context[TexturersKey].graph.init(context)
     }
 
     private constructor() { }
@@ -79,7 +83,7 @@ export abstract class Texturer<
         TextureableT = any,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureSampleT extends TextureSample = TextureSample,
-        TextureContextT extends
+        TextureSamplingContextT extends
             TextureSamplingContext<TextureLocationT> =
             TextureSamplingContext<TextureLocationT>,
         Outputs extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -94,14 +98,14 @@ export abstract class Texturer<
                     InputsTexelTypeT,
                     InputsTexelTypesGrouped,
                     TextureLocationT,
-                    TextureContextT
+                    TextureSamplingContextT
                 > =
             TexturesTemplated<
                     Inputs,
                     InputsTexelTypeT,
                     InputsTexelTypesGrouped,
                     TextureLocationT,
-                    TextureContextT
+                    TextureSamplingContextT
                 >
     >
     implements
@@ -111,14 +115,9 @@ export abstract class Texturer<
                 TextureableT,
                 TextureLocationT,
                 TextureSampleT,
-                TextureContextT
+                TextureSamplingContextT
             >
     > {
-    connections!: {
-        readonly inputs: PropertyPath[]
-        readonly outputs: PropertyPath[]
-    }
-
     readonly mappings: {
         inputs: MultiObjectsGroupsMapped<Inputs, PropertyPath>,
         outputs: MultiObjectsGroupsMapped<Outputs, PropertyPath>,
@@ -136,7 +135,7 @@ export abstract class Texturer<
         }
     }
 
-    protected abstract factory(inputs: InputsTextures): MultiObjectsGroupsMapped<Outputs, Texture<TextureLocationT, TextureSampleT, TextureContextT>>
+    protected abstract factory(inputs: InputsTextures): MultiObjectsGroupsMapped<Outputs, Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT>>
 
     process(textureable: TextureableT): void {
         const inputs = {} as InputsTextures
@@ -148,10 +147,12 @@ export abstract class Texturer<
             intract(textureable, output.get<PropertyPath>(this.mappings.outputs), output.get(outputs))
     }
 
-    init(): void {
-        this.connections = {
+    init() {
+        const connections = {
             inputs: [...groups(this.templates.inputs)].map(input => input.get<PropertyPath>(this.mappings.inputs)),
             outputs: [...groups(this.templates.outputs)].map(output => output.get<PropertyPath>(this.mappings.outputs)),
         }
+
+        return { connections }
     }
 }

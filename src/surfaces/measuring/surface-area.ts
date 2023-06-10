@@ -1,6 +1,6 @@
 import { Vec3 } from "playcanvas-extended"
 import { VolumeSample } from "../../volumes/volume.js"
-import { SurfaceProcessingContext, SurfaceProcessor } from "../processor.js"
+import { SurfaceProcessingContext, SurfaceProcessor } from "../surface-samples.js"
 import { Surface } from "../surface.js"
 
 export interface SurfaceWithSurfaceArea<
@@ -12,28 +12,29 @@ export interface SurfaceWithSurfaceArea<
 
 export class SurfaceWithSurfaceAreaProcessor<
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
         SurfaceT extends SurfaceWithSurfaceArea<Sample> = SurfaceWithSurfaceArea<Sample>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-            SurfaceProcessingContext<SampleContextTemplate>
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>
     >
     implements SurfaceProcessor<
         Sample,
-        SampleContextTemplate,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceProcessingContextT
     > {
-    readonly connections = {
-        inputs: [
-            ['mesh']
-        ],
-        outputs: [
-            ['surfaceArea']
-        ]
-    }
-
-    init(): void {
+    init() {
+        const connections = {
+            inputs: [
+                ['mesh']
+            ],
+            outputs: [
+                ['surfaceArea']
+            ]
+        }
+        
+        return { connections}
     }
     
     process(surface: SurfaceWithSurfaceArea<Sample>): void {

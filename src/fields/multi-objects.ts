@@ -1,6 +1,6 @@
-import { MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects } from "../paradigm/index.js";
+import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects } from "../paradigm/index.js";
 import { Processor } from "../processing/processor.js";
-import { onlyOne, PropertyPath, extract } from "../utils/index.js";
+import { onlyOne } from "../utils/index.js";
 import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
 
 export type MultiObjectsFieldPoint<
@@ -101,7 +101,7 @@ export class MultiObjectsInfluencesNormalizingProcessor<
     ) {
     }
 
-    init(context: Context): void {
+    init(context: Context) {
         const influenceGroups = groupKinds(
             context,
             MultiObjectsInfluencesGroupKindsTemplate,
@@ -110,10 +110,12 @@ export class MultiObjectsInfluencesNormalizingProcessor<
 
         const paths = [...influenceGroups].map(({ group: { path } }) => path)
 
-        this.connections = {
+        const connections = {
             inputs: paths,
             outputs: paths.map(path => [...path, MultiObjectsCombinedValue])
         }
+
+        return { connections }
     }
 
     process(result: Result, context: Context): void {
@@ -283,7 +285,7 @@ export class MultiObjectsCombiningProcessor<
         public influenceGroup?: InfluenceGroup,
     ) { }
 
-    init(context: Context): void {
+    init(context: Context) {
         const influenceGroup = onlyOne(groupKinds(context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroup)).group
         const valueGroups = [...groupKinds(context, this.valueGroupKinds, this.valueGroups)]
         
@@ -291,7 +293,7 @@ export class MultiObjectsCombiningProcessor<
         // be satisfied by this processor's input requirements, thus it may not
         // receive the real combined value.
 
-        this._connections = {
+        const connections = {
             inputs: [
                 influenceGroup.path,
                 ...valueGroups.map(({ group: { path } }) => path)
@@ -300,6 +302,8 @@ export class MultiObjectsCombiningProcessor<
                 ...valueGroups.map(({ group: { path } }) => [...path, MultiObjectsCombinedValue])
             ]
         }
+
+        return { connections }
     }
 
     process(result: Result, context: Context): void {

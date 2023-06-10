@@ -1,6 +1,6 @@
 import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped } from "../../paradigm/index.js";
 import { Texture, TextureLocation, TextureSample } from "../../textures/index.js";
-import { SurfaceProcessingContext } from "../processor.js";
+import { SurfaceProcessingContext } from "../surface-samples.js";
 import { Surface, SurfaceSample } from "../surface.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceWithUVUnwrapping } from "../uv-unwrapping/index.js";
 

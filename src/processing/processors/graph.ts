@@ -1,32 +1,47 @@
 import { PropertyPath, pathExists, pathSubsumes } from "../../paradigm/property-path.js";
-import { Processor } from "../processor.js";
+import { Processor, ProcessorConnections, ProcessorInitialization } from "../processor.js";
 
-export class GraphProcessor<Object, Context> implements Processor<Object, Context> {
-    readonly connections: Processor<Object, Context>["connections"] = {
-        inputs: [],
-        outputs: []
-    }
+interface GraphProcessorDetails {
+    processors_connections: Map<Processor, ProcessorConnections>
+}
 
+export const GraphProcessorContextKey = Symbol("processor:graph")
+export interface GraphProcessorContext {
+    [GraphProcessorContextKey]?: Map<GraphProcessor, GraphProcessorDetails>
+}
+
+export class GraphProcessor<
+        Object = any,
+        Context extends GraphProcessorContext = GraphProcessorContext
+    >
+    implements
+    Processor<Object, Context> {
     constructor(
         public processors: Processor<Object, Context>[] = [],
         public readonly dependencies: PropertyPath[] = []
     ) { }
 
-    init(context: Context): void {
-        for (const processor of this.processors)
-            processor.init(context)
+    init(context: Context): ProcessorInitialization {
+        const processors_initializations = this.processors.map(processor => [processor, processor.init(context)] as [Processor, ProcessorInitialization])
+        const processors_connections = new Map(processors_initializations.map(([processor, { connections }]) => [processor, connections] as [Processor, ProcessorConnections]))
         
-        this.connections.inputs.splice(0, this.connections.inputs.length)
-        this.connections.outputs.splice(0, this.connections.outputs.length)
+        const connections: ProcessorConnections = {
+            inputs: [],
+            outputs: []
+        }
 
+        const map = context[GraphProcessorContextKey] ??= new Map()
+        console.assert(!map.has(this))
+        map.set(this, { processors_connections })
+        
         //TODO: this algorithm doesn't detect cyclic dependencies
 
-        for (const processor of this.processors) {
-            for (const input_new of processor.connections.inputs) {
+        for (const processor_connections of processors_connections.values()) {
+            for (const input_new of processor_connections.inputs) {
                 let input_new_already_handled = false
 
-                for (let i = 0; i < this.connections.inputs.length; i++) {
-                    const input_existing = this.connections.inputs[i]
+                for (let i = 0; i < connections.inputs.length; i++) {
+                    const input_existing = connections.inputs[i]
                     
                     if (pathSubsumes(input_existing, input_new)) {
                         input_new_already_handled = true
@@ -34,14 +49,14 @@ export class GraphProcessor<Object, Context> implements Processor<Object, Contex
                     }
 
                     else if (pathSubsumes(input_new, input_existing)) {
-                        this.connections.inputs.splice(i, 1)
+                        connections.inputs.splice(i, 1)
                         i--
                         continue
                     }
                 }
 
-                for (let i = 0; i < this.connections.outputs.length; i++) {
-                    const output_existing = this.connections.outputs[i]
+                for (let i = 0; i < connections.outputs.length; i++) {
+                    const output_existing = connections.outputs[i]
 
                     if (pathSubsumes(output_existing, input_new)) {
                         input_new_already_handled = true
@@ -50,14 +65,14 @@ export class GraphProcessor<Object, Context> implements Processor<Object, Contex
                 }
 
                 if (!input_new_already_handled)
-                    this.connections.inputs.push(input_new)
+                    connections.inputs.push(input_new)
             }
             
-            for (const output_new of processor.connections.outputs) {
+            for (const output_new of processor_connections.outputs) {
                 let output_new_already_handled = false
 
-                for (let i = 0; i < this.connections.outputs.length; i++) {
-                    const output_existing = this.connections.outputs[i]
+                for (let i = 0; i < connections.outputs.length; i++) {
+                    const output_existing = connections.outputs[i]
 
                     if (pathSubsumes(output_existing, output_new)) {
                         output_new_already_handled = true
@@ -65,38 +80,43 @@ export class GraphProcessor<Object, Context> implements Processor<Object, Contex
                     }
 
                     else if (pathSubsumes(output_new, output_existing)) {
-                        this.connections.outputs.splice(i, 1)
+                        connections.outputs.splice(i, 1)
                         i--
                         continue
                     }
                 }
 
-                for (let i = 0; i < this.connections.inputs.length; i++) {
-                    const input_existing = this.connections.inputs[i]
+                for (let i = 0; i < connections.inputs.length; i++) {
+                    const input_existing = connections.inputs[i]
 
                     if (pathSubsumes(output_new, input_existing)) {
-                        this.connections.inputs.splice(i, 1)
+                        connections.inputs.splice(i, 1)
                         i--
                         continue
                     }
                 }
 
                 if (!output_new_already_handled)
-                    this.connections.outputs.push(output_new)
+                    connections.outputs.push(output_new)
             }
         }
+
+        return { connections }
     }
 
     process(object: Object, context: Context): void {
         const toProcess = [...this.processors]
         let lastLength = 0
         
+        const { processors_connections } = context[GraphProcessorContextKey]!.get(this)!
+
         do {
             lastLength = toProcess.length
             for (let i = 0; i < toProcess.length; i++) {
                 const processor = toProcess[i]
+                const processor_connections = processors_connections.get(processor)!
 
-                if (processor.connections.inputs.every(input => pathExists(object, input))) {
+                if (processor_connections.inputs.every(input => pathExists(object, input))) {
                     processor.process(object, context)
                     toProcess.splice(i, 1)
                     i--

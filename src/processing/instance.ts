@@ -10,6 +10,9 @@ export interface Instance<SharedT> {
      */
     shared: SharedT
 
+    /**
+     * The entity this instance is attached to
+     */
     entity: Entity
 }
 

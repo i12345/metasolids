@@ -1,4 +1,3 @@
-import { ContextWorker } from "../processing/context-worker.js"
 import { Field } from "./field.js"
 import { FieldPoint } from "./point.js"
 
@@ -12,8 +11,10 @@ export interface SampleDomain<
         Location extends FieldPoint,
         Sample extends FieldPoint,
         Context extends SamplingContext<Location> = SamplingContext<Location>
-    >
-    extends ContextWorker<Context> {
+    > {
     field: Field<Sample>
+
+    //TODO: consider if field should be returned from init method
+    init(context: Context): void
     sample(location: Location, context: Context): Sample
 }

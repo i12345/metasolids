@@ -8,7 +8,7 @@ import { SurfaceUVRayCollider, SurfaceUVRayColliderProcessingContext, SurfaceUVR
 import { makeIntractor } from "../../../paradigm/tree.js";
 import { change } from "../../../fields/object-algebra.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "../../surface.js";
-import { SurfaceProcessingContext } from "../../processor.js";
+import { SurfaceProcessingContext } from "../../surface-samples.js";
 
 export interface SurfaceIndividualTexturesRayCollision<
     TextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,

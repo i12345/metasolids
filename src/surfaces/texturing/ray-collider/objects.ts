@@ -10,7 +10,7 @@ import { change } from "../../../fields/object-algebra.js";
 import { MultiObjectsSampleDomain } from "../../../fields/index.js";
 import { Reflect_entries } from "../../../utils/reflect-entries.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "../../surface.js";
-import { SurfaceProcessingContext } from "../../processor.js";
+import { SurfaceProcessingContext } from "../../surface-samples.js";
 import { onlyOne } from "../../../utils/only-one.js";
 
 export interface SurfaceObjectsTexturesRayCollision<

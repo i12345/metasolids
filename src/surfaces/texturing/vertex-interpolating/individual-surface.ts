@@ -1,8 +1,8 @@
-import { groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../../../paradigm/index.js";
+import { PROPERTYKEY_ALL, PropertyPath, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../../../paradigm/index.js";
 import { Processor } from "../../../processing/processor.js";
 import { FieldPoint } from "../../../fields/index.js";
 import { TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { onlyOne, PROPERTYKEY_ALL, PropertyPath } from "../../../utils/index.js";
+import { onlyOne } from "../../../utils/index.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
 import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
@@ -152,15 +152,6 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     SurfaceSampleProcessingContextT
                 >
         > {
-    private _connections!: {
-        inputs: PropertyPath[]
-        outputs: PropertyPath[]
-    }
-    
-    get connections() {
-        return this._connections
-    }
-    
     constructor(
         public interpolatingGroupsKinds?: InterpolatingGroupKinds,
         public interpolatingGroups?: InterpolatingGroups,
@@ -173,7 +164,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
                     SurfaceSampleProcessingContextT
-                >): void {
+                >) {
         const { group: surfaceUVUnwrappingGroup } =
             onlyOne(groupKinds(
                     context,
@@ -183,12 +174,12 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
 
         const interpolatingGroups =
             [...groupKinds(
-                    context.sample,
+                    context.samples,
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )]
         
-        this._connections = {
+        const connections = {
             inputs: [
                 surfaceUVUnwrappingGroup.path,
                 ...interpolatingGroups.map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
@@ -197,6 +188,8 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                 ...interpolatingGroups.map(({ group: { path } }) => path)
             ]
         }
+
+        return { connections }
     }
 
     process(
@@ -225,7 +218,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
 
         const interpolatingGroups =
             groupKinds(
-                    context.sample,
+                    context.samples,
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )

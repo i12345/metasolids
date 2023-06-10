@@ -1,8 +1,8 @@
-import { objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped } from "../../../paradigm/index.js";
+import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped } from "../../../paradigm/index.js";
 import { Processor } from "../../../processing/processor.js";
 import { FieldPoint } from "../../../fields/index.js";
 import { Texture, TextureLocation, TextureSample, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { onlyOne, PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL } from "../../../utils/index.js";
+import { onlyOne } from "../../../utils/index.js";
 import { Surface, SurfaceSample } from "../../surface.js";
 import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations } from "../types.js";
 
@@ -240,15 +240,6 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                     SurfaceSampleProcessingContextT
                 >
         > {
-    private _connections!: {
-        inputs: PropertyPath[]
-        outputs: PropertyPath[]
-    }
-    
-    get connections() {
-        return this._connections
-    }
-    
     constructor(
         public interpolatingGroupsKinds?: InterpolatingGroupKinds,
         public interpolatingGroups?: InterpolatingGroups,
@@ -263,22 +254,22 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                     ObjectsInterpolatingGrouped,
                     InterpolatingGroupKinds,
                     SurfaceSampleProcessingContextT
-                >): void {
+                >) {
         const { group: surfaceTextureLocationGroup } =
             onlyOne(groupKinds(
-                    context.sample,
+                    context.samples,
                     SurfaceIndividualTextureLocationsGroupKindsTemplate,
                     this.surfaceTextureLocationGroup
                 ))
 
         const interpolatingGroups =
             [...groupKinds(
-                    context.sample,
+                    context.samples,
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )]
         
-        this._connections = {
+        const connections = {
             inputs: [
                 ['samples', PROPERTYKEY_ALL, ...surfaceTextureLocationGroup.path],
                 ...interpolatingGroups.map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
@@ -287,6 +278,8 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 ...interpolatingGroups.map(({ group: { path } }) => path)
             ]
         }
+
+        return { connections }
     }
 
     process(
@@ -310,7 +303,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
         ): void {
         const { group: surfaceTextureLocationGroup } =
             onlyOne(groupKinds(
-                    context.sample,
+                    context.samples,
                     SurfaceIndividualTextureLocationsGroupKindsTemplate,
                     this.surfaceTextureLocationGroup
                 ))

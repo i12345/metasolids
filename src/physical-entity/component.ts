@@ -1,10 +1,9 @@
 import { Entity, GraphNode } from "playcanvas-extended";
 import { fields, processing, solids, surfaces, textures, volumes } from "../index.js";
-import { mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/multi-objects.js";
+import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/index.js";
 import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
-import { intract, pathsToNodeWithKey } from "../paradigm/tree.js";
-import { onlyOne, PropertyPath, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
+import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 import { ComponentSystem, SYSTEM_ID } from "./system.js";
 
 export class Component<ID = string> extends processing.Component<
@@ -150,7 +149,7 @@ export class Component<ID = string> extends processing.Component<
         }
 
         const surface_context: SurfaceProcessingContextT = {
-            sample: sample_context,
+            samples: sample_context,
             [textures.TexturersKey]: (this.texturers ?? []) as any,
             material: {},
             
@@ -174,7 +173,7 @@ export class Component<ID = string> extends processing.Component<
             },
 
             [solids.VolumeSolidsKey]: {
-                sample: sample_context,
+                samples: sample_context,
                 surface: surface_context,
             },
 

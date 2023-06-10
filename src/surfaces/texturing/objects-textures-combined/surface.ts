@@ -1,8 +1,8 @@
-import { groupKindObjectsGrouped, groupKinds, MultiObjectsCombined, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsCombined, MultiObjectsGroupsCombinedMapped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsTemplate } from "../../../paradigm/index.js";
+import { PropertyPath, PROPERTYKEY_ALL, groupKindObjectsGrouped, groupKinds, MultiObjectsCombined, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsCombined, MultiObjectsGroupsCombinedMapped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsTemplate } from "../../../paradigm/index.js";
 import { Processor } from "../../../processing/processor.js";
 import { MultiObjectsInfluences, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext } from "../../../fields/multi-objects.js";
 import { ObjectsCombiningTexture, ObjectsCombiningTexturesTemplated, ObjectsTextureLocationsTextureSample, Texture, TextureLocation, TextureSample, TextureSamplesExtracted, TextureSamplesExtracted1, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { onlyOne, PropertyPath, PROPERTYKEY_ALL } from "../../../utils/index.js";
+import { onlyOne } from "../../../utils/index.js";
 import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../index.js";
 import { SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithObjectsTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceWithIndividualTextures, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceWithIndividualTexturesUsingSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations } from "../types.js";
@@ -222,15 +222,6 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             ObjectsValueTexturesGrouped
         >
     > {
-    private _connections!: {
-        inputs: PropertyPath[]
-        outputs: PropertyPath[]
-    }
-    
-    get connections() {
-        return this._connections
-    }
-
     constructor(
         public valueTextureGroups: ValueTextureGroups,
         public influenceGroup?: InfluenceGroup,
@@ -247,7 +238,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             ObjectsValueTextureLocationsGrouped,
             ValueTextureGroups,
             ObjectsValueTexturesGrouped
-        >): void {
+        >) {
         const valueTextureGroups = [...groupKinds(
             context,
             SurfaceObjectsTexturesGroupKindsTemplate,
@@ -255,7 +246,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         )]
 
         const influencesGroup = onlyOne(groupKinds(
-            context.sample,
+            context.samples,
             MultiObjectsInfluencesGroupKindsTemplate,
             this.influenceGroup
         )).group
@@ -267,7 +258,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         )).group
         
         const valueTextureLocationGroups = onlyOne(groupKinds(
-            context.sample,
+            context.samples,
             SurfaceObjectsTextureLocationsGroupKindsTemplate,
             this.valueTextureLocationGroup
         )).group
@@ -281,7 +272,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         // be satisfied by this processor's input requirements, thus it may not
         // receive the real combined value.
 
-        this._connections = {
+        const connections = {
             inputs: [
                 surfaceUVUnwrappingGroup.path,
                 ...sampleDependencies.map(path => ['samples', PROPERTYKEY_ALL, ...path]),
@@ -291,6 +282,8 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
                 ...valueTextureGroups.map(({ group: { path } }) => [...path, MultiObjectsCombinedValue])
             ]
         }
+
+        return { connections }
     }
 
     process(
@@ -325,7 +318,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         const UVunwrapping = surfaceUVUnwrappingGroup.get<SurfaceUVUnwrapping>(surface)
 
         const influencesGroup = onlyOne(groupKinds(
-            context.sample,
+            context.samples,
             MultiObjectsInfluencesGroupKindsTemplate,
             this.influenceGroup
         )).group
@@ -343,7 +336,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         )
 
         const valueTextureLocationGroup = onlyOne(groupKinds(
-            context.sample,
+            context.samples,
             SurfaceObjectsTextureLocationsGroupKindsTemplate,
             this.valueTextureLocationGroup
         )).group

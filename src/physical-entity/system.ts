@@ -11,42 +11,39 @@ const processors: VolumeProcessorT[] = [
     volumes.VolumeSamplingProcessor.instance,
     surfaces.meshing.VolumeSurfaceMeshingProcessor.instance,
     new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer.instance,
+        surfaces.VolumeSurfacesParallelizer,
         surfaces.measuring.SurfaceWithSurfaceAreaProcessor.instance
     ),
     new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer.instance,
+        surfaces.VolumeSurfacesParallelizer,
         new processing.processors.ParallelizingProcessor(
-            surfaces.SurfaceSampleParallelizer.instance,
+            surfaces.SurfaceSampleParallelizer,
             new fields.MultiObjectsInfluencesNormalizingProcessor() as any
         ) as unknown as VolumeSurfaceProcessorT
     ),
     new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer.instance,
+        surfaces.VolumeSurfacesParallelizer,
         new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
             "xAtlas"
         ) as VolumeSurfaceProcessorT
     ),
     new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer.instance,
+        surfaces.VolumeSurfacesParallelizer,
         new surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
             InterpolatingGroupsKindsTemplate
         ) as unknown as VolumeSurfaceProcessorT
     ),
     new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer.instance,
+        surfaces.VolumeSurfacesParallelizer,
         surfaces.rendering.SurfaceWithRenderingProcessor.instance as unknown as VolumeSurfaceProcessorT
     ),
+    solids.VolumeSurfaceSolidifyingProcessor.instance as VolumeProcessorT,
     new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer.instance,
-        solids.VolumeSurfaceSolidifyingProcessor.instance as VolumeSurfaceProcessorT,
-    ),
-    new processing.processors.ParallelizingProcessor(
-        solids.VolumeSolidsParallelizer.instance,
+        solids.VolumeSolidsParallelizer,
         solids.SolidWithEnclosingVolumeProcessor.instance as VolumeSolidProcessorT
     ),
     new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer.instance,
+        surfaces.VolumeSurfacesParallelizer,
         ///@ts-ignore
         textures.TextureableProcessor.instance as VolumeSurfaceProcessorT
     ),

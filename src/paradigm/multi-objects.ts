@@ -1,4 +1,5 @@
-import { PropertyPath, pathsToNodeWithKey, intract, leavesByValue, iterTreeByLeavesValue, pathsToValue, makeLeafInterface } from "../utils/index.js";
+import { PropertyPath } from './property-path.js'
+import { pathsToNodeWithKey, intract, leavesByValue, iterTreeByLeavesValue, pathsToValue, makeLeafInterface } from "./tree.js";
 
 export const MultiObjectsTemplate_Leaf = Symbol("object")
 export type MultiObjectsTemplate = {

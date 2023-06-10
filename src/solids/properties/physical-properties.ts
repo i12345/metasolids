@@ -45,11 +45,11 @@ export class SolidWithPhysicalPropertiesProcessor<
         PhysicalPropertiesTemplateT extends PhysicalPropertiesTemplate<PhysicalPropertiesTemplateT>,
         PhysicalPropertiesValueT extends FieldPoint = FieldPoint,
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-            SurfaceProcessingContext<SampleContextTemplate>,
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>,
         SolidT extends
             SolidWithPhysicalProperties<
                     PhysicalPropertiesTemplateT,
@@ -65,45 +65,38 @@ export class SolidWithPhysicalPropertiesProcessor<
                 >,
         SolidProcessingContextT extends
             SolidProcessingContext<
-                    SampleContextTemplate,
+                    SampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
             SolidProcessingContext<
-                    SampleContextTemplate,
+                    SampleProcessingContextT,
                     SurfaceProcessingContextT
                 >
     >
     implements SolidProcessor<
             Sample,
-            SampleContextTemplate,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceProcessingContextT,
             SolidT,
             SolidProcessingContextT
         > {
-    private _connections!: {
-        readonly inputs: PropertyPath[]
-        readonly outputs: PropertyPath[]
-    }
-
-    get connections() {
-        return this._connections
-    }
-
     constructor(
             public physicalPropertiesTemplate: PhysicalPropertiesTemplateT
         ) { }
     
-    init(context: SolidProcessingContextT): void {
+    init(context: SolidProcessingContextT) {
         const properties = [...leavesByValues(
             this.physicalPropertiesTemplate,
             [PhysicalPropertiesTemplate_Leaf_Extensive, PhysicalPropertiesTemplate_Leaf_Intensive]
         )]
 
-        this._connections = {
+        const connections = {
             inputs: properties.map(({ path }) => ['voxels', ...path]),
             outputs: properties.map(({ path }) => path),
         }
+
+        return { connections }
     }
 
     process(solid: SolidT): void {
@@ -179,11 +172,11 @@ export const IdealGasConstant = 8.31446261815324
 
 export class StandardPhysicalPropertiesSolidProcessor<
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-            SurfaceProcessingContext<SampleContextTemplate>,
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>,
         SolidT extends
             SolidWithPhysicalProperties<
                     StandardPhysicalPropertiesTemplate,
@@ -199,11 +192,11 @@ export class StandardPhysicalPropertiesSolidProcessor<
                 >,
         SolidProcessingContextT extends
             SolidProcessingContext<
-                    SampleContextTemplate,
+                    SampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
             SolidProcessingContext<
-                    SampleContextTemplate,
+                    SampleProcessingContextT,
                     SurfaceProcessingContextT
                 >
     >
@@ -211,7 +204,7 @@ export class StandardPhysicalPropertiesSolidProcessor<
         StandardPhysicalPropertiesTemplate,
         number,
         Sample,
-        SampleContextTemplate,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceProcessingContextT,
         SolidT,

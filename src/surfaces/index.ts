@@ -1,5 +1,6 @@
 export * from './surface.js'
-export * from './processor.js'
+export * from './surface-samples.js'
+export * from './volume-surfaces.js'
 export * from './ray-collider.js'
 export * as meshing from './meshing/index.js'
 export * as measuring from './measuring/index.js'

@@ -1,16 +1,19 @@
 import { PropertyPath } from "../paradigm/property-path.js"
-import { ContextWorker } from "./context-worker.js"
+
+export interface ProcessorConnections {
+    readonly inputs: PropertyPath[]
+    readonly outputs: PropertyPath[]
+}
+
+export interface ProcessorInitialization {
+    readonly connections: ProcessorConnections
+}
 
 export interface Processor<
-        Item,
+        Item = any,
         Context = any
-    > extends
-    ContextWorker<Context> {
-    //TODO: connections should be returned from init() method
-    readonly connections: {
-        readonly inputs: PropertyPath[]
-        readonly outputs: PropertyPath[]
-    }
+    > {
+    init(context: Context): ProcessorInitialization
 
     process(
             item: Item,

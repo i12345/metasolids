@@ -1,7 +1,8 @@
 import { calculateNormals, Vec3 } from "playcanvas-extended"
 import { VolumeProcessor, VolumeSamplingKey } from "../../volumes/processor.js"
 import { VolumeSample, VolumeLocation } from "../../volumes/volume.js"
-import { VolumeSurfacesProcessing, SurfaceProcessingContext, VolumeSurfacesProcessingContext, VolumeSurfacesKey } from "../processor.js"
+import { SurfaceProcessingContext } from "../surface-samples.js"
+import { VolumeSurfacesProcessing, VolumeSurfacesProcessingContext, VolumeSurfacesKey } from "../volume-surfaces.js"
 import { MeshDataWithNormals } from "../surface.js"
 import { MeshingAlgorithm, MeshingSettings } from "./meshing-algorithm.js"
 import { indicesArrayType, IndiciesArray } from "../../utils/indices-array.js"
@@ -17,15 +18,15 @@ export interface VolumeSurfaceMeshingProcessing<
 export interface VolumeSurfaceMeshingProcessingContext<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-            SurfaceProcessingContext<SampleContextTemplate>,
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>,
     > extends
     VolumeSurfacesProcessingContext<
         Location,
         Sample,
-        SampleContextTemplate,
+        SampleProcessingContextT,
         SurfaceProcessingContextT
     > {
     [VolumeSurfaceMeshingKey]: {
@@ -37,25 +38,26 @@ export interface VolumeSurfaceMeshingProcessingContext<
 export class VolumeSurfaceMeshingProcessor<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
     > implements
     VolumeProcessor<
         Location,
         Sample,
-        SampleContextTemplate,
+        SampleProcessingContextT,
         VolumeSurfaceMeshingProcessing<Sample>,
-        VolumeSurfaceMeshingProcessingContext<Location, Sample, SampleContextTemplate>
+        VolumeSurfaceMeshingProcessingContext<Location, Sample, SampleProcessingContextT>
     > {
-    readonly connections = {
-        inputs: [
-            [VolumeSamplingKey]
-        ],
-        outputs: [
-            [VolumeSurfacesKey, PROPERTYKEY_ALL, "mesh"]
-        ]
-    }
+    init() {
+        const connections = {
+            inputs: [
+                [VolumeSamplingKey]
+            ],
+            outputs: [
+                [VolumeSurfacesKey, PROPERTYKEY_ALL, "mesh"]
+            ]
+        }
 
-    init(): void {
+        return { connections }
     }
 
     process(
@@ -63,7 +65,7 @@ export class VolumeSurfaceMeshingProcessor<
             context: VolumeSurfaceMeshingProcessingContext<
                 Location,
                 Sample,
-                SampleContextTemplate
+                SampleProcessingContextT
             >
         ): void {
         const sampling = volume[VolumeSamplingKey]

@@ -6,7 +6,7 @@ import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/multi-obj
 import { Triangles2DMeshInterpolator } from "../../fields/triangles-2D-mesh.js";
 import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrapping } from "./algorithm.js";
-import { SurfaceProcessingContext } from "../processor.js";
+import { SurfaceProcessingContext } from "../surface-samples.js";
 
 export interface SurfaceUVRayCollision extends TriangleRayCollision {
     uv: Vec2

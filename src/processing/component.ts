@@ -2,7 +2,9 @@ import * as pc from "playcanvas-extended";
 import { ComponentSystem } from "./component-system.js";
 import { Instance } from "./instance.js";
 import { Entity, GraphNode } from "playcanvas-extended";
-import { GraphProcessor } from "./processors/graph.js";
+import { GraphProcessor, GraphProcessorContext, GraphProcessorContextKey } from "./processors/graph.js";
+import { Processor } from "./processor.js";
+import { extract } from "../paradigm/tree.js";
 
 export class ComponentData<ID = string> {
     enabled = true
@@ -158,14 +160,21 @@ export abstract class Component<
 
         const system = this.system as SystemT
 
-        const { processing, context } = this.initializeProcessingFromRaw()
-        const graph = new GraphProcessor(system.processors)
-        graph.init(context)
-        graph.process(processing, context)
-        this.processing.shared = processing
+        const raw = this.initializeProcessingFromRaw()
+        const context: GraphProcessorContext & ContextT = {
+            [GraphProcessorContextKey]: new Map(),
+            ...raw.context
+        }
+        const graph = new GraphProcessor(system.processors as Processor<SharedT, GraphProcessorContext & ContextT>[])
+        const initialization = graph.init(context)
+        if (!initialization.connections.inputs.every(input => extract(raw.processing, input) !== undefined))
+            throw new Error("not all inputs defined")
+        
+        graph.process(raw.processing, context)
+        this.processing.shared = raw.processing
 
         if (this.processing.id)
-            system.instancerManager.save(this.processing.id, processing)
+            system.instancerManager.save(this.processing.id, raw.processing)
     }
 
     onEnable(): void {

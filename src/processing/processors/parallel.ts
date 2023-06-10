@@ -1,5 +1,4 @@
-import { PropertyPath } from "../../paradigm/property-path.js";
-import { Processor } from "../processor.js";
+import { Processor, ProcessorInitialization } from "../processor.js";
 
 export const ParallelizedContextParallelInfo = Symbol("parallel")
 
@@ -37,14 +36,12 @@ export interface Parallelizer<
             ParallelizedProcessor<Item, Context, ParallelizedItem, ParallelizedItemContext> =
             ParallelizedProcessor<Item, Context, ParallelizedItem, ParallelizedItemContext>
     > {
-    readonly parallelizedPath: PropertyPath
-    
     init(
             context: Context,
             parallelizedItemProcessor: ParallelizedItemProcessor
-        ): void
+        ): ProcessorInitialization
     
-    parallelize(
+    process(
             item: Item,
             context: Context,
             parallelizedItemProcessor: ParallelizedItemProcessor
@@ -72,31 +69,16 @@ export class ParallelizingProcessor<
             Parallelizer<Item, Context, ParallelizedItem, ParallelizedItemContext, ParallelizedItemProcessor>
     >
     implements Processor<Item, Context> {
-    private _connections!: {
-        readonly inputs: PropertyPath[]
-        readonly outputs: PropertyPath[]
-    }
-
-    get connections() {
-        return this._connections
-    }
-
     constructor(
             public parallelizer: ParallelizerT,
-            public itemProcessor: ParallelizedItemProcessor,
-            public otherDependencies: PropertyPath[] = []
+            public itemProcessor: ParallelizedItemProcessor
         ) { }
     
-    init(context: Context): void {
-        this.parallelizer.init(context, this.itemProcessor)
-
-        this._connections = {
-            inputs: this.itemProcessor.connections.inputs.map(input => [...this.parallelizer.parallelizedPath, ...input]),
-            outputs: this.itemProcessor.connections.outputs.map(output => [...this.parallelizer.parallelizedPath, ...output]),
-        }
+    init(context: Context) {
+        return this.parallelizer.init(context, this.itemProcessor)
     }
 
     process(item: Item, context: Context): void {
-        this.parallelizer.parallelize(item, context, this.itemProcessor)
+        this.parallelizer.process(item, context, this.itemProcessor)
     }
 }

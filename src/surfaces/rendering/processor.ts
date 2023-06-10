@@ -1,4 +1,5 @@
-import { SurfaceProcessor, VolumeSurfaceProcessingContext } from "../processor.js";
+import { SurfaceProcessor } from "../surface-samples.js";
+import { VolumeSurfaceProcessingContext } from "../volume-surfaces.js"
 import { SurfaceSample } from "../surface.js";
 import { Material_Groups_Template } from "./material/groups.js";
 import { VolumeLocation } from "../../volumes/volume.js";

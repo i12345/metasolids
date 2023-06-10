@@ -3,27 +3,39 @@ import { Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator }
 import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../../processing/processors/parallel.js";
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingKey } from "../../volumes/index.js";
-import { SolidProcessingContext, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../processor.js";
+import { SolidProcessingContext } from "../processor.js";
+import { VolumeSolidProcessingContext, VolumeSolidProcessor } from "../volume-solids.js"
 import { Solid } from "../solid.js";
-import { PROPERTYKEY_ALL } from "../../paradigm/property-path.js";
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/multi-objects.js";
+import { IterableParallelizer } from "../../processing/processors/parallelizer-iterable.js";
+
+export const VolumeVoxelsKey = "voxels"
 
 export interface SolidWithEnclosingVolume<
         Sample extends VolumeSample = VolumeSample,
         SurfaceT extends Surface<Sample> = Surface<Sample>
     >
     extends Solid<Sample, SurfaceT> {
-    voxels: Sample[]
+    [VolumeVoxelsKey]: Sample[]
     totalVolume: number
+}
+
+export type SolidVoxelsGroup = {
+    [VolumeVoxelsKey]: MultiObjectsGroupsTemplateLeaf
+}
+
+export const SolidVoxelsGroupTemplate: SolidVoxelsGroup = {
+    [VolumeVoxelsKey]: MultiObjectsGroupsTemplate_Leaf
 }
 
 export class SolidWithEnclosingVolumeProcessor<
         Location extends VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-            SurfaceProcessingContext<SampleContextTemplate>,
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>,
         SolidT extends
             SolidWithEnclosingVolume<Sample, SurfaceT> =
             SolidWithEnclosingVolume<Sample, SurfaceT>
@@ -31,7 +43,7 @@ export class SolidWithEnclosingVolumeProcessor<
     VolumeSolidProcessor<
             Location,
             Sample,
-            SampleContextTemplate,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceProcessingContextT,
             SolidT
@@ -39,23 +51,20 @@ export class SolidWithEnclosingVolumeProcessor<
     init(context: VolumeSolidProcessingContext<
             Location,
             Sample,
-            SampleContextTemplate,
+            SampleProcessingContextT,
             SurfaceProcessingContextT
-        >): void {
-    }
+        >) {
+        const connections = {
+            inputs: [
+                ['surface', 'mesh']
+            ],
+            outputs: [
+                [VolumeVoxelsKey],
+                ['totalVolume']
+            ]
+        }
 
-    readonly dependencies = [
-        ['surface', 'mesh']
-    ]
-
-    readonly connections = {
-        inputs: [
-            ['surface', 'mesh']
-        ],
-        outputs: [
-            ['voxels'],
-            ['totalVolume']
-        ]
+        return { connections }
     }
 
     process(
@@ -63,10 +72,12 @@ export class SolidWithEnclosingVolumeProcessor<
             context: VolumeSolidProcessingContext<
                 Location,
                 Sample,
-                SampleContextTemplate,
+                SampleProcessingContextT,
                 SurfaceProcessingContextT
             >
         ): void {
+        //TODO: replace with 3D triangle ray collider
+
         // from StackOverflow comment https://stackoverflow.com/a/6576840
 
         // This algorithm will index the triangles into 2D cells (a triangle
@@ -168,11 +179,11 @@ export class SolidWithEnclosingVolumeProcessor<
 
 export type SolidEnclosingVolumeSampleProcessingContext<
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-        SurfaceProcessingContext<SampleContextTemplate>,
+            SurfaceProcessingContext<SampleProcessingContextT> =
+        SurfaceProcessingContext<SampleProcessingContextT>,
         SolidT extends
             SolidWithEnclosingVolume<
                     Sample,
@@ -184,15 +195,15 @@ export type SolidEnclosingVolumeSampleProcessingContext<
         >,
         SolidProcessingContextT extends
             SolidProcessingContext<
-                    SampleContextTemplate,
+                    SampleProcessingContextT,
                     SurfaceProcessingContextT
             > =
             SolidProcessingContext<
-                    SampleContextTemplate,
+                    SampleProcessingContextT,
                     SurfaceProcessingContextT
                 >
     > =
-    SampleContextTemplate &
+    SampleProcessingContextT &
     ParallelizedContext<
             SolidT,
             SolidProcessingContextT
@@ -200,21 +211,21 @@ export type SolidEnclosingVolumeSampleProcessingContext<
 
 export interface SolidEnclosingVolumeSampleProcessor<
         Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
+        SampleProcessingContextT = any,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-            SurfaceProcessingContext<SampleContextTemplate>,
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>,
         SolidT extends
             SolidWithEnclosingVolume<Sample, SurfaceT> =
             SolidWithEnclosingVolume<Sample, SurfaceT>,
         SolidProcessingContextT extends
             SolidProcessingContext<
-                SampleContextTemplate,
+                SampleProcessingContextT,
                 SurfaceProcessingContextT
             > =
             SolidProcessingContext<
-                SampleContextTemplate,
+                SampleProcessingContextT,
                 SurfaceProcessingContextT
             >
     > extends
@@ -224,7 +235,7 @@ export interface SolidEnclosingVolumeSampleProcessor<
         Sample,
         SolidEnclosingVolumeSampleProcessingContext<
             Sample,
-            SampleContextTemplate,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceProcessingContextT,
             SolidT,
@@ -232,105 +243,4 @@ export interface SolidEnclosingVolumeSampleProcessor<
         >
     > { }
 
-export class SolidEnclosingVolumeSampleParallelizer<
-        Sample extends VolumeSample = VolumeSample,
-        SampleContextTemplate = any,
-        SurfaceT extends Surface<Sample> = Surface<Sample>,
-        SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleContextTemplate> =
-            SurfaceProcessingContext<SampleContextTemplate>,
-        SolidT extends
-            SolidWithEnclosingVolume<Sample, SurfaceT> =
-            SolidWithEnclosingVolume<Sample, SurfaceT>,
-        SolidProcessingContextT extends
-            SolidProcessingContext<
-                SampleContextTemplate,
-                SurfaceProcessingContextT
-            > =
-            SolidProcessingContext<
-                SampleContextTemplate,
-                SurfaceProcessingContextT
-            >
-    > implements
-    Parallelizer<
-        SolidT,
-        SolidProcessingContextT,
-        Sample,
-        SolidEnclosingVolumeSampleProcessingContext<
-            Sample,
-            SampleContextTemplate,
-            SurfaceT,
-            SurfaceProcessingContextT,
-            SolidT,
-            SolidProcessingContextT
-        >
-    > {
-    readonly parallelizedPath = ['voxels', PROPERTYKEY_ALL]
-    
-    init(
-            context: SolidProcessingContextT,
-            parallelizedItemProcessor: ParallelizedProcessor<
-                SolidT,
-                SolidProcessingContextT,
-                Sample,
-                SolidEnclosingVolumeSampleProcessingContext<
-                    Sample,
-                    SampleContextTemplate,
-                    SurfaceT,
-                    SurfaceProcessingContextT,
-                    SolidT,
-                    SolidProcessingContextT
-                >
-        >): void {
-        type SampleContext = SolidEnclosingVolumeSampleProcessingContext<
-            Sample,
-            SampleContextTemplate,
-            SurfaceT,
-            SurfaceProcessingContextT,
-            SolidT,
-            SolidProcessingContextT
-        >
-        
-        const parallelizedContext: SampleContext = {
-            ...context.sample,
-            [ParallelizedContextParallelInfo]: { item: undefined, context }
-        }
-
-        parallelizedItemProcessor.init(parallelizedContext)
-    }
-    
-    parallelize(
-            solid: SolidT,
-            context: SolidProcessingContextT,
-            sampleProcessor: ParallelizedProcessor<
-                SolidT,
-                SolidProcessingContextT,
-                Sample,
-                SolidEnclosingVolumeSampleProcessingContext<
-                    Sample,
-                    SampleContextTemplate,
-                    SurfaceT,
-                    SurfaceProcessingContextT,
-                    SolidT,
-                    SolidProcessingContextT
-                >
-            >
-        ): void {
-        type SampleContext = SolidEnclosingVolumeSampleProcessingContext<
-            Sample,
-            SampleContextTemplate,
-            SurfaceT,
-            SurfaceProcessingContextT,
-            SolidT,
-            SolidProcessingContextT
-        >
-        
-        const parallelizedContext: SampleContext = {
-            ...context.sample,
-            [ParallelizedContextParallelInfo]: { item: solid, context }
-        }
-
-        for (const sample of solid.voxels)
-            sampleProcessor.process(sample, parallelizedContext)
-    }
-}
+export const SolidEnclosingVolumeSampleParallelizer = new IterableParallelizer(SolidVoxelsGroupTemplate)
