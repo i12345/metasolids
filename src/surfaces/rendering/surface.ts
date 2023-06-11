@@ -3,7 +3,7 @@ import { VolumeLocation } from "../../volumes/volume.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "./renderer.js";
 import { MultiObjectsGroupsTemplate } from "../../paradigm/multi-objects.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
-import { Surface, SurfaceInstance, SurfaceSample, UVunwrapping, texturing } from "../index.js";
+import { Surface, SurfaceInstance, SurfaceSample, UVunwrapping, VolumeProcessingWithSurfacesInstancer, texturing } from "../index.js";
 import { Instancer } from "../../processing/instance.js";
 import { Entity } from "playcanvas-extended";
 
@@ -97,7 +97,12 @@ export class SurfaceWithRenderingInstancer<
     ): void {
         instance.renderer.attached = enabled
     }
+
+    private constructor() { }
+    static readonly instance = new this()
 }
+
+export const VolumeProcessingWithSurfacesWithRenderingInstancer = new VolumeProcessingWithSurfacesInstancer(SurfaceWithRenderingInstancer.instance)
 
 // let a: SurfaceProcessingContextWithRendering<VolumeLocation, { a: MultiObjectsGroupsTemplateLeaf }, SurfaceSampleProcessingContextWithIndividualTextureLocations<{ a: MultiObjectsGroupsTemplateLeaf }>>
 // a[SurfaceIndividualTexturesGroupKindKey].material.textures.diffuse // MultiObjectsGroupsTemplateLeaf

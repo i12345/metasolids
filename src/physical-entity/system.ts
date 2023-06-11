@@ -1,6 +1,6 @@
 import { AppBase } from "playcanvas-extended"
 import { fields, processing, solids, surfaces, textures, volumes } from "../index.js"
-import { InterpolatingGroupsKindsTemplate, InterpolatingGroupsTemplate, SampleProcessingContextT, SampleT, VolumeProcessingContextT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
+import { InterpolatingGroupsKindsTemplate, InterpolatingGroupsTemplate, SampleProcessingContextT, SampleT, SurfaceInstanceT, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
 import { Component } from "./component.js"
 import { ComponentData } from "./data.js"
 import { StorageService } from "../utils/index.js"
@@ -47,6 +47,10 @@ const processors: VolumeProcessorT[] = [
         ///@ts-ignore
         textures.TextureableProcessor.instance as VolumeSurfaceProcessorT
     ),
+]
+
+const instancers: processing.Instancer<VolumeProcessingT, VolumeProcessingInstanceT>[] = [
+    surfaces.rendering.VolumeProcessingWithSurfacesWithRenderingInstancer as any,
 ]
 
 export class ComponentSystem<ID = string>

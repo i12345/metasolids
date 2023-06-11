@@ -2,7 +2,6 @@ import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, ma
 import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsDomainInternalPreservedGroupsKindsKey } from "../fields/index.js"
 import { textures, volumes, surfaces, solids } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
-import { MetaShapeVolumeMultiObjectsInternalPreservedGroups, MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate } from "../volumes/metashapes/metashape.js"
 
 export type VolumeLocationT = volumes.VolumeLocation
 
@@ -466,6 +465,15 @@ export type SurfaceT = surfaces.Surface<SampleT> &
         > &
     {}
 
+export type SurfaceInstanceT =
+    surfaces.SurfaceInstance<SurfaceT> &
+    surfaces.rendering.SurfaceWithRenderingInstancer<
+        SampleT,
+        VolumeLocationT,
+        SurfaceUVUnwrappingGroupT
+    > &
+    {}
+
 export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<SampleProcessingContextT> &
     // surfaces.SurfaceProcessingContextWithSurfaceArea<SampleProcessingContextT> (doesn't exist) &
     surfaces.texturing.SurfaceProcessingContextWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
@@ -617,6 +625,15 @@ export type VolumeProcessingT =
             SurfaceT,
             SolidT
         >
+
+    
+export type VolumeProcessingInstanceT =
+    surfaces.VolumeProcessingWithSurfacesInstance<
+        SampleT,
+        SurfaceT,
+        SurfaceInstanceT,
+        VolumeProcessingT
+    >
 
 export type VolumeProcessingContextT =
     volumes.VolumeProcessingContext<
