@@ -13,10 +13,9 @@ import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 
 export class MaterialSemanticImplementation_VertexColors<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
     >
-    implements MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
     readonly cost: {
         time: number
         space: Cost_Space_VertexColors
@@ -58,7 +57,7 @@ export class MaterialSemanticImplementation_VertexColors<
         return interpolating_fit_definite + ((1 - interpolating_fit_definite) * this.triangleMonotonicity)
     }
     
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_VertexColors &&
             ///@ts-ignore    
             this.texture === that.texture &&
@@ -69,21 +68,24 @@ export class MaterialSemanticImplementation_VertexColors<
             this.vertices === that.vertices
     }
 
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
-        const buffer = new Float32Array(this.channels * renderer.shared.surface.samples.length)
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
+        const buffer = new Float32Array(this.channels * renderer.shared.meshData.vertices.length)
         
-        const textureContext = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>
+        const textureContext = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
         
-        const UVs = renderer.mesh.shared.UVUnwrapping!.UVs
+        const UVs = renderer.shared.surfaceUVUnwrapping.UVs
+        const n_vertices = renderer.shared.meshData.vertices.length
 
         /** original vertices */
-        const sample_texture_values = renderer.shared.surface.samples.map((sample, i) =>
-            this.texture.sample(
-                //TODO: integrate other location fields
-                { uv: UVs[i] } as Material_Texture_Location<VolumeLocationT>,
-                textureContext
-            )
-        )
+        const sample_texture_values = new Array<TexelTypeT>(n_vertices)
+        for (let i = 0; i < n_vertices; i++) {
+            sample_texture_values[i] =
+                this.texture.sample(
+                    //TODO: integrate other location fields
+                    { uv: UVs[i] } as Material_Texture_Location<VolumeLocationT>,
+                    textureContext
+                )
+        }
 
         if (typeof sample_texture_values[0] === 'number') {
             for (let i = 0; i < sample_texture_values.length; i++) {

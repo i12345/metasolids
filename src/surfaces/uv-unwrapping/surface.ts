@@ -22,9 +22,9 @@ export const SurfaceUVUnwrappingGroupsDefaultTemplate: SurfaceUVUnwrappingGroups
 
 export type SurfaceWithUVUnwrapping<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        Sample extends SurfaceSample = SurfaceSample
+        SampleT extends SurfaceSample = SurfaceSample
     > =
-    Surface<Sample> &
+    Surface<SampleT> &
     MultiObjectsGroupsMapped<SurfaceUVUnwrappingGroup, SurfaceUVUnwrapping>
 
 export type SurfaceProcessingContextWithUVUnwrapping<

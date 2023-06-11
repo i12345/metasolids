@@ -5,10 +5,9 @@ import { VolumeLocation } from "../../../../volumes/index.js";
 import { MultiObjectsGroupsTemplate } from "../../../../paradigm/index.js";
 
 export class MaterialSemanticImplementationStorageClass_Constant<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClass<VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    implements MaterialSemanticImplementationStorageClass<VolumeLocationT> {
     readonly $class = MaterialSemanticImplementationStorageClass_Constant.$class
     
     private readonly _defaultMaterials = new Map<typeof Material, Material>()
@@ -27,23 +26,20 @@ export class MaterialSemanticImplementationStorageClass_Constant<
         return { elements: 16 }
     }
 
-    instance(renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
-        return new MaterialSemanticImplementationStorageClassInstanceShared_Constant<VolumeLocationT, SurfaceUVUnwrappingGroup>(this, renderer)
+    instance(renderer: SurfaceRendererShared<VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceShared_Constant<VolumeLocationT>(this, renderer)
     }
 
     static readonly $class = Symbol("material-semantic-implementation-storage-class:constant")
 }
 
-let defaultMaterial: StandardMaterial
-
 class MaterialSemanticImplementationStorageClassInstanceShared_Constant<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    implements MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT> {
     constructor(
-            public readonly $class: MaterialSemanticImplementationStorageClass_Constant<VolumeLocationT, SurfaceUVUnwrappingGroup>,
-            public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
+            public readonly $class: MaterialSemanticImplementationStorageClass_Constant<VolumeLocationT>,
+            public readonly renderer: SurfaceRendererShared<VolumeLocationT>
         ) {
         renderer.material.computeBackingCallbacks.push(renderer => {
             renderer
@@ -53,27 +49,26 @@ class MaterialSemanticImplementationStorageClassInstanceShared_Constant<
         })
     }
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
-        return new MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<VolumeLocationT, SurfaceUVUnwrappingGroup>(this, renderer)
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<VolumeLocationT>(this, renderer)
     }
 }
 
 class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup> {
-    readonly rendered: RenderedBufferForSemanticWithImplementation[] = []
+    implements MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT> {
+    readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] = []
     private _hasRequestedIndividual_material = false
     
     constructor(
-        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_Constant<VolumeLocationT, SurfaceUVUnwrappingGroup>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
+        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_Constant<VolumeLocationT>,
+        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
     ) { }
     
     preoptimize(
-            add: RenderedBufferForSemanticWithImplementation[],
-            remove: RenderedBufferForSemanticWithImplementation[]
+            add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
+            remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
         ): void {
         const final = [...this.rendered, ...add]
         remove.forEach(remove => {
@@ -92,8 +87,8 @@ class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
     }
 
     apply(
-            add: RenderedBufferForSemanticWithImplementation[],
-            remove: RenderedBufferForSemanticWithImplementation[]
+            add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
+            remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
         ): void {
         for (const { semantic } of remove)
             (this.renderer.implementation.material as any)[semantic as string] = (this.$class.$class.defaultMaterial(this.$class.renderer.material.materialType) as any)[semantic]

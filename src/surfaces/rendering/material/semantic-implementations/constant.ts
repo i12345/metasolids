@@ -3,17 +3,15 @@ import { TextureSample } from "../../../../textures/texture.js"
 import { Cost_Space, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
 import { MaterialSemanticImplementationStorageClass_Constant } from "../storage-classes/constant.js"
 import { SurfaceRendererIndividual } from "../../renderer.js"
-import { FieldPoint, field_point_equal } from "../../../../fields/point.js"
+import { field_point_equal } from "../../../../fields/point.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"
 
 export class MaterialSemanticImplementation_Constant<
     VolumeLocationT extends VolumeLocation = VolumeLocation,
-    SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
     TexelTypeT extends TextureSample = TextureSample
 >
-    implements MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
     readonly cost: {
         time: 0,
         space: Cost_Space
@@ -38,7 +36,7 @@ export class MaterialSemanticImplementation_Constant<
         return this.constancy
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_Constant &&
             ///@ts-ignore
             field_point_equal(this.meanValue, that.meanValue) &&
@@ -47,7 +45,7 @@ export class MaterialSemanticImplementation_Constant<
             this.semantic === that.semantic
     }
     
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
         const buffer = new Float32Array(this.channels)
 
         if (typeof this.meanValue === 'number')

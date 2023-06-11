@@ -36,13 +36,31 @@ export interface Instancer<
     
     instantiate(
         shared: SharedT,
-        target: Entity
+        entity: Entity
     ): InstanceT
 
     set_enabled(instance: InstanceT, enabled: boolean): void
 }
 
-export class InstancerManager<
+export class MultiInstancer<
+        SharedT,
+        InstanceT extends Instance<SharedT> = Instance<SharedT>
+    > implements
+    Instancer<SharedT, InstanceT> {
+    constructor(public readonly instancers: Instancer<SharedT, InstanceT>[]) { }
+    
+    instantiate(shared: SharedT, entity: Entity): InstanceT {
+        const instances = this.instancers.map(instancer => instancer.instantiate(shared, entity))
+        return mergeObjects(instances)
+    }
+
+    set_enabled(instance: InstanceT, enabled: boolean): void {
+        for (const instancer of this.instancers)
+            instancer.set_enabled(instance, enabled)
+    }
+}
+
+export class SharedDB<
         SharedT,
         InstanceT extends Instance<SharedT> = Instance<SharedT>,
         ID = string
@@ -51,16 +69,6 @@ export class InstancerManager<
         public readonly instancers: Instancer<SharedT, InstanceT>[],
         public readonly storage: StorageService<ID>
     ) { }
-    
-    instantiate(shared: SharedT, entity: Entity): InstanceT {
-        const instances = this.instancers.map(instancer => instancer.instantiate(shared, entity))
-        return mergeObjects(instances)
-    }
-
-    set_enabled(instance: InstanceT, enabled: boolean) {
-        for(const instancer of this.instancers)
-        instancer.set_enabled(instance, enabled)
-    }
 
     load(id: ID): SharedT {
         const buffer = this.storage.read(id)

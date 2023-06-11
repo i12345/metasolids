@@ -92,8 +92,8 @@ export interface SurfaceObjectsTexturesRayColliderProcessingContext<
                     // SampleT
                 >,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
@@ -171,25 +171,25 @@ export class SurfaceObjectsTexturesRayCollider<
                 // TexturesGrouped,
                 // SampleT
             >,
-        SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
-        SampleProcessingContextT = any,
-        SurfaceProcessingContextT extends
-            SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
-                    UVUnwrappingGroup,
-                    Objects,
-                    TextureGroups,
-                    ObjectsTexturesGrouped,
-                    SampleProcessingContextT
-                > =
-            SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
-                    UVUnwrappingGroup,
-                    Objects,
-                    TextureGroups,
-                    ObjectsTexturesGrouped,
-                    SampleProcessingContextT
-                >
+    SurfaceInstanceT extends
+        SurfaceInstance<SurfaceT> =
+        SurfaceInstance<SurfaceT>,
+    SampleProcessingContextT = any,
+    SurfaceProcessingContextT extends
+        SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
+                UVUnwrappingGroup,
+                Objects,
+                TextureGroups,
+                ObjectsTexturesGrouped,
+                SampleProcessingContextT
+            > =
+        SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
+                UVUnwrappingGroup,
+                Objects,
+                TextureGroups,
+                ObjectsTexturesGrouped,
+                SampleProcessingContextT
+            >
     > implements
     RayCollider<
         SurfaceObjectsTexturesRayCollision<

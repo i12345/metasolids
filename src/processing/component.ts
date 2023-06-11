@@ -174,7 +174,26 @@ export abstract class Component<
         this.processing.shared = raw.processing
 
         if (this.processing.id)
-            system.instancerManager.save(this.processing.id, raw.processing)
+            system.db.save(this.processing.id, raw.processing)
+    }
+
+    /**
+     * Creates the instance for the current shared processing.
+     */
+    instantiate() {
+        type SystemT = ComponentSystem<
+            SharedT,
+            InstanceT,
+            ContextT,
+            ID
+        >
+
+        const system = this.system as SystemT
+
+        if(this.processing.shared)
+            this.processing.instance = system.combinedInstancers.instantiate(this.processing.shared, this.entity)
+        else
+            this.processing.instance = undefined
     }
 
     onEnable(): void {
@@ -191,7 +210,7 @@ export abstract class Component<
         const system = this.system as SystemT
 
         if (this.processing.instance)
-            system.instancerManager.set_enabled(this.processing.instance, true)
+            system.combinedInstancers.set_enabled(this.processing.instance, true)
     }
 
     onDisable(): void {
@@ -208,7 +227,7 @@ export abstract class Component<
         const system = this.system as SystemT
 
         if (this.processing.instance)
-            system.instancerManager.set_enabled(this.processing.instance, false)
+            system.combinedInstancers.set_enabled(this.processing.instance, false)
     }
 
     private _processing_id_changed(oldValue: ID | undefined, newValue: ID | undefined) {
@@ -225,7 +244,7 @@ export abstract class Component<
         const system = this.system as SystemT
 
         if(this.processing.id)
-            this.processing.shared = system.instancerManager.load(this.processing.id)
+            this.processing.shared = system.db.load(this.processing.id)
         else
             this.processing.shared = undefined
     }
@@ -234,19 +253,7 @@ export abstract class Component<
         if (!this.isRoot && newValue !== undefined)
             throw new Error("Cannot set processing on non-root component")
         
-        type SystemT = ComponentSystem<
-            SharedT,
-            InstanceT,
-            ContextT,
-            ID
-        >
-
-        const system = this.system as SystemT
-
-        if(this.processing.shared)
-            this.processing.instance = system.instancerManager.instantiate(this.processing.shared, this.entity)
-        else
-            this.processing.instance = undefined
+        this.instantiate()
     }
 
     private _processing_instance_changed(oldValue?: InstanceT, newValue?: InstanceT) {
@@ -263,9 +270,9 @@ export abstract class Component<
         const system = this.system as SystemT
 
         if (oldValue)
-            system.instancerManager.set_enabled(oldValue, false)
+            system.combinedInstancers.set_enabled(oldValue, false)
         if (newValue)
-            system.instancerManager.set_enabled(newValue, true)
+            system.combinedInstancers.set_enabled(newValue, true)
     }
 
     private findRoot() {

@@ -1,6 +1,8 @@
 export * from './volume.js'
+export * from './space-transformation.js'
 export * from './sampling.js'
 export * from './processor.js'
+export * from './instance.js'
 export * from './volume-samples.js'
 export * from './volumes/index.js'
 export * as metashapes from './metashapes/index.js'

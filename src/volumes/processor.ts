@@ -6,6 +6,8 @@ import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, 
 import { PROPERTYKEY_ALL } from "../paradigm/property-path.js";
 import { GroupsParallelizer, IterableParallelizer } from "../processing/processors/index.js";
 import { MultiObjectsGroupsTemplate_Leaf, MultiObjectsGroupsTemplateLeaf } from "../paradigm/multi-objects.js";
+import { Instance } from "../processing/instance.js";
+import { Mat4 } from "playcanvas-extended";
 
 export const VolumeSampleKey = Symbol('volume.sample')
 export const VolumeSamplingKey = Symbol("volume-sampling")

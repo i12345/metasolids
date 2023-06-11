@@ -1,6 +1,7 @@
 import { BoundingBox, Vec3 } from "playcanvas-extended";
 import { ExtraFields } from "../fields/index.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "./volume.js";
+import { SpaceTransformation } from "./space-transformation.js";
 
 export interface VolumeSamplingRequest<
         Location extends VolumeLocation = VolumeLocation,
@@ -13,6 +14,8 @@ export interface VolumeSamplingRequest<
     context: Context
     extraLocationParameters?: ExtraFields<Location, VolumeLocation>
     settings: VolumeSamplerSettings
+    //TODO: implement
+    // spaceTransformations?: SpaceTransformation[]
 }
 
 export interface VolumeSamplingResult<

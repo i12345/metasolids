@@ -1,11 +1,9 @@
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 import { MaterialSemanticImplementation } from "../implementation.js";
 
 export interface MaterialSemanticImplementation_Immediate<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    extends MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup> {
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean
+    extends MaterialSemanticImplementation<VolumeLocationT> {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean
 }

@@ -14,17 +14,18 @@ import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 import { VertexInterpolatingTexture } from "../../../../textures/index.js"
 
-export type MaterialSemanticImplementation_Texture_SideEffect = (
-        rendered: RenderedBufferForSemanticWithImplementation,
-        renderer: SurfaceRendererIndividual
-    ) => RenderedBufferForSemanticWithImplementation[]
+export type MaterialSemanticImplementation_Texture_SideEffect<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > = (
+        rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>,
+        renderer: SurfaceRendererIndividual<VolumeLocationT>
+    ) => RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
 
 export class MaterialSemanticImplementation_Texture<
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
     > implements
-    MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    MaterialSemanticImplementation_Immediate<VolumeLocationT> {
     readonly cost: {
         time: number
         space: Cost_Space_Texture
@@ -50,7 +51,7 @@ export class MaterialSemanticImplementation_Texture<
         public readonly channels: number,
         public readonly effectiveTexelSizeUV: number,
         public readonly hdr = false,
-        public readonly sideEffects: MaterialSemanticImplementation_Texture_SideEffect[] = []
+        public readonly sideEffects: MaterialSemanticImplementation_Texture_SideEffect<VolumeLocationT>[] = []
     ) {
         const texels = resolution ** 2
 
@@ -75,7 +76,7 @@ export class MaterialSemanticImplementation_Texture<
         return Math.max(information_per_pixel_mean, effectiveFit) ** 2
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_Texture &&
             ///@ts-ignore
             this.texture === that.texture &&
@@ -86,12 +87,12 @@ export class MaterialSemanticImplementation_Texture<
             this.resolution === that.resolution
     }
 
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
         const buffer = new (this.hdr ? Float32Array : Uint8Array)(this.channels * (this.resolution ** 2))
 
-        const texture_context = this.surface_textureGroup.get(renderer.shared.context.material.textures) as Material_Texture_Context<VolumeLocationT>
+        const texture_context = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
 
-        const { UVs, finalIndices } = renderer.mesh.shared.UVUnwrapping!
+        const { UVs, finalIndices } = renderer.shared.surfaceUVUnwrapping
         
         const texture_location_interpolator = new VertexInterpolatingTexture(
             //TODO: integrate other location fields
@@ -173,7 +174,7 @@ export class MaterialSemanticImplementation_Texture<
         
         //TODO: optimizations for translating, rotating, scaling, and tiling textures
 
-        const rendered: RenderedBufferForSemanticWithImplementation = {
+        const rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT> = {
             storageClass: MaterialSemanticImplementationStorageClass_Texture.$class,
             implementation: this,
             semantic: this.semantic,

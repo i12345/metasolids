@@ -1,7 +1,6 @@
 import { MeshData } from "./meshing/types.js";
 import { VolumeSample } from "../volumes/volume.js";
-import { Instance } from "../processing/instance.js";
-import { Mat4 } from "playcanvas-extended";
+import { Instance, Instancer } from "../processing/instance.js";
 
 export type SurfaceSample = VolumeSample
 
@@ -10,7 +9,7 @@ export interface MeshDataWithNormals extends MeshData {
 }
 
 export interface Surface<
-        Sample extends SurfaceSample = SurfaceSample
+        SampleT extends SurfaceSample = SurfaceSample
     > {
     readonly mesh: MeshDataWithNormals
 
@@ -18,16 +17,9 @@ export interface Surface<
      * These might not be directly from the volume samples, but derived
      * from them.
      */
-    readonly samples: Sample[]
+    readonly samples: SampleT[]
 }
 
-export interface SurfaceInstance<
-        Sample extends SurfaceSample = SurfaceSample,
-        SurfaceT extends Surface<Sample> = Surface<Sample>
-    > extends
-    Instance<SurfaceT> {
-    /**
-     * World transform
-     */
-    transform: Mat4
+export interface SurfaceInstance<SurfaceT extends Surface = Surface>
+    extends Instance<SurfaceT> {
 }

@@ -2,7 +2,7 @@ import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from 
 import { PROPERTYKEY_ALL } from "../paradigm/property-path.js"
 import { ParallelizedContext, ParallelizedProcessor } from "../processing/processors/parallel.js"
 import { IterableParallelizer } from "../processing/processors/parallelizer-iterable.js"
-import { VolumeSurfacesKey, VolumeSurfacesProcessing, VolumeSurfacesProcessingContext } from "../surfaces/index.js"
+import { VolumeSurfacesKey, VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext } from "../surfaces/index.js"
 import { SurfaceProcessingContext } from "../surfaces/surface-samples.js"
 import { Surface } from "../surfaces/surface.js"
 import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor } from "../volumes/processor.js"
@@ -20,7 +20,7 @@ export const VolumeSolidsGroupTemplate: VolumeSolidsGroup = {
     [VolumeSolidsKey]: MultiObjectsGroupsTemplate_Leaf
 }
 
-export interface VolumeSolidsProcessing<
+export interface VolumeProcessingWithSolids<
         Sample extends VolumeSample = VolumeSample,
         SurfaceT extends Surface<Sample> = Surface<Sample>,
         SolidT extends Solid<Sample, SurfaceT> = Solid<Sample, SurfaceT>
@@ -29,7 +29,7 @@ export interface VolumeSolidsProcessing<
     [VolumeSolidsKey]: SolidT[]
 }
 
-export interface VolumeSolidsProcessingContext<
+export interface VolumeProcessingWithSolidsContext<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
         SampleProcessingContextT = any,
@@ -71,17 +71,17 @@ export type VolumeSolidProcessingContext<
                 SurfaceProcessingContextT
             >,
         VolumeProcessingT extends
-            VolumeSolidsProcessing<Sample> =
-            VolumeSolidsProcessing<Sample>,
+            VolumeProcessingWithSolids<Sample> =
+            VolumeProcessingWithSolids<Sample>,
         VolumeProcessingContextT extends
-            VolumeSolidsProcessingContext<
+            VolumeProcessingWithSolidsContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
-            VolumeSolidsProcessingContext<
+            VolumeProcessingWithSolidsContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,
@@ -114,17 +114,17 @@ export interface VolumeSolidProcessor<
                 SurfaceProcessingContextT
             >,
         VolumeProcessingT extends
-            VolumeSolidsProcessing<Sample, SurfaceT, SolidT> =
-            VolumeSolidsProcessing<Sample, SurfaceT, SolidT>,
+            VolumeProcessingWithSolids<Sample, SurfaceT, SolidT> =
+            VolumeProcessingWithSolids<Sample, SurfaceT, SolidT>,
         VolumeProcessingContextT extends
-            VolumeSolidsProcessingContext<
+            VolumeProcessingWithSolidsContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
-            VolumeSolidsProcessingContext<
+            VolumeProcessingWithSolidsContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,
@@ -161,29 +161,29 @@ export class VolumeSurfaceSolidifyingProcessor<
             SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT> =
             SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT>,
         VolumeProcessingT extends
-            VolumeSurfacesProcessing<Sample, SurfaceT> & VolumeSolidsProcessing<Sample, SurfaceT> =
-            VolumeSurfacesProcessing<Sample, SurfaceT> & VolumeSolidsProcessing<Sample, SurfaceT>,
+            VolumeProcessingWithSurfaces<Sample, SurfaceT> & VolumeProcessingWithSolids<Sample, SurfaceT> =
+            VolumeProcessingWithSurfaces<Sample, SurfaceT> & VolumeProcessingWithSolids<Sample, SurfaceT>,
         VolumeProcessingContextT extends
-            VolumeSurfacesProcessingContext<
+            VolumeProcessingWithSurfacesContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,
                 SurfaceProcessingContextT
             > &
-            VolumeSolidsProcessingContext<
+            VolumeProcessingWithSolidsContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
-            VolumeSurfacesProcessingContext<
+            VolumeProcessingWithSurfacesContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,
                 SurfaceProcessingContextT
             > &
-            VolumeSolidsProcessingContext<
+            VolumeProcessingWithSolidsContext<
                 Location,
                 Sample,
                 SampleProcessingContextT,

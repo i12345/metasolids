@@ -397,7 +397,7 @@ export const SurfaceIndividualTexturesGroupsTemplate: SurfaceIndividualTexturesG
 
 export type SurfaceIndividualTexturesGrouped =
     SurfaceCombinedTexturesGrouped &
-    surfaces.rendering.SurfaceWithRender_TexturesTemplated<VolumeLocationT>
+    surfaces.rendering.SurfaceWithRendering_TexturesTemplated<VolumeLocationT>
 
 export type SurfaceObjectsTexturesGroupsKindsMappedGroupsT = 
     MultiObjectsGroupsKindsTemplateMapped<
@@ -460,6 +460,7 @@ export type SurfaceT = surfaces.Surface<SampleT> &
             SampleT
         > &
     surfaces.rendering.SurfaceWithRendering<
+            SampleT,
             VolumeLocationT,
             SurfaceUVUnwrappingGroupT
         > &
@@ -610,8 +611,8 @@ export type SolidProcessingContextT =
 export type VolumeProcessingT =
     volumes.VolumeProcessing<SampleT> &
     surfaces.meshing.VolumeSurfaceMeshingProcessing<SampleT> &
-    surfaces.VolumeSurfacesProcessing<SampleT, SurfaceT> &
-    solids.VolumeSolidsProcessing<
+    surfaces.VolumeProcessingWithSurfaces<SampleT, SurfaceT> &
+    solids.VolumeProcessingWithSolids<
             SampleT,
             SurfaceT,
             SolidT
@@ -623,7 +624,7 @@ export type VolumeProcessingContextT =
             SampleT,
             SampleProcessingContextT
         > &
-    surfaces.VolumeSurfacesProcessingContext<
+    surfaces.VolumeProcessingWithSurfacesContext<
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
@@ -635,7 +636,7 @@ export type VolumeProcessingContextT =
             SampleProcessingContextT,
             SurfaceProcessingContextT
         > &
-    solids.VolumeSolidsProcessingContext<
+    solids.VolumeProcessingWithSolidsContext<
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,

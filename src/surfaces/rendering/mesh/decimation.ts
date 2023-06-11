@@ -1,11 +1,14 @@
 import { IndiciesArray, indicesArrayType } from "../../../utils/indices-array.js"
+import { VolumeLocation } from "../../../volumes/index.js"
 import { MeshRendererShared } from "./renderer.js"
 
-export class MeshDecimationShared {
+export class MeshDecimationShared<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > {
     /** quality -> indices */
     private readonly cache = new Map<number, MeshDecimationIndividual["indices"]>()
 
-    constructor(public readonly renderer: MeshRendererShared) {
+    constructor(public readonly renderer: MeshRendererShared<VolumeLocationT>) {
     }
 
     cached(quality: number) {
@@ -19,8 +22,8 @@ export class MeshDecimationShared {
     }
 
     private computeCache(quality: number) {
-        const meshData = this.renderer.renderer.surface.mesh
-        const UVunwrapping = this.renderer.UVUnwrapping
+        const meshData = this.renderer.renderer.meshData
+        const UVunwrapping = this.renderer.renderer.surfaceUVUnwrapping
 
         if (quality === 1) {
             const n_original = meshData.vertices.length
@@ -530,11 +533,13 @@ export class MeshDecimationShared {
     }
 
     individualize() {
-        return new MeshDecimationIndividual(this)
+        return new MeshDecimationIndividual<VolumeLocationT>(this)
     }
 }
 
-export class MeshDecimationIndividual {
+export class MeshDecimationIndividual<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > {
     private _quality: number = NaN
 
     private _indices!: {
@@ -578,7 +583,7 @@ export class MeshDecimationIndividual {
         this._indices = this.shared.cached(quality)
     }
 
-    constructor(public readonly shared: MeshDecimationShared) {
+    constructor(public readonly shared: MeshDecimationShared<VolumeLocationT>) {
         this.quality = 1
     }
 }

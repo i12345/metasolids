@@ -1,50 +1,38 @@
-import { Mesh, PRIMITIVE_TRIANGLES, calculateNormals } from "playcanvas-extended";
+import { Mesh, PRIMITIVE_TRIANGLES } from "playcanvas-extended";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js";
 import { LevelOfDetailInfoComputerShared, LevelOfDetailInfoComputerIndividual } from "./LOD-info.js";
 import { MeshDecimationIndividual, MeshDecimationShared } from "./decimation.js";
-import { MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/index.js";
 import { RANGE_MAX, RANGE_MIN } from "../../../fields/index.js";
-import { RefCount, onlyOne } from "../../../utils/index.js";
-import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
-import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";
-import { TextureLocation } from "../../../textures/texture.js";
+import { RefCount } from "../../../utils/index.js";
 import { VolumeLocation } from "../../../volumes/volume.js";
 
 export class MeshRendererShared<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
-    readonly decimation: MeshDecimationShared
-    readonly LOD: LevelOfDetailInfoComputerShared
-    readonly UVUnwrapping?: SurfaceUVUnwrapping
+    readonly decimation: MeshDecimationShared<VolumeLocationT>
+    readonly LOD: LevelOfDetailInfoComputerShared<VolumeLocationT>
 
     /** quality -> implementation */
     readonly implementation_cache = new Map<number, Mesh>()
-    readonly computeBackingCallbacks: ((individual: MeshRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) => void)[] = []
+    readonly computeBackingCallbacks: ((individual: MeshRendererIndividual<VolumeLocationT>) => void)[] = []
 
-    constructor(public readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
+    constructor(public readonly renderer: SurfaceRendererShared<VolumeLocationT>) {
         ///@ts-ignore
         this.decimation = new MeshDecimationShared(this)
         ///@ts-ignore
         this.LOD = new LevelOfDetailInfoComputerShared(this)
-        this.UVUnwrapping = onlyOne(groupKinds(
-            renderer.context,
-            SurfaceUVUnwrappingGroupKindsTemplate,
-            renderer.surfaceUVUnwrappingGroup
-        )).group?.get<SurfaceUVUnwrapping>(renderer.surface)
     }
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>) {
-        return new MeshRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>(this, renderer)
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>) {
+        return new MeshRendererIndividual<VolumeLocationT>(this, renderer)
     }
 }
 
 export class MeshRendererIndividual<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
-    readonly decimation: MeshDecimationIndividual
-    readonly LOD: LevelOfDetailInfoComputerIndividual
+    readonly decimation: MeshDecimationIndividual<VolumeLocationT>
+    readonly LOD: LevelOfDetailInfoComputerIndividual<VolumeLocationT>
     readonly individuality = new RefCount()
     private _implementation!: Mesh
     private _individualImplimentationQuality?: number
@@ -54,8 +42,8 @@ export class MeshRendererIndividual<
     }
 
     constructor(
-        public readonly shared: MeshRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
+        public readonly shared: MeshRendererShared<VolumeLocationT>,
+        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
     ) {
         this.decimation = shared.decimation.individualize()
         this.LOD = shared.LOD.individualize(this)
@@ -154,11 +142,10 @@ export class MeshRendererIndividual<
 
     private computeBacking() {
         const n_decimated = this.decimation.numRenderVerts
-        const UVunwrapping = this.shared.UVUnwrapping
+        const UVunwrapping = this.shared.renderer.surfaceUVUnwrapping
         const { vertices_original, vertices_final, triangles } = this.decimation.indices
         const mesh = this.implementation
-        const surface = this.renderer.shared.surface
-        const surface_meshData = surface.mesh
+        const surface_meshData = this.renderer.shared.meshData
         
         const positions = new Float32Array(3 * n_decimated)
         const UVs = new Float32Array(2 * n_decimated)

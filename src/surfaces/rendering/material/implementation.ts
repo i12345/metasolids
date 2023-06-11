@@ -43,56 +43,54 @@ export type Cost = {
 }
 
 export interface MaterialSemanticImplementationStorageClass<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     readonly $class: symbol
 
-    startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): Cost_Space
+    startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT>): Cost_Space
 
-    instance(renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>): MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    instance(renderer: SurfaceRendererShared<VolumeLocationT>): MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT>
 }
 
 export interface MaterialSemanticImplementationStorageClassInstanceShared<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
-    readonly $class: MaterialSemanticImplementationStorageClass<VolumeLocationT, SurfaceUVUnwrappingGroup>
-    readonly renderer: SurfaceRendererShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    readonly $class: MaterialSemanticImplementationStorageClass<VolumeLocationT>
+    readonly renderer: SurfaceRendererShared<VolumeLocationT>
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>): MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT>
 }
 
 export interface MaterialSemanticImplementationStorageClassInstanceIndividual<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
-    readonly $class: MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT, SurfaceUVUnwrappingGroup>
-    readonly rendered: RenderedBufferForSemanticWithImplementation[]
-    readonly renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>
+    readonly $class: MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT>
+    readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+    readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
 
     preoptimize(
-        add: RenderedBufferForSemanticWithImplementation[],
-        remove: RenderedBufferForSemanticWithImplementation[]
+        add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
+        remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
     ): void
 
     apply(
-        add: RenderedBufferForSemanticWithImplementation[],
-        remove: RenderedBufferForSemanticWithImplementation[]
+        add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
+        remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
     ): void
 }
 
-export interface RenderedBufferForSemanticWithImplementation extends RenderedBufferForSemantic {
-    implementation: MaterialSemanticImplementation_Immediate
+export interface RenderedBufferForSemanticWithImplementation<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > extends RenderedBufferForSemantic {
+    implementation: MaterialSemanticImplementation_Immediate<VolumeLocationT>
     storageClass: symbol
 }
 
 export interface MaterialSemanticImplementation<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     stage: number
     cost: Cost
     quality(info: LevelOfDetailInfo): number
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[]
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
 }

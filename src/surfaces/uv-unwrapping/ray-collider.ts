@@ -19,8 +19,8 @@ export interface SurfaceUVRayColliderProcessingContext<
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT> =
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT>,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
@@ -45,8 +45,8 @@ export class SurfaceUVRayCollider<
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT> =
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT>,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-        SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContextWithUVUnwrapping<UVUnwrappingGroup> =

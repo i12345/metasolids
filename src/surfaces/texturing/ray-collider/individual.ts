@@ -70,8 +70,8 @@ export interface SurfaceIndividualTexturesRayColliderProcessingContext<
                     // TexturesGrouped
                 >,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
@@ -138,8 +138,8 @@ export class SurfaceIndividualTexturesRayCollider<
                 // TexturesGrouped
             >,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<

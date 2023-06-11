@@ -24,8 +24,8 @@ export interface RayColliderProcessingContext<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
@@ -40,8 +40,8 @@ export interface RayCollider<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
@@ -75,8 +75,8 @@ export interface TriangleRayColliderProcessingContext<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
@@ -95,8 +95,8 @@ export class TriangleRayCollider<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
-            SurfaceInstance<SampleT, SurfaceT> =
-            SurfaceInstance<SampleT, SurfaceT>,
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =

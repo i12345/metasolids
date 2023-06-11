@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsMappedOptional } from "../../../paradigm/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsMappedOptional } from "../../../paradigm/index.js";
 import { FieldPoint, ExtraFields } from "../../../fields/index.js"
 import { Texture, TextureLocation, TextureSamplingContext, TexturesTemplated } from "../../../textures/texture.js"
 import { VolumeLocation } from "../../../volumes/volume.js"
@@ -31,3 +31,11 @@ export type Material_Groups_Textures<
                 Material_Texture_Context<VolumeLocationT>
         >
     >
+
+export type Material_Groups_TextureContexts<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > =
+    MultiObjectsGroupsMapped<
+            Material_Groups,
+            Material_Texture_Context<VolumeLocationT>
+        >

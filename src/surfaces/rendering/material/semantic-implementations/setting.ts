@@ -6,10 +6,9 @@ import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.j
 import { VolumeLocation } from "../../../../volumes/volume.js";
 
 export class MaterialSemanticImplementation_Setting<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
     readonly cost: Cost = { space: { elements: 0 }, time: 0 }
 
     constructor(
@@ -22,14 +21,14 @@ export class MaterialSemanticImplementation_Setting<
         return 1
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT, SurfaceUVUnwrappingGroup>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_Setting &&
             ///@ts-ignore
             this.key === that.key &&
             this.value === that.value
     }
 
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT, SurfaceUVUnwrappingGroup>): RenderedBufferForSemanticWithImplementation[] {
+    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
         (renderer.material.implementation as any)[this.key] = this.value
         return []
     }

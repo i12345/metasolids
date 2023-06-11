@@ -2,7 +2,7 @@ import { calculateNormals, Vec3 } from "playcanvas-extended"
 import { VolumeProcessor, VolumeSamplingKey } from "../../volumes/processor.js"
 import { VolumeSample, VolumeLocation } from "../../volumes/volume.js"
 import { SurfaceProcessingContext } from "../surface-samples.js"
-import { VolumeSurfacesProcessing, VolumeSurfacesProcessingContext, VolumeSurfacesKey } from "../volume-surfaces.js"
+import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeSurfacesKey } from "../volume-surfaces.js"
 import { MeshDataWithNormals } from "../surface.js"
 import { MeshingAlgorithm, MeshingSettings } from "./meshing-algorithm.js"
 import { indicesArrayType, IndiciesArray } from "../../utils/indices-array.js"
@@ -12,7 +12,7 @@ export const VolumeSurfaceMeshingKey = Symbol("volume.surface-meshing")
 
 export interface VolumeSurfaceMeshingProcessing<
         Sample extends VolumeSample = VolumeSample
-    > extends VolumeSurfacesProcessing<Sample> {
+    > extends VolumeProcessingWithSurfaces<Sample> {
 }
 
 export interface VolumeSurfaceMeshingProcessingContext<
@@ -23,7 +23,7 @@ export interface VolumeSurfaceMeshingProcessingContext<
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>,
     > extends
-    VolumeSurfacesProcessingContext<
+    VolumeProcessingWithSurfacesContext<
         Location,
         Sample,
         SampleProcessingContextT,

@@ -1,12 +1,11 @@
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
-import { Cost, MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
+import { Cost, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
+import { MaterialSemanticImplementation_Immediate } from "./immediate.js";
 
 export class MaterialSemanticImplementation_None<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementation<VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
     readonly cost: Cost = { space: { elements: 0 }, time: 0 }
     readonly stage = 0
 
@@ -16,8 +15,12 @@ export class MaterialSemanticImplementation_None<
         return 1
     }
 
-    implement(): RenderedBufferForSemanticWithImplementation[] {
+    implement(): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
         return []
+    }
+
+    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
+        return that instanceof MaterialSemanticImplementation_None
     }
 
     static readonly instance = new this()

@@ -1,12 +1,7 @@
-import { AppBase, Application, CameraComponent, Entity, LightComponent, RenderComponent, Vec2, Vec3 } from "playcanvas-extended"
-import { groupKinds } from "../../../paradigm/index.js";
-import { FieldPointRange, FieldPointVectorized, RANGE_MAX, RANGE_MIN, field_point_mean, field_point_range_compute } from "../../../fields/index.js"
-import { MeshDecimationIndividual } from "./decimation.js"
+import { Application, Vec2 } from "playcanvas-extended"
+import { FieldPointRange, RANGE_MAX, RANGE_MIN, field_point_range_compute } from "../../../fields/index.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
-import { IndiciesArray, indicesArrayType } from "../../../utils/indices-array.js"
-import { onlyOne } from "../../../utils/index.js"
-import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js"
-import { TextureLocation } from "../../../textures/texture.js"
+import { VolumeLocation } from "../../../volumes/index.js"
 
 type LevelOfDetailInfo_Edge_Cached = {
     absolute: {
@@ -56,14 +51,16 @@ export type LevelOfDetailInfo = {
     }
 }
 
-export class LevelOfDetailInfoComputerShared {
+export class LevelOfDetailInfoComputerShared<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > {
     /** quality -> cache */
     private readonly cache = new Map<number, LevelOfDetailInfo_Cached>()
 
-    constructor(public readonly renderer: MeshRendererShared) { }
+    constructor(public readonly renderer: MeshRendererShared<VolumeLocationT>) { }
 
-    individualize(renderer: MeshRendererIndividual) {
-        return new LevelOfDetailInfoComputerIndividual(this, renderer)
+    individualize(renderer: MeshRendererIndividual<VolumeLocationT>) {
+        return new LevelOfDetailInfoComputerIndividual<VolumeLocationT>(this, renderer)
     }
 
     cached(quality: number) {
@@ -79,9 +76,8 @@ export class LevelOfDetailInfoComputerShared {
 
     private computeCache(quality: number): LevelOfDetailInfo_Cached {
         const isFirst = this.renderer.implementation_cache.size === 0
-        const surface = this.renderer.renderer.surface
-        const meshData = surface.mesh
-        const UVunwrapping = this.renderer.UVUnwrapping
+        const meshData = this.renderer.renderer.meshData
+        const UVunwrapping = this.renderer.renderer.surfaceUVUnwrapping
 
         /** decimated? UV-unwrapped-duplicated? vertex index -> original mesh data vertex index */
         const vertices_original = isFirst ?
@@ -155,7 +151,9 @@ export class LevelOfDetailInfoComputerShared {
     }
 }
 
-export class LevelOfDetailInfoComputerIndividual {
+export class LevelOfDetailInfoComputerIndividual<
+        VolumeLocationT extends VolumeLocation = VolumeLocation
+    > {
     private _info!: LevelOfDetailInfo
 
     get info(): LevelOfDetailInfo {
@@ -163,14 +161,15 @@ export class LevelOfDetailInfoComputerIndividual {
     }
 
     constructor(
-        public readonly shared: LevelOfDetailInfoComputerShared,
-        public readonly renderer: MeshRendererIndividual
+        public readonly shared: LevelOfDetailInfoComputerShared<VolumeLocationT>,
+        public readonly renderer: MeshRendererIndividual<VolumeLocationT>
     ) {
         this.update()
     }
 
     update() {
-        const camera = this.renderer.renderer.shared.app.systems.camera!.cameras[0]
+        const app = Application.getApplication()!
+        const camera = app.systems.camera!.cameras[0]
         const distance = this.renderer.renderer.entity.getPosition().distance(camera.entity.getPosition())
 
         const cache = this.shared.cached(this.renderer.decimation.quality)

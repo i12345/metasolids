@@ -1,11 +1,14 @@
 import { AppBase, Entity } from "playcanvas-extended";
 import * as pc from "playcanvas-extended"
 import { Component, ComponentData } from "./component.js";
-import { Instance, Instancer, InstancerManager } from "./instance.js";
+import { Instance, Instancer, MultiInstancer, SharedDB } from "./instance.js";
 import { StorageService } from "../utils/storage-service.js";
 import { Processor } from "./processor.js";
 
 const _schema = ['enabled']
+
+
+//TODO: separate SharedT from ProcessingT
 
 export class ComponentSystem<
         SharedT,
@@ -29,7 +32,8 @@ export class ComponentSystem<
             ComponentData<ID> =
             ComponentData<ID>
     > extends pc.ComponentSystem {
-    readonly instancerManager: InstancerManager<SharedT, InstanceT, ID>
+    readonly db: SharedDB<SharedT, InstanceT, ID>
+    readonly combinedInstancers: MultiInstancer<SharedT, InstanceT>
 
     constructor(
         app: AppBase,
@@ -42,7 +46,9 @@ export class ComponentSystem<
     ) {
         super(app)
 
-        this.instancerManager = new InstancerManager(instancers, storage)
+        this.db = new SharedDB(instancers, storage)
+        this.combinedInstancers = new MultiInstancer(instancers)
+
         this.schema = _schema
 
         this.on('beforeremove', this._onBeforeRemove, this);
@@ -68,7 +74,7 @@ export class ComponentSystem<
 
     protected _onBeforeRemove(entity: Entity, component: ComponentT) {
         if (component.processing.instance)
-            this.instancerManager.set_enabled(component.processing.instance, false)
+            this.combinedInstancers.set_enabled(component.processing.instance, false)
         
         component.fire('remove')
     }
