@@ -28,6 +28,7 @@
     "textures"
   ],
   "author": "",
+  "license": "MIT",
   "devDependencies": {
     "nodeplotlib": "^1.1.2",
     "reflect-metadata": "^0.1.13",
