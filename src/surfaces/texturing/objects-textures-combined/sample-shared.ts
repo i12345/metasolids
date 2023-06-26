@@ -290,19 +290,19 @@
 //         )]
 
 //         const influencesGroup = onlyOne(groupKinds(
-//             context.sample,
+//             context.samples,
 //             MultiObjectsInfluencesGroupKindsTemplate,
 //             this.influenceGroup
 //         )).group
         
 //         const surfaceTextureLocationGroup = onlyOne(groupKinds(
-//             context.sample,
+//             context.samples,
 //             SurfaceIndividualTextureLocationsGroupKindsTemplate,
 //             this.surfaceTextureLocationGroup
 //         )).group
         
 //         const valueTextureLocationGroups = onlyOne(groupKinds(
-//             context.sample,
+//             context.samples,
 //             SurfaceObjectsTextureLocationsGroupKindsTemplate,
 //             this.valueTextureLocationGroup
 //         )).group
@@ -346,7 +346,7 @@
 //                 >
 //         ): void {
 //         const surfaceTextureLocationGroup = onlyOne(groupKinds(
-//             context.sample,
+//             context.samples,
 //             SurfaceIndividualTextureLocationsGroupKindsTemplate,
 //             this.surfaceTextureLocationGroup
 //         )).group
@@ -356,7 +356,7 @@
 //         const UVs = surfaceTextureLocations.map(location => location.uv)
 
 //         const influencesGroup = onlyOne(groupKinds(
-//             context.sample,
+//             context.samples,
 //             MultiObjectsInfluencesGroupKindsTemplate,
 //             this.influenceGroup
 //         )).group
@@ -372,7 +372,7 @@
 //         )
 
 //         const valueTextureLocationGroup = onlyOne(groupKinds(
-//             context.sample,
+//             context.samples,
 //             SurfaceObjectsTextureLocationsGroupKindsTemplate,
 //             this.valueTextureLocationGroup
 //         )).group

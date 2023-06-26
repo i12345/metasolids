@@ -321,7 +321,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 >(
                     ///@ts-ignore
                     surface,
-                    context.sample,
+                    context.samples,
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )

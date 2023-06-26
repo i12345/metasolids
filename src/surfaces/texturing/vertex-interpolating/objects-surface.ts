@@ -298,7 +298,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                 >(
                     ///@ts-ignore
                     surface,
-                    context.sample,
+                    context.samples,
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )
