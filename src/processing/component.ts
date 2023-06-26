@@ -230,7 +230,7 @@ export abstract class Component<
             system.combinedInstancers.set_enabled(this.processing.instance, false)
     }
 
-    private _processing_id_changed(oldValue: ID | undefined, newValue: ID | undefined) {
+    private async _processing_id_changed(oldValue: ID | undefined, newValue: ID | undefined) {
         if (!this.isRoot && newValue !== undefined)
             throw new Error("Cannot set processing on non-root component")
         
@@ -244,7 +244,7 @@ export abstract class Component<
         const system = this.system as SystemT
 
         if(this.processing.id)
-            this.processing.shared = system.db.load(this.processing.id)
+            this.processing.shared = await system.db.load(this.processing.id)
         else
             this.processing.shared = undefined
     }

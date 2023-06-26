@@ -53,7 +53,8 @@ export class VolumeSurfaceMeshingProcessor<
                 [VolumeSamplingKey]
             ],
             outputs: [
-                [VolumeSurfacesKey, PROPERTYKEY_ALL, "mesh"]
+                [VolumeSurfacesKey, PROPERTYKEY_ALL, "mesh"],
+                [VolumeSurfacesKey, PROPERTYKEY_ALL, "samples"],
             ]
         }
 

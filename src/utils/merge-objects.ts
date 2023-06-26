@@ -2,8 +2,8 @@
 import { Reflect_entries } from "./reflect-entries.js"
 
 export function mergeObjects<T extends object = object>(objs: T[]): T {
-    if(objs.length === 0) return undefined! as T
-    const result = {} as T
+    if (objs.length === 0) return undefined! as T
+    else if (objs.length === 1) return objs[0]
 
     // Consider carefully if this is valid
 
@@ -39,27 +39,20 @@ export function mergeObjects<T extends object = object>(objs: T[]): T {
     //     return concatenated as T
     // }
 
-    for (let i = 1; i < objs.length; i++) {
+    const key_values: Record<PropertyKey, any[]> = {}
+
+    for (let i = 0; i < objs.length; i++) {
         const obj = objs[i]
 
         for (const [key, obj_value] of Reflect_entries(obj)) {
-            if (!(key in result))
-                result[key] = obj_value
-            else {
-                const result_value = result[key]
-                if (result_value !== obj_value) {
-                    if (typeof result_value !== 'object' ||
-                        typeof obj_value !== 'object')
-                        throw new Error("cannot merge object with literal")
-                    if (result_value === null ||
-                        obj_value === null)
-                        throw new Error("Cannot merge object with null")
-                    
-                    result[key] = mergeObjects([obj_value, result_value])
-                }
-            }
+            key_values[key] ??= []
+            key_values[key].push(obj_value)
         }
     }
+
+    const result: any = {}
+    for (const [key, values] of Reflect_entries(key_values))
+        result[key] = mergeObjects(values)
 
     return result
 }

@@ -107,6 +107,7 @@ export type FieldsPointOptional<Point extends FieldsPoint> = FieldsPoint & {
 
 export type FieldPoint = FieldPointPrimitive | FieldsPoint
 
+//TODO: rewrite using a recursive definition
 export type ExtraFields<
         Type extends FieldsPoint,
         Base extends FieldsPoint

@@ -200,7 +200,7 @@ export class VolumeSurfaceSolidifyingProcessor<
     > {
     init() {
         const connections = {
-            inputs: [[VolumeSurfacesKey, PROPERTYKEY_ALL]],
+            inputs: [[VolumeSurfacesKey, PROPERTYKEY_ALL, 'mesh']],
             outputs: [[VolumeSolidsKey, PROPERTYKEY_ALL, 'surface']]
         }
 

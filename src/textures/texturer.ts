@@ -1,5 +1,5 @@
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../paradigm/index.js";
-import { Processor } from "../processing/index.js";
+import { Processor, ProcessorInitialization } from "../processing/index.js";
 import { GraphProcessor, GraphProcessorContext } from "../processing/processors/graph.js";
 import { PropertyPath } from "../paradigm/property-path.js";
 import { extract, intract } from "../paradigm/tree.js";
@@ -21,6 +21,9 @@ export interface TextureableProcessingContext<
             TextureSampleT,
             TextureSamplingContextT
         >[]
+
+        outputs?: PropertyPath[]
+
         graph?: GraphProcessor<
             TextureableT,
             TextureableProcessingContext<
@@ -69,9 +72,20 @@ export class TextureableProcessor<
                     TextureSampleT,
                     TextureSamplingContextT
                 >
-        ) {
+        ): ProcessorInitialization {
         context[TexturersKey].graph = new GraphProcessor(context[TexturersKey].texturers)
-        return context[TexturersKey].graph.init(context)
+        const initialization = context[TexturersKey].graph.init(context)
+
+        return {
+            ...initialization,
+            connections: {
+                inputs: initialization.connections.inputs,
+                outputs: [
+                    ...initialization.connections.outputs,
+                    ...(context[TexturersKey].outputs ?? [])
+                ]
+            }
+        }
     }
 
     private constructor() { }

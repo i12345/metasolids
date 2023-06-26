@@ -1,23 +1,74 @@
-import { Entity, MeshInstance } from "playcanvas-extended"
+import { Entity, MeshInstance, Vec3 } from "playcanvas-extended"
 import { VolumeLocation } from "../../volumes/volume.js"
 import { MaterialRendererIndividual, MaterialRendererShared } from "./material/renderer.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./mesh/renderer.js"
-import { Material_Groups_TextureContexts, Material_Groups_Textures, Material_Texture_Context } from "./material/material-texture.js"
+import { Material_Groups_TextureContexts, Material_Groups_Textures, Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js"
 import { SurfaceUVUnwrapping } from "../uv-unwrapping/algorithm.js"
 import { MeshDataWithNormals } from "../surface.js"
+import { groups } from "../../paradigm/index.js"
+import { Material_Groups_Template } from "./material/groups.js"
+import { ExtraFields, Field, FieldsField, FieldsPoint, FieldsPointMapped, SampleDomainLocationField, Vec2Field, defaultField } from "../../fields/index.js"
+import { preDeserializer, serializableClass, serializableProperty } from "simple-typed-serialization"
+import 'reflect-metadata'
 
+@serializableClass()
 export class SurfaceRendererShared<
-        VolumeLocationT extends VolumeLocation = VolumeLocation
+        VolumeLocationT extends FieldsPoint & VolumeLocation = VolumeLocation
     > {
     readonly mesh: MeshRendererShared<VolumeLocationT>
     readonly material: MaterialRendererShared<VolumeLocationT>
+    readonly textureContexts: Material_Groups_TextureContexts<VolumeLocationT>
+
+    @serializableProperty({ preDeserialize: true })
+    readonly meshData: MeshDataWithNormals
+
+    @serializableProperty({ preDeserialize: true })
+    readonly textures: Material_Groups_Textures<VolumeLocationT>
+    
+    @serializableProperty({ preDeserialize: true })
+    readonly surfaceUVUnwrapping: SurfaceUVUnwrapping
+
+    @serializableProperty({ preDeserialize: true })
+    readonly extraLocationParameters: ExtraFields<VolumeLocationT, VolumeLocation>
+
+    @preDeserializer
+    static preDeserializer(serialized: SurfaceRendererShared) {
+        ///@ts-ignore
+        return new SurfaceRendererShared(
+            serialized.meshData,
+            serialized.textures,
+            serialized.surfaceUVUnwrapping,
+            serialized.extraLocationParameters
+        )
+    }
 
     constructor(
-        public readonly meshData: MeshDataWithNormals,
-        public readonly textures: Material_Groups_Textures<VolumeLocationT>,
-        public readonly textureContexts: Material_Groups_TextureContexts<VolumeLocationT>,
-        public readonly surfaceUVUnwrapping: SurfaceUVUnwrapping,
+        meshData: MeshDataWithNormals,
+        textures: Material_Groups_Textures<VolumeLocationT>,
+        surfaceUVUnwrapping: SurfaceUVUnwrapping,
+        extraLocationParameters: ExtraFields<VolumeLocationT, VolumeLocation>
     ) {
+        this.meshData = meshData
+        this.textures = textures
+        this.surfaceUVUnwrapping = surfaceUVUnwrapping
+        this.extraLocationParameters = extraLocationParameters
+
+        type TextureLocationT = Material_Texture_Location<VolumeLocationT>
+        type TextureContextT = Material_Texture_Context<VolumeLocationT>
+
+        const sharedContext = {
+            [SampleDomainLocationField]: FieldsField.merge(
+                defaultField(extraLocationParameters) as FieldsField<TextureLocationT>,
+                new FieldsField<TextureLocationT>({
+                    uv: new Vec2Field()
+                } as FieldsPointMapped<TextureLocationT, Field>)
+            )
+        } as TextureContextT
+
+        this.textureContexts = {} as Material_Groups_TextureContexts<VolumeLocationT>
+        for (const group of groups(Material_Groups_Template))
+            group.set(this.textureContexts, { ...sharedContext })
+
         this.mesh = new MeshRendererShared<VolumeLocationT>(this)
         this.material = new MaterialRendererShared<VolumeLocationT>(this)
         

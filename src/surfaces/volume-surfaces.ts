@@ -84,9 +84,9 @@ export class VolumeProcessingWithSurfacesInstancer<
         >,
         enabled: boolean
     ): void {
-        throw new Error("Method not implemented.")
+        for (const surface of instance[VolumeSurfacesKey])
+            this.instancer.set_enabled(surface, enabled)
     }
-    
 }
 
 export interface VolumeProcessingWithSurfacesContext<

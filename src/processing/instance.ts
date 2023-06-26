@@ -1,8 +1,6 @@
 import { Entity } from "playcanvas-extended"
-import { PropertyPath, PROPERTYKEY_ALL } from "../paradigm/property-path.js"
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../paradigm/multi-objects.js"
 import { mergeObjects } from "../utils/index.js"
-import { StorageService } from "../utils/storage-service.js"
 
 export interface Instance<SharedT> {
     /**
@@ -20,20 +18,6 @@ export interface Instancer<
         SharedT,
         InstanceT extends Instance<SharedT> = Instance<SharedT>
     > {
-    /**
-    //  * The paths in the result processing where shared data is stored.
-    //  * 
-    //  * These paths will be merged from individual instances.
-    //  * 
-    //  * Use {@link PROPERTYKEY_ALL} to match multiple items.
-    //  * 
-    //  * This is the data that will be saved and loaded if processing happened
-    //  * offline.
-    //  * 
-    //  * @example [['surfaces', PROPERTYKEY_ALL, 'renderer']]
-    //  */
-    // paths: PropertyPath
-    
     instantiate(
         shared: SharedT,
         entity: Entity
@@ -48,7 +32,7 @@ export class MultiInstancer<
     > implements
     Instancer<SharedT, InstanceT> {
     constructor(public readonly instancers: Instancer<SharedT, InstanceT>[]) { }
-    
+
     instantiate(shared: SharedT, entity: Entity): InstanceT {
         const instances = this.instancers.map(instancer => instancer.instantiate(shared, entity))
         return mergeObjects(instances)
@@ -57,27 +41,6 @@ export class MultiInstancer<
     set_enabled(instance: InstanceT, enabled: boolean): void {
         for (const instancer of this.instancers)
             instancer.set_enabled(instance, enabled)
-    }
-}
-
-export class SharedDB<
-        SharedT,
-        InstanceT extends Instance<SharedT> = Instance<SharedT>,
-        ID = string
-    > {
-    constructor(
-        public readonly instancers: Instancer<SharedT, InstanceT>[],
-        public readonly storage: StorageService<ID>
-    ) { }
-
-    load(id: ID): SharedT {
-        const buffer = this.storage.read(id)
-
-        //TODO: read about avsc and integrate
-    }
-
-    save(id: ID, shared: SharedT): void {
-        //TODO: read about avsc and integrate
     }
 }
 

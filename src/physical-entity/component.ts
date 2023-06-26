@@ -150,7 +150,12 @@ export class Component<ID = string> extends processing.Component<
 
         const surface_context: SurfaceProcessingContextT = {
             samples: sample_context,
-            [textures.TexturersKey]: (this.texturers ?? []) as any,
+            [textures.TexturersKey]: {
+                texturers: (this.texturers ?? []) as any,
+                outputs: [
+                    ['material', 'textures']
+                ]
+            },
             material: {},
             
             ...surface_multiObjectsContext

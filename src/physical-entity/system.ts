@@ -1,11 +1,11 @@
 import { AppBase } from "playcanvas-extended"
 import { fields, processing, solids, surfaces, textures, volumes } from "../index.js"
-import { InterpolatingGroupsKindsTemplate, InterpolatingGroupsTemplate, SampleProcessingContextT, SampleT, SurfaceInstanceT, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
+import { InterpolatingGroupsKindsTemplate, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
 import { Component } from "./component.js"
 import { ComponentData } from "./data.js"
-import { StorageService } from "../utils/index.js"
+import { StorageService } from "../storage/index.js"
 
-export const SYSTEM_ID = 'volume'
+export const SYSTEM_ID = 'physical-entity'
 
 const processors: VolumeProcessorT[] = [
     volumes.VolumeSamplingProcessor.instance,
