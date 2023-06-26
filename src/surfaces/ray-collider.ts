@@ -89,6 +89,16 @@ export interface TriangleRayColliderProcessingContext<
             SampleProcessingContextT,
             SurfaceProcessingContextT
         > {
+    precomputed: {
+        tri_n: number
+        
+        v0: Float32Array
+        v01: Float32Array
+        v02: Float32Array
+
+        //TODO: this may be substitutable with MeshData.normals
+        n: Float32Array
+    }
 }
 
 export class TriangleRayCollider<
@@ -158,61 +168,185 @@ export class TriangleRayCollider<
     //     this.transform.local_to_2D.mul2(transform_view, this.transform.world)
     // }
 
-    init({ surface }: RayColliderProcessingContextT) {
-        // const mesh = surface.shared.mesh
-        // const vertices = new Array<Vec2>(mesh.vertices.length)
-        
-        // this.update_transform(surface, view)
-        // const transformed = new Vec3()
-        // for (let i = 0; i < mesh.vertices.length; i++) {
-        //     this.transform.local_to_2D.transformPoint(mesh.vertices[i], transformed)
-        //     vertices[i] = new Vec2(transformed.x, transformed.y)
-        // }
+    init(context: RayColliderProcessingContextT) {
+        const mesh = context.surface.shared.mesh
+        const tri_n = mesh.triangles.length / 3
 
-        // return new Triangles2DMeshCollider(Triangles2DMesh.build(vertices, mesh.triangles))
+        context.precomputed = {
+            tri_n,
+            n: new Float32Array(3 * tri_n),
+            v0: new Float32Array(3 * tri_n),
+            v01: new Float32Array(3 * tri_n),
+            v02: new Float32Array(3 * tri_n),
+        }
+
+        function saveV3(v3: Vec3, array: Float32Array, tri_i: number) {
+            array[(3 * tri_i) + 0] = v3.x
+            array[(3 * tri_i) + 1] = v3.y
+            array[(3 * tri_i) + 2] = v3.z
+        }
+
+        const v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
+        for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+            const v0 = mesh.vertices[mesh.triangles[(3 * tri_i) + 0]]
+            const v1 = mesh.vertices[mesh.triangles[(3 * tri_i) + 1]]
+            const v2 = mesh.vertices[mesh.triangles[(3 * tri_i) + 2]]
+
+            saveV3(v0, context.precomputed.v0, tri_i)
+            saveV3(v01.sub2(v1, v0), context.precomputed.v01, tri_i)
+            saveV3(v02.sub2(v2, v0), context.precomputed.v02, tri_i)
+            saveV3(n.cross(v01, v02), context.precomputed.n, tri_i)
+        }
     }
 
-    sample_multiple(ray: Ray, { surface }: RayColliderProcessingContextT) {
+    sample_multiple(ray: Ray, { surface, precomputed }: RayColliderProcessingContextT) {
         const collisions: TriangleRayCollision[] = []
 
-        // if (!ray.direction.equals(this.transform.view.direction))
-        //     throw new Error("view direction must be the same from init()")
-        // if (!surface.transform.equals(this.transform.world))
-        //     throw new Error("surface transform must be the same from init()")
+        const v0 = new Vec3(), v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
+        const w0 = new Vec3(), I = new Vec3(), w = new Vec3()
 
-        // const mesh = surface.shared.mesh
+        function loadV3(v3: Vec3, array: Float32Array, tri_i: number) {
+            return v3.set(
+                array[(3 * tri_i) + 0],
+                array[(3 * tri_i) + 1],
+                array[(3 * tri_i) + 2]
+            )
+        }
 
-        // const ray_origin_2Dspace = this.transform.local_to_2D.transformPoint(ray.origin)
-        // const ray_origin_2Dspace_2D = new Vec2(ray_origin_2Dspace.x, ray_origin_2Dspace.y)
+        // adapted from http://www.geomalgorithms.com/code.html
+        // "C06_Ray_Triangle_Intersection.cpp"
 
-        // this.collider.collide(ray_origin_2Dspace_2D, (tri, w1, w2) => {
-        //     const v0 = mesh.vertices[mesh.triangles[tri + 0]]
-        //     const v1 = mesh.vertices[mesh.triangles[tri + 1]]
-        //     const v2 = mesh.vertices[mesh.triangles[tri + 2]]
-        //     const v01 = new Vec3().sub2(v1, v0)
-        //     const v02 = new Vec3().sub2(v2, v0)
+        // Copyright 2001, 2012, 2021 Dan Sunday
+        // This code may be freely used and modified for any purpose
+        // providing that this copyright notice is included with it.
+        // There is no warranty for this code, and the author of it cannot
+        // be held liable for any real or imagined damage from its use.
+        // Users of this code must verify correctness for their application.
 
-        //     const p_local =
-        //         v0.clone()
-        //             .add(v01.mulScalar(w1))
-        //             .add(v02.mulScalar(w2))
+        // Assume that classes are already given for the objects:
+        //    Point and Vector with
+        //        coordinates {float x, y, z;}
+        //        operators for:
+        //            == to test  equality
+        //            != to test  inequality
+        //            (Vector)0 =  (0,0,0)        (null vector)
+        //            Point  = Point ± Vector     (translation)
+        //            Vector = Point - Point
+        //            Vector = Scalar * Vector    (scalar product)
+        //            Vector = Vector * Vector    (cross product)
+        //    Line and Ray and Segment with defining  points {Point P0, P1;}
+        //        A Line is infinite, Rays and  Segments start at P0.
+        //        A Ray extends beyond P1, but a  Segment ends at P1.
+        //    Plane with a point and a normal {Point V0; Vector n;}
+        //    Triangle with defining vertices {Point V0, V1, V2;}
+        //    Polyline and Polygon with n vertices {int n;  Point *V;}
+        //        A Polygon has V[n]=V[0].
+        //===================================================================
+
+        // #define SMALL_NUM   0.00000001 // anything that avoids division overflow
+        // dot product (3D) which allows vector operations in arguments
+        // #define dot(u,v)   ((u).x * (v).x + (u).y * (v).y + (u).z * (v).z)
+
+        // intersect3D_RayTriangle(): find the 3D intersection of a ray with a triangle
+        //    Input:  a ray R, and a triangle T
+        ////    Output: *I = intersection point (when it exists)
+        ////    Return: -1 = triangle is degenerate (a segment or point)
+        ////             0 =  disjoint (no intersect)
+        ////             1 =  intersect in unique point I1
+        ////             2 =  are in the same Plane
+
+        for (let tri_i = 0; tri_i < precomputed.tri_n; tri_i++) {
+            //Vector    u, v, n;              // triangle vectors
+            //Vector    dir, w0, w;           // ray vectors
+            //float     r, a, b;              // params to calc ray-plane intersect
+
+            loadV3(v0, precomputed.v0, tri_i)
+            loadV3(v01, precomputed.v01, tri_i)
+            loadV3(v02, precomputed.v02, tri_i)
+            loadV3(n, precomputed.n, tri_i)
+
+            // get triangle edge vectors and plane normal
+            // u = v01, v = v02
+            // u = T.V1 - T.V0;
+            // v = T.V2 - T.V0;
+            // n = u * v;              // cross product
+            // if (n == (Vector)0)             // triangle is degenerate
+            //     return -1;                  // do not deal with this case
+
+            // dir = R.direction
+            //dir = R.P1 - R.P0;              // ray direction vector
             
-        //     const p_world = surface.transform.transformPoint(p_local)
-            
-        //     const p_ray = this.transform.local_to_2D.transformPoint(p_local)
-        //     console.assert(Math.abs(p_ray.x) < 0.01 && Math.abs(p_ray.y) < 0.01)
+            w0.sub2(ray.origin, v0)
+            const a = -n.dot(w0)
+            const b = n.dot(ray.direction)
+            if (Math.abs(b) < 0.0001)
+                continue
+                
+            //w0 = R.P0 - T.V0;
+            // a = -dot(n,w0);
+            // b = dot(n,dir);
+            // if (fabs(b) < SMALL_NUM) {     // ray is  parallel to triangle plane
+            //     if (a == 0)                 // ray lies in triangle plane
+            //         return 2;
+            //     else return 0;              // ray disjoint from plane
+            // }
 
-        //     const t = -p_ray.z
-            
-        //     collisions.push({
-        //         p: {
-        //             world: p_world,
-        //             local: p_local,
-        //         },
-        //         t,
-        //         triangle: { tri, w1, w2 }
-        //     })
-        // })
+            // get intersect point of ray with triangle plane
+            const r = a / b;
+            if (r < 0.0)                    // ray goes away from triangle
+                continue;                   // => no intersect
+            // for a segment, also test if (r > 1.0) => no intersect
+
+            I.copy(ray.direction).mulScalar(r).add(ray.origin)
+            // * I = R.P0 + r * dir;            // intersect point of ray and plane
+
+            // is I inside T?
+            // float    uu, uv, vv, wu, wv, D;
+            // uu = dot(u, u);
+            // uv = dot(u, v);
+            // vv = dot(v, v);
+            // w = * I - T.V0;
+            // wu = dot(w, u);
+            // wv = dot(w, v);
+            // D = uv * uv - uu * vv;
+            const uu = v01.dot(v01)
+            const uv = v01.dot(v02)
+            const vv = v02.dot(v02)
+            w.sub2(I, v0)
+            const wu = w.dot(v01)
+            const wv = w.dot(v02)
+            const D = (uv * uv) - (uu * vv)
+
+            // get and test parametric coords
+            // float s, t;
+            // s = (uv * wv - vv * wu) / D;
+            // if (s < 0.0 || s > 1.0)         // I is outside T
+            //     return 0;
+            // t = (uv * wu - uu * wv) / D;
+            // if (t < 0.0 || (s + t) > 1.0)  // I is outside T
+            //     return 0;
+            // return 1;                       // I is in T
+
+            const s = (uv * wv - vv * wu) / D
+            if (s < 0.0 || s > 1.0) continue
+            const t = (uv * wu - uu * wv) / D
+            if (t < 0.0 || (s + t) > 1.0) continue
+
+            // this ends adapted code from "C06_Ray_Triangle_Intersection.cpp"
+
+            collisions.push({
+                p: {
+                    local: w,
+                    world: I
+                },
+                t: r,
+                triangle: {
+                    tri: tri_i,
+                    w1: s,
+                    w2: t
+                }
+            })
+        }
 
         return collisions
     }
