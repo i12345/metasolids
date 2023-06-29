@@ -99,7 +99,7 @@ export class VolumeSampler {
                             .mulScalar(2)
                             .div(size)
                             .add(offset)
-                    } as Location
+                    } as unknown as Location
 
                     voxels[x][y][z] = volume.sample(location, context)
                 }

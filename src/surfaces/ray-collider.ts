@@ -1,6 +1,4 @@
-import { Mat4, Quat, Ray, Vec2, Vec3 } from "playcanvas-extended";
-import { Triangles2DMesh } from "../fields/triangles-2D-mesh.js";
-import { Triangles2DMeshCollider } from "../fields/triangles-2D-mesh.js";
+import { Ray, Vec3 } from "playcanvas-extended";
 import { Surface, SurfaceInstance, SurfaceSample } from "./surface.js";
 import { TriangleCollision } from "../fields/triangles-2D-mesh.js";
 import { SurfaceProcessingContext } from "./surface-samples.js";
@@ -20,7 +18,7 @@ export interface RayCollision {
     t: number
 }
 
-export interface RayColliderProcessingContext<
+export interface SurfaceRayColliderProcessingContext<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
@@ -31,11 +29,11 @@ export interface RayColliderProcessingContext<
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>
     > {
-    surface: SurfaceInstanceT
+    surfaces: SurfaceInstanceT[]
     context: SurfaceProcessingContextT
 }
 
-export interface RayCollider<
+export interface SurfaceRayCollider<
         Collision extends RayCollision = RayCollision,
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
@@ -46,15 +44,15 @@ export interface RayCollider<
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>,
-        RayColliderProcessingContextT extends
-            RayColliderProcessingContext<
+        SurfaceRayColliderProcessingContextT extends
+            SurfaceRayColliderProcessingContext<
                     SampleT,
                     SurfaceT,
                     SurfaceInstanceT,
                     SampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
-            RayColliderProcessingContext<
+            SurfaceRayColliderProcessingContext<
                     SampleT,
                     SurfaceT,
                     SurfaceInstanceT,
@@ -62,16 +60,17 @@ export interface RayCollider<
                     SurfaceProcessingContextT
                 >
     > {
-    init(context: RayColliderProcessingContextT): void
-    sample(ray: Ray, context: RayColliderProcessingContextT): Collision | undefined
-    sample_multiple(ray: Ray, context: RayColliderProcessingContextT): Collision[]
+    init(context: SurfaceRayColliderProcessingContextT): void
+    sample(ray: Ray, context: SurfaceRayColliderProcessingContextT): Collision | undefined
+    sample_multiple(ray: Ray, context: SurfaceRayColliderProcessingContextT): Collision[]
 }
 
-export interface TriangleRayCollision extends RayCollision {
+export interface SurfaceTriangleRayCollision extends RayCollision {
+    i_surface: number
     triangle: TriangleCollision
 }
 
-export interface TriangleRayColliderProcessingContext<
+export interface SurfaceTriangleRayColliderProcessingContext<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
@@ -82,13 +81,33 @@ export interface TriangleRayColliderProcessingContext<
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>
     > extends
-    RayColliderProcessingContext<
+    SurfaceRayColliderProcessingContext<
             SampleT,
             SurfaceT,
             SurfaceInstanceT,
             SampleProcessingContextT,
             SurfaceProcessingContextT
-        > {
+    > {
+}
+    
+interface SurfaceTriangleRayColliderProcessingContextPrivate<
+        SampleT extends SurfaceSample = SurfaceSample,
+        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
+        SurfaceInstanceT extends
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
+        SampleProcessingContextT = any,
+        SurfaceProcessingContextT extends
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>
+    > extends
+    SurfaceTriangleRayColliderProcessingContext<
+        SampleT,
+        SurfaceT,
+        SurfaceInstanceT,
+        SampleProcessingContextT,
+        SurfaceProcessingContextT
+    > {
     precomputed: {
         tri_n: number
         
@@ -96,12 +115,13 @@ export interface TriangleRayColliderProcessingContext<
         v01: Float32Array
         v02: Float32Array
 
-        //TODO: this may be substitutable with MeshData.normals
+        // this cannot be substituted with MeshData.normals because
+        // these normals are computed after space transformations
         n: Float32Array
-    }
+    }[]
 }
 
-export class TriangleRayCollider<
+export class SurfaceTriangleRayCollider<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
@@ -111,15 +131,15 @@ export class TriangleRayCollider<
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>,
-        RayColliderProcessingContextT extends
-            TriangleRayColliderProcessingContext<
+        SurfaceRayColliderProcessingContextT extends
+            SurfaceTriangleRayColliderProcessingContext<
                     SampleT,
                     SurfaceT,
                     SurfaceInstanceT,
                     SampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
-            TriangleRayColliderProcessingContext<
+            SurfaceTriangleRayColliderProcessingContext<
                     SampleT,
                     SurfaceT,
                     SurfaceInstanceT,
@@ -128,88 +148,95 @@ export class TriangleRayCollider<
                 >
     >
     implements
-    RayCollider<
-        TriangleRayCollision,
+    SurfaceRayCollider<
+        SurfaceTriangleRayCollision,
         SampleT,
         SurfaceT,
         SurfaceInstanceT,
         SampleProcessingContextT,
         SurfaceProcessingContextT
     > {
-    // private collider!: Triangles2DMeshCollider
-    // private readonly transform = {
-    //     /**
-    //      * This transformation gives the mostly-projected coordinates,
-    //      * from local space to 2D space. The view position is not included
-    //      * since it is esaily customized.
-    //      */
-    //     local_to_2D: new Mat4(),
-
-    //     world: new Mat4(),
-    //     view: {
-    //         direction: new Vec3()
-    //     }
-    // }
-
-    // private update_transform(surface: SurfaceInstanceT, view: RayColliderProcessingContextT["view"]) {
-    //     this.transform.view.direction.copy(view.direction)
-    //     this.transform.view.direction.normalize()
-
-    //     this.transform.world.copy(surface.transform)
-
-    //     const transform_view = new Mat4().setTRS(
-    //         Vec3.ZERO,
-    //         new Quat().setFromDirections(Vec3.FORWARD, this.transform.view.direction),
-    //         Vec3.ONE
-    //     )
+    init(context: SurfaceRayColliderProcessingContextT) {
+        type ContextPrivateT = SurfaceTriangleRayColliderProcessingContextPrivate<
+                SampleT,
+                SurfaceT,
+                SurfaceInstanceT,
+                SampleProcessingContextT,
+                SurfaceProcessingContextT
+            >
         
-    //     transform_view.invert()
+        const context_private = context as unknown as ContextPrivateT
+        context_private.precomputed ??= []
 
-    //     this.transform.local_to_2D.mul2(transform_view, this.transform.world)
-    // }
-
-    init(context: RayColliderProcessingContextT) {
-        const mesh = context.surface.shared.mesh
-        const tri_n = mesh.triangles.length / 3
-
-        context.precomputed = {
-            tri_n,
-            n: new Float32Array(3 * tri_n),
-            v0: new Float32Array(3 * tri_n),
-            v01: new Float32Array(3 * tri_n),
-            v02: new Float32Array(3 * tri_n),
+        if (context_private.precomputed.length > context.surfaces.length) {
+            context_private.precomputed.splice(
+                context.surfaces.length,
+                context.surfaces.length - context_private.precomputed.length
+            )
         }
 
-        function saveV3(v3: Vec3, array: Float32Array, tri_i: number) {
-            array[(3 * tri_i) + 0] = v3.x
-            array[(3 * tri_i) + 1] = v3.y
-            array[(3 * tri_i) + 2] = v3.z
-        }
+        for (let i_surface = 0; i_surface < context.surfaces.length; i_surface++) {
+            const surface = context.surfaces[i_surface]
+            const mesh = surface.shared.mesh
+            const tri_n = mesh.triangles.length / 3
 
-        const v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
-        for (let tri_i = 0; tri_i < tri_n; tri_i++) {
-            const v0 = mesh.vertices[mesh.triangles[(3 * tri_i) + 0]]
-            const v1 = mesh.vertices[mesh.triangles[(3 * tri_i) + 1]]
-            const v2 = mesh.vertices[mesh.triangles[(3 * tri_i) + 2]]
+            if (context_private.precomputed[i_surface] && 
+                context_private.precomputed[i_surface].tri_n !== tri_n)
+                delete context_private.precomputed[i_surface]
 
-            saveV3(v0, context.precomputed.v0, tri_i)
-            saveV3(v01.sub2(v1, v0), context.precomputed.v01, tri_i)
-            saveV3(v02.sub2(v2, v0), context.precomputed.v02, tri_i)
-            saveV3(n.cross(v01, v02), context.precomputed.n, tri_i)
+            if (context_private.precomputed[i_surface] === undefined) {
+                context_private.precomputed[i_surface] = {
+                    tri_n,
+                    n: new Float32Array(3 * tri_n),
+                    v0: new Float32Array(3 * tri_n),
+                    v01: new Float32Array(3 * tri_n),
+                    v02: new Float32Array(3 * tri_n),
+                }
+            }
+
+            function saveV3(v3: Vec3, array: Float32Array, tri: number) {
+                array[(3 * tri) + 0] = v3.x
+                array[(3 * tri) + 1] = v3.y
+                array[(3 * tri) + 2] = v3.z
+            }
+
+            const precomputed = context_private.precomputed[i_surface]
+
+            const v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
+            for (let tri = 0; tri < tri_n; tri++) {
+                const v0 = mesh.vertices[mesh.triangles[(3 * tri) + 0]]
+                const v1 = mesh.vertices[mesh.triangles[(3 * tri) + 1]]
+                const v2 = mesh.vertices[mesh.triangles[(3 * tri) + 2]]
+
+                saveV3(v0, precomputed.v0, tri)
+                saveV3(v01.sub2(v1, v0), precomputed.v01, tri)
+                saveV3(v02.sub2(v2, v0), precomputed.v02, tri)
+                saveV3(n.cross(v01, v02), precomputed.n, tri)
+            }
         }
     }
 
-    sample_multiple(ray: Ray, { surface, precomputed }: RayColliderProcessingContextT) {
-        const collisions: TriangleRayCollision[] = []
+    sample_multiple(ray: Ray, context: SurfaceRayColliderProcessingContextT) {
+        type ContextPrivateT = SurfaceTriangleRayColliderProcessingContextPrivate<
+                SampleT,
+                SurfaceT,
+                SurfaceInstanceT,
+                SampleProcessingContextT,
+                SurfaceProcessingContextT
+            >
+        
+        const context_private = context as unknown as ContextPrivateT
+        
+        const collisions: SurfaceTriangleRayCollision[] = []
 
         const v0 = new Vec3(), v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
         const w0 = new Vec3(), I = new Vec3(), w = new Vec3()
 
-        function loadV3(v3: Vec3, array: Float32Array, tri_i: number) {
+        function loadV3(v3: Vec3, array: Float32Array, tri: number) {
             return v3.set(
-                array[(3 * tri_i) + 0],
-                array[(3 * tri_i) + 1],
-                array[(3 * tri_i) + 2]
+                array[(3 * tri) + 0],
+                array[(3 * tri) + 1],
+                array[(3 * tri) + 2]
             )
         }
 
@@ -255,108 +282,117 @@ export class TriangleRayCollider<
         ////             1 =  intersect in unique point I1
         ////             2 =  are in the same Plane
 
-        for (let tri_i = 0; tri_i < precomputed.tri_n; tri_i++) {
-            //Vector    u, v, n;              // triangle vectors
-            //Vector    dir, w0, w;           // ray vectors
-            //float     r, a, b;              // params to calc ray-plane intersect
+        for (let i_surface = 0; i_surface < context.surfaces.length; i_surface++) {
+            const precomputed = context_private.precomputed[i_surface]
 
-            loadV3(v0, precomputed.v0, tri_i)
-            loadV3(v01, precomputed.v01, tri_i)
-            loadV3(v02, precomputed.v02, tri_i)
-            loadV3(n, precomputed.n, tri_i)
+            for (let tri = 0; tri < precomputed.tri_n; tri++) {
+                //Vector    u, v, n;              // triangle vectors
+                //Vector    dir, w0, w;           // ray vectors
+                //float     r, a, b;              // params to calc ray-plane intersect
 
-            // get triangle edge vectors and plane normal
-            // u = v01, v = v02
-            // u = T.V1 - T.V0;
-            // v = T.V2 - T.V0;
-            // n = u * v;              // cross product
-            // if (n == (Vector)0)             // triangle is degenerate
-            //     return -1;                  // do not deal with this case
+                loadV3(v0, precomputed.v0, tri)
+                loadV3(v01, precomputed.v01, tri)
+                loadV3(v02, precomputed.v02, tri)
+                loadV3(n, precomputed.n, tri)
 
-            // dir = R.direction
-            //dir = R.P1 - R.P0;              // ray direction vector
+                // get triangle edge vectors and plane normal
+                // u = v01, v = v02
+                // u = T.V1 - T.V0;
+                // v = T.V2 - T.V0;
+                // n = u * v;              // cross product
+                // if (n == (Vector)0)             // triangle is degenerate
+                //     return -1;                  // do not deal with this case
+
+                // dir = R.direction
+                //dir = R.P1 - R.P0;              // ray direction vector
             
-            w0.sub2(ray.origin, v0)
-            const a = -n.dot(w0)
-            const b = n.dot(ray.direction)
-            if (Math.abs(b) < 0.0001)
-                continue
+                w0.sub2(ray.origin, v0)
+                const a = -n.dot(w0)
+                const b = n.dot(ray.direction)
+                if (Math.abs(b) < 0.0001)
+                    continue
                 
-            //w0 = R.P0 - T.V0;
-            // a = -dot(n,w0);
-            // b = dot(n,dir);
-            // if (fabs(b) < SMALL_NUM) {     // ray is  parallel to triangle plane
-            //     if (a == 0)                 // ray lies in triangle plane
-            //         return 2;
-            //     else return 0;              // ray disjoint from plane
-            // }
+                //w0 = R.P0 - T.V0;
+                // a = -dot(n,w0);
+                // b = dot(n,dir);
+                // if (fabs(b) < SMALL_NUM) {     // ray is  parallel to triangle plane
+                //     if (a == 0)                 // ray lies in triangle plane
+                //         return 2;
+                //     else return 0;              // ray disjoint from plane
+                // }
 
-            // get intersect point of ray with triangle plane
-            const r = a / b;
-            if (r < 0.0)                    // ray goes away from triangle
-                continue;                   // => no intersect
-            // for a segment, also test if (r > 1.0) => no intersect
+                // get intersect point of ray with triangle plane
+                const r = a / b;
+                if (r > 0.0)                    // ray goes away from triangle
+                    continue;                   // => no intersect
+                // for a segment, also test if (r > 1.0) => no intersect
 
-            I.copy(ray.direction).mulScalar(r).add(ray.origin)
-            // * I = R.P0 + r * dir;            // intersect point of ray and plane
+                I.copy(ray.direction).mulScalar(r).add(ray.origin)
+                // * I = R.P0 + r * dir;            // intersect point of ray and plane
 
-            // is I inside T?
-            // float    uu, uv, vv, wu, wv, D;
-            // uu = dot(u, u);
-            // uv = dot(u, v);
-            // vv = dot(v, v);
-            // w = * I - T.V0;
-            // wu = dot(w, u);
-            // wv = dot(w, v);
-            // D = uv * uv - uu * vv;
-            const uu = v01.dot(v01)
-            const uv = v01.dot(v02)
-            const vv = v02.dot(v02)
-            w.sub2(I, v0)
-            const wu = w.dot(v01)
-            const wv = w.dot(v02)
-            const D = (uv * uv) - (uu * vv)
+                // is I inside T?
+                // float    uu, uv, vv, wu, wv, D;
+                // uu = dot(u, u);
+                // uv = dot(u, v);
+                // vv = dot(v, v);
+                // w = * I - T.V0;
+                // wu = dot(w, u);
+                // wv = dot(w, v);
+                // D = uv * uv - uu * vv;
+                const uu = v01.dot(v01)
+                const uv = v01.dot(v02)
+                const vv = v02.dot(v02)
+                w.sub2(I, v0)
+                const wu = w.dot(v01)
+                const wv = w.dot(v02)
+                const D = (uv * uv) - (uu * vv)
 
-            // get and test parametric coords
-            // float s, t;
-            // s = (uv * wv - vv * wu) / D;
-            // if (s < 0.0 || s > 1.0)         // I is outside T
-            //     return 0;
-            // t = (uv * wu - uu * wv) / D;
-            // if (t < 0.0 || (s + t) > 1.0)  // I is outside T
-            //     return 0;
-            // return 1;                       // I is in T
+                // get and test parametric coords
+                // float s, t;
+                // s = (uv * wv - vv * wu) / D;
+                // if (s < 0.0 || s > 1.0)         // I is outside T
+                //     return 0;
+                // t = (uv * wu - uu * wv) / D;
+                // if (t < 0.0 || (s + t) > 1.0)  // I is outside T
+                //     return 0;
+                // return 1;                       // I is in T
 
-            const s = (uv * wv - vv * wu) / D
-            if (s < 0.0 || s > 1.0) continue
-            const t = (uv * wu - uu * wv) / D
-            if (t < 0.0 || (s + t) > 1.0) continue
+                const s = (uv * wv - vv * wu) / D
+                if (s < 0.0 || s > 1.0) continue
+                const t = (uv * wu - uu * wv) / D
+                if (t < 0.0 || (s + t) > 1.0) continue
 
-            // this ends adapted code from "C06_Ray_Triangle_Intersection.cpp"
+                // this ends adapted code from "C06_Ray_Triangle_Intersection.cpp"
 
-            collisions.push({
-                p: {
-                    local: w,
-                    world: I
-                },
-                t: r,
-                triangle: {
-                    tri: tri_i,
-                    w1: s,
-                    w2: t
-                }
-            })
+                collisions.push({
+                    p: {
+                        local: w,
+                        world: I
+                    },
+                    t: r,
+                    i_surface,
+                    triangle: {
+                        tri,
+                        w1: s,
+                        w2: t
+                    }
+                })
+            }
         }
 
         return collisions
     }
 
-    sample(ray: Ray, context: RayColliderProcessingContextT): TriangleRayCollision | undefined {
+    sample(ray: Ray, context: SurfaceRayColliderProcessingContextT): SurfaceTriangleRayCollision | undefined {
         const collisions = this.sample_multiple(ray, context)
         if (collisions.length === 0)
             return undefined
         
-        const min_t = Math.min(...collisions.map(({ t }) => t))
-        return collisions.find(({ t }) => t === min_t)
+        let min = collisions[0]
+        for (let i = 1; i < collisions.length; i++)
+            if (min.t < collisions[i].t)
+                min = collisions[i]
+        
+        return min
     }
 }

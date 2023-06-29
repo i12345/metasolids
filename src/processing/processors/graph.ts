@@ -6,13 +6,13 @@ interface GraphProcessorDetails {
 }
 
 export const GraphProcessorContextKey = Symbol("processor:graph")
-export interface GraphProcessorContext {
+interface GraphProcessorContextPrivate {
     [GraphProcessorContextKey]?: Map<GraphProcessor, GraphProcessorDetails>
 }
 
 export class GraphProcessor<
         Object = any,
-        Context extends GraphProcessorContext = GraphProcessorContext
+        Context = any
     >
     implements
     Processor<Object, Context> {
@@ -22,6 +22,8 @@ export class GraphProcessor<
     ) { }
 
     init(context: Context): ProcessorInitialization {
+        const context_private = context as GraphProcessorContextPrivate
+
         const processors_initializations = this.processors.map(processor => [processor, processor.init(context)] as [Processor, ProcessorInitialization])
         const processors_connections = new Map(processors_initializations.map(([processor, { connections }]) => [processor, connections] as [Processor, ProcessorConnections]))
         
@@ -30,7 +32,7 @@ export class GraphProcessor<
             outputs: []
         }
 
-        const map = context[GraphProcessorContextKey] ??= new Map()
+        const map = context_private[GraphProcessorContextKey] ??= new Map()
         console.assert(!map.has(this))
         map.set(this, { processors_connections })
         
@@ -105,10 +107,12 @@ export class GraphProcessor<
     }
 
     process(object: Object, context: Context): void {
+        const context_private = context as GraphProcessorContextPrivate
+
         const toProcess = [...this.processors]
         let lastLength = 0
         
-        const { processors_connections } = context[GraphProcessorContextKey]!.get(this)!
+        const { processors_connections } = context_private[GraphProcessorContextKey]!.get(this)!
 
         do {
             lastLength = toProcess.length

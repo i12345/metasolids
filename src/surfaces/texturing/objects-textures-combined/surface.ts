@@ -4,7 +4,7 @@ import { MultiObjectsInfluences, MultiObjectsInfluencesGrouped, MultiObjectsInfl
 import { ObjectsCombiningTexture, ObjectsCombiningTexturesTemplated, ObjectsTextureLocationsTextureSample, Texture, TextureLocation, TextureSample, TextureSamplesExtracted, TextureSamplesExtracted1, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { onlyOne } from "../../../utils/index.js";
 import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
-import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../index.js";
+import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping } from "../index.js";
 import { SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithObjectsTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceWithIndividualTextures, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceWithIndividualTexturesUsingSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations } from "../types.js";
 
 export type SurfaceSampleForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
@@ -82,6 +82,12 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
                     ValueTextureLocationT
                 >
     > =
+    SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
+            SurfaceUVUnwrappingGroup,
+            Objects,
+            InfluenceGroup,
+            SurfaceSampleT
+        > &
     SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
             ValueTextureLocationGroup,
             Objects,
@@ -262,11 +268,6 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             SurfaceObjectsTextureLocationsGroupKindsTemplate,
             this.valueTextureLocationGroup
         )).group
-
-        const sampleDependencies = [
-            influencesGroup.path,
-            valueTextureLocationGroups.path,
-        ]
         
         //TODO: currently, any processor depending on the combined value would
         // be satisfied by this processor's input requirements, thus it may not
@@ -275,7 +276,8 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         const connections = {
             inputs: [
                 surfaceUVUnwrappingGroup.path,
-                ...sampleDependencies.map(path => ['samples', PROPERTYKEY_ALL, ...path]),
+                influencesGroup.path,
+                ['samples', PROPERTYKEY_ALL, ...valueTextureLocationGroups.path],
                 ...valueTextureGroups.map(({ group: { path } }) => path)
             ],
             outputs: [
@@ -322,11 +324,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             MultiObjectsInfluencesGroupKindsTemplate,
             this.influenceGroup
         )).group
-        const influenceValues = surface.samples.map(sample =>
-            influencesGroup.get<MultiObjectsInfluences<Objects>>(sample))
-        for (const duplicatedVert of UVunwrapping.duplicatedVerts)
-            influenceValues.push(influenceValues[duplicatedVert])
-        const influences_texture = new VertexInterpolatingTexture(influenceValues, UVunwrapping.UVs, UVunwrapping.finalIndices)
+        const influences_texture = influencesGroup.get<VertexInterpolatingTexture<MultiObjectsInfluences<Objects>>>(surface)
 
         const valueTextureGroups = groupKindObjectsGrouped(
             surface,
@@ -341,7 +339,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             this.valueTextureLocationGroup
         )).group
         
-        for (const { group, objects: { value, template } } of valueTextureGroups) {
+        for (const { objects: { value, template } } of valueTextureGroups) {
             const locations = surface.samples.map((sample: SurfaceSampleWithObjectsTextureLocations<Objects, ValueTextureLocationGroup, ValueTextureLocationT>) =>
                 valueTextureLocationGroup.get<ObjectsTextureLocationsTextureSample<Objects, ValueTextureLocationT>>(sample))
             for (const duplicatedVert of UVunwrapping.duplicatedVerts)

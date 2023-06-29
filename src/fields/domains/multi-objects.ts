@@ -1,9 +1,9 @@
-import { GeneratorType } from "../../utils/index.js"
+import { GeneratorType, Reflect_entries, Reflect_fromEntries } from "../../utils/index.js"
 import { SampleDomain, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { makeInterpolator } from "../interpolation.js"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf } from "../../paradigm/multi-objects.js"
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf } from "../../paradigm/multi-objects.js"
 import { FieldPoint, FieldsPoint, fields_point_map, field_point_add_inplace } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
 
@@ -218,6 +218,14 @@ export class MultiObjectsSampleDomain<
                 groupKindsTemplate: ContextGroupKinds,
                 groupsTemplate?: ContextGroups
             }
+        } =
+        {
+            context: {
+                groupKindsTemplate: MultiObjectsDomainInternalPreservedGroupsKindsTemplate as ContextGroupKinds
+            },
+            sample: {
+                groupKindsTemplate: MultiObjectsDomainInternalPreservedGroupsKindsTemplate as SampleGroupKinds
+            }
         }
     ) { }
 
@@ -387,5 +395,110 @@ export class MultiObjectsSampleDomain<
         }
 
         return this.finalizeSample(sample)
+    }
+
+    static build<
+            Objects extends MultiObjectsTemplate,
+            SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+            SampleGroupKinds extends
+                MultiObjectsDomainInternalPreservedGroupsKinds =
+                MultiObjectsDomainInternalPreservedGroupsKinds,
+            ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+            ContextGroupKinds extends
+                MultiObjectsDomainInternalPreservedGroupsKinds =
+                MultiObjectsDomainInternalPreservedGroupsKinds,
+            Location extends FieldPoint = FieldPoint,
+            LeafSample extends
+                MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
+                MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
+            LeafContext extends
+                SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
+                SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
+            LeafDomain extends
+                SampleDomain<
+                        Location,
+                        LeafSample,
+                        MultiObjectsLeafContext<
+                                Objects,
+                                SampleGroups,
+                                SampleGroupKinds,
+                                ContextGroups,
+                                ContextGroupKinds,
+                                Location,
+                                LeafSample,
+                                LeafContext
+                            >
+                    > =
+                SampleDomain<
+                        Location,
+                        LeafSample,
+                        MultiObjectsLeafContext<
+                                Objects,
+                                SampleGroups,
+                                SampleGroupKinds,
+                                ContextGroups,
+                                ContextGroupKinds,
+                                Location,
+                                LeafSample,
+                                LeafContext
+                            >
+                    >,
+            Sample extends
+                MultiObjectsSample<Objects, SampleGroups, LeafSample> =
+                MultiObjectsSample<Objects, SampleGroups, LeafSample>
+            >(
+                sampleDomains: MultiObjectsMapped<Objects, LeafDomain>,
+                template: Objects,
+                multiObj?: {
+                    sample: {
+                        groupKindsTemplate: SampleGroupKinds,
+                        groupsTemplate?: SampleGroups
+                    }
+                    context: {
+                        groupKindsTemplate: ContextGroupKinds,
+                        groupsTemplate?: ContextGroups
+                    }
+                }
+        ): SampleDomain<
+                Location,
+                Sample,
+                MultiObjectsContext<
+                        Objects,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LeafContext
+                    >
+            > {
+        if (template as unknown === MultiObjectsTemplate_Leaf) {
+            return sampleDomains as SampleDomain<
+                Location,
+                Sample,
+                MultiObjectsContext<
+                    Objects,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    Location,
+                    LeafContext
+                >
+            >
+        }
+
+        ///@ts-ignore
+        return new MultiObjectsSampleDomain(
+            ///@ts-ignore
+            Reflect_fromEntries<any>(
+                Reflect_entries<any>(sampleDomains)
+                    .map(([key, sampleDomain]) =>
+                        ///@ts-ignore
+                        [key, MultiObjectsSampleDomain.build(
+                                sampleDomain as MultiObjectsMapped<Objects, LeafDomain>,
+                                (template as any)[key] as Objects,
+                                multiObj
+                        )] as [PropertyKey, LeafDomain]
+                    )
+                ),
+            multiObj
+        )
     }
 }

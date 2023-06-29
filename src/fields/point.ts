@@ -1,7 +1,7 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
 import { mat4_from_mat3, trs } from "../utils/matrix.js";
 import { PropertyPath } from "../paradigm/property-path.js";
-import { Reflect_fromEntries } from "../utils/index.js";
+import { Reflect_fromEntries, RemoveEmptyStructs } from "../utils/index.js";
 
 export type Vector = Array<number>
     | Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array
@@ -107,12 +107,63 @@ export type FieldsPointOptional<Point extends FieldsPoint> = FieldsPoint & {
 
 export type FieldPoint = FieldPointPrimitive | FieldsPoint
 
-//TODO: rewrite using a recursive definition
+// export type ExtraFields<
+//         Type extends FieldsPoint,
+//         Base extends FieldsPoint
+//     > =
+//     Omit<Type, keyof Base>
+
+type ExtraFields_Recursive<
+        Type extends FieldsPoint,
+        Base extends FieldsPoint
+    > = {
+        [K in keyof Type]:
+        Type[K] extends FieldsPoint?
+            Base[K] extends FieldsPoint?
+                ExtraFields_Recursive<Type[K], Base[K]> :
+                never :
+            Base[K] extends FieldPoint?
+                never : 
+                Type[K]
+    }
+
 export type ExtraFields<
         Type extends FieldsPoint,
         Base extends FieldsPoint
     > =
-    Omit<Type, keyof Base>
+    RemoveEmptyStructs<ExtraFields_Recursive<Type, Base>>
+
+// let extraFields_example1!: ExtraFields<
+//     {
+//         a: number,
+//         b: Vec2,
+//         c: {
+//             u: number,
+//             v: number,
+//             w: Vec3
+//         }
+//     },
+//     {
+//         a: number
+//         c: {
+//             u: number
+//             v: number
+//         }
+//     }
+// >
+
+// extraFields_example1.a // never
+// extraFields_example1.b // Vec2
+// extraFields_example1.c.u // never
+// extraFields_example1.c.v // never
+// extraFields_example1.c.w // Vec3
+
+// extraFields_example1 = {
+//     b: new Vec2(),
+//     c: {
+//         w: new Vec3()
+//     }
+// } as unknown as typeof extraFields_example1
 
 export function field_point_is<Point = any>(p: Point): Point extends FieldPoint ? true : false {
     if (field_point_isPrimitive(p as FieldPoint))

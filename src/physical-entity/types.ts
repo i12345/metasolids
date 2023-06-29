@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths } from "../paradigm/index.js";
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped } from "../paradigm/index.js";
 import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsDomainInternalPreservedGroupsKindsKey } from "../fields/index.js"
 import { textures, volumes, surfaces, solids } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
@@ -386,11 +386,13 @@ export type SurfaceCombinedTexturesGrouped =
 
 export type SurfaceIndividualTexturesGroupsT =
     SurfaceCombinedTexturesGroupsT &
+    InfluenceGroup &
     surfaces.rendering.SurfaceWithRendering_TextureGroups &
     {}
 
-export const SurfaceIndividualTexturesGroupsTemplate: SurfaceIndividualTexturesGroupsT = mergeGroups(
+export const SurfaceIndividualTexturesGroupsTemplate = mergeGroups<SurfaceIndividualTexturesGroupsT>(
     SurfaceCombinedTexturesGroupsTemplate,
+    InfluenceGroupTemplate,
     surfaces.rendering.SurfaceWithRendering_TextureGroupsTemplate,
 )
 
@@ -437,6 +439,12 @@ export const SurfaceTexturesGroupsKindsMappedGroupsTemplate = {
 
 export type SurfaceT = surfaces.Surface<SampleT> &
     surfaces.measuring.SurfaceWithSurfaceArea<SampleT> &
+    surfaces.texturing.SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
+            SurfaceUVUnwrappingGroupT,
+            Objects,
+            InfluenceGroup,
+            SampleT
+        > &
     surfaces.texturing.SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroupT,
             Objects,
@@ -476,6 +484,12 @@ export type SurfaceInstanceT =
 
 export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<SampleProcessingContextT> &
     // surfaces.SurfaceProcessingContextWithSurfaceArea<SampleProcessingContextT> (doesn't exist) &
+    surfaces.texturing.SurfaceProcessingContextWithInfluencesTextureUsingSurfaceUVUnwrapping<
+            SurfaceUVUnwrappingGroupT,
+            Objects,
+            InfluenceGroup,
+            SampleProcessingContextT
+        > &
     surfaces.texturing.SurfaceProcessingContextWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroupT,
             Objects,

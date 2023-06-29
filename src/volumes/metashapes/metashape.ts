@@ -7,11 +7,10 @@ import { extract } from "../../paradigm/tree.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js";
 import { meshing, texturing } from "../../surfaces/index.js";
 
-export interface MetaShapeLocation extends VolumeLocation {
-}
+export type MetaShapeLocation = VolumeLocation
 
 export type MetaShapeLocationExtraFields<Location extends MetaShapeLocation = MetaShapeLocation> =
-    ExtraFields<Location, VolumeLocation>
+    ExtraFields<Location, MetaShapeLocation>
 
 export type MetaShapeParametersIn = {
     unit: {

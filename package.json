@@ -32,11 +32,11 @@
   "devDependencies": {
     "nodeplotlib": "^1.1.2",
     "reflect-metadata": "^0.1.13",
-    "typescript": "^5.1.3"
+    "typescript": "^5.1.6"
   },
   "dependencies": {
     "byte-rw": "^1.2.2",
-    "playcanvas-extended": "^1.64.2-dev",
+    "playcanvas-extended": "^1.65.2-dev",
     "playcanvas-extended-serializer": "^1.0.0",
     "simple-typed-serialization": "^1.1.8",
     "xatlasjs-esm": "^0.1.3"

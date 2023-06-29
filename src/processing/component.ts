@@ -2,8 +2,8 @@ import * as pc from "playcanvas-extended";
 import { ComponentSystem } from "./component-system.js";
 import { Instance } from "./instance.js";
 import { Entity, GraphNode } from "playcanvas-extended";
-import { GraphProcessor, GraphProcessorContext, GraphProcessorContextKey } from "./processors/graph.js";
-import { Processor } from "./processor.js";
+import { GraphProcessor } from "./processors/graph.js";
+import { ProcessingPair } from "./processor.js";
 import { extract } from "../paradigm/tree.js";
 
 export class ComponentData<ID = string> {
@@ -19,7 +19,7 @@ class ProcessingObjects<
         ID = string
     > {
     private _id?: ID
-    private _shared?: SharedT
+    private _shared?: ProcessingPair<SharedT, ContextT>
     private _instance?: InstanceT
 
     get id() {
@@ -80,8 +80,8 @@ class ProcessingObjects<
                         ContextT,
                         ID
                     >,
-                oldValue: SharedT | undefined,
-                newValue: SharedT | undefined
+                oldValue: ProcessingPair<SharedT, ContextT> | undefined,
+                newValue: ProcessingPair<SharedT, ContextT> | undefined
             ) => void,
             instance: (
                 this: Component<
@@ -105,7 +105,7 @@ export abstract class Component<
     > extends pc.Component {
     readonly processing: {
         id?: ID
-        shared?: SharedT
+        shared?: ProcessingPair<SharedT, ContextT>
         instance?: InstanceT
     } = new ProcessingObjects(this, {
         id: this._processing_id_changed,
@@ -142,10 +142,7 @@ export abstract class Component<
         this._root = this.findRoot()
     }
 
-    protected abstract initializeProcessingFromRaw(): {
-        processing: SharedT
-        context: ContextT
-    }
+    protected abstract initializeProcessingFromRaw(): ProcessingPair<SharedT, ContextT>
 
     processFromRaw() {
         if (!this.isRoot)
@@ -161,20 +158,16 @@ export abstract class Component<
         const system = this.system as SystemT
 
         const raw = this.initializeProcessingFromRaw()
-        const context: GraphProcessorContext & ContextT = {
-            [GraphProcessorContextKey]: new Map(),
-            ...raw.context
-        }
-        const graph = new GraphProcessor(system.processors as Processor<SharedT, GraphProcessorContext & ContextT>[])
-        const initialization = graph.init(context)
-        if (!initialization.connections.inputs.every(input => extract(raw.processing, input) !== undefined))
+        const graph = new GraphProcessor(system.processors)
+        const initialization = graph.init(raw.context)
+        if (!initialization.connections.inputs.every(input => extract(raw.item, input) !== undefined))
             throw new Error("not all inputs defined")
         
-        graph.process(raw.processing, context)
-        this.processing.shared = raw.processing
+        graph.process(raw.item, raw.context)
+        this.processing.shared = raw
 
         if (this.processing.id)
-            system.db.save(this.processing.id, raw.processing)
+            system.db.save(this.processing.id, raw)
     }
 
     /**
@@ -191,7 +184,7 @@ export abstract class Component<
         const system = this.system as SystemT
 
         if(this.processing.shared)
-            this.processing.instance = system.combinedInstancers.instantiate(this.processing.shared, this.entity)
+            this.processing.instance = system.combinedInstancers.instantiate(this.processing.shared.item, this.entity)
         else
             this.processing.instance = undefined
     }
@@ -249,7 +242,10 @@ export abstract class Component<
             this.processing.shared = undefined
     }
 
-    private _processing_shared_changed(oldValue: SharedT | undefined, newValue: SharedT | undefined) {
+    private _processing_shared_changed(
+        oldValue: ProcessingPair<SharedT, ContextT> | undefined,
+        newValue: ProcessingPair<SharedT, ContextT> | undefined
+    ) {
         if (!this.isRoot && newValue !== undefined)
             throw new Error("Cannot set processing on non-root component")
         

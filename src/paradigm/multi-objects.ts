@@ -112,16 +112,20 @@ export function* groups<
         yield makeLeafInterface(path)
 }
 
-export function mergeGroups<
-        G1 extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        G2 extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
-    >(g1: G1, g2: G2): G1 & G2 {
-    const result = {} as G1 & G2
+// export function mergeGroups<
+//         G1 extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+//         G2 extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+//     >(g1: G1, g2: G2): G1 & G2 {
+//     const result = {} as G1 & G2
 
-    mergeGroupsInplace(result, g1)
-    mergeGroupsInplace(result, g2)
+//     mergeGroupsInplace(result, g1)
+//     mergeGroupsInplace(result, g2)
     
-    return result
+//     return result
+// }
+
+export function mergeGroups<Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate>(...groups: Partial<Groups>[]): Groups {
+    return groups.reduce<Groups>((merged, group) => mergeGroupsInplace(merged, group as unknown as Groups), {} as Groups)
 }
 
 export function mergeGroupsInplace<

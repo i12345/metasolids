@@ -1,4 +1,7 @@
 export function Reflect_entries<T = any>(o: T) {
+    if (o === undefined || o === null)
+        return []
+
     const result: [key: keyof T, value: T[keyof T]][] = []
     for (const key of Reflect.ownKeys(o as object))
         result.push([key as keyof T, o[key as keyof T]])

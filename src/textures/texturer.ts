@@ -1,6 +1,6 @@
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../paradigm/index.js";
 import { Processor, ProcessorInitialization } from "../processing/index.js";
-import { GraphProcessor, GraphProcessorContext } from "../processing/processors/graph.js";
+import { GraphProcessor } from "../processing/processors/graph.js";
 import { PropertyPath } from "../paradigm/property-path.js";
 import { extract, intract } from "../paradigm/tree.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "./texture.js";
@@ -13,7 +13,7 @@ export interface TextureableProcessingContext<
         TextureSamplingContextT extends
             TextureSamplingContext<TextureLocationT> =
             TextureSamplingContext<TextureLocationT>
-    > extends GraphProcessorContext {
+    > {
     [TexturersKey]: {
         texturers: Texturer<
             TextureableT,

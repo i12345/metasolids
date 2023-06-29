@@ -137,8 +137,8 @@ export class Component<ID = string> extends processing.Component<
         const surface_multiObjectsContext = makeClone(SurfaceProcessingContext_MultiObjects_Template)
         const volume_multiObjectsContext = makeClone(VolumeProcessingContext_MultiObjects_Template)
 
-        multiObjectsContext_insertGroups(sample_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, (this.interpolatingGroups ?? []).reduce(mergeGroups, {}))
-        multiObjectsContext_insertGroups(surface_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, (this.interpolatingGroups ?? []).reduce(mergeGroups, {}))
+        multiObjectsContext_insertGroups(sample_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
+        multiObjectsContext_insertGroups(surface_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
 
         multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext)
         multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.texturing.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
@@ -167,7 +167,7 @@ export class Component<ID = string> extends processing.Component<
             [volumes.VolumeSampleKey]: sample_context,
             [volumes.VolumeSamplingKey]: {
                 volume: compositeVolume_final,
-                extraLocationParameters: this.extraLocationParameters,
+                extraLocationParameters: this.extraLocationParameters as VolumeProcessingContextT[typeof volumes.VolumeSamplingKey]["extraLocationParameters"],
                 settings: this.samplerSettings ?? volumes.defaultVolumeSamplerSettings,
             },
 
@@ -191,7 +191,7 @@ export class Component<ID = string> extends processing.Component<
         } as VolumeProcessingT
 
         return {
-            processing: volume_processing,
+            item: volume_processing,
             context: volume_context
         }
     }

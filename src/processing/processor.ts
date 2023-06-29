@@ -20,3 +20,11 @@ export interface Processor<
             context: Context
         ): void
 }
+
+export interface ProcessingPair<
+        Item = any,
+        Context = any
+    > {
+    item: Item
+    context: Context
+}

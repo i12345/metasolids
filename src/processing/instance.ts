@@ -7,6 +7,7 @@ export interface Instance<SharedT> {
      * The processing this instance is based on
      */
     shared: SharedT
+    //TODO: should this be replaced with a ProcessingPair<SharedT, ContextT>?
 
     /**
      * The entity this instance is attached to
