@@ -17,7 +17,7 @@
     "build:tsc:release": "tsc -p tsconfig.json",
     "build:tsc:debug": "tsc -p tsconfig.dbg.json",
     "pretest": "npm run build:debug",
-    "test": "node --experimental-specifier-resolution=node test.js"
+    "test": "mocha -p src/tsconfig.json 'src/**/*.spec.ts'"
   },
   "keywords": [
     "dual-contour",
@@ -30,8 +30,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "nodeplotlib": "^1.1.2",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
     "reflect-metadata": "^0.1.13",
+    "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },
   "dependencies": {
@@ -39,6 +43,7 @@
     "playcanvas-extended": "^1.65.2-dev",
     "playcanvas-extended-serializer": "^1.0.0",
     "simple-typed-serialization": "^1.1.8",
+    "type-namespace": "^1.1.0",
     "xatlasjs-esm": "^0.1.3"
   }
 }

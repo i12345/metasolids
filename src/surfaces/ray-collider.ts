@@ -111,13 +111,18 @@ interface SurfaceTriangleRayColliderProcessingContextPrivate<
     precomputed: {
         tri_n: number
         
-        v0: Float32Array
-        v01: Float32Array
-        v02: Float32Array
+        v0: Float64Array
+        v01: Float64Array
+        v02: Float64Array
 
         // this cannot be substituted with MeshData.normals because
         // these normals are computed after space transformations
-        n: Float32Array
+        n: Float64Array
+
+        uu: Float64Array
+        uv: Float64Array
+        vv: Float64Array
+        D: Float64Array
     }[]
 }
 
@@ -187,14 +192,18 @@ export class SurfaceTriangleRayCollider<
             if (context_private.precomputed[i_surface] === undefined) {
                 context_private.precomputed[i_surface] = {
                     tri_n,
-                    n: new Float32Array(3 * tri_n),
-                    v0: new Float32Array(3 * tri_n),
-                    v01: new Float32Array(3 * tri_n),
-                    v02: new Float32Array(3 * tri_n),
+                    n: new Float64Array(3 * tri_n),
+                    v0: new Float64Array(3 * tri_n),
+                    v01: new Float64Array(3 * tri_n),
+                    v02: new Float64Array(3 * tri_n),
+                    uu: new Float64Array(tri_n),
+                    uv: new Float64Array(tri_n),
+                    vv: new Float64Array(tri_n),
+                    D: new Float64Array(tri_n),
                 }
             }
 
-            function saveV3(v3: Vec3, array: Float32Array, tri: number) {
+            function saveV3(v3: Vec3, array: Float64Array, tri: number) {
                 array[(3 * tri) + 0] = v3.x
                 array[(3 * tri) + 1] = v3.y
                 array[(3 * tri) + 2] = v3.z
@@ -203,6 +212,7 @@ export class SurfaceTriangleRayCollider<
             const precomputed = context_private.precomputed[i_surface]
 
             const v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
+            let uu: number, uv: number, vv: number
             for (let tri = 0; tri < tri_n; tri++) {
                 const v0 = mesh.vertices[mesh.triangles[(3 * tri) + 0]]
                 const v1 = mesh.vertices[mesh.triangles[(3 * tri) + 1]]
@@ -212,6 +222,11 @@ export class SurfaceTriangleRayCollider<
                 saveV3(v01.sub2(v1, v0), precomputed.v01, tri)
                 saveV3(v02.sub2(v2, v0), precomputed.v02, tri)
                 saveV3(n.cross(v01, v02), precomputed.n, tri)
+
+                uu = precomputed.uu[tri] = v01.dot(v01)
+                uv = precomputed.uv[tri] = v01.dot(v02)
+                vv = precomputed.vv[tri] = v02.dot(v02)
+                precomputed.D[tri] = (uv * uv) - (uu * vv)
             }
         }
     }
@@ -232,7 +247,7 @@ export class SurfaceTriangleRayCollider<
         const v0 = new Vec3(), v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
         const w0 = new Vec3(), I = new Vec3(), w = new Vec3()
 
-        function loadV3(v3: Vec3, array: Float32Array, tri: number) {
+        function loadV3(v3: Vec3, array: Float64Array, tri: number) {
             return v3.set(
                 array[(3 * tri) + 0],
                 array[(3 * tri) + 1],
@@ -282,6 +297,11 @@ export class SurfaceTriangleRayCollider<
         ////             1 =  intersect in unique point I1
         ////             2 =  are in the same Plane
 
+        const potential_duplicates: Vec3[] = []
+        const potential_duplicate_parametric_margin = 0.0001
+        const potential_duplicate_comparison = new Vec3()
+        const potential_duplicate_position_margin_sq = 0.0001 ** 2;
+
         for (let i_surface = 0; i_surface < context.surfaces.length; i_surface++) {
             const precomputed = context_private.precomputed[i_surface]
 
@@ -294,6 +314,11 @@ export class SurfaceTriangleRayCollider<
                 loadV3(v01, precomputed.v01, tri)
                 loadV3(v02, precomputed.v02, tri)
                 loadV3(n, precomputed.n, tri)
+
+                const uu = precomputed.uu[tri]
+                const uv = precomputed.uv[tri]
+                const vv = precomputed.vv[tri]
+                const D = precomputed.D[tri]
 
                 // get triangle edge vectors and plane normal
                 // u = v01, v = v02
@@ -323,7 +348,7 @@ export class SurfaceTriangleRayCollider<
 
                 // get intersect point of ray with triangle plane
                 const r = a / b;
-                if (r > 0.0)                    // ray goes away from triangle
+                if (r < 0.0)                    // ray goes away from triangle
                     continue;                   // => no intersect
                 // for a segment, also test if (r > 1.0) => no intersect
 
@@ -339,13 +364,13 @@ export class SurfaceTriangleRayCollider<
                 // wu = dot(w, u);
                 // wv = dot(w, v);
                 // D = uv * uv - uu * vv;
-                const uu = v01.dot(v01)
-                const uv = v01.dot(v02)
-                const vv = v02.dot(v02)
                 w.sub2(I, v0)
                 const wu = w.dot(v01)
                 const wv = w.dot(v02)
-                const D = (uv * uv) - (uu * vv)
+                // const uu = v01.dot(v01)
+                // const uv = v01.dot(v02)
+                // const vv = v02.dot(v02)
+                // const D = (uv * uv) - (uu * vv)
 
                 // get and test parametric coords
                 // float s, t;
@@ -363,6 +388,23 @@ export class SurfaceTriangleRayCollider<
                 if (t < 0.0 || (s + t) > 1.0) continue
 
                 // this ends adapted code from "C06_Ray_Triangle_Intersection.cpp"
+
+                if (s <= potential_duplicate_parametric_margin ||
+                    t <= potential_duplicate_parametric_margin ||
+                    (1 - s - t) <= potential_duplicate_parametric_margin) {
+                    let isDuplicate = false
+                    for (let i = 0; i < potential_duplicates.length; i++) {
+                        if (potential_duplicate_comparison.sub2(potential_duplicates[i], I).lengthSq() < potential_duplicate_position_margin_sq) {
+                            isDuplicate = true
+                            break
+                        }
+                    }
+
+                    if (isDuplicate)
+                        continue
+                    else
+                        potential_duplicates.push(I)
+                }
 
                 collisions.push({
                     p: {
