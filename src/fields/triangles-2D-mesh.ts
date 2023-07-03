@@ -196,6 +196,11 @@ export class Triangles2DMesh {
 class Triangles2DMeshQuad {
     private filtered_triangles: number[] = []
 
+    private readonly margins: {
+        readonly min: number
+        readonly max: number
+    }
+
     constructor(
         public mesh: Triangles2DMesh,
         public bounds: { min: Vec2, max: Vec2 }
@@ -218,10 +223,18 @@ class Triangles2DMeshQuad {
             
             this.filtered_triangles.push(tri++)
         }
+
+        const size = new Vec2().sub2(this.bounds.max, this.bounds.min)
+        const margin = size.length() / (4 * 1024)
+        this.margins = {
+            min: -margin,
+            max: 1 + (2 * margin)
+        }
     }
 
     collide(point: Vec2, collisionHandler: TriangleCollisionHandler) {
         const { v0, tri_vec_inv } = this.mesh
+        const { min: margin_min, max: margin_max } = this.margins
 
         for (let tri of this.filtered_triangles) {
             const v0_x = v0[(2 * tri) + 0]
@@ -238,7 +251,8 @@ class Triangles2DMeshQuad {
             const w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
             const w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
-            if (w1 < 0 || w2 < 0 || w1 + w2 >= 1)
+            if (w1 < margin_min || w2 < margin_min ||
+                w1 + w2 >= margin_max)
                 continue
             
             collisionHandler(tri, w1, w2)
@@ -247,6 +261,7 @@ class Triangles2DMeshQuad {
 
     collision_first(point: Vec2): TriangleCollision | undefined {
         const { v0, tri_vec_inv } = this.mesh
+        const { min: margin_min, max: margin_max } = this.margins
 
         for (let tri of this.filtered_triangles) {
             const v0_x = v0[(2 * tri) + 0]
@@ -263,7 +278,8 @@ class Triangles2DMeshQuad {
             const w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
             const w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
-            if (w1 < 0 || w2 < 0 || w1 + w2 >= 1)
+            if (w1 < margin_min || w2 < margin_min ||
+                w1 + w2 >= margin_max)
                 continue
             
             return { tri, w1, w2 }

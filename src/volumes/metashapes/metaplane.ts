@@ -52,7 +52,7 @@ export class MetaPlane<
         ) { }
     
     init(context: Context): void {
-        const texture = context[MetaShapeSamplingContext_Texture].item
+        const texture = context[MetaShapeSamplingContext_Texture]?.item
 
         const xy_offset = this.maxDomain.offset
         const xy_size = this.maxDomain.size
@@ -84,7 +84,7 @@ export class MetaPlane<
                     boundingBox.max.z = Math.max(
                         boundingBox.max.z,
                         +1 *
-                        MetaShapeVolume.boundingLength(
+                        MetaShapeVolume.safeBoundingLength(
                             parameters,
                             meshingSettings
                         )
@@ -93,7 +93,7 @@ export class MetaPlane<
                     boundingBox.min.z = Math.min(
                         boundingBox.min.z,
                         -1 *
-                        MetaShapeVolume.boundingLength(
+                        MetaShapeVolume.safeBoundingLength(
                             parameters,
                             meshingSettings
                         )

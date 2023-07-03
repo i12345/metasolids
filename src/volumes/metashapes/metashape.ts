@@ -416,14 +416,8 @@ export class MetaShapeVolume<
 
     static combineParameters(a?: FieldsPointOptional<MetaShapeParametersIn>, b?: FieldsPointOptional<MetaShapeParametersIn>): MetaShapeParametersIn {
         const parameters: MetaShapeParametersIn = {
-            unit: {
-                height: 0,
-                length: 1
-            },
-            falloff: {
-                bias: 0,
-                rate: 1
-            }
+            unit: { ...this.defaultParameters.unit },
+            falloff: { ...this.defaultParameters.falloff },
         }
 
         parameters.unit.height += a?.unit?.height ?? 0
@@ -445,6 +439,19 @@ export class MetaShapeVolume<
             isNaN(parameters.unit.length) ||
             isNaN(parameters.falloff.bias) ||
             isNaN(parameters.falloff.rate))
+    }
+
+    /**
+     * 
+     * @param parameters MetaShapeParametersIn at this point
+     * @param meshingSettings
+     * @returns safe distance to construct a bounding box (2 times the expected surface level cutoff)
+     */
+    static safeBoundingLength(
+            parameters: MetaShapeParametersIn,
+            meshingSettings: meshing.MeshingSettings
+        ): number {
+        return this.boundingLength(parameters, meshingSettings) * 2
     }
 
     static boundingLength(
@@ -475,7 +482,7 @@ export class MetaShapeVolume<
     static idealSurfaceLevel(parameters: MetaShapeParametersIn): number {
         /**
          * What value of surfaceLevel is needed so that distance = unit.length + unit.height
-         * using the equation from the previous method?
+         * at the surface level, using the equation from the previous method?
          * 
          * distance = (((ln(surfaceLevel) / -falloff.rate) - falloff.bias) * unit.length) + unit.height
          * unit.length + unit.height = (((ln(surfaceLevel) / -falloff.rate) - falloff.bias) * unit.length) + unit.height

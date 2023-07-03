@@ -421,7 +421,7 @@ export class MetaSplineSegment<
                 const parameters_valid = MetaShapeVolume.parametersValid(parameters)
 
                 if (parameters_valid) {
-                    const radius = MetaShapeVolume.boundingLength(parameters, meshingSettings)
+                    const radius = MetaShapeVolume.safeBoundingLength(parameters, meshingSettings)
                     v.mulScalar(radius)
                     v.add(m_offset)
 

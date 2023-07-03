@@ -53,38 +53,38 @@ export function renderPack(
         pack: PackedRenderedBufferForSemantic,
         indices_dst?: IndiciesArray
     ) {
-    if (pack.sources.length === 1 && pack.sources[0].buffer.length === buffer_dst.length) {
-        const buffer_src = pack.sources[0].buffer
-        if (buffer_dst.length !== buffer_src.length)
-            throw new Error()
+    // if (pack.sources.length === 1 && pack.sources[0].buffer.length === buffer_dst.length) {
+    //     const buffer_src = pack.sources[0].buffer
+    //     if (buffer_dst.length !== buffer_src.length)
+    //         throw new Error()
         
-        if ((buffer_dst instanceof Float32Array && buffer_src instanceof Float32Array) ||
-            (buffer_dst instanceof Uint8Array && buffer_src instanceof Uint8Array))
-            buffer_dst.set(buffer_src)
-        else if (buffer_dst instanceof Float32Array && buffer_src instanceof Uint8Array)
-            for (let i = 0; i < buffer_dst.length; i++)
-                buffer_dst[i] = buffer_src[i] / 255
-        else if (buffer_dst instanceof Uint8Array && buffer_src instanceof Float32Array)
-            for (let i = 0; i < buffer_dst.length; i++)
-                buffer_dst[i] = math.clamp(Math.floor(buffer_src[i] * 255), 0, 255)
-    }
-    else {
-        const size = indices_dst?.length ?? (pack.sources[0].buffer.length / pack.sources[0].channels)
-        if (buffer_dst.length !== size * pack.channels)
+    //     if ((buffer_dst instanceof Float32Array && buffer_src instanceof Float32Array) ||
+    //         (buffer_dst instanceof Uint8Array && buffer_src instanceof Uint8Array))
+    //         buffer_dst.set(buffer_src)
+    //     else if (buffer_dst instanceof Float32Array && buffer_src instanceof Uint8Array)
+    //         for (let i = 0; i < buffer_dst.length; i++)
+    //             buffer_dst[i] = buffer_src[i] / 255.0
+    //     else if (buffer_dst instanceof Uint8Array && buffer_src instanceof Float32Array)
+    //         for (let i = 0; i < buffer_dst.length; i++)
+    //             buffer_dst[i] = math.clamp(Math.floor(buffer_src[i] * 255), 0, 255)
+    // }
+    // else {
+        const size_dst = indices_dst?.length ?? (pack.sources[0].buffer.length / pack.sources[0].channels)
+        if (buffer_dst.length !== size_dst * pack.channels)
             throw new Error()
         
         for (const source of pack.sources) {
             const target = pack.targets.find(target => target.source.semantic === source.semantic)!
             for (const [source_channel_index, pack_channel] of target.channels.entries()) {
                 if (buffer_dst instanceof Float32Array) {
-                    for (let i = 0; i < size; i++) {
+                    for (let i = 0; i < size_dst; i++) {
                         const src_i = indices_dst ? indices_dst[i] : i
                         const value = source.buffer[(src_i * source.channels) + source_channel_index]
                         buffer_dst[(i * pack.channels) + pack_channel] = value
                     }
                 }
                 else if (buffer_dst instanceof Uint8Array) {
-                    for (let i = 0; i < size; i++) {
+                    for (let i = 0; i < size_dst; i++) {
                         //TODO: after debugging this code, make separate versions for with and without indices mappings
                         const src_i = indices_dst ? indices_dst[i] : i
                         let value = Math.floor(255 * source.buffer[(src_i * source.channels) + source_channel_index])
@@ -96,7 +96,7 @@ export function renderPack(
                 }
             }
         }
-    }
+    // }
 
     return buffer_dst
 }

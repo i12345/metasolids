@@ -516,6 +516,12 @@ function qualityMetrics_compute<
 
     const samples: TexelTypeT[] = []
 
+    function calculate_constancy() {
+        const sample_stdDev = field_point_stdDev(samples)
+        //TODO: experiment to find ideal factor
+        return Math.exp(-5 * sample_stdDev)
+    }
+
     /** indexed by UV-unwrapped (potentially duplicated) vertex index */
     const vertex_texture_locations = new Map<number, Material_Texture_Location<VolumeLocationT>>()
 
@@ -584,7 +590,7 @@ function qualityMetrics_compute<
             }
         }
 
-        const constancy = (1 - field_point_stdDev(samples)) ** 10
+        const constancy = calculate_constancy()
 
         return {
             constancy,
@@ -602,12 +608,12 @@ function qualityMetrics_compute<
     let triangleInterpolating_error_total = 0
     let triangleInterpolating_error_eval = 0
 
-    for (const tri of tri_i_s) {
+    for (let i_tri = 0; i_tri < tri_i_s.size; i_tri++) {
         let texture_location_prev: Material_Texture_Location<VolumeLocationT> | undefined = undefined
         let texture_sample_prev: TexelTypeT | undefined = undefined
         for (let w = 0; w < 0.5; w += 0.02) {
-            const texture_location_interpolated = interpolator_texture_location.interpolate(tri, w, w)
-            const texture_sample_interpolated = interpolator_texture_sample.interpolate(tri, w, w)
+            const texture_location_interpolated = interpolator_texture_location.interpolate(i_tri, w, w)
+            const texture_sample_interpolated = interpolator_texture_sample.interpolate(i_tri, w, w)
 
             const texture_sample_real = texture.sample(texture_location_interpolated, textureContext)
             samples.push(texture_sample_real)
@@ -632,7 +638,7 @@ function qualityMetrics_compute<
     }
 
     const triangleMonotonicity = Math.exp(-(triangleInterpolating_error_total / triangleInterpolating_error_eval))
-    const constancy = (1 - field_point_stdDev(samples)) ** 10
+    const constancy = calculate_constancy()
     const textureValuePerUV_q3 = textureValuePerUV_dist.sort((a, b) => a - b).at(Math.floor(0.75 * textureValuePerUV_dist.length))!
 
     let effectiveTexelSizeUV = (implementation.effectiveTexelDiff ?? EFFECTIVE_TEXEL_DIFF_DEFAULT) / textureValuePerUV_q3
@@ -697,7 +703,8 @@ export function* material_group_implementations<
     ///@ts-ignore
     const sideEffects_general = (implementation.sideEffects?.filter(sideEffect => typeof sideEffect !== 'function') as [keyof StandardMaterial, boolean][] ?? []).map(([key, value]) => new MaterialSemanticImplementation_Setting<VolumeLocationT>(key, value, 0))
 
-    const texture_resolutions = [64, 128, 256, 512, 1024, 2048]
+    // const texture_resolutions = [64, 128, 256, 512, 1024, 2048]
+    const texture_resolutions = [1024, 2048]
 
     type CompositeTextureT = CompositeSampleDomain<TextureLocationT, TexelTypeT, TextureContextT>
 

@@ -2,7 +2,7 @@ import { MeshData } from "./types.js";
 import { VolumeSamplingResult } from "../../volumes/sampling.js";
 
 export const defaultMeshingSettings: MeshingSettings = {
-    surfaceLevel: Math.exp(-1)
+    surfaceLevel: Math.exp(-1) //MetaShapeVolume.idealSurfaceLevel(MetaShapeVolume.defaultParameters)
 }
 
 export interface MeshingSettings {

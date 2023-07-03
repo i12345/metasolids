@@ -49,7 +49,7 @@ export class MetaSphere<
     }
 
     init(context: Context): void {
-        const texture = context[MetaShapeSamplingContext_Texture].item
+        const texture = context[MetaShapeSamplingContext_Texture]?.item
         const meshingSettings = (context[MetaShapeSamplingContext_Volume] as unknown as meshing.VolumeSurfaceMeshingProcessingContext)[meshing.VolumeSurfaceMeshingKey].settings ?? meshing.defaultMeshingSettings
 
         const resolution = 32
@@ -79,7 +79,7 @@ export class MetaSphere<
                 const parameters_valid = MetaShapeVolume.parametersValid(parameters)
 
                 if (parameters_valid) {
-                    const radius = MetaShapeVolume.boundingLength(parameters, meshingSettings)
+                    const radius = MetaShapeVolume.safeBoundingLength(parameters, meshingSettings)
                     point.mulScalar(radius)
                     
                     boundingBox.max.max(point)

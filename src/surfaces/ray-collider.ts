@@ -185,6 +185,9 @@ export class SurfaceTriangleRayCollider<
             const mesh = surface.shared.mesh
             const tri_n = mesh.triangles.length / 3
 
+            //TODO: consider when the space transformations should be applied
+            // Also, how are they related to the surface and to the volume?
+
             if (context_private.precomputed[i_surface] && 
                 context_private.precomputed[i_surface].tri_n !== tri_n)
                 delete context_private.precomputed[i_surface]
@@ -255,6 +258,11 @@ export class SurfaceTriangleRayCollider<
             )
         }
 
+        const potential_duplicates: Vec3[] = []
+        const potential_duplicate_parametric_margin = 0.0001
+        const potential_duplicate_comparison = new Vec3()
+        const potential_duplicate_position_margin_sq = 0.0001 ** 2;
+
         // adapted from http://www.geomalgorithms.com/code.html
         // "C06_Ray_Triangle_Intersection.cpp"
 
@@ -297,11 +305,6 @@ export class SurfaceTriangleRayCollider<
         ////             1 =  intersect in unique point I1
         ////             2 =  are in the same Plane
 
-        const potential_duplicates: Vec3[] = []
-        const potential_duplicate_parametric_margin = 0.0001
-        const potential_duplicate_comparison = new Vec3()
-        const potential_duplicate_position_margin_sq = 0.0001 ** 2;
-
         for (let i_surface = 0; i_surface < context.surfaces.length; i_surface++) {
             const precomputed = context_private.precomputed[i_surface]
 
@@ -330,10 +333,10 @@ export class SurfaceTriangleRayCollider<
 
                 // dir = R.direction
                 //dir = R.P1 - R.P0;              // ray direction vector
-            
+                
                 w0.sub2(ray.origin, v0)
-                const a = -n.dot(w0)
-                const b = n.dot(ray.direction)
+                const a = n.dot(w0)
+                const b = -n.dot(ray.direction)
                 if (Math.abs(b) < 0.0001)
                     continue
                 
