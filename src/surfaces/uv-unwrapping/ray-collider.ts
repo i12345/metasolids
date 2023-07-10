@@ -6,63 +6,129 @@ import { Triangles2DMeshInterpolator } from "../../fields/triangles-2D-mesh.js";
 import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrapping } from "./algorithm.js";
 import { SurfaceProcessingContext } from "../surface-samples.js";
-import { SurfaceRayCollider, SurfaceTriangleRayCollider, SurfaceTriangleRayColliderProcessingContext, SurfaceTriangleRayCollision } from "../ray-collider.js";
+import { VolumeWithSurfacesRayCollider, VolumeWithSurfacesTriangleRayCollider, VolumeWithSurfacesTriangleRayColliderProcessingContext, VolumeWithSurfacesTriangleRayCollision } from "../ray-collider.js";
+import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../volume-surfaces.js";
+import { VolumeLocation } from "../../volumes/volume.js";
 
-export interface SurfaceUVRayCollision extends SurfaceTriangleRayCollision {
+export interface VolumeWithSurfacesUVRayCollision extends VolumeWithSurfacesTriangleRayCollision {
     uv: Vec2
 }
 
-export interface SurfaceUVRayColliderProcessingContext<
+export interface VolumeWithSurfacesUVRayColliderProcessingContext<
         UVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SampleT extends SurfaceSample = SurfaceSample,
+        SampleProcessingContextT = any,
         SurfaceT extends
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT> =
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>
+            SurfaceProcessingContext<SampleProcessingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > extends
-    SurfaceTriangleRayColliderProcessingContext<
+    VolumeWithSurfacesTriangleRayColliderProcessingContext<
             SampleT,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
         > {
 }
 
-interface SurfaceUVRayColliderProcessingContextPrivate<
+interface VolumeWithSurfacesUVRayColliderProcessingContextPrivate<
         UVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SampleT extends SurfaceSample = SurfaceSample,
+        SampleProcessingContextT = any,
         SurfaceT extends
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT> =
             SurfaceWithUVUnwrapping<UVUnwrappingGroup, SampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>
+            SurfaceProcessingContext<SampleProcessingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > extends
-    SurfaceUVRayColliderProcessingContext<
+    VolumeWithSurfacesUVRayColliderProcessingContext<
         UVUnwrappingGroup,
         SampleT,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceInstanceT,
-        SampleProcessingContextT,
-        SurfaceProcessingContextT
+        SurfaceProcessingContextT,
+        VolumeProcessingT,
+        VolumeProcessingInstanceT,
+        VolumeProcessingContextT
     > {
     UVinterpolators: Triangles2DMeshInterpolator<Vec2>[]
 }
 
 //TODO: re-write using transforming sample domain <Ray, SurfaceUVRayCollision>
 // after making sample domains able to have multiple values
-export class SurfaceUVRayCollider<
+export class VolumeWithSurfacesUVRayCollider<
         UVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends
@@ -74,56 +140,99 @@ export class SurfaceUVRayCollider<
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContextWithUVUnwrapping<UVUnwrappingGroup> =
-            SurfaceProcessingContextWithUVUnwrapping<UVUnwrappingGroup>
+            SurfaceProcessingContextWithUVUnwrapping<UVUnwrappingGroup>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > implements
-    SurfaceRayCollider<
-        SurfaceUVRayCollision,
+    VolumeWithSurfacesRayCollider<
+        VolumeWithSurfacesUVRayCollision,
         SampleT,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceInstanceT,
-        SampleProcessingContextT,
         SurfaceProcessingContextT,
-        SurfaceUVRayColliderProcessingContext<
+        VolumeProcessingT,
+        VolumeProcessingInstanceT,
+        VolumeProcessingContextT,
+        VolumeWithSurfacesUVRayColliderProcessingContext<
             UVUnwrappingGroup,
             SampleT,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
         >
     > {
-    private readonly triCollider = new SurfaceTriangleRayCollider()
+    private readonly triCollider = new VolumeWithSurfacesTriangleRayCollider()
 
     constructor(
         public readonly UVunwrappingGroup?: UVUnwrappingGroup
     ) { }
 
-    init(context: SurfaceUVRayColliderProcessingContext<
+    init(context: VolumeWithSurfacesUVRayColliderProcessingContext<
             UVUnwrappingGroup,
             SampleT,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
         >): void {
-        type ContextPrivateT = SurfaceUVRayColliderProcessingContextPrivate<
+        type ContextPrivateT = VolumeWithSurfacesUVRayColliderProcessingContextPrivate<
                 UVUnwrappingGroup,    
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
         
         const context_private = context as unknown as ContextPrivateT
         
+        const surfaces = context_private.instance[VolumeSurfacesKey]
+
         const { group: UVunwrapping_group } = onlyOne(groupKinds(
-            context.context,
+            context.context[VolumeSurfacesKey],
             SurfaceUVUnwrappingGroupKindsTemplate,
             this.UVunwrappingGroup
         ))
 
-        context_private.UVinterpolators = context.surfaces.map(surface => {
+        context_private.UVinterpolators = surfaces.map(surface => {
             const UVunwrapping = UVunwrapping_group.get<SurfaceUVUnwrapping>(surface.shared)
             return new Triangles2DMeshInterpolator(UVunwrapping.UVs, UVunwrapping.finalIndices)
         })
@@ -132,23 +241,29 @@ export class SurfaceUVRayCollider<
     }
 
     private transformCollision(
-            collision: SurfaceTriangleRayCollision,
-            context: SurfaceUVRayColliderProcessingContext<
+            collision: VolumeWithSurfacesTriangleRayCollision,
+            context: VolumeWithSurfacesUVRayColliderProcessingContext<
                     UVUnwrappingGroup,
                     SampleT,
+                    SampleProcessingContextT,
                     SurfaceT,
                     SurfaceInstanceT,
-                    SampleProcessingContextT,
-                    SurfaceProcessingContextT
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingInstanceT,
+                    VolumeProcessingContextT
                 >
-        ): SurfaceUVRayCollision {
-        type ContextPrivateT = SurfaceUVRayColliderProcessingContextPrivate<
+        ): VolumeWithSurfacesUVRayCollision {
+        type ContextPrivateT = VolumeWithSurfacesUVRayColliderProcessingContextPrivate<
                 UVUnwrappingGroup,    
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
         
         const context_private = context as unknown as ContextPrivateT
@@ -167,29 +282,35 @@ export class SurfaceUVRayCollider<
 
     sample_multiple(
         ray: Ray,
-        context: SurfaceUVRayColliderProcessingContext<
+        context: VolumeWithSurfacesUVRayColliderProcessingContext<
                 UVUnwrappingGroup,
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
-    ): SurfaceUVRayCollision[] {
+    ): VolumeWithSurfacesUVRayCollision[] {
         return this.triCollider.sample_multiple(ray, context).map(collision => this.transformCollision(collision, context))
     }
 
     sample(
         ray: Ray,
-        context: SurfaceUVRayColliderProcessingContext<
+        context: VolumeWithSurfacesUVRayColliderProcessingContext<
                 UVUnwrappingGroup,
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
-    ): SurfaceUVRayCollision | undefined {
+    ): VolumeWithSurfacesUVRayCollision | undefined {
         const collision = this.triCollider.sample(ray, context)
         if (collision)
             return this.transformCollision(collision, context)

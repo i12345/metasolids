@@ -2,6 +2,8 @@ import { Ray, Vec3 } from "playcanvas-extended";
 import { Surface, SurfaceInstance, SurfaceSample } from "./surface.js";
 import { TriangleCollision } from "../fields/triangles-2D-mesh.js";
 import { SurfaceProcessingContext } from "./surface-samples.js";
+import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "./volume-surfaces.js";
+import { VolumeLocation } from "../volumes/volume.js";
 
 export interface RayCollision {
     /**
@@ -18,23 +20,7 @@ export interface RayCollision {
     t: number
 }
 
-export interface SurfaceRayColliderProcessingContext<
-        SampleT extends SurfaceSample = SurfaceSample,
-        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
-        SurfaceInstanceT extends
-            SurfaceInstance<SurfaceT> =
-            SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
-        SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>
-    > {
-    surfaces: SurfaceInstanceT[]
-    context: SurfaceProcessingContextT
-}
-
-export interface SurfaceRayCollider<
-        Collision extends RayCollision = RayCollision,
+export interface VolumeWithSurfacesRayColliderProcessingContext<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
@@ -44,69 +30,213 @@ export interface SurfaceRayCollider<
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>,
-        SurfaceRayColliderProcessingContextT extends
-            SurfaceRayColliderProcessingContext<
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
                     SampleT,
                     SurfaceT,
                     SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
                     SampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
-            SurfaceRayColliderProcessingContext<
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
+    > {
+    instance: VolumeProcessingInstanceT
+    context: VolumeProcessingContextT
+}
+
+export interface VolumeWithSurfacesRayCollider<
+        Collision extends RayCollision = RayCollision,
+        SampleT extends SurfaceSample = SurfaceSample,
+        SampleProcessingContextT = any,
+        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
+        SurfaceInstanceT extends
+            SurfaceInstance<SurfaceT> =
+            SurfaceInstance<SurfaceT>,
+        SurfaceProcessingContextT extends
+            SurfaceProcessingContext<SampleProcessingContextT> =
+            SurfaceProcessingContext<SampleProcessingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
+        RayColliderProcessingContextT extends
+            VolumeWithSurfacesRayColliderProcessingContext<
                     SampleT,
                     SurfaceT,
                     SurfaceInstanceT,
                     SampleProcessingContextT,
-                    SurfaceProcessingContextT
-                >
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingInstanceT,
+                    VolumeProcessingContextT
+                > =
+            VolumeWithSurfacesRayColliderProcessingContext<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingInstanceT,
+                    VolumeProcessingContextT
+                >,
     > {
-    init(context: SurfaceRayColliderProcessingContextT): void
-    sample(ray: Ray, context: SurfaceRayColliderProcessingContextT): Collision | undefined
-    sample_multiple(ray: Ray, context: SurfaceRayColliderProcessingContextT): Collision[]
+    init(context: RayColliderProcessingContextT): void
+    sample(ray: Ray, context: RayColliderProcessingContextT): Collision | undefined
+    sample_multiple(ray: Ray, context: RayColliderProcessingContextT): Collision[]
 }
 
-export interface SurfaceTriangleRayCollision extends RayCollision {
+export interface VolumeWithSurfacesTriangleRayCollision extends RayCollision {
     i_surface: number
     triangle: TriangleCollision
 }
 
-export interface SurfaceTriangleRayColliderProcessingContext<
+export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
         SampleT extends SurfaceSample = SurfaceSample,
+        SampleProcessingContextT = any,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>
+            SurfaceProcessingContext<SampleProcessingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > extends
-    SurfaceRayColliderProcessingContext<
+    VolumeWithSurfacesRayColliderProcessingContext<
             SampleT,
             SurfaceT,
             SurfaceInstanceT,
             SampleProcessingContextT,
-            SurfaceProcessingContextT
-    > {
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
+        > {
 }
     
-interface SurfaceTriangleRayColliderProcessingContextPrivate<
+interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
         SampleT extends SurfaceSample = SurfaceSample,
+        SampleProcessingContextT = any,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>
+            SurfaceProcessingContext<SampleProcessingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > extends
-    SurfaceTriangleRayColliderProcessingContext<
+    VolumeWithSurfacesTriangleRayColliderProcessingContext<
         SampleT,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceInstanceT,
-        SampleProcessingContextT,
-        SurfaceProcessingContextT
+        SurfaceProcessingContextT,
+        VolumeProcessingT,
+        VolumeProcessingInstanceT,
+        VolumeProcessingContextT
     > {
     precomputed: {
         tri_n: number
@@ -126,7 +256,7 @@ interface SurfaceTriangleRayColliderProcessingContextPrivate<
     }[]
 }
 
-export class SurfaceTriangleRayCollider<
+export class VolumeWithSurfacesTriangleRayCollider<
         SampleT extends SurfaceSample = SurfaceSample,
         SurfaceT extends Surface<SampleT> = Surface<SampleT>,
         SurfaceInstanceT extends
@@ -136,54 +266,112 @@ export class SurfaceTriangleRayCollider<
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>,
-        SurfaceRayColliderProcessingContextT extends
-            SurfaceTriangleRayColliderProcessingContext<
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
                     SampleT,
                     SurfaceT,
                     SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
                     SampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
-            SurfaceTriangleRayColliderProcessingContext<
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
                     SampleT,
-                    SurfaceT,
-                    SurfaceInstanceT,
                     SampleProcessingContextT,
                     SurfaceProcessingContextT
-                >
+                >,
+        RayColliderProcessingContextT extends
+            VolumeWithSurfacesTriangleRayColliderProcessingContext<
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingInstanceT,
+                    VolumeProcessingContextT
+                > =
+            VolumeWithSurfacesTriangleRayColliderProcessingContext<
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingInstanceT,
+                    VolumeProcessingContextT
+                >,
     >
     implements
-    SurfaceRayCollider<
-        SurfaceTriangleRayCollision,
+    VolumeWithSurfacesRayCollider<
+        VolumeWithSurfacesTriangleRayCollision,
         SampleT,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceInstanceT,
-        SampleProcessingContextT,
-        SurfaceProcessingContextT
+        SurfaceProcessingContextT,
+        VolumeProcessingT,
+        VolumeProcessingInstanceT,
+        VolumeProcessingContextT,
+        RayColliderProcessingContextT
     > {
-    init(context: SurfaceRayColliderProcessingContextT) {
-        type ContextPrivateT = SurfaceTriangleRayColliderProcessingContextPrivate<
+    init(context: RayColliderProcessingContextT) {
+        type ContextPrivateT = VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
         
         const context_private = context as unknown as ContextPrivateT
         context_private.precomputed ??= []
 
-        if (context_private.precomputed.length > context.surfaces.length) {
+        const {
+            [VolumeSurfacesKey]: surfaces,
+            spaceTransformations
+        } = context.instance
+
+        if (context_private.precomputed.length > surfaces.length) {
             context_private.precomputed.splice(
-                context.surfaces.length,
-                context.surfaces.length - context_private.precomputed.length
+                surfaces.length,
+                surfaces.length - context_private.precomputed.length
             )
         }
 
-        for (let i_surface = 0; i_surface < context.surfaces.length; i_surface++) {
-            const surface = context.surfaces[i_surface]
+        for (let i_surface = 0; i_surface < surfaces.length; i_surface++) {
+            const surface = surfaces[i_surface]
             const mesh = surface.shared.mesh
             const tri_n = mesh.triangles.length / 3
+            
+            const transformed_vertices = new Float32Array(3 * mesh.vertices.length)
+            
+            // mesh.vertices might change to a Float32Array
+            for (let i = 0; i < mesh.vertices.length; i++) {
+                transformed_vertices[(3 * i) + 0] = mesh.vertices[i].x
+                transformed_vertices[(3 * i) + 1] = mesh.vertices[i].y
+                transformed_vertices[(3 * i) + 2] = mesh.vertices[i].z
+            }
+
+            spaceTransformations.forEach(spaceTransformation => spaceTransformation.transform(transformed_vertices))
 
             //TODO: consider when the space transformations should be applied
             // Also, how are they related to the surface and to the volume?
@@ -191,7 +379,7 @@ export class SurfaceTriangleRayCollider<
             if (context_private.precomputed[i_surface] && 
                 context_private.precomputed[i_surface].tri_n !== tri_n)
                 delete context_private.precomputed[i_surface]
-
+            
             if (context_private.precomputed[i_surface] === undefined) {
                 context_private.precomputed[i_surface] = {
                     tri_n,
@@ -206,6 +394,14 @@ export class SurfaceTriangleRayCollider<
                 }
             }
 
+            function loadV3(v3: Vec3, array: Float32Array | Float64Array, tri: number) {
+                return v3.set(
+                    array[(3 * tri) + 0],
+                    array[(3 * tri) + 1],
+                    array[(3 * tri) + 2]
+                )
+            }
+
             function saveV3(v3: Vec3, array: Float64Array, tri: number) {
                 array[(3 * tri) + 0] = v3.x
                 array[(3 * tri) + 1] = v3.y
@@ -214,12 +410,13 @@ export class SurfaceTriangleRayCollider<
 
             const precomputed = context_private.precomputed[i_surface]
 
+            const v0 = new Vec3(), v1 = new Vec3(), v2 = new Vec3()
             const v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
             let uu: number, uv: number, vv: number
             for (let tri = 0; tri < tri_n; tri++) {
-                const v0 = mesh.vertices[mesh.triangles[(3 * tri) + 0]]
-                const v1 = mesh.vertices[mesh.triangles[(3 * tri) + 1]]
-                const v2 = mesh.vertices[mesh.triangles[(3 * tri) + 2]]
+                loadV3(v0, transformed_vertices, mesh.triangles[(3 * tri) + 0])
+                loadV3(v1, transformed_vertices, mesh.triangles[(3 * tri) + 1])
+                loadV3(v2, transformed_vertices, mesh.triangles[(3 * tri) + 2])
 
                 saveV3(v0, precomputed.v0, tri)
                 saveV3(v01.sub2(v1, v0), precomputed.v01, tri)
@@ -234,18 +431,23 @@ export class SurfaceTriangleRayCollider<
         }
     }
 
-    sample_multiple(ray: Ray, context: SurfaceRayColliderProcessingContextT) {
-        type ContextPrivateT = SurfaceTriangleRayColliderProcessingContextPrivate<
+    sample_multiple(ray: Ray, context: RayColliderProcessingContextT) {
+        type ContextPrivateT = VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
         
         const context_private = context as unknown as ContextPrivateT
         
-        const collisions: SurfaceTriangleRayCollision[] = []
+        const surfaces = context_private.instance[VolumeSurfacesKey]
+
+        const collisions: VolumeWithSurfacesTriangleRayCollision[] = []
 
         const v0 = new Vec3(), v01 = new Vec3(), v02 = new Vec3(), n = new Vec3()
         const w0 = new Vec3(), I = new Vec3(), w = new Vec3()
@@ -305,7 +507,7 @@ export class SurfaceTriangleRayCollider<
         ////             1 =  intersect in unique point I1
         ////             2 =  are in the same Plane
 
-        for (let i_surface = 0; i_surface < context.surfaces.length; i_surface++) {
+        for (let i_surface = 0; i_surface < surfaces.length; i_surface++) {
             const precomputed = context_private.precomputed[i_surface]
 
             for (let tri = 0; tri < precomputed.tri_n; tri++) {
@@ -411,6 +613,7 @@ export class SurfaceTriangleRayCollider<
 
                 collisions.push({
                     p: {
+                        //TODO: compute local & world using interpolated vertex positions and spaceTransformations
                         local: w,
                         world: I
                     },
@@ -428,7 +631,7 @@ export class SurfaceTriangleRayCollider<
         return collisions
     }
 
-    sample(ray: Ray, context: SurfaceRayColliderProcessingContextT): SurfaceTriangleRayCollision | undefined {
+    sample(ray: Ray, context: RayColliderProcessingContextT): VolumeWithSurfacesTriangleRayCollision | undefined {
         const collisions = this.sample_multiple(ray, context)
         if (collisions.length === 0)
             return undefined

@@ -2,26 +2,28 @@ import { Ray } from "playcanvas-extended";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/multi-objects.js";
 import { ExtraFields, FieldPoint, FieldsPointMapped } from "../../../fields/point.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "../../../textures/texture.js";
-import { SurfaceRayCollider } from "../../ray-collider.js";
 import { SurfaceIndividualTexturesGroupKindsTemplate, SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
-import { SurfaceUVRayCollider, SurfaceUVRayColliderProcessingContext, SurfaceUVRayCollision } from "../../uv-unwrapping/ray-collider.js";
 import { makeIntractor } from "../../../paradigm/tree.js";
 import { change } from "../../../fields/object-algebra.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContext } from "../../surface-samples.js";
 import { Field, FieldsField, SampleDomainLocationField, Vec2Field, defaultField } from "../../../fields/index.js";
+import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../uv-unwrapping/ray-collider.js";
+import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
+import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../../volume-surfaces.js";
+import { VolumeLocation } from "../../../volumes/volume.js";
 
-export interface SurfaceIndividualTexturesRayCollision<
+export interface VolumeWithSurfacesIndividualTexturesRayCollision<
     TextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
     TextureSampleT extends FieldPoint = FieldPoint,
     TextureSamplesGrouped extends
         MultiObjectsGroupsMapped<TextureGroups, TextureSampleT> =
         MultiObjectsGroupsMapped<TextureGroups, TextureSampleT>
-    > extends SurfaceUVRayCollision {
+    > extends VolumeWithSurfacesUVRayCollision {
     samples: TextureSamplesGrouped
 }
 
-export interface SurfaceIndividualTexturesRayColliderProcessingContext<
+export interface VolumeWithSurfacesIndividualTexturesRayColliderProcessingContext<
         UVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
@@ -51,6 +53,7 @@ export interface SurfaceIndividualTexturesRayColliderProcessingContext<
                     TextureSamplingContextT
                 >,
         SampleT extends SurfaceSample = SurfaceSample,
+        SampleProcessingContextT = any,
         SurfaceT extends
             Surface<SampleT> &
             SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
@@ -73,23 +76,54 @@ export interface SurfaceIndividualTexturesRayColliderProcessingContext<
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>
+            SurfaceProcessingContext<SampleProcessingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > extends
-    SurfaceUVRayColliderProcessingContext<
+    VolumeWithSurfacesUVRayColliderProcessingContext<
             UVUnwrappingGroup,
             SampleT,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
         > {
     extraLocationParameters: ExtraFields<TextureLocationT, TextureLocation>
 }
 
-interface SurfaceIndividualTexturesRayColliderProcessingContextPrivate<
+interface VolumeWithSurfacesIndividualTexturesRayColliderProcessingContextPrivate<
         UVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
@@ -119,6 +153,7 @@ interface SurfaceIndividualTexturesRayColliderProcessingContextPrivate<
                     TextureSamplingContextT
                 >,
         SampleT extends SurfaceSample = SurfaceSample,
+        SampleProcessingContextT = any,
         SurfaceT extends
             Surface<SampleT> &
             SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
@@ -141,12 +176,40 @@ interface SurfaceIndividualTexturesRayColliderProcessingContextPrivate<
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>
+            SurfaceProcessingContext<SampleProcessingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > extends
-    SurfaceIndividualTexturesRayColliderProcessingContext<
+    VolumeWithSurfacesIndividualTexturesRayColliderProcessingContext<
         UVUnwrappingGroup,
         TextureGroups,
         TextureLocationT,
@@ -156,10 +219,13 @@ interface SurfaceIndividualTexturesRayColliderProcessingContextPrivate<
         TextureSamplesGrouped,
         TexturesGrouped,
         SampleT,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceInstanceT,
-        SampleProcessingContextT,
-        SurfaceProcessingContextT
+        SurfaceProcessingContextT,
+        VolumeProcessingT,
+        VolumeProcessingInstanceT,
+        VolumeProcessingContextT
     > {
     /**
      * textures[i_surface] = information for textures for surface
@@ -171,7 +237,7 @@ interface SurfaceIndividualTexturesRayColliderProcessingContextPrivate<
     }[][]
 }
 
-export class SurfaceIndividualTexturesRayCollider<
+export class VolumeWithSurfacesIndividualTexturesRayCollider<
     UVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
     TextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
     TextureLocationT extends TextureLocation = TextureLocation,
@@ -234,20 +300,52 @@ export class SurfaceIndividualTexturesRayCollider<
                     UVUnwrappingGroup,
                     TextureGroups,
                     SampleProcessingContextT
-                >
+                >,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
+            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+        VolumeProcessingInstanceT extends
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                > =
+            VolumeProcessingWithSurfacesInstance<
+                    SampleT,
+                    SurfaceT,
+                    SurfaceInstanceT,
+                    VolumeProcessingT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeLocation,
+                    SampleT,
+                    SampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
     > implements
-    SurfaceRayCollider<
-        SurfaceIndividualTexturesRayCollision<
+    VolumeWithSurfacesRayCollider<
+        VolumeWithSurfacesIndividualTexturesRayCollision<
             TextureGroups,
             TextureSampleT,
             TextureSamplesGrouped
         >,
         SampleT,
+        SampleProcessingContextT,
         SurfaceT,
         SurfaceInstanceT,
-        SampleProcessingContextT,
         SurfaceProcessingContextT,
-        SurfaceIndividualTexturesRayColliderProcessingContext<
+        VolumeProcessingT,
+        VolumeProcessingInstanceT,
+        VolumeProcessingContextT,
+        VolumeWithSurfacesIndividualTexturesRayColliderProcessingContext<
                 UVUnwrappingGroup,
                 TextureGroups,
                 TextureLocationT,
@@ -257,13 +355,16 @@ export class SurfaceIndividualTexturesRayCollider<
                 TextureSamplesGrouped,
                 TexturesGrouped,
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
     > {
-    private readonly UVcollider: SurfaceUVRayCollider<
+    private readonly UVcollider: VolumeWithSurfacesUVRayCollider<
             UVUnwrappingGroup,
             SampleT,
             SurfaceT,
@@ -276,10 +377,10 @@ export class SurfaceIndividualTexturesRayCollider<
         public readonly UVunwrappingGroup?: UVUnwrappingGroup,
         public readonly textureGroups?: TextureGroups
     ) {
-        this.UVcollider = new SurfaceUVRayCollider(UVunwrappingGroup)
+        this.UVcollider = new VolumeWithSurfacesUVRayCollider(UVunwrappingGroup)
     }
 
-    init(context: SurfaceIndividualTexturesRayColliderProcessingContext<
+    init(context: VolumeWithSurfacesIndividualTexturesRayColliderProcessingContext<
             UVUnwrappingGroup,
             TextureGroups,
             TextureLocationT,
@@ -289,14 +390,17 @@ export class SurfaceIndividualTexturesRayCollider<
             TextureSamplesGrouped,
             TexturesGrouped,
             SampleT,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
         >): void {
         this.UVcollider.init(context)
 
-        type ContextPrivateT = SurfaceIndividualTexturesRayColliderProcessingContextPrivate<
+        type ContextPrivateT = VolumeWithSurfacesIndividualTexturesRayColliderProcessingContextPrivate<
             UVUnwrappingGroup,
             TextureGroups,
             TextureLocationT,
@@ -306,16 +410,19 @@ export class SurfaceIndividualTexturesRayCollider<
             TextureSamplesGrouped,
             TexturesGrouped,
             SampleT,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
         >
         
         const context_private = context as ContextPrivateT
 
         const textureGroups = groupKinds(
-            context.context,
+            context.context[VolumeSurfacesKey],
             SurfaceIndividualTexturesGroupKindsTemplate,
             this.textureGroups
         )
@@ -329,7 +436,7 @@ export class SurfaceIndividualTexturesRayCollider<
             )
         }
 
-        context_private.textures = context.surfaces.map(surface => {
+        context_private.textures = context.instance[VolumeSurfacesKey].map(surface => {
             const textures = []
             for (const { group } of textureGroups) {
                 const texture = group.get<TextureT>(surface.shared)
@@ -357,8 +464,8 @@ export class SurfaceIndividualTexturesRayCollider<
     }
 
     private transformCollision(
-            collision: SurfaceUVRayCollision,
-            context: SurfaceIndividualTexturesRayColliderProcessingContext<
+            collision: VolumeWithSurfacesUVRayCollision,
+            context: VolumeWithSurfacesIndividualTexturesRayColliderProcessingContext<
                 UVUnwrappingGroup,
                 TextureGroups,
                 TextureLocationT,
@@ -368,17 +475,20 @@ export class SurfaceIndividualTexturesRayCollider<
                 TextureSamplesGrouped,
                 TexturesGrouped,
                 SampleT,
+                SampleProcessingContextT,
                 SurfaceT,
                 SurfaceInstanceT,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
+                SurfaceProcessingContextT,
+                VolumeProcessingT,
+                VolumeProcessingInstanceT,
+                VolumeProcessingContextT
             >
-        ): SurfaceIndividualTexturesRayCollision<
+        ): VolumeWithSurfacesIndividualTexturesRayCollision<
                 TextureGroups,
                 TextureSampleT,
                 TextureSamplesGrouped
             > {
-        type ContextPrivateT = SurfaceIndividualTexturesRayColliderProcessingContextPrivate<
+        type ContextPrivateT = VolumeWithSurfacesIndividualTexturesRayColliderProcessingContextPrivate<
             UVUnwrappingGroup,
             TextureGroups,
             TextureLocationT,
@@ -388,10 +498,13 @@ export class SurfaceIndividualTexturesRayCollider<
             TextureSamplesGrouped,
             TexturesGrouped,
             SampleT,
+            SampleProcessingContextT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT
+            SurfaceProcessingContextT,
+            VolumeProcessingT,
+            VolumeProcessingInstanceT,
+            VolumeProcessingContextT
         >
                 
         const context_private = context as ContextPrivateT
@@ -411,7 +524,7 @@ export class SurfaceIndividualTexturesRayCollider<
 
     sample_multiple(
             ray: Ray,
-            context: SurfaceIndividualTexturesRayColliderProcessingContext<
+            context: VolumeWithSurfacesIndividualTexturesRayColliderProcessingContext<
                     UVUnwrappingGroup,
                     TextureGroups,
                     TextureLocationT,
@@ -421,10 +534,13 @@ export class SurfaceIndividualTexturesRayCollider<
                     TextureSamplesGrouped,
                     TexturesGrouped,
                     SampleT,
+                    SampleProcessingContextT,
                     SurfaceT,
                     SurfaceInstanceT,
-                    SampleProcessingContextT,
-                    SurfaceProcessingContextT
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingInstanceT,
+                    VolumeProcessingContextT
                 >
         ) {
         return this.UVcollider.sample_multiple(ray, context).map(collision => this.transformCollision(collision, context))
@@ -432,7 +548,7 @@ export class SurfaceIndividualTexturesRayCollider<
 
     sample(
             ray: Ray,
-            context: SurfaceIndividualTexturesRayColliderProcessingContext<
+            context: VolumeWithSurfacesIndividualTexturesRayColliderProcessingContext<
                     UVUnwrappingGroup,
                     TextureGroups,
                     TextureLocationT,
@@ -442,10 +558,13 @@ export class SurfaceIndividualTexturesRayCollider<
                     TextureSamplesGrouped,
                     TexturesGrouped,
                     SampleT,
+                    SampleProcessingContextT,
                     SurfaceT,
                     SurfaceInstanceT,
-                    SampleProcessingContextT,
-                    SurfaceProcessingContextT
+                    SurfaceProcessingContextT,
+                    VolumeProcessingT,
+                    VolumeProcessingInstanceT,
+                    VolumeProcessingContextT
                 >
         ) {
         const collision = this.UVcollider.sample(ray, context)
