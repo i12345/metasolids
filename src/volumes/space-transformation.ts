@@ -6,7 +6,7 @@ export interface SpaceTransformation {
 
 export class WorldSpaceTransformation
     implements SpaceTransformation {
-    constructor(public readonly world: Mat4) { }
+    constructor(public readonly world = new Mat4()) { }
 
     transform(points: Float32Array): void {
         const [
@@ -19,8 +19,8 @@ export class WorldSpaceTransformation
         const n = points.length / 3
         for (let i = 0; i < n; i++) {
             const x = points[(3 * i) + 0]
-            const y = points[(3 * i) + 0]
-            const z = points[(3 * i) + 0]
+            const y = points[(3 * i) + 1]
+            const z = points[(3 * i) + 2]
             points[(3 * i) + 0] = (x * m11) + (y * m21) + (z * m31) + m41
             points[(3 * i) + 1] = (x * m12) + (y * m22) + (z * m32) + m42
             points[(3 * i) + 2] = (x * m13) + (y * m23) + (z * m33) + m43
@@ -35,7 +35,7 @@ export class GraphNodeWorldSpaceTransformation
     }
 
     override transform(points: Float32Array): void {
-        super.world.copy(this.node.getWorldTransform())
+        this.world.copy(this.node.getWorldTransform())
         super.transform(points)
     }
 }
