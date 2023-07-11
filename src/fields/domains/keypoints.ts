@@ -19,7 +19,7 @@ export class KeypointsSampleDomain<
     init(context: Context): void {
         this.interpolator = InterpolationManager[makeInterpolator](this.keypoints, context[SampleDomainLocationField])
     }
-
+    
     sample(location: Location, context: Context): Sample {
         return this.interpolator(location)
     }

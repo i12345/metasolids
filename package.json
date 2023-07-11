@@ -44,6 +44,7 @@
     "playcanvas-extended-serializer": "^1.0.0",
     "simple-typed-serialization": "^1.1.8",
     "type-namespace": "^1.1.0",
+    "vectorized-functions": "^1.1.0",
     "xatlasjs-esm": "^0.1.3"
   }
 }

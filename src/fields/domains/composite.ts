@@ -1,4 +1,5 @@
-import { SampleDomain, SamplingContext } from "../domain.js"
+import { VectorFunction, vectorized } from "vectorized-functions"
+import { SampleDomain, SampleDomain_vectorized, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { FieldPoint, field_point_add_inplace } from "../point.js"
@@ -50,11 +51,43 @@ export class CompositeSampleDomain<
         return field_point_add_inplace(accumulator, addition)
     }
 
+    @vectorized(CompositeSampleDomain.sample_vectorized)
     sample(location: Location, context: Context): Sample {
         let sample: Sample | undefined = undefined
         for (const child of this.children)
             sample = this.composite(sample, child.sample(location, context))
         
         return sample!
+    }
+
+    private static sample_vectorized<
+            Location extends FieldPoint = FieldPoint,
+            Sample extends FieldPoint = FieldPoint,
+            Context extends SamplingContext<Location> = SamplingContext<Location>
+        >(
+            this: CompositeSampleDomain<Location, Sample, Context>,
+            locations: Location[],
+            context: Context
+        ): Sample[] {
+        let samples: (Sample | undefined)[] = new Array(locations.length).fill(undefined)
+        for (const child of this.children) {
+            samples = CompositeSampleDomain.vectorized.composite.call(
+                this as any,
+                samples,
+                SampleDomain_vectorized.sample(child, locations, context)
+            ) as Sample[]
+        }
+        
+        return samples as Sample[]
+    }
+
+    protected static readonly vectorized = {
+        composite: new VectorFunction<
+            { composite(accumulator: FieldPoint | undefined, addition: FieldPoint): FieldPoint },
+            // CompositeSampleDomain,
+            "composite",
+            (accumulator: FieldPoint | undefined, addition: FieldPoint) => FieldPoint,
+            (accumulator: (FieldPoint | undefined)[], addition: FieldPoint[]) => FieldPoint[]
+        >("composite")
     }
 }

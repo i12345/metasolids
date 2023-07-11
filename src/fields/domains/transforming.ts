@@ -1,8 +1,9 @@
 import { FieldPoint } from '../point.js'
-import { SampleDomain, SampleDomainLocationField, SamplingContext } from '../domain.js'
+import { SampleDomain, SampleDomainLocationField, SampleDomain_vectorized, SamplingContext } from '../domain.js'
 import { Field } from '../field.js'
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from './encapsulating.js'
 import { PropertyPath } from '../../paradigm/property-path.js'
+import { VectorFunction, vectorized } from 'vectorized-functions'
 
 export type TransformingDefaultInnerSamplingContext<
         OuterLocation extends FieldPoint = FieldPoint,
@@ -103,6 +104,7 @@ export abstract class TransformingSampleDomain<
         return sample as any as OuterSample
     }
 
+    @vectorized(TransformingSampleDomain.sample_vectorized)
     sample(outerLocation: OuterLocation, outerContext: OuterContext): OuterSample {
         const innerContext = this.transformContext(outerContext)
         const context = { outer: outerContext, inner: innerContext }
@@ -110,5 +112,82 @@ export abstract class TransformingSampleDomain<
         const location = { outer: outerLocation, inner: innerLocation }
         const innerSample = this.inner.sample(innerLocation, innerContext)
         return this.transformSample(innerSample, location, context)
+    }
+
+    private static sample_vectorized<
+            OuterLocation extends FieldPoint,
+            OuterSample extends FieldPoint,
+            OuterContext extends
+                SamplingContext<OuterLocation> =
+                SamplingContext<OuterLocation>,
+            InnerLocation extends FieldPoint = OuterLocation,
+            InnerSample extends FieldPoint = OuterSample,
+            InnerContext extends
+                SamplingContext<InnerLocation> =
+                TransformingDefaultInnerSamplingContext<
+                        OuterLocation,
+                        InnerLocation,
+                        OuterSample,
+                        OuterContext
+                    >,
+        >(
+            this: TransformingSampleDomain<
+                OuterLocation,
+                OuterSample,
+                OuterContext,
+                InnerLocation,
+                InnerSample,
+                InnerContext
+                >,
+            outerLocations: OuterLocation[],
+            outerContext: OuterContext
+        ): OuterSample[] {
+        const innerContext = this.transformContext(outerContext)
+        const context = { outer: outerContext, inner: innerContext }
+        const innerLocations = TransformingSampleDomain.vectorized.transformLocation.call(this as any, outerLocations, context)
+        const locations = outerLocations.map((_, i) => ({ outer: outerLocations[i], inner: innerLocations[i] }))
+        const innerSamples = SampleDomain_vectorized.sample(this.inner, innerLocations, innerContext)
+        return TransformingSampleDomain.vectorized.transformSample.call(this as any, innerSamples, locations, context) as OuterSample[]
+    }
+
+    protected static readonly vectorized = {
+        transformLocation: new VectorFunction<
+                {
+                    transformLocation(
+                        location: FieldPoint,
+                        context: { outer: SamplingContext, inner: SamplingContext }
+                    ): FieldPoint
+                },
+                "transformLocation",
+                (
+                    location: FieldPoint,
+                    context: { outer: SamplingContext, inner: SamplingContext }
+                ) => FieldPoint,
+                (
+                    locations: FieldPoint[],
+                    context: { outer: SamplingContext, inner: SamplingContext }
+                ) => FieldPoint[]
+            >("transformLocation"),
+        
+        transformSample: new VectorFunction <
+                {
+                    transformSample(
+                        sample: FieldPoint,
+                        location: { outer: FieldPoint, inner: FieldPoint },
+                        context: { outer: SamplingContext, inner: SamplingContext }
+                    ): FieldPoint
+                },
+                "transformSample",
+                (
+                    sample: FieldPoint,
+                    location: { outer: FieldPoint, inner: FieldPoint },
+                    context: { outer: SamplingContext, inner: SamplingContext }
+                ) => FieldPoint,
+                (
+                    samples: FieldPoint[],
+                    locations: { outer: FieldPoint, inner: FieldPoint }[],
+                    context: { outer: SamplingContext, inner: SamplingContext }
+                ) => FieldPoint[]
+            >("transformSample", [0, 1]),
     }
 }
