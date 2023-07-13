@@ -5,13 +5,14 @@ import { indicesArrayType } from '../../../utils/indices-array.js';
 
 let xAtlasAPI: XAtlasAPI
 
-export const XAtlasAPI_promise = new Promise<void>(async resolve => {
-    const { XAtlasAPI: XAtlasAPIClass } = await (eval(`import` + `('/xatlasjs-esm/index.js')`) as PromiseLike<{ XAtlasAPI: typeof XAtlasAPI }>)
+export const init_XAtlasAPI = (xatlas_path: string = '/xatlasjs-esm') => new Promise<void>(async resolve => {
+    const { XAtlasAPI: XAtlasAPIClass } = await (eval(`import` + `(${xatlas_path}/index.js)`) as PromiseLike<{ XAtlasAPI: typeof XAtlasAPI }>)
     
     xAtlasAPI = new XAtlasAPIClass(
         () => resolve(),
         (path, dir) => {
-            if (path === "xatlas.wasm") return "xatlasjs-esm/" + path;
+            //TODO: should the prefix "/" be removed for this path?
+            if (path === "xatlas.wasm") return xatlas_path + path;
             return dir + path;
         },
         (mode: any, progress: any) => {
@@ -19,7 +20,6 @@ export const XAtlasAPI_promise = new Promise<void>(async resolve => {
         }
     )
 })
-
 
 export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
     init() {
