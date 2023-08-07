@@ -1,4 +1,4 @@
-import { CompositeSampleDomain, LocationFieldObserverSampleDomain, TransformingSampleDomain } from "../../fields/index.js";
+import { CompositeSampleDomain, LocationFieldObserverSampleDomain, TransformingSampleDomain } from "../../fields/domains/index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 
 export class StagedTexture<

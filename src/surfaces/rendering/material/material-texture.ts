@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsMappedOptional } from "../../../paradigm/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsMappedOptional } from "../../../paradigm/trees/index.js";
 import { FieldPoint, ExtraFields } from "../../../fields/index.js"
 import { Texture, TextureLocation, TextureSamplingContext, TexturesTemplated } from "../../../textures/texture.js"
 import { VolumeLocation } from "../../../volumes/volume.js"

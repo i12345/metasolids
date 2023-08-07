@@ -2,7 +2,6 @@ import { RenderedBufferForSemantic } from "./packer.js"
 import { MaterialSemanticImplementation_Immediate } from "./semantic-implementations/immediate.js"
 import { LevelOfDetailInfo } from "../mesh/LOD-info.js"
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js"
-import { MultiObjectsGroupsTemplate } from "../../../paradigm/multi-objects.js"
 import { VolumeLocation } from "../../../volumes/index.js"
 
 export type Cost_Space = {

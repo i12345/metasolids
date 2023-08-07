@@ -1,5 +1,6 @@
-import { fields, processing, surfaces, textures, volumes } from "../index.js";
-import { MultiObjectsGroupsTemplate } from "../paradigm/index.js";
+import { fields, textures } from "../index.js"
+import { octtree, processing } from "../paradigm/index.js";
+import { MultiObjectsGroupsTemplate } from "../paradigm/trees/index.js";
 import { VolumeT } from "./types.js";
 
 export class ComponentData<ID = string> extends processing.ComponentData<ID> {
@@ -7,6 +8,8 @@ export class ComponentData<ID = string> extends processing.ComponentData<ID> {
     texturers?: textures.Texturer[]
     interpolatingGroups?: MultiObjectsGroupsTemplate[]
     extraLocationParameters?: fields.FieldsPoint
-    samplerSettings?: volumes.VolumeSamplerSettings
-    meshingSettings?: surfaces.meshing.MeshingSettings
+    
+    //TODO: these settings should be stored in a better way
+    volumeSamplingSettings?: octtree.OctTreeSubdivisionSettings
+    surfaceLevel?: number
 }

@@ -1,9 +1,10 @@
 import { Entity, GraphNode } from "playcanvas-extended";
-import { fields, processing, solids, surfaces, textures, volumes } from "../index.js";
-import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/index.js";
-import { Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
+import { textures, volumes, surfaces, solids, fields } from "../index.js"
+import { octtree, processing } from "../paradigm/index.js";
+import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/trees/index.js";
+import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSampling_MultiObjects_Template, VolumeSamplingContextT, VolumeSamplingSubdividingOctTreeGroupsTemplate, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
-import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
+import { onlyOne, Reflect_entries, Reflect_fromEntries, TypedArrayConstructor } from "../utils/index.js";
 import { ComponentSystem, SYSTEM_ID } from "./system.js";
 
 export class Component<ID = string> extends processing.Component<
@@ -22,15 +23,20 @@ export class Component<ID = string> extends processing.Component<
     texturers?: textures.Texturer[]
     interpolatingGroups?: MultiObjectsGroupsTemplate[]
     extraLocationParameters?: fields.FieldsPoint
-    samplerSettings?: volumes.VolumeSamplerSettings
-    meshingSettings?: surfaces.meshing.MeshingSettings
+    
+    //TODO: these settings should be stored in a better way
+    volumeSamplingSettings?: octtree.OctTreeSubdivisionSettings
+    surfaceLevel?: number
 
     constructor(system: ComponentSystem<ID>, entity: Entity) { 
         super(system, entity)
     }
 
     protected initializeProcessingFromRaw() {
+        const surfaceLevel = this.surfaceLevel ?? 0.5
+
         const map_volume_component = new Map<VolumeT, Component<ID>>()
+
         function compositeVolume(node: GraphNode, require_multiObjects = false): VolumeT | undefined {
             const entity = node as Entity
             const component = entity?.findComponent(SYSTEM_ID) as Component<ID>
@@ -44,11 +50,11 @@ export class Component<ID = string> extends processing.Component<
                     .filter(child => !child.name.startsWith("$$"))
                     .map(child => [
                         child.name,
-                        new volumes.TransformVolume(
-                            compositeVolume(child)!,
+                        new volumes.volumes.TransformVolumeWithBoundingBox(
+                            compositeVolume(child)! as volumes.volumes.VolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeSamplingContextT>,
                             child.getLocalTransform()
                         )
-                    ] as [string, volumes.TransformVolume<VolumeLocationT, SampleT, VolumeProcessingContextT>])
+                    ] as [string, volumes.volumes.TransformVolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeSamplingContextT>])
                     .filter(([, { inner }]) => inner !== undefined)
             ] as [string, VolumeT][]
 
@@ -57,7 +63,7 @@ export class Component<ID = string> extends processing.Component<
             else if (children.length === 1 && component?.volume !== undefined && !require_multiObjects)
                 return children[0][1]
             else {
-                return new volumes.MultiObjectsVolume(
+                return new volumes.volumes.MultiObjectsVolume(
                     Reflect_fromEntries<Record<string, VolumeT>>(children),
                     {
                         context: {
@@ -75,13 +81,13 @@ export class Component<ID = string> extends processing.Component<
         const compositeVolume_final = compositeVolume(this.entity, true)!
 
         function assignMultiObjPaths(volume: VolumeT, path: PropertyPath) {
-            if (volume instanceof volumes.TransformVolume)
+            if (volume instanceof volumes.volumes.TransformVolume)
                 assignMultiObjPaths(volume.inner as any as VolumeT, path)
             else {
                 const component = map_volume_component.get(volume)
                 if (component)
                     component._multiObjPath = path
-                if (volume instanceof volumes.MultiObjectsVolume)
+                if (volume instanceof volumes.volumes.MultiObjectsVolume)
                     for (const [key, child] of Reflect_entries(volume.children))
                         assignMultiObjPaths(child as unknown as VolumeT, [...path, key])
             }
@@ -90,11 +96,11 @@ export class Component<ID = string> extends processing.Component<
         assignMultiObjPaths(compositeVolume_final, [])
 
         function objectsTemplate_populate(volume: VolumeT): MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf {
-            if (volume instanceof volumes.MultiObjectsVolume)
+            if (volume instanceof volumes.volumes.MultiObjectsVolume)
                 return Reflect_fromEntries(Reflect_entries(volume.children as any).map(([key, child]) =>
                     [key, objectsTemplate_populate(child as VolumeT) as ReturnType<typeof objectsTemplate_populate>])
                 ) as MultiObjectsTemplate
-            else if (volume instanceof volumes.TransformVolume)
+            else if (volume instanceof volumes.volumes.TransformVolume)
                 return objectsTemplate_populate(volume.inner as unknown as VolumeT)
             return MultiObjectsTemplate_Leaf
         }
@@ -136,6 +142,7 @@ export class Component<ID = string> extends processing.Component<
         const sample_multiObjectsContext = makeClone(SampleProcessingContext_MultiObjects_Template)
         const surface_multiObjectsContext = makeClone(SurfaceProcessingContext_MultiObjects_Template)
         const volume_multiObjectsContext = makeClone(VolumeProcessingContext_MultiObjects_Template)
+        const volume_sampling_multiObjectsContext = makeClone(VolumeSampling_MultiObjects_Template)
 
         multiObjectsContext_insertGroups(sample_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
         multiObjectsContext_insertGroups(surface_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
@@ -150,6 +157,7 @@ export class Component<ID = string> extends processing.Component<
 
         const surface_context: SurfaceProcessingContextT = {
             samples: sample_context,
+            surfaceLevel,
             [textures.TexturersKey]: {
                 texturers: (this.texturers ?? []) as any,
                 outputs: [
@@ -161,31 +169,54 @@ export class Component<ID = string> extends processing.Component<
             ...surface_multiObjectsContext
         }
 
-        const volume_context: VolumeProcessingContextT = {
-            [fields.SampleDomainLocationField]: volumes.defaultVolumeLocationField,
+        const solid_context: SolidProcessingContextT = {
+            samples: sample_context,
+            surface: surface_context,
+        }
 
+        const volume_domain_sampling_context: VolumeSamplingContextT = {
+            [fields.SampleDomainLocationFieldKey]: fields.fields.FieldsField.merge<VolumeLocationT>(
+                volumes.defaultVolumeLocationField,
+                fields.fields.defaultField(this.extraLocationParameters ?? {}) as fields.fields.FieldsField<VolumeLocationT>
+            ),
             [volumes.VolumeSampleKey]: sample_context,
-            [volumes.VolumeSamplingKey]: {
-                volume: compositeVolume_final,
-                extraLocationParameters: this.extraLocationParameters as VolumeProcessingContextT[typeof volumes.VolumeSamplingKey]["extraLocationParameters"],
-                settings: this.samplerSettings ?? volumes.defaultVolumeSamplerSettings,
+            [solids.VolumeSolidsKey]: {
+                hints: []
             },
+            [surfaces.VolumeSurfacesKey]: {
+                hints: [],
+                surfaceLevel
+            }
+        }
+
+        const volume_sampling_context: VolumeProcessingContextT[typeof volumes.sampling.SamplingKey] = {
+            ...volume_sampling_multiObjectsContext,
+
+            [volumes.sampling.VolumeSamplingContextKey]: volume_domain_sampling_context as unknown as VolumeProcessingContextT[typeof volumes.sampling.SamplingKey][typeof volumes.sampling.VolumeSamplingContextKey],
+
+            [octtree.SubdivisionKey]: this.volumeSamplingSettings ?? {
+                indicesType: Uint32Array,
+                max_depth: 8,
+                recommendation_threshold: 1
+            } as octtree.OctTreeSubdivisionSettings<IndicesT>
+        } as VolumeProcessingContextT[typeof volumes.sampling.SamplingKey]
+
+        const volume_context: VolumeProcessingContextT = {
+            [volumes.VolumeSampleKey]: sample_context,
+            [volumes.sampling.SamplingKey]: volume_sampling_context,
 
             [surfaces.VolumeSurfacesKey]: surface_context,
-            [surfaces.meshing.VolumeSurfaceMeshingKey]: {
-                algorithm: new surfaces.meshing.SurfaceNetsMeshingAlgorithm(),
-                settings: this.meshingSettings ?? surfaces.meshing.defaultMeshingSettings,
-            },
 
-            [solids.VolumeSolidsKey]: {
-                samples: sample_context,
-                surface: surface_context,
-            },
+            [solids.VolumeSolidsKey]: solid_context,
 
             ...volume_multiObjectsContext
         }
 
         const volume_processing = {
+            [volumes.VolumeKey]: compositeVolume_final,
+            [volumes.sampling.SamplingKey]: {
+                extraLocationParameters: this.extraLocationParameters ?? {},
+            },
             [surfaces.VolumeSurfacesKey]: [] as SurfaceT[],
             [solids.VolumeSolidsKey]: [] as SolidT[],
         } as VolumeProcessingT

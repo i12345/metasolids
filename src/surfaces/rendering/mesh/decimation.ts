@@ -1,4 +1,4 @@
-import { IndiciesArray, indicesArrayType } from "../../../utils/indices-array.js"
+import { IndicesArray, indicesArrayType } from "../../../utils/indices-array.js"
 import { VolumeLocation } from "../../../volumes/index.js"
 import { MeshRendererShared } from "./renderer.js"
 
@@ -549,16 +549,16 @@ export class MeshDecimationIndividual<
          * Equal to {@link vertices_final} except duplicated vertex indices are
          * mapped to their original vertex indices.
          */
-        readonly vertices_original: IndiciesArray
+        readonly vertices_original: IndicesArray
 
         /**
          * Array of final vertex indices (after considering duplicated
          * vertices from UV unwrapping)
          */
-        readonly vertices_final: IndiciesArray
+        readonly vertices_final: IndicesArray
 
         /** triples of indices within the decimated vertices */
-        readonly triangles: IndiciesArray
+        readonly triangles: IndicesArray
     }
 
     get indices() {

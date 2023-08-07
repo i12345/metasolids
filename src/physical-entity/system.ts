@@ -1,5 +1,6 @@
 import { AppBase } from "playcanvas-extended"
-import { fields, processing, solids, surfaces, textures, volumes } from "../index.js"
+import { fields, solids, surfaces, textures, volumes } from "../index.js"
+import { octtree, processing } from "../paradigm/index.js"
 import { InterpolatingGroupsKindsTemplate, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
 import { Component } from "./component.js"
 import { ComponentData } from "./data.js"
@@ -8,16 +9,22 @@ import { StorageService } from "../storage/index.js"
 export const SYSTEM_ID = 'physical-entity'
 
 const processors: VolumeProcessorT[] = [
-    volumes.VolumeSamplingProcessor.instance,
-    surfaces.meshing.VolumeSurfaceMeshingProcessor.instance,
+    new volumes.sampling.VolumeSamplingSubdividingProcessor([
+        octtree.OctTreeWithDualSubdivisionProcessor.instance,
+        surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessor.instance,
+        surfaces.sampling.SurfaceHintVolumeSamplingSubdivisionProcessor.instance,
+        solids.sampling.SolidHintVolumeSamplingSubdivisionProcessor.instance,
+    ] as any[]) as unknown as VolumeProcessorT,
+    surfaces.meshing.SurfaceNetMeshingProcessor.instance as unknown as VolumeProcessorT,
+    // surfaces.meshing.PaperThinMeshingProcessor.instance,
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
-        surfaces.measuring.SurfaceWithSurfaceAreaProcessor.instance
+        surfaces.measuring.SurfaceWithSurfaceAreaProcessor.instance as any
     ),
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
         new processing.processors.ParallelizingProcessor(
-            surfaces.SurfaceSampleParallelizer,
+            surfaces.SurfaceSamplesParallelizer,
             new fields.MultiObjectsInfluencesNormalizingProcessor() as any
         ) as unknown as VolumeSurfaceProcessorT
     ),
@@ -25,7 +32,7 @@ const processors: VolumeProcessorT[] = [
         surfaces.VolumeSurfacesParallelizer,
         new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
             "xAtlas"
-        ) as VolumeSurfaceProcessorT
+        ) as unknown as VolumeSurfaceProcessorT
     ),
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
@@ -42,10 +49,10 @@ const processors: VolumeProcessorT[] = [
         surfaces.VolumeSurfacesParallelizer,
         surfaces.rendering.SurfaceWithRenderingProcessor.instance as unknown as VolumeSurfaceProcessorT
     ),
-    solids.VolumeSurfaceSolidifyingProcessor.instance as VolumeProcessorT,
+    solids.processors.VolumeSurfaceSolidificationProcessor.instance,
     new processing.processors.ParallelizingProcessor(
         solids.VolumeSolidsParallelizer,
-        solids.SolidWithEnclosingVolumeProcessor.instance as VolumeSolidProcessorT
+        solids.processors.SolidWithEnclosingVolumeProcessor.instance as VolumeSolidProcessorT
     ),
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,

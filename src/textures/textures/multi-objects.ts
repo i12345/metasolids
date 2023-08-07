@@ -1,7 +1,8 @@
-import { iterObjects, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues } from "../../paradigm/index.js";
-import { Field, FieldPoint, FieldPointCombiner, FieldsField, SampleDomainLocationField, SamplingContext } from "../../fields/index.js";
-import { extract, intract } from "../../paradigm/tree.js";
+import { iterObjects, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues } from "../../paradigm/trees/index.js";
+import { Field, FieldPoint, FieldPointCombiner, SampleDomainLocationFieldKey, SamplingContext } from "../../fields/index.js";
+import { extract, intract } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample } from "../texture.js";
+import { FieldsField } from "../../fields/fields/fields.js";
 
 export type ObjectsCombiningTexturesTemplated<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -92,12 +93,12 @@ export class ObjectsCombiningTexture<
             if (value) {
                 set(this.location_fields, FieldsField.merge<TextureLocationT & SampledTextureLocationT>(
                     get((this.locations.field as FieldsField<ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>>).fields) as FieldsField<SampledTextureLocationT> as FieldsField<TextureLocationT & SampledTextureLocationT>,
-                    context[SampleDomainLocationField] as FieldsField<TextureLocationT & SampledTextureLocationT>
+                    context[SampleDomainLocationFieldKey] as FieldsField<TextureLocationT & SampledTextureLocationT>
                 ))
                 
                 value.init({
                     ...context,
-                    [SampleDomainLocationField]: get(this.location_fields)
+                    [SampleDomainLocationFieldKey]: get(this.location_fields)
                 })
             }
         }
@@ -130,7 +131,7 @@ export class ObjectsCombiningTexture<
                         }
                         const value_context = {
                             ...context,
-                            [SampleDomainLocationField]: extract(this.location_fields, fullpath) as Field<TextureLocationT & SampledTextureLocationT>
+                            [SampleDomainLocationFieldKey]: extract(this.location_fields, fullpath) as Field<TextureLocationT & SampledTextureLocationT>
                         }
                         const value = value_texture.sample(value_location, value_context)
                         

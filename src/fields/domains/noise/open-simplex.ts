@@ -1,13 +1,6 @@
 import { Vec2, Vec3, Vec4 } from "playcanvas-extended";
-import { ScalarField, SeedKey, SeededSampleDomain, SeededSamplingContext } from "../../index.js";
-
-class OpenSimplexSampleDomain_improveX2D extends SeededSampleDomain<Vec2, number> {
-    readonly field = ScalarField.instance
-
-    sample(location: Vec2, context: SeededSamplingContext<Vec2>): number {
-        return OpenSimplex2S.noise2_ImproveX(BigInt(context[SeedKey]), location.x, location.y)
-    }
-}
+import { ScalarField } from "../../fields/scalar.js"
+import { SeedKey, SeededSampleDomain, SeededSamplingContext } from "../../domains/seeded.js";
 
 export const openSimplex = {
     [2]: {

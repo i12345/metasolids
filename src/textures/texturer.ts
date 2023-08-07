@@ -1,8 +1,7 @@
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../paradigm/index.js";
-import { Processor, ProcessorInitialization } from "../processing/index.js";
-import { GraphProcessor } from "../processing/processors/graph.js";
-import { PropertyPath } from "../paradigm/property-path.js";
-import { extract, intract } from "../paradigm/tree.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groups, mapGroups } from "../paradigm/trees/index.js";
+import { Processor, ProcessorInitialization } from "../paradigm/processing/index.js";
+import { GraphProcessor } from "../paradigm/processing/processors/graph.js";
+import { PropertyPath, extract, intract } from "../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "./texture.js";
 
 export const TexturersKey = Symbol('texturers')

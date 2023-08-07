@@ -3,11 +3,12 @@ import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from
 import { GeneratorType, Reflect_entries, onlyOne } from "../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
-import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate } from "../../../paradigm/index.js";
-import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator } from "../../../fields/index.js";
+import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js";
+import { field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator } from "../../../fields/index.js";
+import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain } from "../../../fields/domains/index.js"
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Immediate, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
 import { Material_Groups } from "./groups.js";
-import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial } from "playcanvas-extended";
+import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial, Vec2 } from "playcanvas-extended";
 import { FormatChannelQuality } from "./texture-formats.js";
 import { SurfaceUVUnwrapping } from "../../uv-unwrapping/index.js";
 import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";
@@ -15,7 +16,7 @@ import { MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColo
 import { Material_Groups_TextureContexts, Material_Texture_Context, Material_Texture_Location } from "./material-texture.js";
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "../surface.js";
 import { Material_Groups_Textures } from "./material-texture.js";
-import { MeshData } from "../../meshing/index.js";
+import { MeshData } from "../../../surfaces/mesh-data.js";
 
 const MaterialGroup_ImplementationType_NotSupported = Symbol("not supported")
 
@@ -528,11 +529,16 @@ function qualityMetrics_compute<
     /** indexed by original (not UV unwrapped) vertex index */
     const vertex_texture_samples = new Map<number, TexelTypeT>()
 
+    //TODO: use vectorized functions
+
     function vertex_texture_info(vertex: number) {
         const vertex_original_ = vertex_original(vertex)
 
         if (!vertex_texture_locations.has(vertex)) {
-            const uv = UVunwrapping.UVs[vertex]
+            const uv = new Vec2(
+                UVunwrapping.UVs[(2 * vertex) + 0],
+                UVunwrapping.UVs[(2 * vertex) + 1]
+            )
             //TODO: integrate extra fields for material texture location
             const texture_location = { uv } as Material_Texture_Location<VolumeLocationT>
             vertex_texture_locations.set(vertex, texture_location)
@@ -580,13 +586,18 @@ function qualityMetrics_compute<
                 const v0 = indices[(tri_i * 3) + i0]
                 const v1 = indices[(tri_i * 3) + i1]
 
-                const uv0 = UVunwrapping.UVs[v0]
-                const uv1 = UVunwrapping.UVs[v1]
+                const uv0x = UVunwrapping.UVs[(2 * v0) + 0]
+                const uv0y = UVunwrapping.UVs[(2 * v0) + 1]
+
+                const uv1x = UVunwrapping.UVs[(2 * v1) + 0]
+                const uv1y = UVunwrapping.UVs[(2 * v1) + 1]
+
+                const dist_01 = Math.sqrt(((uv0x - uv1x) ** 2) + ((uv0y - uv1y) ** 2))
 
                 const val0 = vertex_texture_info(v0).sample
                 const val1 = vertex_texture_info(v1).sample
 
-                effectiveTexelSizeUV_dist.push(texture.field.distance(val0, val1) / uv0.distance(uv1))
+                effectiveTexelSizeUV_dist.push(texture.field.distance(val0, val1) / dist_01)
             }
         }
 

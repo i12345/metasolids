@@ -1,7 +1,10 @@
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped } from "../paradigm/index.js";
-import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsDomainInternalPreservedGroupsKindsKey } from "../fields/index.js"
-import { textures, volumes, surfaces, solids } from "../index.js"
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped } from "../paradigm/trees/index.js";
+import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds } from "../fields/index.js"
+import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
+import { octtree } from "../paradigm/index.js";
+
+export type IndicesT = Uint32Array
 
 export type VolumeLocationT = volumes.VolumeLocation
 
@@ -134,31 +137,68 @@ export const InterpolatingGroupsKindsTemplate: InterpolatingGroupsKindsT = {
     ...OtherInterpolatingGroupsKindsTemplate,
 }
 
+export type VolumeSamplingSubdividingOctTreeGroupsT =
+    volumes.sampling.VolumeSamplingSubdivisionSamplesGroups<SampleT> &
+    octtree.OctTreeWithDualGroups &
+    surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups &
+    {}
+
+export const VolumeSamplingSubdividingOctTreeGroupsTemplate = mergeGroups<VolumeSamplingSubdividingOctTreeGroupsT>(
+    volumes.sampling.VolumeSamplingSubdivisionSamplesGroupsTemplate<SampleT>(),
+    octtree.OctTreeWithDualGroupsTemplate,
+    surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroupsTemplate,
+)
+
+export type VolumeSamplingSubdividingGroupsKindMappedGroupsT =
+    MultiObjectsGroupsKindsTemplateMapped<
+        octtree.OctTreeSubdividingGroupsKind,
+        VolumeSamplingSubdividingOctTreeGroupsT
+    >
+
+export const VolumeSamplingSubdividingGroupsKindMappedGroupsTemplate: VolumeSamplingSubdividingGroupsKindMappedGroupsT = {
+    [octtree.OctTreeSubdividingGroupsKindKey]: VolumeSamplingSubdividingOctTreeGroupsTemplate
+}
+
+export type VolumeSampling_MultiObjects =
+    VolumeSamplingSubdividingGroupsKindMappedGroupsT &
+    MultiObjectsGroupsProcessingContext<
+        VolumeSamplingSubdividingOctTreeGroupsT,
+        octtree.OctTreeSubdividingGroupsKind
+    >
+
+export const VolumeSampling_MultiObjects_Template: VolumeSampling_MultiObjects = {
+    ...VolumeSamplingSubdividingGroupsKindMappedGroupsTemplate,
+
+    [MultiObjectsProcessingContextGroupKinds]: {
+        ...octtree.OctTreeSubdividingGroupsKindTemplate
+    }
+}
+
 export type Volume_Context_PreservedGroupsT =
-    volumes.metashapes.MetaShapeVolumeMultiObjectsInternalPreservedGroups &
-    volumes.metashapes.MetaSplineSegmentMultiObjectsInternalPreservedGroups &
+    solids.metasolids.MetaSolidVolumeMultiObjectsInternalPreservedGroups &
+    solids.metasolids.MetaSplineSegmentMultiObjectsInternalPreservedGroups &
     {}
 
 export const Volume_Context_PreservedGroupsTemplate = [
-    volumes.metashapes.MetaShapeVolumeMultiObjectsInternalPreservedGroupsTemplate,
-    volumes.metashapes.MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate,
+    solids.metasolids.MetaSolidVolumeMultiObjectsInternalPreservedGroupsTemplate,
+    solids.metasolids.MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate,
 ].reduce(mergeGroupsInplace, {}) as Volume_Context_PreservedGroupsT
 
 export type Volume_Context_PreservedGroupsKinds =
-    MultiObjectsDomainInternalPreservedGroupsKinds
+    fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
 
 export const Volume_Context_PreservedGroupsKindsTemplate: Volume_Context_PreservedGroupsKinds = {
-    ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate
+    ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate
 }
 
 export type Volume_Context_PreservedGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
-            MultiObjectsDomainInternalPreservedGroupsKinds,
+            fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds,
             Volume_Context_PreservedGroupsT
         >
 
 export const Volume_Context_PreservedGroupsKindsMappedGroupsTemplate: Volume_Context_PreservedGroupsKindsMappedGroupsT = {
-    [MultiObjectsDomainInternalPreservedGroupsKindsKey]: Volume_Context_PreservedGroupsTemplate
+    [fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsKey]: Volume_Context_PreservedGroupsTemplate
 }
 
 export type Volume_Sample_PreservedGroupsT =
@@ -171,23 +211,23 @@ export type Volume_Sample_PreservedGroupsKindsT =
     MultiObjectsInfluencesGroupKinds &
     surfaces.texturing.SurfaceTextureLocationsGroupKinds &
     OtherInterpolatingGroupsKindsT &
-    MultiObjectsDomainInternalPreservedGroupsKinds
+    fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
 
 export const Volume_Sample_PreservedGroupsKindsTemplate: Volume_Sample_PreservedGroupsKindsT = {
     ...MultiObjectsInfluencesGroupKindsTemplate,
     ...surfaces.texturing.SurfaceTextureLocationsGroupKindsTemplate,
     ...OtherInterpolatingGroupsKindsTemplate,
-    ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
+    ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
 }
 
 export type Volume_Sample_PreservedGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
-            MultiObjectsDomainInternalPreservedGroupsKinds,
+            fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds,
             Volume_Sample_PreservedGroupsT
         >
 
 export const Volume_Sample_PreservedGroupsKindsMappedGroupsTemplate: Volume_Sample_PreservedGroupsKindsMappedGroupsT = {
-    [MultiObjectsDomainInternalPreservedGroupsKindsKey]: Volume_Sample_PreservedGroupsTemplate
+    [fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsKey]: Volume_Sample_PreservedGroupsTemplate
 }
 
 export type SampleT = volumes.VolumeSample &
@@ -223,7 +263,7 @@ export type SampleProcessingContextT = {} &
             Objects,
             Volume_Sample_PreservedGroupsT,
             MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
-            MultiObjectsDomainInternalPreservedGroupsKinds
+            fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
         > &
     {}
 
@@ -255,7 +295,7 @@ export type SampleProcessingContext_MultiObjects =
         Objects,
         Volume_Sample_PreservedGroupsT,
         MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
-        MultiObjectsDomainInternalPreservedGroupsKinds
+        fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
     > &
     {}
 
@@ -269,7 +309,6 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
     ...Volume_Sample_PreservedGroupsKindsMappedGroupsTemplate,
 
     [MultiObjectsProcessingContextObjectsGrouped]: {
-        // [MultiObjectsInfluencesGroupsDefaultKey]: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
         ...(mapGroups(
             InfluenceGroupTemplate,
             () => ({ [MultiObjectsGroupedObjectsKey]: {} as Objects })
@@ -300,37 +339,23 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
         
         ...OtherInterpolatingGroupsKindsTemplate,
 
-        ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
+        ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
     }
 }
 
-// export type Sample_MultiObjectsMappedGroups =
-//     InfluenceGroup &
-//     SurfaceObjectsTextureLocationsGroupsT &
-//     OtherInterpolatingGroupsT &
-//     {}
-
-// export const Sample_MultiObjectsMappedGroups_Template: Sample_MultiObjectsMappedGroups = mergeGroups(
-//     mergeGroups(
-//         InfluenceGroupTemplate,
-//         SurfaceObjectsTextureLocationsGroupsTemplate
-//     ),
-//     OtherInterpolatingGroupsTemplate
-// )
-
-// let a!: SampleProcessingContext_MultiObjects
-// let b!: SampleProcessingContextT
-// let c!: MultiObjectsProcessingContext<
-//         Objects,
-//         OtherInterpolatingGroupsT,
-//         ObjectsOtherInterpolatingGrouped,
-//         OtherInterpolatingGroupsKindsT
-//     >
-// a = b // works
-// b = a // works
-// c = a // works
-// // Types are equal, although other context types may need additional
-// // information than just the multi objects/groups/kinds info.
+export type VolumeSamplingContextT =
+    volumes.VolumeSamplingContext<
+            VolumeLocationT,
+            SampleProcessingContextT
+        > &
+    solids.sampling.VolumeSamplingContextWithSolidHints<
+            VolumeLocationT,
+            SampleProcessingContextT
+        > &
+    surfaces.sampling.VolumeSamplingContextWithSurfaceHints<
+            VolumeLocationT,
+            SampleProcessingContextT
+        >
 
 /**
  * Customizeable
@@ -437,15 +462,17 @@ export const SurfaceTexturesGroupsKindsMappedGroupsTemplate = {
     )
 } as SurfaceTexturesGroupsKindsMappedGroupsT
 
-export type SurfaceT = surfaces.Surface<SampleT> &
-    surfaces.measuring.SurfaceWithSurfaceArea<SampleT> &
+export type SurfaceT = surfaces.Surface<IndicesT, SampleT> &
+    surfaces.measuring.SurfaceWithSurfaceArea<IndicesT, SampleT> &
     surfaces.texturing.SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroupT,
             Objects,
             InfluenceGroup,
             SampleT
         > &
     surfaces.texturing.SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroupT,
             Objects,
             InfluenceGroup,
@@ -458,6 +485,7 @@ export type SurfaceT = surfaces.Surface<SampleT> &
             // SampleT
         > &
     surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroupT,
             Objects,
             OtherInterpolatingGroupsT,
@@ -467,8 +495,9 @@ export type SurfaceT = surfaces.Surface<SampleT> &
             SampleT
         > &
     surfaces.rendering.SurfaceWithRendering<
-            SampleT,
+            IndicesT,
             VolumeLocationT,
+            SampleT,
             SurfaceUVUnwrappingGroupT
         > &
     {}
@@ -476,8 +505,9 @@ export type SurfaceT = surfaces.Surface<SampleT> &
 export type SurfaceInstanceT =
     surfaces.SurfaceInstance<SurfaceT> &
     surfaces.rendering.SurfaceWithRenderingInstancer<
-        SampleT,
+        IndicesT,
         VolumeLocationT,
+        SampleT,
         SurfaceUVUnwrappingGroupT
     > &
     {}
@@ -516,12 +546,12 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
             textures.TextureSamplingContext<SurfaceCombinedTextureLocationT>
         > &
     surfaces.rendering.SurfaceProcessingContextWithRendering<
-            VolumeLocationT,
-            SurfaceUVUnwrappingGroupT
+            SurfaceUVUnwrappingGroupT,
+            SampleProcessingContextT,
+            VolumeLocationT
         >
 
 export type SurfaceProcessingContext_MultiObjects =
-    // SampleProcessingContext_MultiObjects &
     MultiObjectsGroupsProcessingContext<
         SurfaceUVUnwrappingGroupT,
         surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds
@@ -572,6 +602,7 @@ export type SurfaceProcessingContext_MultiObjects =
 export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingContext_MultiObjects = {
     ...SurfaceUVUnwrappingGroupsKindsMappedGroupsTemplate,
 
+    // influences is a feature of the sample
     // ...MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate,
 
     ...SurfaceTexturesGroupsKindsMappedGroupsTemplate,
@@ -579,6 +610,7 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
     ...OtherInterpolatingGroupsKindsMappedGroupsTemplate,
 
     [MultiObjectsProcessingContextObjectsGrouped]: {
+        // influences is a feature of the sample
         // // [MultiObjectsInfluencesGroupsDefaultKey]: { [MultiObjectsGroupedObjectsKey]: {} as Objects },
         // ...(mapGroups(
         //     InfluenceGroupTemplate,
@@ -597,7 +629,8 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
     },
 
     [MultiObjectsProcessingContextGroupKinds]: {
-        // ...MultiObjectsInfluencesGroupKindsTemplate,
+        // influences is a feature of the samplemplate,
+        // ...MultiObjectsInfluencesGroupKindsTemplate
         
         ...surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindsTemplate,
 
@@ -621,8 +654,8 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
 // s2 = s1 // error, missing "sample"
 
 export type SolidT =
-    solids.Solid<SampleT, SurfaceT> &
-    solids.SolidWithEnclosingVolume<SampleT, SurfaceT> &
+    solids.Solid<IndicesT, SampleT, SurfaceT> &
+    solids.processors.SolidWithEnclosingVolume<IndicesT, SampleT, SurfaceT> &
     {}
 
 export type SolidProcessingContextT =
@@ -631,19 +664,106 @@ export type SolidProcessingContextT =
     {}
 
 export type VolumeProcessingT =
-    volumes.VolumeProcessing<SampleT> &
-    surfaces.meshing.VolumeSurfaceMeshingProcessing<SampleT> &
-    surfaces.VolumeProcessingWithSurfaces<SampleT, SurfaceT> &
-    solids.VolumeProcessingWithSolids<
+    volumes.VolumeProcessing<
+            VolumeLocationT,
             SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT
+        > &
+    // volumes.sampling.VolumeProcessingWithSampling<
+    //         IndicesT,
+    //         {},
+    //         any,
+    //         {},
+    //         any,
+    //         {},
+    //         {},
+    //         VolumeLocationT,
+    //         SampleT,
+    //         SampleProcessingContextT,
+    //         VolumeSamplingContextT //,
+    //         // ...
+    //     > &
+    volumes.sampling.VolumeProcessingWithSampling<
+            IndicesT,
+            {},
+            any,
+            {},
+            any,
+            {},
+            {},
+            VolumeLocationT,
+            SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT //,
+            // ...
+        > &
+    volumes.sampling.VolumeProcessingWithSampling<
+            IndicesT,
+            octtree.OctTreeWithDualGroups,
+            octtree.OctTreeWithDualValue,
+            octtree.OctTreeWithDualValuesGrouped,
+            octtree.OctTreeWithDualLayer,
+            octtree.OctTreeWithDualLayersGrouped,
+            octtree.OctTreeWithDualOctTreesGrouped,
+            VolumeLocationT,
+            SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT //,
+            // ...
+        > &
+    volumes.sampling.VolumeProcessingWithSamplingWithAdjacency<
+            IndicesT,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
+            VolumeLocationT,
+            SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT //,
+            // ...
+        > &
+    surfaces.meshing.VolumeProcessingWithMeshing<
+            IndicesT,
+            VolumeLocationT,
+            SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
+            SurfaceT
+        > &
+    surfaces.VolumeProcessingWithSurfaces<
+            IndicesT,
+            VolumeLocationT,
+            SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
+            SurfaceT
+        > &
+    solids.VolumeProcessingWithSolids<
+            IndicesT,
+            VolumeLocationT,
+            SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
             SurfaceT,
             SolidT
         >
 
-    
 export type VolumeProcessingInstanceT =
     surfaces.VolumeProcessingWithSurfacesInstance<
+        IndicesT,
+        VolumeLocationT,
         SampleT,
+        SampleProcessingContextT,
+        VolumeSamplingContextT,
+        VolumeT,
         SurfaceT,
         SurfaceInstanceT,
         VolumeProcessingT
@@ -651,25 +771,63 @@ export type VolumeProcessingInstanceT =
 
 export type VolumeProcessingContextT =
     volumes.VolumeProcessingContext<
-            VolumeLocationT,
-            SampleT,
             SampleProcessingContextT
         > &
-    surfaces.VolumeProcessingWithSurfacesContext<
+    // volumes.sampling.VolumeProcessingContextWithSampling<
+    //         IndicesT,
+    //         {},
+    //         any,
+    //         {},
+    //         any,
+    //         {},
+    //         {},
+    //         VolumeLocationT,
+    //         SampleT,
+    //         SampleProcessingContextT,
+    //         VolumeSamplingContextT //,
+    //         // ...
+    //     > &
+    volumes.sampling.VolumeProcessingContextWithSampling<
+            IndicesT,
+            octtree.OctTreeWithDualGroups,
+            octtree.OctTreeWithDualValue,
+            octtree.OctTreeWithDualValuesGrouped,
+            octtree.OctTreeWithDualLayer,
+            octtree.OctTreeWithDualLayersGrouped,
+            octtree.OctTreeWithDualOctTreesGrouped,
             VolumeLocationT,
             SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT //,
+            // ...
+        > &
+    volumes.sampling.VolumeProcessingContextWithSampling<
+            IndicesT,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
+            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
+            VolumeLocationT,
+            SampleT,
+            SampleProcessingContextT,
+            VolumeSamplingContextT //,
+            // ...
+        > &
+    surfaces.VolumeProcessingWithSurfacesContext<
             SampleProcessingContextT,
             SurfaceProcessingContextT
         > &
-    surfaces.meshing.VolumeSurfaceMeshingProcessingContext<
+    surfaces.meshing.VolumeProcessingContextWithMeshing<
+            IndicesT,
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
+            VolumeSamplingContextT,
             SurfaceProcessingContextT
         > &
     solids.VolumeProcessingWithSolidsContext<
-            VolumeLocationT,
-            SampleT,
             SampleProcessingContextT,
             SurfaceProcessingContextT,
             SolidProcessingContextT
@@ -678,18 +836,24 @@ export type VolumeProcessingContextT =
             Objects,
             Volume_Context_PreservedGroupsT,
             MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>,
-            MultiObjectsDomainInternalPreservedGroupsKinds
+            fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
         > &
     {}
 
-export type VolumeT = volumes.Volume<VolumeLocationT, SampleT, VolumeProcessingContextT>
+export type VolumeT =
+    volumes.volumes.VolumeWithBoundingBox<
+        VolumeLocationT,
+        SampleT,
+        SampleProcessingContextT,
+        VolumeSamplingContextT
+    >
 
 export type VolumeProcessingContext_MultiObjects =
     MultiObjectsProcessingContext<
             Objects,
             Volume_Context_PreservedGroupsT,
             MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>,
-            MultiObjectsDomainInternalPreservedGroupsKinds
+            fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
         > &
     {}
 
@@ -704,7 +868,7 @@ export const VolumeProcessingContext_MultiObjects_Template: VolumeProcessingCont
     },
 
     [MultiObjectsProcessingContextGroupKinds]: {
-        ...MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
+        ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
     },
 }
 
@@ -713,25 +877,27 @@ export type VolumeProcessorT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
             VolumeProcessingT,
             VolumeProcessingContextT
         >
 
 export type VolumeSurfaceProcessingContextT =
     surfaces.VolumeSurfaceProcessingContext<
-            VolumeLocationT,
-            SampleT,
             SampleProcessingContextT,
             SurfaceProcessingContextT,
-            VolumeProcessingT,
             VolumeProcessingContextT
         >
 
 export type VolumeSurfaceProcessorT =
     surfaces.VolumeSurfaceProcessor<
+            IndicesT,
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
             SurfaceT,
             SurfaceProcessingContextT,
             VolumeProcessingT,
@@ -740,20 +906,20 @@ export type VolumeSurfaceProcessorT =
 
 export type VolumeSolidProcessingContextT =
     solids.VolumeSolidProcessingContext<
-            VolumeLocationT,
-            SampleT,
             SampleProcessingContextT,
             SurfaceProcessingContextT,
             SolidProcessingContextT,
-            VolumeProcessingT,
             VolumeProcessingContextT
-    >
+        >
 
 export type VolumeSolidProcessorT =
     solids.VolumeSolidProcessor<
+            IndicesT,
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
             SurfaceT,
             SurfaceProcessingContextT,
             SolidT,

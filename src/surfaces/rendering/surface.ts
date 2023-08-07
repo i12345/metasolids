@@ -1,11 +1,12 @@
 import { Material_Groups_TextureContexts, Material_Groups_Textures } from "./material/material-texture.js";
 import { VolumeLocation } from "../../volumes/volume.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "./renderer.js";
-import { MultiObjectsGroupsTemplate } from "../../paradigm/multi-objects.js";
+import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/index.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
 import { Surface, SurfaceInstance, SurfaceSample, UVunwrapping, VolumeProcessingWithSurfacesInstancer, texturing } from "../index.js";
-import { Instancer } from "../../processing/instance.js";
+import { Instancer } from "../../paradigm/processing/instance.js";
 import { Entity } from "playcanvas-extended";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
 
 export type SurfaceWithRendering_TextureGroups = {
     material: {
@@ -31,25 +32,28 @@ export interface SurfaceWithRendering_TexturesTemplated<
 }
 
 export type SurfaceWithRendering<
-        SampleT extends SurfaceSample = SurfaceSample,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceSampleT extends SurfaceSample = SurfaceSample,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > =
-    Surface<SampleT> &
-    UVunwrapping.SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup> &
+    Surface<IndicesT, SurfaceSampleT> &
+    UVunwrapping.SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup> &
     SurfaceWithRendering_TexturesTemplated<VolumeLocationT> & {
     renderer: SurfaceRendererShared<VolumeLocationT>
 }
 
 export type SurfaceInstanceWithRendering<
-        SampleT extends SurfaceSample = SurfaceSample,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,    
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceSampleT extends SurfaceSample = SurfaceSample,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > =
     SurfaceInstance<
         SurfaceWithRendering<
-            SampleT,
+            IndicesT,
             VolumeLocationT,
+            SurfaceSampleT,
             SurfaceUVUnwrappingGroup
         >
     > & {
@@ -57,11 +61,13 @@ export type SurfaceInstanceWithRendering<
 }
 
 export interface SurfaceProcessingContextWithRendering<
-        VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        VolumeSampleProcessingContextT = any,
+        VolumeLocationT extends VolumeLocation = VolumeLocation
     > extends
     texturing.SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup,
+        VolumeSampleProcessingContextT,
         SurfaceWithRendering_TextureGroups
     > {
     material: {
@@ -71,19 +77,40 @@ export interface SurfaceProcessingContextWithRendering<
 }
 
 export class SurfaceWithRenderingInstancer<
-        SampleT extends SurfaceSample = SurfaceSample,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,    
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        SurfaceSampleT extends SurfaceSample = SurfaceSample,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     >
     implements
     Instancer<
-        SurfaceWithRendering<SampleT, VolumeLocationT, SurfaceUVUnwrappingGroup>,
-        SurfaceInstanceWithRendering<SampleT, VolumeLocationT, SurfaceUVUnwrappingGroup>
+        SurfaceWithRendering<
+                IndicesT,
+                VolumeLocationT,
+                SurfaceSampleT,
+                SurfaceUVUnwrappingGroup
+            >,
+        SurfaceInstanceWithRendering<
+                IndicesT,
+                VolumeLocationT,
+                SurfaceSampleT,
+                SurfaceUVUnwrappingGroup
+            >
     > {
     instantiate(
-        shared: SurfaceWithRendering<SampleT, VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        shared: SurfaceWithRendering<
+                IndicesT,
+                VolumeLocationT,
+                SurfaceSampleT,
+                SurfaceUVUnwrappingGroup
+            >,
         entity: Entity
-    ): SurfaceInstanceWithRendering<SampleT, VolumeLocationT, SurfaceUVUnwrappingGroup> {
+    ): SurfaceInstanceWithRendering<
+                IndicesT,
+                VolumeLocationT,
+                SurfaceSampleT,
+                SurfaceUVUnwrappingGroup
+            > {
         return {
             shared,
             entity,
@@ -92,7 +119,12 @@ export class SurfaceWithRenderingInstancer<
     }
 
     set_enabled(
-        instance: SurfaceInstanceWithRendering<SampleT, VolumeLocationT, SurfaceUVUnwrappingGroup>,
+        instance: SurfaceInstanceWithRendering<
+                IndicesT,
+                VolumeLocationT,
+                SurfaceSampleT,
+                SurfaceUVUnwrappingGroup
+            >,
         enabled: boolean
     ): void {
         instance.renderer.attached = enabled

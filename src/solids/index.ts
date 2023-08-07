@@ -1,4 +1,6 @@
 export * from './solid.js'
 export * from './processor.js'
 export * from './volume-solids.js'
-export * from './properties/index.js'
+export * as processors from './processors/index.js'
+export * as sampling from './sampling/index.js'
+export * as metasolids from './metasolids/index.js'

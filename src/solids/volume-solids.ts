@@ -1,14 +1,12 @@
-import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../paradigm/multi-objects.js"
-import { PROPERTYKEY_ALL } from "../paradigm/property-path.js"
-import { ParallelizedContext, ParallelizedProcessor } from "../processing/processors/parallel.js"
-import { IterableParallelizer } from "../processing/processors/parallelizer-iterable.js"
-import { VolumeSurfacesKey, VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext } from "../surfaces/index.js"
-import { SurfaceProcessingContext } from "../surfaces/surface-samples.js"
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, WithEncapsulating } from "../paradigm/trees/index.js"
+import { ParallelizedProcessor, IterableParallelizer } from "../paradigm/processing/processors/index.js"
+import { SurfaceProcessingContext } from "../surfaces/processing.js"
 import { Surface } from "../surfaces/surface.js"
-import { VolumeProcessing, VolumeProcessingContext, VolumeProcessor } from "../volumes/processor.js"
-import { VolumeSample, VolumeLocation } from "../volumes/volume.js"
+import { VolumeProcessing, VolumeProcessingContext } from "../volumes/processor.js"
+import { VolumeSample, VolumeLocation, Volume, VolumeSamplingContext } from "../volumes/volume.js"
 import { SolidProcessingContext } from "./processor.js"
 import { Solid } from "./solid.js"
+import { IndicesTypedArray } from "../utils/indices-array.js"
 
 export const VolumeSolidsKey = Symbol('volume.solids')
 
@@ -21,17 +19,68 @@ export const VolumeSolidsGroupTemplate: VolumeSolidsGroup = {
 }
 
 export interface VolumeProcessingWithSolids<
-        Sample extends VolumeSample = VolumeSample,
-        SurfaceT extends Surface<Sample> = Surface<Sample>,
-        SolidT extends Solid<Sample, SurfaceT> = Solid<Sample, SurfaceT>
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
+        SolidT extends Solid<IndicesT, VolumeSampleT, SurfaceT> = Solid<IndicesT, VolumeSampleT, SurfaceT>
     > extends
-    VolumeProcessing<Sample> {
+    VolumeProcessing<
+            VolumeLocationT,
+            VolumeSampleT,
+            VolumeSampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT
+        > {
     [VolumeSolidsKey]: SolidT[]
 }
 
+export type VolumeSolidProcessing<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
+        SolidT extends Solid<IndicesT, VolumeSampleT, SurfaceT> = Solid<IndicesT, VolumeSampleT, SurfaceT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSolids<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT,
+                    SolidT
+                > =
+            VolumeProcessingWithSolids<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT,
+                    SolidT
+                >
+    > =
+    SolidT &
+    WithEncapsulating<VolumeProcessingT>
+
 export interface VolumeProcessingWithSolidsContext<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
         SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
@@ -47,87 +96,102 @@ export interface VolumeProcessingWithSolidsContext<
             >
     > extends
     VolumeProcessingContext<
-        Location,
-        Sample,
         SampleProcessingContextT
     > {
     [VolumeSolidsKey]: SolidProcessingContextT
 }
 
 export type VolumeSolidProcessingContext<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any,
+        VolumeSampleProcessingContextT = any,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<
+                VolumeSampleProcessingContextT
+            > =
+            SurfaceProcessingContext<
+                VolumeSampleProcessingContextT
+            >,
         SolidProcessingContextT extends
             SolidProcessingContext<
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
-            > =
+                    VolumeSampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
             SolidProcessingContext<
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
-            >,
-        VolumeProcessingT extends
-            VolumeProcessingWithSolids<Sample> =
-            VolumeProcessingWithSolids<Sample>,
+                    VolumeSampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
         VolumeProcessingContextT extends
             VolumeProcessingWithSolidsContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
+                VolumeSampleProcessingContextT,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
             VolumeProcessingWithSolidsContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
+                VolumeSampleProcessingContextT,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             >
     > =
     SolidProcessingContextT &
-    ParallelizedContext<
-            VolumeProcessingT,
-            VolumeProcessingContextT
-        >
+    WithEncapsulating<VolumeProcessingContextT>
 
 export interface VolumeSolidProcessor<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any,
-        SurfaceT extends Surface<Sample> = Surface<Sample>,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
-        SolidT extends Solid<Sample, SurfaceT> = Solid<Sample, SurfaceT>,
+            SurfaceProcessingContext<
+                VolumeSampleProcessingContextT
+            > =
+            SurfaceProcessingContext<
+                VolumeSampleProcessingContextT
+            >,
+        SolidT extends Solid<IndicesT, VolumeSampleT, SurfaceT> = Solid<IndicesT, VolumeSampleT, SurfaceT>,
         SolidProcessingContextT extends
             SolidProcessingContext<
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
-            > =
+                    VolumeSampleProcessingContextT,
+                    SurfaceProcessingContextT
+                > =
             SolidProcessingContext<
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
-            >,
+                    VolumeSampleProcessingContextT,
+                    SurfaceProcessingContextT
+                >,
         VolumeProcessingT extends
-            VolumeProcessingWithSolids<Sample, SurfaceT, SolidT> =
-            VolumeProcessingWithSolids<Sample, SurfaceT, SolidT>,
+            VolumeProcessingWithSolids<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT,
+                    SolidT
+                > =
+            VolumeProcessingWithSolids<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT,
+                    SolidT
+                >,
         VolumeProcessingContextT extends
             VolumeProcessingWithSolidsContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
+                VolumeSampleProcessingContextT,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             > =
             VolumeProcessingWithSolidsContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
+                VolumeSampleProcessingContextT,
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             >
@@ -135,83 +199,23 @@ export interface VolumeSolidProcessor<
     ParallelizedProcessor<
         VolumeProcessingT,
         VolumeProcessingContextT,
-        SolidT,
+        VolumeSolidProcessing<
+                IndicesT,    
+                VolumeLocationT,
+                VolumeSampleT,
+                VolumeSampleProcessingContextT,
+                VolumeSamplingContextT,
+                VolumeT,
+                SurfaceT,
+                SolidT,
+                VolumeProcessingT
+            >,
         VolumeSolidProcessingContext<
-            Location,
-            Sample,
-            SampleProcessingContextT,
-            SurfaceProcessingContextT,
-            SolidProcessingContextT,
-            VolumeProcessingT,
-            VolumeProcessingContextT
-        >
+                VolumeSampleProcessingContextT,
+                SurfaceProcessingContextT,
+                SolidProcessingContextT,
+                VolumeProcessingContextT
+            >
     > { }
 
 export const VolumeSolidsParallelizer = new IterableParallelizer(VolumeSolidsGroupTemplate)
-
-export class VolumeSurfaceSolidifyingProcessor<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any,
-        SurfaceT extends Surface<Sample> = Surface<Sample>,
-        SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
-        SolidProcessingContextT extends
-            SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT> =
-            SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT>,
-        VolumeProcessingT extends
-            VolumeProcessingWithSurfaces<Sample, SurfaceT> & VolumeProcessingWithSolids<Sample, SurfaceT> =
-            VolumeProcessingWithSurfaces<Sample, SurfaceT> & VolumeProcessingWithSolids<Sample, SurfaceT>,
-        VolumeProcessingContextT extends
-            VolumeProcessingWithSurfacesContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
-            > &
-            VolumeProcessingWithSolidsContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT,
-                SolidProcessingContextT
-            > =
-            VolumeProcessingWithSurfacesContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT
-            > &
-            VolumeProcessingWithSolidsContext<
-                Location,
-                Sample,
-                SampleProcessingContextT,
-                SurfaceProcessingContextT,
-                SolidProcessingContextT
-            >
-    > implements
-    VolumeProcessor<
-        Location,
-        Sample,
-        SampleProcessingContextT,
-        VolumeProcessingT,
-        VolumeProcessingContextT
-    > {
-    init() {
-        const connections = {
-            inputs: [[VolumeSurfacesKey, PROPERTYKEY_ALL, 'mesh']],
-            outputs: [[VolumeSolidsKey, PROPERTYKEY_ALL, 'surface']]
-        }
-
-        return { connections }
-    }
-
-    process(volume: VolumeProcessingT): void {
-        volume[VolumeSolidsKey] = volume[VolumeSurfacesKey].map(surface => ({ surface }))
-    }
-
-    private constructor() { }
-
-    static readonly instance = new this()
-}

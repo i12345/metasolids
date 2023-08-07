@@ -1,8 +1,9 @@
 import { BoundingBox, Vec3 } from "playcanvas-extended";
 import { Field } from "../../../fields/field.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext, defaultVolumeLocationField, defaultVolumeSampleField } from "../../volume.js";
-import { SampleDomainLocationField, ScalarField, SeededSamplingContext, TransformingSampleDomain, Vec3Field } from "../../../fields/index.js";
 import { openSimplex } from "../../../fields/domains/noise/open-simplex.js";
+import { SeededSamplingContext, TransformingSampleDomain } from "../../../fields/domains/index.js";
+import { Vec3Field } from "../../../fields/fields/vec3.js";
 
 export class OpenSimlpexNoiseVolume
     extends TransformingSampleDomain<
@@ -43,6 +44,6 @@ export class OpenSimlpexNoiseVolume
     }
 
     protected transformSample(sample: number, location: { outer: VolumeLocation; inner: Vec3; }, context: { outer: VolumeSamplingContext<VolumeLocation>; inner: SeededSamplingContext<Vec3>; }): VolumeSample {
-        return { presence: sample, gradient: Vec3.ZERO }
+        return { alpha: sample, gradient: Vec3.ZERO }
     }
 }

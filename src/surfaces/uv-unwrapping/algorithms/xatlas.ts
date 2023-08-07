@@ -1,18 +1,17 @@
 import type { XAtlasAPI } from 'xatlasjs-esm'
 import { SurfaceUVUnwrappingAlgorithm } from '../algorithm.js';
-import { Vec2 } from 'playcanvas-extended';
 import { indicesArrayType } from '../../../utils/indices-array.js';
 
 let xAtlasAPI: XAtlasAPI
 
 export const init_XAtlasAPI = (xatlas_path: string = '/xatlasjs-esm') => new Promise<void>(async resolve => {
-    const { XAtlasAPI: XAtlasAPIClass } = await (eval(`import` + `(${xatlas_path}/index.js)`) as PromiseLike<{ XAtlasAPI: typeof XAtlasAPI }>)
+    const { XAtlasAPI: XAtlasAPIClass } = await (eval(`import("${xatlas_path}/index.js")`) as PromiseLike<{ XAtlasAPI: typeof XAtlasAPI }>)
     
     xAtlasAPI = new XAtlasAPIClass(
         () => resolve(),
         (path, dir) => {
             //TODO: should the prefix "/" be removed for this path?
-            if (path === "xatlas.wasm") return xatlas_path + path;
+            if (path === "xatlas.wasm") return `${xatlas_path}/${path}`;
             return dir + path;
         },
         (mode: any, progress: any) => {
@@ -29,13 +28,7 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
 
     unwrap(mesh) {
         const indices_start = mesh.triangles instanceof Uint16Array ? mesh.triangles : new Uint16Array(mesh.triangles)
-        const vertices_start = new Float32Array(3 * mesh.vertices.length)
-        for (let i = 0; i < mesh.vertices.length; i++) {
-            const vertex = mesh.vertices[i]
-            vertices_start[(3 * i) + 0] = vertex.x
-            vertices_start[(3 * i) + 1] = vertex.y
-            vertices_start[(3 * i) + 2] = vertex.z
-        }
+        const vertices_start = mesh.vertices
 
         xAtlasAPI.createAtlas()
         xAtlasAPI.addMesh(indices_start, vertices_start)
@@ -55,22 +48,14 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
         /** original surface mesh vertex indices */
         const duplicatedVerts = new Array<number>()
         /** final vertex UV's */
-        const UVs = new Array<Vec2>(n_atlas)
-
-        const original_verts = new Float32Array(3 * mesh.vertices.length)
-        for (let i = 0; i < mesh.vertices.length; i++){
-            const vertex = mesh.vertices[i]
-            original_verts[(3 * i) + 0] = vertex.x
-            original_verts[(3 * i) + 1] = vertex.y
-            original_verts[(3 * i) + 2] = vertex.z
-        }
+        const UVs = atlas.vertex.coords1
         
         function original_vert_index(x: number, y: number, z: number) {
             //TODO: use binary list
-            for (let i = 0; i < original_verts.length / 3; i++) {
-                if (original_verts[(3 * i) + 0] === x &&
-                    original_verts[(3 * i) + 1] === y &&
-                    original_verts[(3 * i) + 2] === z)
+            for (let i = 0; i < vertices_start.length / 3; i++) {
+                if (mesh.vertices[(3 * i) + 0] === x &&
+                    mesh.vertices[(3 * i) + 1] === y &&
+                    mesh.vertices[(3 * i) + 2] === z)
                     return i
             }
 
@@ -92,11 +77,6 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
 
             vertsUsed[i_original] = true
             mappings_atlas_final[i_atlas] = i_final
-
-            UVs[i_final] = new Vec2(
-                atlas.vertex.coords1[(2 * i_atlas) + 0],
-                atlas.vertex.coords1[(2 * i_atlas) + 1]
-            )
         }
 
         const finalIndices = new (indicesArrayType(n_atlas))(atlas.index.length)

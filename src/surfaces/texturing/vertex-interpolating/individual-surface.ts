@@ -1,12 +1,13 @@
-import { PROPERTYKEY_ALL, PropertyPath, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../../../paradigm/index.js";
-import { Processor } from "../../../processing/processor.js";
+import { PROPERTYKEY_ALL, PropertyPath, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js";
+import { Processor } from "../../../paradigm/processing/processor.js";
 import { FieldPoint } from "../../../fields/index.js";
 import { TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { onlyOne } from "../../../utils/index.js";
+import { IndicesTypedArray, onlyOne } from "../../../utils/index.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
 import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
+import { Vec2 } from "playcanvas-extended";
 
 // type A = {
 //     a: {
@@ -50,6 +51,7 @@ export type SurfaceSampleProcessingContextWithIndividualInterpolatingValueTextur
     >
 
 export type SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingValue extends FieldPoint = FieldPoint,
@@ -79,6 +81,7 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapp
     //     SurfaceSampleT
     // > =
     SurfaceWithUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             SurfaceSampleT
         > &
@@ -100,8 +103,8 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
     > =
     SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup,
-        InterpolatingGroups,
-        SampleProcessingContextT
+        SampleProcessingContextT,
+        InterpolatingGroups
     > &
     MultiObjectsGroupsProcessingContext<
         InterpolatingGroups,
@@ -109,6 +112,7 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
     >
 
 export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
@@ -139,6 +143,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
     > implements
     Processor<
             SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
+                    IndicesT,        
                     SurfaceUVUnwrappingGroup,
                     InterpolatingGroups,
                     InterpolatingValue,
@@ -194,6 +199,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
 
     process(
             surface: SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
+                    IndicesT,
                     SurfaceUVUnwrappingGroup,
                     InterpolatingGroups,
                     InterpolatingValue,
@@ -228,7 +234,15 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
             for (const duplicatedVert of UVunwrapping.duplicatedVerts)
                 values.push(values[duplicatedVert])
             
-            const texture = new VertexInterpolatingTexture(values, UVunwrapping.UVs, UVunwrapping.finalIndices)
+            const uvs = new Array<Vec2>(UVunwrapping.UVs.length / 2)
+            for (let i = 0; i < uvs.length; i++) {
+                uvs[i] = new Vec2(
+                    UVunwrapping.UVs[(2 * i) + 0],
+                    UVunwrapping.UVs[(2 * i) + 1]
+                )
+            }
+            
+            const texture = new VertexInterpolatingTexture(values, uvs, UVunwrapping.finalIndices)
             interpolatingGroup.set(surface, texture)
         }
     }

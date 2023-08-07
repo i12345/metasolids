@@ -1,3 +1,3 @@
-export * from './property-path.js'
-export * from './tree.js'
-export * from './multi-objects.js'
+export * as trees from './trees/index.js'
+export * as processing from './processing/index.js'
+export * as octtree from './octtree/index.js'

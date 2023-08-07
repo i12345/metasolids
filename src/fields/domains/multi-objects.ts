@@ -3,7 +3,7 @@ import { SampleDomain, SampleDomain_vectorized, SamplingContext } from "../domai
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { makeInterpolator } from "../interpolation.js"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf } from "../../paradigm/multi-objects.js"
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf } from "../../paradigm/trees/index.js"
 import { FieldPoint, FieldsPoint, fields_point_map, field_point_add_inplace } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
 import { VectorFunction, vectorized } from "vectorized-functions"
@@ -41,7 +41,7 @@ export type MultiObjectsSample<
 // >
 // sample.texture.a
 
-export type MultiObjectsContext<
+export type MultiObjectsSamplingContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         GroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
@@ -101,7 +101,7 @@ export type MultiObjectsLeafContext<
     EncapsulatingDomainSamplingContext<
         Location, Location,
         MultiObjectsSample<Objects, SampleGroups, LeafSample>,
-        MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
+        MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
     > &
     {
         [MultiObjectsSamplingContextParent]: {
@@ -116,15 +116,23 @@ export type MultiObjectsLeafContext<
                 LeafContext,
                 LeafDomain
             >,
-            context: MultiObjectsGroupsOmitted<
-                ContextGroups,
-                MultiObjectsContext<
+            // context: MultiObjectsGroupsOmitted<
+            //     ContextGroups,
+            //     MultiObjectsSamplingContext<
+            //         Objects,
+            //         ContextGroups,
+            //         ContextGroupKinds,
+            //         Location,
+            //         LeafContext
+            //     >
+            // >
+            context: MultiObjectsSamplingContext<
                     Objects,
                     ContextGroups,
                     ContextGroupKinds,
+                    Location,
                     LeafContext
                 >
-            >
         }
     }
 
@@ -193,7 +201,7 @@ export class MultiObjectsSampleDomain<
     SampleDomain<
         Location,
         Sample,
-        MultiObjectsContext<
+        MultiObjectsSamplingContext<
             Objects,
             ContextGroups,
             ContextGroupKinds,
@@ -262,11 +270,11 @@ export class MultiObjectsSampleDomain<
      * @param context the domain context
      * @returns the sample context
      */
-    protected sampleContext(context: MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds> {
+    protected sampleContext(context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds> {
         return context as unknown as MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds>
     }
 
-    init(context: MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): void {
+    init(context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): void {
         this.groupsMemoized = {
             context: [...groupKinds(context, this.multiObj.context.groupKindsTemplate, this.multiObj.context.groupsTemplate)],
             sample: [...groupKinds(this.sampleContext(context), this.multiObj.sample.groupKindsTemplate, this.multiObj.sample.groupsTemplate)],
@@ -339,7 +347,7 @@ export class MultiObjectsSampleDomain<
     @vectorized(MultiObjectsSampleDomain.sample_vectorized)
     sample(
             location: Location,
-            context: MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
+            context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
         ): Sample {
         let sample = {} as MultiObjectsSample<Objects, SampleGroups, LeafSample>
         
@@ -462,7 +470,7 @@ export class MultiObjectsSampleDomain<
                 Sample
             >,
             locations: Location[],
-            context: MultiObjectsContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
+            context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
         ): Sample[] {
         let samples = locations.map(() => ({} as MultiObjectsSample<Objects, SampleGroups, LeafSample>))
     
@@ -516,7 +524,7 @@ export class MultiObjectsSampleDomain<
                 }
             }
 
-            samples = MultiObjectsSampleDomain.vectorized.combineResidualLeafSample.call(this as any, samples, key, child_samples as MultiObjectsGroupsOmitted<SampleGroups, LeafSample>[]) as typeof samples
+            samples = MultiObjectsSampleDomain.vectorized.combineResidualLeafSample.call(this as any, samples, key, child_samples /* as unknown as MultiObjectsGroupsOmitted<SampleGroups, LeafSample>[] */) as typeof samples
         }
 
         for (const { group } of this.groupsMemoized.context) {
@@ -675,7 +683,7 @@ export class MultiObjectsSampleDomain<
         ): SampleDomain<
                 Location,
                 Sample,
-                MultiObjectsContext<
+                MultiObjectsSamplingContext<
                         Objects,
                         ContextGroups,
                         ContextGroupKinds,
@@ -687,7 +695,7 @@ export class MultiObjectsSampleDomain<
             return sampleDomains as SampleDomain<
                 Location,
                 Sample,
-                MultiObjectsContext<
+                MultiObjectsSamplingContext<
                     Objects,
                     ContextGroups,
                     ContextGroupKinds,
@@ -705,7 +713,7 @@ export class MultiObjectsSampleDomain<
                     .map(([key, sampleDomain]) =>
                         ///@ts-ignore
                         [key, MultiObjectsSampleDomain.build(
-                                sampleDomain as MultiObjectsMapped<Objects, LeafDomain>,
+                                sampleDomain, //as unknown as MultiObjectsMapped<Objects, LeafDomain>,
                                 (template as any)[key] as Objects,
                                 multiObj
                         )] as [PropertyKey, LeafDomain]

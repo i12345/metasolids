@@ -1,4 +1,3 @@
-// import { Vector } from "../fields/point.js"
 import { Reflect_entries } from "./reflect-entries.js"
 
 export function mergeObjects<T extends object = object>(objs: T[]): T {

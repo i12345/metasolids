@@ -2,7 +2,7 @@ import { StandardMaterial } from "playcanvas-extended";
 import { Cost, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { SurfaceRendererIndividual } from "../../renderer.js";
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js";
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js";
+import { MultiObjectsGroupsTemplate } from "../../../../paradigm/trees/index.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 
 export class MaterialSemanticImplementation_Setting<

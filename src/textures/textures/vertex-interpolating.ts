@@ -1,8 +1,9 @@
 import { Vec2 } from "playcanvas-extended";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../paradigm/index.js";
-import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, defaultField, field_point_identity } from "../../fields/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../paradigm/trees/index.js";
+import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_identity } from "../../fields/index.js";
 import { Texture, TextureLocation } from "../texture.js";
-import { IndiciesArray } from "../../utils/indices-array.js";
+import { IndicesArray } from "../../utils/indices-array.js";
+import { defaultField } from "../../fields/fields/default.js";
 
 export type VertexInterpolatingTexturesTemplated<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -26,18 +27,16 @@ export class VertexInterpolatingTexture
         TextureLocation,
         VertexSample
     > {
-    field: Field<VertexSample>
-    
     private collider?: Triangles2DMeshCollider
     private interpolator?: Triangles2DMeshInterpolator<VertexSample>
-    
 
     constructor(
+        //TODO: support vectorized vertices and UVs
         public vertices: VertexSample[],
         public uv: Vec2[],
-        public triangles: IndiciesArray,
+        public triangles: IndicesArray,
+        public readonly field: Field<VertexSample> = vertices.length > 0 ? defaultField(vertices[0]) : undefined!
     ) {
-        this.field = vertices.length > 0 ? defaultField(vertices[0]) : undefined!
     }
 
     sample(location: TextureLocation): VertexSample {

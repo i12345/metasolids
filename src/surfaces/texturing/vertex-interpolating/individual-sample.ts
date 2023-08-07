@@ -1,10 +1,10 @@
-import { Processor } from "../../../processing/processor.js";
-import { PROPERTYKEY_ALL, PropertyPath, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf } from "../../../paradigm/index.js";
+import { Processor } from "../../../paradigm/processing/processor.js";
+import { PROPERTYKEY_ALL, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js";
 import { FieldPoint } from "../../../fields/index.js";
-import { Texture, TextureLocation, TextureSample, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { onlyOne } from "../../../utils/index.js";
+import { TextureLocation, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
+import { IndicesTypedArray, onlyOne } from "../../../utils/index.js";
 import { Surface, SurfaceSample } from "../../surface.js";
-import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceTextureLocationsGroupKindsTemplate, SurfaceWithIndividualTextures, SurfaceWithIndividualTexturesUsingSampleTextureLocations } from "../types.js";
+import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations } from "../types.js";
 
 // type A = {
 //     a: {
@@ -52,6 +52,7 @@ export type SurfaceSampleProcessingContextWithIndividualInterpolatingValuesUsing
     >
 
 export type SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingValue extends FieldPoint = FieldPoint,
@@ -100,7 +101,7 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLoc
     //         >,
     //     SurfaceSampleT
     // > =
-    Surface<SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleT> &
     TexturesTemplated<
             InterpolatingGroups,
             InterpolatingValue,
@@ -135,6 +136,7 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
     >
 
 export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLocationsProcessor<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
@@ -169,6 +171,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
     > implements
     Processor<
             SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
+                    IndicesT,        
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     InterpolatingValue,
@@ -228,6 +231,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
 
     process(
             surface: SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
+                    IndicesT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     InterpolatingValue,

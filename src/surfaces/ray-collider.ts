@@ -1,9 +1,10 @@
 import { Ray, Vec3 } from "playcanvas-extended";
 import { Surface, SurfaceInstance, SurfaceSample } from "./surface.js";
 import { TriangleCollision } from "../fields/triangles-2D-mesh.js";
-import { SurfaceProcessingContext } from "./surface-samples.js";
+import { SurfaceProcessingContext } from "./processing.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "./volume-surfaces.js";
-import { VolumeLocation } from "../volumes/volume.js";
+import { Volume, VolumeLocation, VolumeSamplingContext } from "../volumes/volume.js";
+import { IndicesTypedArray } from "../utils/indices-array.js";
 
 export interface RayCollision {
     /**
@@ -21,42 +22,72 @@ export interface RayCollision {
 }
 
 export interface VolumeWithSurfacesRayColliderProcessingContext<
-        SampleT extends SurfaceSample = SurfaceSample,
-        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends SurfaceSample = SurfaceSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<VolumeSampleProcessingContextT> =
+            SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         VolumeProcessingT extends
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > =
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                >,
         VolumeProcessingInstanceT extends
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,    
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 > =
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,    
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 >,
         VolumeProcessingContextT extends
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 >,
     > {
@@ -65,61 +96,99 @@ export interface VolumeWithSurfacesRayColliderProcessingContext<
 }
 
 export interface VolumeWithSurfacesRayCollider<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Collision extends RayCollision = RayCollision,
-        SampleT extends SurfaceSample = SurfaceSample,
-        SampleProcessingContextT = any,
-        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends SurfaceSample = SurfaceSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<VolumeSampleProcessingContextT> =
+            SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         VolumeProcessingT extends
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > =
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                >,
         VolumeProcessingInstanceT extends
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,        
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 > =
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,        
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 >,
         VolumeProcessingContextT extends
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 >,
         RayColliderProcessingContextT extends
             VolumeWithSurfacesRayColliderProcessingContext<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,    
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
-                    SampleProcessingContextT,
                     SurfaceProcessingContextT,
                     VolumeProcessingT,
                     VolumeProcessingInstanceT,
                     VolumeProcessingContextT
                 > =
             VolumeWithSurfacesRayColliderProcessingContext<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,    
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
-                    SampleProcessingContextT,
                     SurfaceProcessingContextT,
                     VolumeProcessingT,
                     VolumeProcessingInstanceT,
@@ -137,50 +206,84 @@ export interface VolumeWithSurfacesTriangleRayCollision extends RayCollision {
 }
 
 export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
-        SampleT extends SurfaceSample = SurfaceSample,
-        SampleProcessingContextT = any,
-        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends SurfaceSample = SurfaceSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<VolumeSampleProcessingContextT> =
+            SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         VolumeProcessingT extends
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > =
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                >,
         VolumeProcessingInstanceT extends
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,        
+                    VolumeLocationT,        
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 > =
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,        
+                    VolumeLocationT,        
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 >,
         VolumeProcessingContextT extends
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 >,
     > extends
     VolumeWithSurfacesRayColliderProcessingContext<
-            SampleT,
+            IndicesT,
+            VolumeLocationT,
+            VolumeSampleT,
+            VolumeSampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
             SurfaceT,
             SurfaceInstanceT,
-            SampleProcessingContextT,
             SurfaceProcessingContextT,
             VolumeProcessingT,
             VolumeProcessingInstanceT,
@@ -189,48 +292,82 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
 }
     
 interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
-        SampleT extends SurfaceSample = SurfaceSample,
-        SampleProcessingContextT = any,
-        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends SurfaceSample = SurfaceSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<VolumeSampleProcessingContextT> =
+            SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         VolumeProcessingT extends
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > =
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                >,
         VolumeProcessingInstanceT extends
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 > =
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 >,
         VolumeProcessingContextT extends
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 >,
     > extends
     VolumeWithSurfacesTriangleRayColliderProcessingContext<
-        SampleT,
-        SampleProcessingContextT,
+        IndicesT,    
+        VolumeLocationT,
+        VolumeSampleT,
+        VolumeSampleProcessingContextT,
+        VolumeSamplingContextT,
+        VolumeT,
         SurfaceT,
         SurfaceInstanceT,
         SurfaceProcessingContextT,
@@ -257,48 +394,82 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
 }
 
 export class VolumeWithSurfacesTriangleRayCollider<
-        SampleT extends SurfaceSample = SurfaceSample,
-        SurfaceT extends Surface<SampleT> = Surface<SampleT>,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends SurfaceSample = SurfaceSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
-        SampleProcessingContextT = any,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<VolumeSampleProcessingContextT> =
+            SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         VolumeProcessingT extends
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT> =
-            VolumeProcessingWithSurfaces<SampleT, SurfaceT>,
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > =
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                >,
         VolumeProcessingInstanceT extends
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 > =
             VolumeProcessingWithSurfacesInstance<
-                    SampleT,
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     VolumeProcessingT
                 >,
         VolumeProcessingContextT extends
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 > =
             VolumeProcessingWithSurfacesContext<
-                    VolumeLocation,
-                    SampleT,
-                    SampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     SurfaceProcessingContextT
                 >,
         RayColliderProcessingContextT extends
             VolumeWithSurfacesTriangleRayColliderProcessingContext<
-                    SampleT,
-                    SampleProcessingContextT,
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     SurfaceProcessingContextT,
@@ -307,8 +478,12 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeProcessingContextT
                 > =
             VolumeWithSurfacesTriangleRayColliderProcessingContext<
-                    SampleT,
-                    SampleProcessingContextT,
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
                     SurfaceT,
                     SurfaceInstanceT,
                     SurfaceProcessingContextT,
@@ -319,9 +494,13 @@ export class VolumeWithSurfacesTriangleRayCollider<
     >
     implements
     VolumeWithSurfacesRayCollider<
+        IndicesT,
         VolumeWithSurfacesTriangleRayCollision,
-        SampleT,
-        SampleProcessingContextT,
+        VolumeLocationT,
+        VolumeSampleT,
+        VolumeSampleProcessingContextT,
+        VolumeSamplingContextT,
+        VolumeT,
         SurfaceT,
         SurfaceInstanceT,
         SurfaceProcessingContextT,
@@ -332,8 +511,12 @@ export class VolumeWithSurfacesTriangleRayCollider<
     > {
     init(context: RayColliderProcessingContextT) {
         type ContextPrivateT = VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
-                SampleT,
-                SampleProcessingContextT,
+                IndicesT,
+                VolumeLocationT,
+                VolumeSampleT,
+                VolumeSampleProcessingContextT,
+                VolumeSamplingContextT,
+                VolumeT,
                 SurfaceT,
                 SurfaceInstanceT,
                 SurfaceProcessingContextT,
@@ -363,13 +546,7 @@ export class VolumeWithSurfacesTriangleRayCollider<
             const tri_n = mesh.triangles.length / 3
             
             const transformed_vertices = new Float32Array(3 * mesh.vertices.length)
-            
-            // mesh.vertices might change to a Float32Array
-            for (let i = 0; i < mesh.vertices.length; i++) {
-                transformed_vertices[(3 * i) + 0] = mesh.vertices[i].x
-                transformed_vertices[(3 * i) + 1] = mesh.vertices[i].y
-                transformed_vertices[(3 * i) + 2] = mesh.vertices[i].z
-            }
+            new Uint8Array(transformed_vertices.buffer).set(new Uint8Array(mesh.vertices.buffer))
 
             spaceTransformations.forEach(spaceTransformation => spaceTransformation.transform(transformed_vertices))
 
@@ -433,8 +610,12 @@ export class VolumeWithSurfacesTriangleRayCollider<
 
     sample_multiple(ray: Ray, context: RayColliderProcessingContextT) {
         type ContextPrivateT = VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
-                SampleT,
-                SampleProcessingContextT,
+                IndicesT,
+                VolumeLocationT,
+                VolumeSampleT,
+                VolumeSampleProcessingContextT,
+                VolumeSamplingContextT,
+                VolumeT,
                 SurfaceT,
                 SurfaceInstanceT,
                 SurfaceProcessingContextT,

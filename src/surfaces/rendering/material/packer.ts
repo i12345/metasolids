@@ -1,6 +1,6 @@
 import { BasicMaterial, StandardMaterial, math } from "playcanvas-extended"
 import { ColorChannelIndex, ColorChannels } from "./color-channels.js"
-import { IndiciesArray } from "../../../utils/indices-array.js"
+import { IndicesArray } from "../../../utils/indices-array.js"
 
 export interface RenderedBuffer {
     buffer: Float32Array | Uint8Array
@@ -51,7 +51,7 @@ export interface PackedRenderedBufferForSemanticWithRefCount
 export function renderPack(
         buffer_dst: Float32Array | Uint8Array,
         pack: PackedRenderedBufferForSemantic,
-        indices_dst?: IndiciesArray
+        indices_dst?: IndicesArray
     ) {
     // if (pack.sources.length === 1 && pack.sources[0].buffer.length === buffer_dst.length) {
     //     const buffer_src = pack.sources[0].buffer

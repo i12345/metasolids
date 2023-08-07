@@ -1,88 +1,56 @@
-import { Processor } from "../processing/processor.js";
-import { defaultVolumeLocationField, VolumeLocation, VolumeSample, VolumeSamplingContext } from "./volume.js";
-import { VolumeSampler, VolumeSamplingRequest, VolumeSamplingResult } from "./sampling.js";
-import { ParallelizedContext, ParallelizedContextParallelInfo, ParallelizedProcessor, Parallelizer } from "../processing/processors/parallel.js";
-import { defaultField, FieldPoint, FieldsField, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_isPrimitive, SampleDomainLocationField } from "../fields/index.js";
-import { PROPERTYKEY_ALL } from "../paradigm/property-path.js";
-import { GroupsParallelizer, IterableParallelizer } from "../processing/processors/index.js";
-import { MultiObjectsGroupsTemplate_Leaf, MultiObjectsGroupsTemplateLeaf } from "../paradigm/multi-objects.js";
-import { Instance } from "../processing/instance.js";
-import { Mat4 } from "playcanvas-extended";
+import { Processor } from "../paradigm/processing/index.js";
+import { Volume, VolumeLocation, VolumeSample, VolumeSampleKey, VolumeSamplingContext } from "./volume.js";
 
-export const VolumeSampleKey = Symbol('volume.sample')
-export const VolumeSamplingKey = Symbol("volume-sampling")
+export const VolumeKey = Symbol("volume")
 
 export interface VolumeProcessing<
-        Sample extends VolumeSample = VolumeSample
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>
     > {
-    [VolumeSamplingKey]: VolumeSamplingResult<Sample>
+    [VolumeKey]: VolumeT
 }
 
 export interface VolumeProcessingContext<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any,
-    > extends
-    VolumeSamplingContext<Location> {
-    [VolumeSamplingKey]: Omit<VolumeSamplingRequest<Location, Sample>, "context">
-    [VolumeSampleKey]: SampleProcessingContextT
+        VolumeSampleProcessingContextT = any,
+    > {
+    [VolumeSampleKey]: VolumeSampleProcessingContextT
 }
 
 export interface VolumeProcessor<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
         VolumeProcessingT extends
-            VolumeProcessing<Sample> =
-            VolumeProcessing<Sample>,
+            VolumeProcessing<
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT
+                > =
+            VolumeProcessing<
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT
+                >,
         VolumeProcessingContextT extends
-            VolumeProcessingContext<Location, Sample, SampleProcessingContextT> =
-            VolumeProcessingContext<Location, Sample, SampleProcessingContextT>,
+            VolumeProcessingContext<VolumeSampleProcessingContextT> =
+            VolumeProcessingContext<VolumeSampleProcessingContextT>,
     > extends
     Processor<VolumeProcessingT, VolumeProcessingContextT> {
-}
-
-export class VolumeSamplingProcessor<
-        Location extends VolumeLocation = VolumeLocation,
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any
-    > implements
-    VolumeProcessor<
-            Location,
-            Sample,
-            SampleProcessingContextT,
-            VolumeProcessing<Sample>,
-            VolumeProcessingContext<Location, Sample, SampleProcessingContextT>
-        > {
-    init() {
-        return {
-            connections: {
-                inputs: [],
-                outputs: [[VolumeSamplingKey]]
-            }
-        }
-    }
-    
-    process(
-            item: VolumeProcessing<Sample>,
-            context: VolumeProcessingContext<Location, Sample, SampleProcessingContextT>
-        ): void {
-        context[SampleDomainLocationField] = FieldsField.merge<Location>(
-            defaultVolumeLocationField as FieldsField<Location>,
-            new FieldsField(fields_point_map(
-                (context[VolumeSamplingKey].extraLocationParameters ?? {}) as any as FieldsPointMapped<FieldsPoint, FieldPoint>,
-                field_point_isPrimitive,
-                value => defaultField(value)
-            )) as FieldsField<Location>
-        )
-
-        item[VolumeSamplingKey] = VolumeSampler.sample({
-            context,
-            ...context[VolumeSamplingKey]
-        })
-    }
-
-    private constructor() { }
-
-    static readonly instance = new this()
 }

@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/multi-objects.js";
+import { MultiObjectsGroupsTemplate } from "../../../../paradigm/trees/index.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js";
 import { Cost, RenderedBufferForSemanticWithImplementation } from "../implementation.js";

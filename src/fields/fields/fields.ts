@@ -2,7 +2,7 @@ import { Field } from "../field.js";
 import { FieldsInterpolationType } from "../interpolators/fields.js";
 import { FieldInterpolationType, makeInterpolator } from "../interpolation.js";
 import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
-import { deletePath, extract, pathsToValue } from "../../paradigm/tree.js";
+import { deletePath, extract, pathsToValue } from "../../paradigm/trees/index.js";
 
 export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     implements Field<Point> {

@@ -1,23 +1,37 @@
-import { SurfaceProcessor } from "../surface-samples.js";
+import { SurfaceProcessor } from "../processing.js";
 import { SurfaceSample } from "../surface.js";
-import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/index.js";
+import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/trees/index.js";
 import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrappingAlgorithms } from "./algorithms.js";
 import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
-import { PropertyPath } from "../../paradigm/property-path.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
 
 export class SurfaceUVUnwrappingProcessor<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SampleT extends SurfaceSample = SurfaceSample,
-        SampleProcessingContextT = any
+        SurfaceSampleT extends SurfaceSample = SurfaceSample,
+        VolumeSampleProcessingContextT = any,
+        SurfaceT extends
+            SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup, SurfaceSampleT> =
+            SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup, SurfaceSampleT>,
+        SurfaceProcessingContextT extends
+            SurfaceProcessingContextWithUVUnwrapping<
+                    SurfaceUVUnwrappingGroup,
+                    VolumeSampleProcessingContextT
+                > =
+            SurfaceProcessingContextWithUVUnwrapping<
+                    SurfaceUVUnwrappingGroup,
+                    VolumeSampleProcessingContextT
+                >
     > implements
     SurfaceProcessor<
-            SampleT,
-            SampleProcessingContextT,
-            SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleT>,
-            SurfaceProcessingContextWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleProcessingContextT>
-    > {
+            IndicesT,
+            SurfaceSampleT,
+            VolumeSampleProcessingContextT,
+            SurfaceT,
+            SurfaceProcessingContextT
+        > {
     readonly algorithm: SurfaceUVUnwrappingAlgorithm
 
     constructor(
@@ -30,11 +44,9 @@ export class SurfaceUVUnwrappingProcessor<
     }
 
     process(
-            surface: SurfaceWithUVUnwrapping<SurfaceUVUnwrappingGroup, SampleT>,
-            context: SurfaceProcessingContextWithUVUnwrapping<
-                    SurfaceUVUnwrappingGroup,
-                    SampleProcessingContextT
-                >): void {
+            surface: SurfaceT,
+            context: SurfaceProcessingContextT
+        ): void {
         const surfaceUVUnwrappingGroup = onlyOne(groupKinds(
             context,
             SurfaceUVUnwrappingGroupKindsTemplate,
@@ -46,10 +58,7 @@ export class SurfaceUVUnwrappingProcessor<
         surfaceUVUnwrappingGroup.set(surface, unwrapping)
     }
 
-    init(context: SurfaceProcessingContextWithUVUnwrapping<
-            SurfaceUVUnwrappingGroup,
-            SampleProcessingContextT
-        >) {
+    init(context: SurfaceProcessingContextT) {
         this.algorithm.init()
 
         const surfaceUVUnwrappingGroup = onlyOne(groupKinds(

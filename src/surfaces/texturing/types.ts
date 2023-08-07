@@ -1,6 +1,7 @@
-import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped } from "../../paradigm/index.js";
+import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample } from "../../textures/index.js";
-import { SurfaceProcessingContext } from "../surface-samples.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { SurfaceProcessingContext } from "../processing.js";
 import { Surface, SurfaceSample } from "../surface.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceWithUVUnwrapping } from "../uv-unwrapping/index.js";
 
@@ -121,6 +122,7 @@ export type SurfaceSampleProcessingContextWithObjectsTextureLocations<
     >
 
 export type SurfaceWithIndividualTextures<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureSampleT extends TextureSample = TextureSample,
@@ -132,10 +134,11 @@ export type SurfaceWithIndividualTextures<
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
         SurfaceSampleT extends SurfaceSample = SurfaceSample
     > =
-    Surface<SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleT> &
     TexturesGrouped
 
 export type SurfaceWithObjectsTextures<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
@@ -148,10 +151,11 @@ export type SurfaceWithObjectsTextures<
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
         SurfaceSampleT extends SurfaceSample = SurfaceSample
     > =
-    Surface<SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleT> &
     MultiObjectsMappedAgainGrouped<Objects, ObjectsTextureGroups, TextureT, TexturesGrouped>
 
 export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         IndividualTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
@@ -167,6 +171,7 @@ export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
             SurfaceSampleWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT>
     > =
     SurfaceWithIndividualTextures<
+            IndicesT,
             IndividualTextureGroups,
             TextureLocationT,
             TextureSampleT,
@@ -176,6 +181,7 @@ export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
         >
 
 export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SharedTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -192,6 +198,7 @@ export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
             SurfaceSampleWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT>
     > =
     SurfaceWithObjectsTextures<
+            IndicesT,
             Objects,
             ObjectsTextureGroups,
             TextureLocationT,
@@ -202,6 +209,7 @@ export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
         >
 
 export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         ObjectsTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -218,6 +226,7 @@ export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
             SurfaceSampleWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT>
     > =
     SurfaceWithObjectsTextures<
+            IndicesT,
             Objects,
             ObjectsTextureGroups,
             TextureLocationT,
@@ -313,6 +322,7 @@ export type SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTexture
 
 
 export type SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
@@ -326,12 +336,14 @@ export type SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
         Sample extends SurfaceSample = SurfaceSample
     > =
     SurfaceWithUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             Sample
         > &
     TexturesGrouped
 
 export type SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -346,6 +358,7 @@ export type SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
         Sample extends SurfaceSample = SurfaceSample
     > =
     SurfaceWithUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             Sample
         > &
@@ -353,8 +366,8 @@ export type SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
 
 export type SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        SampleProcessingContextT = any,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SampleProcessingContextT = any
     > =
     SurfaceProcessingContextWithUVUnwrapping<
         SurfaceUVUnwrappingGroup,
@@ -371,12 +384,12 @@ export type SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrappi
 
 export type SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        SampleProcessingContextT = any,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsTexturesGrouped extends
             MultiObjectsGrouped<Objects, ObjectsTextureGroups> =
             MultiObjectsGrouped<Objects, ObjectsTextureGroups>,
-        SampleProcessingContextT = any
     > =
     SurfaceProcessingContextWithUVUnwrapping<
             SurfaceUVUnwrappingGroup,

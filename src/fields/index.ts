@@ -2,16 +2,15 @@ export * from './point.js'
 export * from './stats.js'
 
 export * from './range.js'
-export * from './merge_mapped.js'
 
 export * from './interpolation.js'
-export * from './interpolators/index.js'
+export * as interpolators from './interpolators/index.js'
 
 export * from './field.js'
-export * from './fields/index.js'
+export * as fields from './fields/index.js'
 
 export * from './domain.js'
-export * from './domains/index.js'
+export * as domains from './domains/index.js'
 
 export * from './curve.js'
 

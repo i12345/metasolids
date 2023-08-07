@@ -4,10 +4,11 @@ import { MaterialRendererIndividual, MaterialRendererShared } from "./material/r
 import { MeshRendererIndividual, MeshRendererShared } from "./mesh/renderer.js"
 import { Material_Groups_TextureContexts, Material_Groups_Textures, Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js"
 import { SurfaceUVUnwrapping } from "../uv-unwrapping/algorithm.js"
-import { MeshDataWithNormals } from "../surface.js"
-import { groups } from "../../paradigm/index.js"
+import { MeshDataWithNormals } from "../mesh-data.js"
+import { groups } from "../../paradigm/trees/index.js"
 import { Material_Groups_Template } from "./material/groups.js"
-import { ExtraFields, Field, FieldsField, FieldsPoint, FieldsPointMapped, SampleDomainLocationField, Vec2Field, defaultField } from "../../fields/index.js"
+import { ExtraFields, Field, FieldsPoint, FieldsPointMapped, SampleDomainLocationFieldKey } from "../../fields/index.js"
+import { FieldsField, Vec2Field, defaultField } from "../../fields/fields/index.js"
 import { preDeserializer, serializableClass, serializableProperty } from "simple-typed-serialization"
 import 'reflect-metadata'
 
@@ -57,7 +58,7 @@ export class SurfaceRendererShared<
         type TextureContextT = Material_Texture_Context<VolumeLocationT>
 
         const sharedContext = {
-            [SampleDomainLocationField]: FieldsField.merge(
+            [SampleDomainLocationFieldKey]: FieldsField.merge(
                 defaultField(extraLocationParameters) as FieldsField<TextureLocationT>,
                 new FieldsField<TextureLocationT>({
                     uv: new Vec2Field()

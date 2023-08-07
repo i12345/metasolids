@@ -1,5 +1,5 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { groups, MultiObjectsGroupsTemplate } from "../../../../paradigm/index.js";
+import { groups, MultiObjectsGroupsTemplate } from "../../../../paradigm/trees/index.js";
 import { RANGE_MIN, RANGE_MAX } from "../../../../fields/index.js"
 import { Texture, TextureSample } from "../../../../textures/texture.js"
 import { GeneratorType } from "../../../../utils/generator-type.js"
@@ -74,15 +74,16 @@ export class MaterialSemanticImplementation_VertexColors<
         const textureContext = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
         
         const UVs = renderer.shared.surfaceUVUnwrapping.UVs
-        const n_vertices = renderer.shared.meshData.vertices.length
+        const n_vertices = renderer.shared.meshData.vertices.length / 3
 
+        //TODO: vectorized sampling will let the vertex color buffer be easily automatically filled
         /** original vertices */
         const sample_texture_values = new Array<TexelTypeT>(n_vertices)
         for (let i = 0; i < n_vertices; i++) {
             sample_texture_values[i] =
                 this.texture.sample(
                     //TODO: integrate other location fields
-                    { uv: UVs[i] } as Material_Texture_Location<VolumeLocationT>,
+                    { uv: new Vec2(UVs[(2 * i) + 0], UVs[(2 * i) + 1]) } as Material_Texture_Location<VolumeLocationT>,
                     textureContext
                 )
         }

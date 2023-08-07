@@ -1,62 +1,146 @@
-import { SurfaceProcessor } from "../surface-samples.js";
-import { VolumeProcessingWithSurfaces, VolumeSurfaceProcessingContext } from "../volume-surfaces.js"
-import { SurfaceSample } from "../surface.js";
+import { SurfaceProcessingContext, SurfaceProcessor } from "../processing.js";
+import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeSurfaceProcessing, VolumeSurfaceProcessingContext, VolumeSurfaceProcessor } from "../volume-surfaces.js"
+import { Surface, SurfaceSample } from "../surface.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
-import { VolumeLocation } from "../../volumes/volume.js";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groupKinds, groups } from "../../paradigm/index.js";
-import { ExtraFields, Field, FieldsField, FieldsPointMapped, FieldsPoint_Omit_Leaf, SampleDomainLocationField, Vec2Field } from "../../fields/index.js";
+import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
+import { EncapsulatingKey, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groupKinds, groups } from "../../paradigm/trees/index.js";
+import { ExtraFields, Field, FieldsPointMapped, FieldsPoint_Omit_Leaf, SampleDomainLocationFieldKey, domains } from "../../fields/index.js";
+import { FieldsField, Vec2Field } from "../../fields/fields/index.js"
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./surface.js";
 import { SurfaceRendererShared } from "./renderer.js";
 import { Material_Groups_TextureContexts, Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js";
-import { ParallelizedContext, ParallelizedContextParallelInfo } from "../../processing/processors/parallel.js";
-import { VolumeProcessingContext, VolumeSamplingKey } from "../../volumes/processor.js";
+import { VolumeProcessingContext } from "../../volumes/processor.js";
+import { SamplingKey, VolumeProcessingWithSampling } from "../../volumes/sampling/index.js"
 import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrappingGroupKindsTemplate } from "../uv-unwrapping/surface.js";
 import { SurfaceUVUnwrapping } from "../uv-unwrapping/algorithm.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 
 export class SurfaceWithRenderingProcessor<
-        SampleT extends SurfaceSample = SurfaceSample,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
-    > implements
-    SurfaceProcessor<
-        SurfaceSample,
-        any,
-        SurfaceWithRendering<
-                SampleT,
-                VolumeLocationT,
-                SurfaceUVUnwrappingGroup
-            >,
-        SurfaceProcessingContextWithRendering<
-                VolumeLocationT,
-                SurfaceUVUnwrappingGroup
-            >
-    > {
-    process(
-            surface: SurfaceWithRendering<
-                    SampleT,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        SurfaceT extends
+            SurfaceWithRendering<
+                    IndicesT,
                     VolumeLocationT,
+                    VolumeSampleT,
+                    SurfaceUVUnwrappingGroup
+                > =
+            SurfaceWithRendering<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
                     SurfaceUVUnwrappingGroup
                 >,
-            context: SurfaceProcessingContextWithRendering<
+        SurfaceProcessingContextT extends
+            SurfaceProcessingContextWithRendering<
+                    SurfaceUVUnwrappingGroup,
+                    VolumeSampleProcessingContextT,
+                    VolumeLocationT
+                > =
+            SurfaceProcessingContextWithRendering<
+                    SurfaceUVUnwrappingGroup,
+                    VolumeSampleProcessingContextT,
+                    VolumeLocationT
+                >,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
                     VolumeLocationT,
-                    SurfaceUVUnwrappingGroup
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > &
+            VolumeProcessingWithSampling<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT
+                > =
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > &
+            VolumeProcessingWithSampling<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                VolumeSampleProcessingContextT,
+                SurfaceProcessingContextT
+            > =
+            VolumeProcessingWithSurfacesContext<
+                VolumeSampleProcessingContextT,
+                SurfaceProcessingContextT
+            >
+    > implements
+    VolumeSurfaceProcessor<
+        IndicesT,
+        VolumeLocationT,
+        VolumeSampleT,
+        VolumeSampleProcessingContextT,
+        VolumeSamplingContextT,
+        VolumeT,
+        SurfaceT,
+        SurfaceProcessingContextT,
+        VolumeProcessingT,
+        VolumeProcessingContextT
+    > {
+    
+    process(
+            surface: VolumeSurfaceProcessing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT,
+                    VolumeProcessingT
+                >,
+            context: VolumeSurfaceProcessingContext<
+                    VolumeSampleProcessingContextT,
+                    SurfaceProcessingContextT,
+                    VolumeProcessingContextT
                 >
         ): void {
-        const paralellizedContext = context as unknown as ParallelizedContext<
-            VolumeProcessingWithSurfaces,
-            VolumeProcessingContext<VolumeLocationT>
-        >
-        
-        const extraLocationParameters = (
-            paralellizedContext[ParallelizedContextParallelInfo] ?
-                paralellizedContext
-                    [ParallelizedContextParallelInfo]
-                    .context
-                    [VolumeSamplingKey]
-                    .extraLocationParameters :
-                undefined
-        )
+        const extraLocationParameters = surface[EncapsulatingKey][SamplingKey].extraLocationParameters
 
         const surfaceUVunwrapping = onlyOne(groupKinds(
             context,
@@ -72,9 +156,10 @@ export class SurfaceWithRenderingProcessor<
         )
     }
 
-    init(context: SurfaceProcessingContextWithRendering<
-                VolumeLocationT,
-                SurfaceUVUnwrappingGroup
+    init(context: VolumeSurfaceProcessingContext<
+                VolumeSampleProcessingContextT,
+                SurfaceProcessingContextT,
+                VolumeProcessingContextT
             >) {
         const connections = {
             inputs: [

@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "module": "ESNext",
+        "module": "NodeNext",
         "moduleResolution": "nodenext",
         "outDir": "dist",
         "rootDir": "src",
@@ -15,7 +15,8 @@
     },
     "exclude": [
         "node_modules",
-        "src/**/*.spec.ts"
+        "src/**/*.spec.ts",
+        "src/physical-entity",
     ],
     "include": ["src"]
 }

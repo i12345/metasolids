@@ -1,8 +1,9 @@
-import { Processor } from "../processing/index.js"
+import { Processor } from "../paradigm/processing/index.js"
 import { Surface } from "../surfaces/surface.js"
-import { SurfaceProcessingContext, SurfaceProcessor } from "../surfaces/surface-samples.js"
+import { SurfaceProcessingContext, SurfaceProcessor } from "../surfaces/processing.js"
 import { VolumeSample } from "../volumes/volume.js"
 import { Solid } from "./solid.js"
+import { IndicesTypedArray } from "../utils/indices-array.js"
 
 export interface SolidProcessingContext<
         SampleProcessingContextT = any,
@@ -15,47 +16,51 @@ export interface SolidProcessingContext<
 }
 
 export interface SolidProcessor<
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any,
-        SurfaceT extends Surface<Sample> = Surface<Sample>,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<VolumeSampleProcessingContextT> =
+            SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         SolidT extends
-            Solid<Sample, SurfaceT> =
-            Solid<Sample, SurfaceT>,
+            Solid<IndicesT, VolumeSampleT, SurfaceT> =
+            Solid<IndicesT, VolumeSampleT, SurfaceT>,
         SolidProcessingContextT extends
-            SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT> = 
-            SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT>
+            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> = 
+            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT>
     > extends
     Processor<SolidT, SolidProcessingContextT> {
 }
 
 export class SolidSurfaceProcessor<
-        Sample extends VolumeSample = VolumeSample,
-        SampleProcessingContextT = any,
-        SurfaceT extends Surface<Sample> = Surface<Sample>,
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceProcessingContextT extends
-            SurfaceProcessingContext<SampleProcessingContextT> =
-            SurfaceProcessingContext<SampleProcessingContextT>,
+            SurfaceProcessingContext<VolumeSampleProcessingContextT> =
+            SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         SolidT extends
-            Solid<Sample, SurfaceT> =
-            Solid<Sample, SurfaceT>,
+            Solid<IndicesT, VolumeSampleT, SurfaceT> =
+            Solid<IndicesT, VolumeSampleT, SurfaceT>,
         SolidProcessingContextT extends
-            SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT> = 
-            SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT>
+            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> = 
+            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT>
     > implements
     SolidProcessor<
-        Sample,
-        SampleProcessingContextT,
+        IndicesT,
+        VolumeSampleT,
+        VolumeSampleProcessingContextT,
         SurfaceT,
         SurfaceProcessingContextT,
         SolidT,
         SolidProcessingContextT
     > {
     constructor(public processor: SurfaceProcessor<
-            Sample,
-            SampleProcessingContextT,
+            IndicesT,
+            VolumeSampleT,
+            VolumeSampleProcessingContextT,
             SurfaceT,
             SurfaceProcessingContextT
         >) { }

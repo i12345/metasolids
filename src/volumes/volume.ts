@@ -1,5 +1,6 @@
-import { BoundingBox, Vec3 } from "playcanvas-extended";
-import { Field, FieldsField, FieldsPoint, FieldsPointMapped, SampleDomain, SamplingContext, Vec3Field } from "../fields/index.js";
+import { Vec3 } from "playcanvas-extended";
+import { Field, FieldsPoint, FieldsPointMapped, SampleDomain, SamplingContext } from "../fields/index.js"
+import { FieldsField, ScalarField, Vec3Field } from "../fields/fields/index.js";
 
 export type VolumeLocation = {
     /**
@@ -10,16 +11,16 @@ export type VolumeLocation = {
 
 export const defaultVolumeLocationField = new FieldsField<VolumeLocation>({
     p: new Vec3Field()
-} as any as FieldsPointMapped<VolumeLocation, Field>)
+})
 
 export type VolumeSample = {
     /**
-     * The presence of the volume at the sampled point
+     * The presence of the volume at the sampled point, in [0, 1]
      * 
      * The threshhold of the mesher will determine whether this is
      * inside or outside a mesh
      */
-    presence: number
+    alpha: number
 
     /**
      * The derivative of presence with respect to position
@@ -29,18 +30,27 @@ export type VolumeSample = {
     gradient: Vec3
 }
 
-export interface VolumeSamplingContext
-    <Location extends VolumeLocation = VolumeLocation> extends
+export const defaultVolumeSampleField = new FieldsField<VolumeSample>({
+    alpha: ScalarField.instance,
+    gradient: Vec3Field.instance,
+})
+
+export const VolumeSampleKey = Symbol("volume.sample")
+
+export interface VolumeSamplingContext<
+        Location extends VolumeLocation = VolumeLocation,
+        SampleProcessingContextT = any
+    > extends
     SamplingContext<Location> {
+    [VolumeSampleKey]: SampleProcessingContextT
 }
 
 export interface Volume<
         Location extends VolumeLocation = VolumeLocation,
         Sample extends VolumeSample = VolumeSample,
-        Context extends VolumeSamplingContext<Location> = VolumeSamplingContext<Location>
+        SampleProcessingContextT = any,
+        Context extends
+            VolumeSamplingContext<Location, SampleProcessingContextT> =
+            VolumeSamplingContext<Location, SampleProcessingContextT>
     > extends SampleDomain<Location, Sample, Context> {
-    /**
-     * Calculates a bounding box that encloses this volume, in world space
-     */
-    boundingBox: BoundingBox
 }

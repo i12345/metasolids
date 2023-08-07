@@ -1,5 +1,5 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate, groups } from "../../../../paradigm/multi-objects.js"
+import { MultiObjectsGroupsTemplate, groups } from "../../../../paradigm/trees/index.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../fields/range.js"
 import { textures } from "../../../../index.js"
 import { TextureSample } from "../../../../textures/texture.js"
@@ -93,11 +93,15 @@ export class MaterialSemanticImplementation_Texture<
         const texture_context = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
 
         const { UVs, finalIndices } = renderer.shared.surfaceUVUnwrapping
-        
+
+        const UVs_tmp = new Array<Vec2>(UVs.length / 2)
+        for (let i = 0; i < UVs_tmp.length; i++)
+            UVs_tmp[i] = new Vec2(UVs[(2 * i) + 0], UVs[(2 * i) + 1])
+
         const texture_location_interpolator = new VertexInterpolatingTexture(
             //TODO: integrate other location fields
-            UVs.map(uv => ({ uv }) as Material_Texture_Location<VolumeLocationT>),
-            UVs,
+            UVs_tmp.map(uv => ({ uv }) as Material_Texture_Location<VolumeLocationT>),
+            UVs_tmp,
             finalIndices
         )
 

@@ -1,4 +1,4 @@
-import { SampleDomain, SampleDomainLocationField, SamplingContext } from "../domain.js";
+import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldPoint } from "../point.js";
 import { TransformingSampleDomain } from "./transforming.js";
@@ -23,7 +23,7 @@ export class LocationFieldObserverSampleDomain<
     }
 
     protected override init_location_field(context: Context): Field<Location> {
-        this._locationField = context[SampleDomainLocationField]
-        return context[SampleDomainLocationField]
+        this._locationField = context[SampleDomainLocationFieldKey]
+        return context[SampleDomainLocationFieldKey]
     }
 }

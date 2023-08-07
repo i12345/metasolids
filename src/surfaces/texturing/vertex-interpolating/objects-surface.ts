@@ -1,12 +1,13 @@
-import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped } from "../../../paradigm/index.js";
+import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped } from "../../../paradigm/trees/index.js";
 import { FieldPoint } from "../../../fields/index.js";
-import { Processor } from "../../../processing/processor.js";
+import { Processor } from "../../../paradigm/processing/processor.js";
 import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { onlyOne } from "../../../utils/index.js";
+import { IndicesTypedArray, onlyOne } from "../../../utils/index.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
 import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
 import { SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping } from "../types.js";
+import { Vec2 } from "playcanvas-extended";
 
 // type A = {
 //     a: {
@@ -66,6 +67,7 @@ export type SurfaceSampleProcessingContextWithObjectsInterpolatingValuesUsingSur
         >
 
 export type SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -108,6 +110,7 @@ export type SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping
     //             >
     //     > =
     SurfaceWithUVUnwrapping<
+        IndicesT,
         SurfaceUVUnwrappingGroup,
         SurfaceSampleT
     > &
@@ -148,10 +151,10 @@ export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSu
     > =
     SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroup,
+            SampleProcessingContextT,
             Objects,
             InterpolatingGroups,
-            ObjectsInterpolatingGrouped,
-            SampleProcessingContextT
+            ObjectsInterpolatingGrouped
         > &
     MultiObjectsGroupsProcessingContext<
             InterpolatingGroups,
@@ -159,6 +162,7 @@ export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSu
         >
 
 export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -201,6 +205,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
     > implements
     Processor<
             SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
+                    IndicesT,    
                     SurfaceUVUnwrappingGroup,
                     Objects,
                     InterpolatingGroups,
@@ -262,6 +267,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
 
     process(
             surface: SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
+                    IndicesT,
                     SurfaceUVUnwrappingGroup,
                     Objects,
                     InterpolatingGroups,
@@ -312,7 +318,15 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                 for (const duplicatedVert of UVunwrapping.duplicatedVerts)
                     values.push(values[duplicatedVert])
                 
-                const texture = new VertexInterpolatingTexture(values, UVunwrapping.UVs, UVunwrapping.finalIndices)
+                const uvs = new Array<Vec2>(UVunwrapping.UVs.length / 2)
+                for (let i = 0; i < uvs.length; i++) {
+                    uvs[i] = new Vec2(
+                        UVunwrapping.UVs[(2 * i) + 0],
+                        UVunwrapping.UVs[(2 * i) + 1]
+                    )
+                }
+                
+                const texture = new VertexInterpolatingTexture(values, uvs, UVunwrapping.finalIndices)
                 intract(surface, objectPath, texture)
             }
         }

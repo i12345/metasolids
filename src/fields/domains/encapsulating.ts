@@ -1,6 +1,7 @@
 import { SampleDomain, SamplingContext } from "../domain.js";
 import { FieldPoint } from "../point.js";
 
+//TODO: reimplement using WithEncapsulating<{ domain: ... context: ... }>
 export const EncapsulatingDomainSamplingContextParentDomain = Symbol('encapsulating-domain:parent:domain')
 export const EncapsulatingDomainSamplingContextParentContext = Symbol('encapsulating-domain:parent:context')
 export interface EncapsulatingDomainSamplingContext<

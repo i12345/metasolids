@@ -1,11 +1,12 @@
-import { PropertyPath, PROPERTYKEY_ALL, groupKindObjectsGrouped, groupKinds, MultiObjectsCombined, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsCombined, MultiObjectsGroupsCombinedMapped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsTemplate } from "../../../paradigm/index.js";
-import { Processor } from "../../../processing/processor.js";
+import { PropertyPath, PROPERTYKEY_ALL, groupKindObjectsGrouped, groupKinds, MultiObjectsCombined, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsCombined, MultiObjectsGroupsCombinedMapped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
+import { Processor } from "../../../paradigm/processing/processor.js";
 import { MultiObjectsInfluences, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext } from "../../../fields/multi-objects.js";
 import { ObjectsCombiningTexture, ObjectsCombiningTexturesTemplated, ObjectsTextureLocationsTextureSample, Texture, TextureLocation, TextureSample, TextureSamplesExtracted, TextureSamplesExtracted1, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { onlyOne } from "../../../utils/index.js";
+import { IndicesTypedArray, onlyOne } from "../../../utils/index.js";
 import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping } from "../index.js";
 import { SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithObjectsTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceWithIndividualTextures, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceWithIndividualTexturesUsingSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations } from "../types.js";
+import { Vec2 } from "playcanvas-extended";
 
 export type SurfaceSampleForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -55,6 +56,7 @@ export type SurfaceSampleProcessingContextForSurfaceWithObjectsTexturesCombinedU
  * `[MultiObjectsCombinedValue]` key of the root of each value texture group.
  */
 export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -83,12 +85,14 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
                 >
     > =
     SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             Objects,
             InfluenceGroup,
             SurfaceSampleT
         > &
     SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
+            IndicesT,
             ValueTextureLocationGroup,
             Objects,
             ValueTexturesGroups,
@@ -99,6 +103,7 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
             SurfaceSampleT
         > &
     SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             MultiObjectsGroupsCombined<ValueTexturesGroups>,
             ValueTextureLocationT,
@@ -177,11 +182,12 @@ export type SurfaceProcessingContextWithObjectsTexturesCombinedUsingSurfaceUVUnw
     > &
     SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup,
-        MultiObjectsGroupsCombined<ValueTextureGroups>,
-        SampleProcessingContextT
+        SampleProcessingContextT,
+        MultiObjectsGroupsCombined<ValueTextureGroups>
     >
 
 export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -207,6 +213,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
     > implements
     Processor<
         SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             Objects,
             InfluenceGroup,
@@ -289,7 +296,8 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
     }
 
     process(
-            surface: SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
+        surface: SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
+                    IndicesT,
                     SurfaceUVUnwrappingGroup,
                     Objects,
                     InfluenceGroup,
@@ -345,7 +353,15 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             for (const duplicatedVert of UVunwrapping.duplicatedVerts)
                 locations.push(locations[duplicatedVert])
             
-            const locations_texture = new VertexInterpolatingTexture(locations, UVunwrapping.UVs, UVunwrapping.finalIndices)
+            const uvs = new Array<Vec2>(UVunwrapping.UVs.length / 2)
+            for (let i = 0; i < uvs.length; i++) {
+                uvs[i] = new Vec2(
+                    UVunwrapping.UVs[(2 * i) + 0],
+                    UVunwrapping.UVs[(2 * i) + 1]
+                )
+            }
+            
+            const locations_texture = new VertexInterpolatingTexture(locations, uvs, UVunwrapping.finalIndices)
 
             const combined = new ObjectsCombiningTexture(
                 template,

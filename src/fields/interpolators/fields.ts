@@ -1,4 +1,4 @@
-import { extract } from "../../paradigm/tree.js"
+import { extract } from "../../paradigm/trees/index.js"
 import { Field } from "../field.js"
 import { FieldInterpolationType, makeInterpolator, FieldInterpolator, FieldInterpolationKeypoint, InterpolationManager } from "../interpolation.js"
 import { FieldsPoint, FieldsPointMapped, FieldPoint, fields_point_map } from "../point.js"

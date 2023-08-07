@@ -1,8 +1,8 @@
 import { FieldPoint } from '../point.js'
-import { SampleDomain, SampleDomainLocationField, SampleDomain_vectorized, SamplingContext } from '../domain.js'
+import { SampleDomain, SampleDomainLocationFieldKey, SampleDomain_vectorized, SamplingContext } from '../domain.js'
 import { Field } from '../field.js'
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from './encapsulating.js'
-import { PropertyPath } from '../../paradigm/property-path.js'
+import { PropertyPath } from '../../paradigm/trees/path.js'
 import { VectorFunction, vectorized } from 'vectorized-functions'
 
 export type TransformingDefaultInnerSamplingContext<
@@ -12,9 +12,9 @@ export type TransformingDefaultInnerSamplingContext<
         OuterContext extends
             SamplingContext<OuterLocation> =
             SamplingContext<OuterLocation>
-    > = Omit<OuterContext, typeof SampleDomainLocationField> &
+    > = Omit<OuterContext, typeof SampleDomainLocationFieldKey> &
     EncapsulatingDomainSamplingContext<InnerLocation, OuterLocation, OuterSample, OuterContext> &
-    { [SampleDomainLocationField]: Field<InnerLocation> }
+    { [SampleDomainLocationFieldKey]: Field<InnerLocation> }
 
 /**
  * A transforming sample domain. It has overrideable behavoir for transforming
@@ -62,7 +62,7 @@ export abstract class TransformingSampleDomain<
     protected transformContext(context: OuterContext): InnerContext {
         const innerContext: TransformingDefaultInnerSamplingContext<OuterLocation, InnerLocation, OuterSample, OuterContext> = {
             ...context,
-            [SampleDomainLocationField]: this.location_field,
+            [SampleDomainLocationFieldKey]: this.location_field,
             [EncapsulatingDomainSamplingContextParentContext]: context,
             [EncapsulatingDomainSamplingContextParentDomain]: this
         }
@@ -71,7 +71,7 @@ export abstract class TransformingSampleDomain<
     }
 
     protected init_location_field(context: OuterContext): Field<InnerLocation> {
-        return context[SampleDomainLocationField] as any as Field<InnerLocation>
+        return context[SampleDomainLocationFieldKey] as any as Field<InnerLocation>
     }
 
     protected init_transfer_context(

@@ -1,7 +1,8 @@
-import { Application, Vec2 } from "playcanvas-extended"
+import { Application, Vec2, Vec3 } from "playcanvas-extended"
 import { FieldPointRange, RANGE_MAX, RANGE_MIN, field_point_range_compute } from "../../../fields/index.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
 import { VolumeLocation } from "../../../volumes/index.js"
+import { indicesArrayType } from "../../../utils/indices-array.js"
 
 type LevelOfDetailInfo_Edge_Cached = {
     absolute: {
@@ -78,27 +79,28 @@ export class LevelOfDetailInfoComputerShared<
         const isFirst = this.renderer.implementation_cache.size === 0
         const meshData = this.renderer.renderer.meshData
         const UVunwrapping = this.renderer.renderer.surfaceUVUnwrapping
+        const n_original_vertices = meshData.vertices.length / 3
 
         /** decimated? UV-unwrapped-duplicated? vertex index -> original mesh data vertex index */
         const vertices_original = isFirst ?
-            new Array(meshData.vertices.length + (UVunwrapping?.duplicatedVerts.length ?? 0)) :
+            new (indicesArrayType(n_original_vertices))(n_original_vertices + (UVunwrapping?.duplicatedVerts.length ?? 0)) :
             this.renderer.decimation.cached(quality).vertices_original
 
         /** decimated? UV-unwrapped? vertex index -> UV-unwrapped? vertex index */
         const vertices_unwrapped = isFirst ?
-            new Array(meshData.vertices.length + (UVunwrapping?.duplicatedVerts.length ?? 0)) :
+            new (indicesArrayType(n_original_vertices + (UVunwrapping?.duplicatedVerts.length ?? 0)))(n_original_vertices + (UVunwrapping?.duplicatedVerts.length ?? 0)) :
             this.renderer.decimation.cached(quality).vertices_final
         
         if (isFirst) {
-            for (let i = 0; i < meshData.vertices.length; i++) {
+            for (let i = 0; i < n_original_vertices; i++) {
                 vertices_original[i] = i
                 vertices_unwrapped[i] = i
             }
 
             if (UVunwrapping) {
                 for (let i = 0; i < UVunwrapping.duplicatedVerts.length; i++) {
-                    vertices_original[i + meshData.vertices.length] = UVunwrapping.duplicatedVerts[i]
-                    vertices_unwrapped[i + meshData.vertices.length] = i + meshData.vertices.length
+                    vertices_original[i + n_original_vertices] = UVunwrapping.duplicatedVerts[i]
+                    vertices_unwrapped[i + n_original_vertices] = i + n_original_vertices
                 }
             }
         }
@@ -111,6 +113,10 @@ export class LevelOfDetailInfoComputerShared<
         const edges: LevelOfDetailInfo_Edge_Cached[] = []
         
         const EDGES_COUNT = Math.min(100, indices.length / 3)
+
+        const world_0 = new Vec3(), world_1 = new Vec3()
+        const uv_0 = new Vec2(), uv_1 = new Vec2()
+
         for (let i = 0; i < EDGES_COUNT; i++) {
             const i0 = Math.min(indices.length - 1, Math.floor(indices.length * Math.random()))
             const i1 = (((i0 % 3) + 1) % 3) + (3 * Math.floor(i0 / 3))
@@ -124,12 +130,31 @@ export class LevelOfDetailInfoComputerShared<
             const v0_original = vertices_original[v0_decimated]
             const v1_original = vertices_original[v1_decimated]
 
-            const world_0 = meshData.vertices[v0_original]
-            const world_1 = meshData.vertices[v1_original]
+            world_0.set(
+                meshData.vertices[(3 * v0_original) + 0],
+                meshData.vertices[(3 * v0_original) + 1],
+                meshData.vertices[(3 * v0_original) + 2]
+            )
+
+            world_1.set(
+                meshData.vertices[(3 * v1_original) + 0],
+                meshData.vertices[(3 * v1_original) + 1],
+                meshData.vertices[(3 * v1_original) + 2]
+            )
+            
             const world_dist = world_0.distance(world_1)
 
             const uv_dist = UVunwrapping ?
-                UVunwrapping.UVs[v0_UVunwrapped].distance(UVunwrapping?.UVs[v1_UVunwrapped]) :
+                uv_0.set(
+                        UVunwrapping.UVs[(2 * v0_UVunwrapped) + 0],
+                        UVunwrapping.UVs[(2 * v0_UVunwrapped) + 1]
+                    )
+                    .distance(
+                            uv_1.set(
+                                    UVunwrapping.UVs[(2 * v1_UVunwrapped) + 0],
+                                    UVunwrapping.UVs[(2 * v1_UVunwrapped) + 1]
+                                )
+                        ) :
                 NaN
 
             edges.push({

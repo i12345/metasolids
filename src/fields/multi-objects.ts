@@ -1,5 +1,5 @@
-import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects } from "../paradigm/index.js";
-import { Processor } from "../processing/processor.js";
+import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped } from "../paradigm/trees/index.js";
+import { Processor } from "../paradigm/processing/processor.js";
 import { onlyOne } from "../utils/index.js";
 import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
 
@@ -90,7 +90,7 @@ export class MultiObjectsInfluencesNormalizingProcessor<
             MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups> =
             MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroups>
     >
-    implements Processor<Result, Context> {
+    implements Processor<Result[], Context> {
     connections!: {
         readonly inputs: PropertyPath[]
         readonly outputs: PropertyPath[]
@@ -111,39 +111,41 @@ export class MultiObjectsInfluencesNormalizingProcessor<
         const paths = [...influenceGroups].map(({ group: { path } }) => path)
 
         const connections = {
-            inputs: paths,
-            outputs: paths.map(path => [...path, MultiObjectsCombinedValue])
+            inputs: paths.map(path => [PROPERTYKEY_ALL, ...path]),
+            outputs: paths.map(path => [PROPERTYKEY_ALL, ...path, MultiObjectsCombinedValue])
         }
 
         return { connections }
     }
 
-    process(result: Result, context: Context): void {
-        for (const { objects } of groupKindObjectsGrouped(result, context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroups)) {
-            const influences = objects.value as MultiObjectsInfluences<Objects>
-            const objects_template = objects.template
+    //TODO: support vectorized field points
+    process(results: Result[], context: Context): void {
+        for (const { group } of groupKinds(context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroups)) {
+            for (const influences of results.map(result => group.get<MultiObjectsInfluences<Objects>>(result))) {
+                const objects_template = group.get<Objects>(context[MultiObjectsProcessingContextObjectsGrouped])
 
-            let sum = 0
+                let sum = 0
             
-            iterObjects(
-                influences,
-                objects_template,
-                (influences, key) =>
-                    sum += influences[key]
-            )
-            
-            if (sum > 0) {
                 iterObjects(
                     influences,
                     objects_template,
                     (influences, key) =>
-                        influences[key] /= sum
+                        sum += influences[key]
                 )
+            
+                if (sum > 0) {
+                    iterObjects(
+                        influences,
+                        objects_template,
+                        (influences, key) =>
+                            influences[key] /= sum
+                    )
 
-                sum = 1
+                    sum = 1
+                }
+
+                influences[MultiObjectsCombinedValue] = sum
             }
-
-            influences[MultiObjectsCombinedValue] = sum
         }
     }
 

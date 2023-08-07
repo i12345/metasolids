@@ -1,5 +1,6 @@
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/multi-objects.js";
-import { SurfaceProcessingContext } from "../surface-samples.js";
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { SurfaceProcessingContext } from "../processing.js";
 import { Surface, SurfaceSample } from "../surface.js";
 import { SurfaceUVUnwrapping } from "./algorithm.js";
 
@@ -21,10 +22,11 @@ export const SurfaceUVUnwrappingGroupsDefaultTemplate: SurfaceUVUnwrappingGroups
 }
 
 export type SurfaceWithUVUnwrapping<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SampleT extends SurfaceSample = SurfaceSample
+        SurfaceSampleT extends SurfaceSample = SurfaceSample
     > =
-    Surface<SampleT> &
+    Surface<IndicesT, SurfaceSampleT> &
     MultiObjectsGroupsMapped<SurfaceUVUnwrappingGroup, SurfaceUVUnwrapping>
 
 export type SurfaceProcessingContextWithUVUnwrapping<

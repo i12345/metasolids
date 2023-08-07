@@ -1,12 +1,14 @@
 import { describe, it } from "mocha"
 import { assert } from "chai"
 import { fullname } from "type-namespace"
-import { SurfaceTriangleRayCollider, SurfaceTriangleRayColliderProcessingContext } from "./ray-collider.js"
+import { VolumeWithSurfacesTriangleRayCollider, VolumeWithSurfacesTriangleRayColliderProcessingContext } from "./ray-collider.js"
 import { Ray, Vec3 } from "playcanvas-extended"
-import { MeshData } from "./meshing/types.js"
-import { MeshDataWithNormals, Surface, SurfaceInstance } from "./surface.js"
+import { MeshData, MeshDataWithNormals } from "./mesh-data.js"
+import { Surface, SurfaceInstance } from "./surface.js"
+import { VolumeSurfacesKey } from "./volume-surfaces.js"
+import { VolumeKey } from "../volumes/processor.js"
 
-describe(fullname(SurfaceTriangleRayCollider), () => {
+describe(fullname(VolumeWithSurfacesTriangleRayCollider), () => {
     interface Case {
         mesh: MeshData
         ray: Ray
@@ -15,16 +17,20 @@ describe(fullname(SurfaceTriangleRayCollider), () => {
     
     const surfaces: MeshData[] = [
         {
-            vertices: [
-                new Vec3(0, 0, 0),
-                new Vec3(1, 0, 0),
-                new Vec3(1, 1, 0),
-                new Vec3(0, 1, 0),
-            ],
+            vertices: new Float32Array([
+                0, 0, 0,
+                1, 0, 0,
+                1, 1, 0,
+                0, 1, 0,
+            ]),
             triangles: [
                 0, 1, 2,
                 0, 2, 3,
-            ]
+            ],
+            dualCellReferences: {
+                layers: undefined!,
+                localIndices: undefined!
+            }
         },
     ]
 
@@ -66,7 +72,8 @@ describe(fullname(SurfaceTriangleRayCollider), () => {
     cases.forEach(({ mesh, ray, t }) => it("", () => {
         const surface: Surface = {
             mesh: mesh as MeshDataWithNormals,
-            samples: []
+            samples: [],
+            isClosed: false,
         }
 
         const instance: SurfaceInstance = {
@@ -74,13 +81,21 @@ describe(fullname(SurfaceTriangleRayCollider), () => {
             shared: surface
         }
 
-        const collider = new SurfaceTriangleRayCollider()
+        const collider = new VolumeWithSurfacesTriangleRayCollider()
         
-        const context: SurfaceTriangleRayColliderProcessingContext = {
+        const context: VolumeWithSurfacesTriangleRayColliderProcessingContext = {
             context: undefined!,
-            surfaces: [instance]
+            instance: {
+                entity: undefined!,
+                shared: {
+                    [VolumeKey]: undefined!,
+                    [VolumeSurfacesKey]: [surface]
+                },
+                [VolumeSurfacesKey]: [instance],
+                spaceTransformations: []
+            }
         }
-        
+
         collider.init(context)
 
         const collision = collider.sample_multiple(ray, context)

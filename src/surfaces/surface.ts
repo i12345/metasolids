@@ -1,23 +1,26 @@
-import { MeshData } from "./meshing/types.js";
+import { MeshDataWithNormals } from "./mesh-data.js";
 import { VolumeSample } from "../volumes/volume.js";
-import { Instance, Instancer } from "../processing/instance.js";
+import { Instance } from "../paradigm/processing/instance.js";
+import { IndicesTypedArray } from "../utils/indices-array.js";
 
 export type SurfaceSample = VolumeSample
 
-export interface MeshDataWithNormals extends MeshData {
-    normals: Float32Array
-}
-
 export interface Surface<
-        SampleT extends SurfaceSample = SurfaceSample
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        SurfaceSampleT extends SurfaceSample = SurfaceSample
     > {
-    readonly mesh: MeshDataWithNormals
+    readonly mesh: MeshDataWithNormals<IndicesT>
 
     /**
      * These might not be directly from the volume samples, but derived
      * from them.
      */
-    readonly samples: SampleT[]
+    readonly samples: SurfaceSampleT[]
+
+    /**
+     * whether this surface encloses a space or not
+     */
+    readonly isClosed: boolean
 }
 
 export interface SurfaceInstance<SurfaceT extends Surface = Surface>

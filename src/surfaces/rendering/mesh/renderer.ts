@@ -153,19 +153,23 @@ export class MeshRendererIndividual<
 
         for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {
             const i_original = vertices_original[i_decimated]
-            const i_UVunwrapped = vertices_final[i_decimated]
 
-            const position = surface_meshData.vertices[i_original]
-            const uv = UVunwrapping?.UVs[i_UVunwrapped]!
+            positions[(3 * i_decimated) + 0] = surface_meshData.vertices[(3 * i_original) + 0]
+            positions[(3 * i_decimated) + 1] = surface_meshData.vertices[(3 * i_original) + 1]
+            positions[(3 * i_decimated) + 2] = surface_meshData.vertices[(3 * i_original) + 2]
 
-            positions[(3 * i_decimated) + 0] = position.x
-            positions[(3 * i_decimated) + 1] = position.y
-            positions[(3 * i_decimated) + 2] = position.z
-            UVs[(2 * i_decimated) + 0] = uv.x
-            UVs[(2 * i_decimated) + 1] = uv.y
             normals[(3 * i_decimated) + 0] = surface_meshData.normals[(3 * i_original) + 0]
             normals[(3 * i_decimated) + 1] = surface_meshData.normals[(3 * i_original) + 1]
             normals[(3 * i_decimated) + 2] = surface_meshData.normals[(3 * i_original) + 2]
+        }
+
+        if (UVunwrapping) {
+            for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {            
+                const i_UVunwrapped = vertices_final[i_decimated]
+
+                UVs[(2 * i_decimated) + 0] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 0]
+                UVs[(2 * i_decimated) + 1] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 1]
+            }
         }
 
         mesh.setPositions(positions)

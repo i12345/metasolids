@@ -1,0 +1,212 @@
+import { Vec3 } from "playcanvas-extended";
+import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { SamplingKey, SpaceKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroupsTemplate } from "../../volumes/sampling/index.js";
+import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
+import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
+import { OctTreeSpace } from "../../paradigm/octtree/space.js";
+import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
+import { EncapsulatingKey } from "../../paradigm/trees/encapsulating.js";
+import { VolumeSolidsKey } from "../volume-solids.js";
+import { VolumeProcessingWithSurfacesContext } from "../../surfaces/volume-surfaces.js";
+import { groupPaths } from "../../paradigm/trees/multi-objects-groups.js";
+
+export interface VolumeSamplingContextWithSolidHints<
+        LocationT extends VolumeLocation = VolumeLocation,
+        SampleProcessingContextT = any
+    >
+    extends VolumeSamplingContext<
+        LocationT,
+        SampleProcessingContextT
+    > {
+    [VolumeSolidsKey]: {
+        /**
+         * packed xyz arrays of hint points, for each object that gives solid hints
+         * 
+         * The solid hint volume sampling subdivision processor will recommend
+         * subdivision so that all solid hint points are inside of cells with
+         * alpha of 1.
+         * 
+         * TODO: how will subtraction be handled? should this be for influence groups
+         * instead of [just] alpha?
+         */
+        hints: Float32Array[]
+    }
+}
+
+export class SolidHintVolumeSamplingSubdivisionProcessor<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContextWithSolidHints<VolumeLocationT, VolumeSampleProcessingContextT> =
+            VolumeSamplingContextWithSolidHints<VolumeLocationT, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
+            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+        VolumeProcessingT extends
+            VolumeProcessingWithSampling<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT
+                > =
+            VolumeProcessingWithSampling<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT
+                >,
+        VolumeProcessingContextT extends
+            VolumeProcessingWithSurfacesContext<
+                    VolumeSampleProcessingContextT//,
+                    // SurfaceProcessingContextT
+                > &
+            VolumeProcessingContextWithSampling<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT //,
+                    // VolumeProcessingContextT
+                > =
+            VolumeProcessingWithSurfacesContext<
+                    VolumeSampleProcessingContextT//,
+                    // SurfaceProcessingContextT
+                > &
+            VolumeProcessingContextWithSampling<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT //,
+                    // VolumeProcessingContextT
+                >
+    > implements
+    VolumeSamplingSubdivisionProcessor<
+            IndicesT,
+            {},
+            any,
+            {},
+            any,
+            {},
+            {},
+            VolumeLocationT,
+            VolumeSampleT,
+            VolumeSampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
+            VolumeProcessingT,
+            VolumeProcessingContextT
+    > {
+    init(context: VolumeSamplingSubdivisionProcessingContext<IndicesT, {}, any, {}, any, {}, {}, VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT, VolumeProcessingContextT>): ProcessorInitialization {
+        context[VolumeSamplingContextKey][VolumeSolidsKey] = {
+            // surfaceLevel: context[EncapsulatingKey][VolumeSurfacesKey].surfaceLevel,
+            hints: []
+        }
+        
+        return {
+            connections: {
+                //TODO: specialize for just presence
+                inputs: [...groupPaths(VolumeSamplingSubdivisionSamplesGroupsTemplate<VolumeSampleT>())],
+                outputs: []
+            }
+        }
+    }
+
+    process(
+            item: VolumeSamplingSubdivisionProcessing<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    VolumeProcessingT
+                >,
+            context: VolumeSamplingSubdivisionProcessingContext<
+                    IndicesT,
+                    {},
+                    any,
+                    {},
+                    any,
+                    {},
+                    {},
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeProcessingContextT
+                >
+        ): void {
+        const subdivision = context[SubdivisionKey]
+        const layer = subdivision.depth
+
+        const recommendation_pre = new Uint8Array(subdivision.layer_sizes[layer])
+
+        for (const hint_array of context[VolumeSamplingContextKey][VolumeSolidsKey].hints) {
+            //TODO: support different parameter & return types for vectorized functions
+
+            const positions = new Array<Vec3>(hint_array.length / 3)
+            let hint_array_offset = 0
+            for (let i = 0; i < positions.length; i++)
+                positions[i] = new Vec3(hint_array[hint_array_offset++], hint_array[hint_array_offset++], hint_array[hint_array_offset++])
+            
+            const layerLocalIndices = OctTreeSpace.vectorized.indexOfPosition.call(context[SpaceKey], positions)
+
+            for (let i = 0; i < layerLocalIndices.length; i++) {
+                if (layerLocalIndices[i].layer === layer) {
+                    const localIndex = layerLocalIndices[i].local_index
+                    
+                    const is_interior = item.samples[localIndex].alpha === 1
+
+                    if (!is_interior)
+                        recommendation_pre[localIndex]++
+                }
+            }
+        }
+
+        const recommendation = item[SubdivisionKey].recommendation.layers[layer]
+        for (let localIndex = 0; localIndex < recommendation_pre.length; localIndex++)
+            if (recommendation_pre[localIndex] > 0)
+                recommendation[localIndex]++
+    }
+
+    private constructor() { }
+    public static readonly instance = new this()
+}

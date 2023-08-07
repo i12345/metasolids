@@ -1,5 +1,5 @@
 import { Color, StandardMaterial, BasicMaterial, BLEND_NORMAL } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../paradigm/multi-objects.js"
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../paradigm/trees/index.js"
 
 export type Material_Groups = {
     /**
@@ -156,7 +156,7 @@ export type Material_Groups = {
      * NOTE: this field is not set by the user; it is constructed using
      * interpolated surface normals (from {@link VolumeSample.gradient}) and
      * surface distance textures calculated from the metasphapes' textures for
-     * metashape parameters (unit.height, unit.length, falloff.bias,
+     * metasolid parameters (unit.height, unit.length, falloff.bias,
      * falloff.rate), merged with corresponding weights:
      * 
      * ```text
@@ -640,7 +640,7 @@ export type Material_Groups_Textures_TexelTypes = {
      * NOTE: this field is not set by the user; it is constructed using
      * interpolated surface normals (from {@link VolumeSample.gradient}) and
      * surface distance textures calculated from the metasphapes' textures for
-     * metashape parameters (unit.height, unit.length, falloff.bias,
+     * metasolid parameters (unit.height, unit.length, falloff.bias,
      * falloff.rate), merged with corresponding weights:
      * 
      * ```text

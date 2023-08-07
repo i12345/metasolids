@@ -1,9 +1,7 @@
-import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain, SampleDomain, defaultField } from "../../fields/index.js";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/index.js";
-import { FieldPoint } from "../../fields/point.js";
-import { PropertyPath } from "../../paradigm/property-path.js";
+import { CompositeHadamardProductSampleDomain, CompositeSampleDomain } from "../../fields/domains/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "../texture.js";
-import { TextureableProcessingContext, Texturer } from "../texturer.js";
+import { Texturer } from "../texturer.js";
 
 type InputsT = {
     a: MultiObjectsGroupsTemplateLeaf

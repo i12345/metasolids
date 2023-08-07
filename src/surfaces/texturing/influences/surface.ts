@@ -1,6 +1,7 @@
 import { MultiObjectsInfluences, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupKindsTemplate } from "../../../fields/multi-objects.js";
-import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../../paradigm/multi-objects.js";
+import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { Texture, TextureLocation } from "../../../textures/texture.js";
+import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 import { SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceSampleWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor } from "../vertex-interpolating/individual-surface.js";
@@ -34,12 +35,14 @@ export type SurfaceSampleProcessingContextWithInfluences<
     >
 
 export type SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SurfaceSampleT extends SurfaceSample = SurfaceSample
     > =
     SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             InfluencesGroup,
             TextureLocation,
@@ -68,11 +71,12 @@ export type SurfaceProcessingContextWithInfluencesTextureUsingSurfaceUVUnwrappin
     > =
     SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroup,
-            InfluencesGroup,
-            SampleProcessingContextT
+            SampleProcessingContextT,
+            InfluencesGroup
         >
 
 export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -84,6 +88,7 @@ export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
             SurfaceSampleProcessingContextWithInfluences<Objects, InfluencesGroup>
     > extends
     SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor<
+            IndicesT,
             SurfaceUVUnwrappingGroup,
             InfluencesGroup,
             MultiObjectsInfluencesGroupKinds,

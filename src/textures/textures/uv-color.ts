@@ -1,5 +1,5 @@
 import { Color } from "playcanvas-extended";
-import { ColorField } from "../../fields/index.js";
+import { ColorField } from "../../fields/fields/color.js";
 import { FieldPoint } from "../../fields/point.js";
 import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
 

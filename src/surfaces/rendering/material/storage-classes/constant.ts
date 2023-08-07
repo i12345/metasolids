@@ -2,7 +2,7 @@ import { StandardMaterial, Color, Vec3, Vec2, Vec4, Material } from "playcanvas-
 import { Cost_Space, MaterialSemanticImplementationStorageClass, MaterialSemanticImplementationStorageClassInstanceIndividual, MaterialSemanticImplementationStorageClassInstanceShared, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { VolumeLocation } from "../../../../volumes/index.js";
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/index.js";
+import { MultiObjectsGroupsTemplate } from "../../../../paradigm/trees/index.js";
 
 export class MaterialSemanticImplementationStorageClass_Constant<
         VolumeLocationT extends VolumeLocation = VolumeLocation
