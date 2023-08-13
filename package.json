@@ -32,6 +32,7 @@
   "devDependencies": {
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
+    "@types/ronomon__hash-table": "^2.0.0",
     "chai": "^4.3.7",
     "mocha": "^10.2.0",
     "reflect-metadata": "^0.1.13",
@@ -39,6 +40,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@ronomon/hash-table": "^2.0.8",
     "byte-rw": "^1.2.2",
     "playcanvas-extended": "^1.65.2-dev",
     "playcanvas-extended-serializer": "^1.0.0",

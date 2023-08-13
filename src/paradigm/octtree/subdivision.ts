@@ -132,8 +132,8 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
         let next_layer_voxel_count = 0
 
         if (advice) {
-            if (advice.recommendation.depth !== 1 + this.references.global.depth)
-                throw new Error(`subdivision advice depth should equal 1 + subdivision references depth"`)
+            if (advice.recommendation.depth !== this.references.global.depth)
+                throw new Error(`subdivision advice depth should equal subdivision references depth"`)
             
             const recommendation = advice.recommendation.layers.at(-1)!
             // const regret = advice.regret.layers.at(-1)!
@@ -187,15 +187,14 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
     }
 
     address(layer: number, localIndex: number, result: OctTreeAddress = new Array(layer + 1)) {
-        if (result.length < layer + 1)
-            throw new Error("result.length must be >= layer + 1")
+        if (layer > result.length)
+            throw new Error("result.length must be >= layer")
         
         const references_parents = this.references.parents.layers
-        while (layer >= 0) {
-            result[layer] = octTreeSubcell(localIndex)
-            if(layer > 0)
-                localIndex = references_parents[layer - 1][localIndex / 8]
+        while (layer > 0) {
             layer--
+            result[layer] = octTreeSubcell(localIndex)
+            localIndex = references_parents[layer][localIndex >> 3]
         }
 
         return result
@@ -297,7 +296,7 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
         const prev = direction === 0 ? mask : 0
         
         let leastSignificantBit: number
-        for (leastSignificantBit = layer; leastSignificantBit >= 0; leastSignificantBit--)
+        for (leastSignificantBit = layer - 1; leastSignificantBit >= 0; leastSignificantBit--)
             if ((address[leastSignificantBit] & mask) === prev)
                 break
         
@@ -346,7 +345,7 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
         let leastSignificantBit: number
         let leastSignificantBitFound1 = false
         let leastSignificantBitFound2 = false
-        for (leastSignificantBit = layer; leastSignificantBit >= 0; leastSignificantBit--) {
+        for (leastSignificantBit = layer - 1; leastSignificantBit >= 0; leastSignificantBit--) {
             if ((address[leastSignificantBit] & mask1) === prev1)
                 leastSignificantBitFound1 = true
             if ((address[leastSignificantBit] & mask2) === prev2)
@@ -405,7 +404,7 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
         let leastSignificantBitFoundX = false
         let leastSignificantBitFoundY = false
         let leastSignificantBitFoundZ = false
-        for (leastSignificantBit = layer; leastSignificantBit >= 0; leastSignificantBit--) {
+        for (leastSignificantBit = layer - 1; leastSignificantBit >= 0; leastSignificantBit--) {
             if ((address[leastSignificantBit] & maskX) === prevX)
                 leastSignificantBitFoundX = true
             if ((address[leastSignificantBit] & maskY) === prevY)

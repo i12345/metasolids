@@ -39,8 +39,8 @@ export class OctTreeReferences<IndicesT extends IndicesTypedArray = IndicesTyped
             OctTreeReferencesOctTreeLayer,
             OctTreeReferencesOctTreeLayersGrouped
         > {
-    readonly layers = new TypedArrayOctTree<number, Uint8Array>(Uint8Array)
-    readonly localIndices = new TypedArrayOctTree<number, IndicesT>(this.typedArray)
+    readonly layers = new TypedArrayOctTree<number, Uint8Array>(Uint8Array, [], 255)
+    readonly localIndices = new TypedArrayOctTree<number, IndicesT>(this.typedArray, [], new this.typedArray([-1])[0])
     
     constructor(public readonly typedArray: TypedArrayConstructor<number, IndicesT>) { }
     

@@ -292,6 +292,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     if (!is_interior) {
                         for (let triagonal_corner = 0; triagonal_corner < 8; triagonal_corner++) {
                             const dual_cell_layer = dual_cells_lookup_layer[(8 * localIndex) + triagonal_corner]
+                            if(dual_cell_layer === invalid_layer) continue
                             const dual_cell_localIndex = dual_cells_lookup_localIndices[(8 * localIndex) + triagonal_corner]
 
                             const polygons_by_edge_offset = 12 * dual_cell_localIndex

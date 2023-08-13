@@ -1,10 +1,10 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, field_point_clone, makeInterpolator, field_point_invalid } from "../../fields/index.js";
-import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../../fields/domain.js";
+import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, field_point_invalid } from "../../fields/index.js";
+import { SampleDomain, SampleDomainLocationFieldKey } from "../../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/texture.js";
 import { extract, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
-import { Volume, VolumeLocation, VolumeSample, VolumeSampleKey, VolumeSamplingContext } from "../../volumes/index.js";
-import { meshing, texturing } from "../../surfaces/index.js";
+import { VolumeLocation, VolumeSample, VolumeSampleKey } from "../../volumes/index.js";
+import { VolumeSurfacesKey, texturing } from "../../surfaces/index.js";
 import { TransformingSampleDomain } from "../../fields/domains/index.js";
 import { ScalarField, Vec2Field, Vec3Field, FieldsField  } from "../../fields/fields/index.js";
 import { VolumeSamplingContextWithSolidHints } from "../sampling/hints.js";
@@ -381,7 +381,7 @@ export class MetaSolidVolume<
         const is_valid = MetaSolidVolume.parametersValid(parameters)
         
         const surface_distance = !is_valid ? NaN : (sample.distance - parameters.unit.height) / parameters.unit.length
-        const alpha = !is_valid ? 0 : ((1 - Math.max(1, Math.min(0, (surface_distance - parameters.unit.height) / parameters.unit.length))) ** parameters.falloff.rate)
+        const alpha = !is_valid ? 0 : ((1 - Math.min(1, Math.max(0, surface_distance))) ** parameters.falloff.rate)
 
         return change<
                 MetaSolidVolumeSample<TxSample, InnerSample>,
@@ -486,6 +486,6 @@ export class MetaSolidVolume<
          * alpha = surface level alpha
          */
         
-        return ((1 - Math.exp(Math.log(samplingContext[VolumeSampleKey].surfaceLevel) / parameters.falloff.rate)) * parameters.unit.length) + parameters.unit.height
+        return ((1 - Math.exp(Math.log(samplingContext[VolumeSurfacesKey].surfaceLevel) / parameters.falloff.rate)) * parameters.unit.length) + parameters.unit.height
     }
 }

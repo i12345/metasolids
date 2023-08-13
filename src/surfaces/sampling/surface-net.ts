@@ -1,4 +1,7 @@
-import { Axis, Direction, OctTreeCell, Quadrant } from "../../paradigm/octtree/address.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { NumberArrayLike, TypedArray } from "../../utils/typed-array.js";
+import { arrayCopy } from "../../paradigm/trees/index.js"
+import { Axis, Direction, OctTreeCell, OctTreeCellsMask, Quadrant } from "../../paradigm/octtree/address.js";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualGroupsTemplate, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import { OctTreeCellsMaskOctTree } from "../../paradigm/octtree/mask.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
@@ -7,12 +10,13 @@ import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { EncapsulatingKey, WithEncapsulating } from "../../paradigm/trees/encapsulating.js";
 import { MultiObjectsGroupsOrLeafMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplateOrLeaf, MultiObjectsGroupsTemplate_Leaf, groupPaths, isGroupLeaf } from "../../paradigm/trees/multi-objects-groups.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberArrayLike, TypedArray } from "../../utils/typed-array.js";
 import { VolumeProcessing } from "../../volumes/processor.js";
 import { VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionProcessingWithDual, VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessingContextWithDual, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessing, SamplingKey, SpaceKey } from "../../volumes/sampling/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
+import { VolumeProcessingContextWithMeshing } from "../meshing/processing.js";
+import { VolumeSurfacesKey } from "../volume-surfaces.js";
+import HashTable from "@ronomon/hash-table"
 
 export const SurfaceNetKey = "surface"
 
@@ -390,6 +394,13 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
+                > &
+            VolumeProcessingContextWithMeshing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 > =
             VolumeProcessingContextWithSampling<
                     IndicesT,
@@ -404,6 +415,13 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
+                > &
+            VolumeProcessingContextWithMeshing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 >
     > =
     VolumeSamplingSubdivisionProcessingContextWithDual<
@@ -479,13 +497,20 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
                     OctTreeWithDualLayer, // <IndicesT>,
-                    OctTreeWithDualLayersGrouped, /// <IndicesT>,
+                    OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
                     VolumeSampleT,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
+                > &
+            VolumeProcessingContextWithMeshing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 > =
             VolumeProcessingContextWithSampling<
                     IndicesT,
@@ -493,13 +518,20 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
                     OctTreeWithDualLayer, // <IndicesT>,
-                    OctTreeWithDualLayersGrouped, /// <IndicesT>,
+                    OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
                     VolumeSampleT,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
+                > &
+            VolumeProcessingContextWithMeshing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 >,
     > implements
     VolumeSamplingSubdivisionProcessor<
@@ -529,6 +561,13 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT//,
                     // VolumeProcessingContextT
+                >  &
+            VolumeProcessingContextWithMeshing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 >,
             WithEncapsulating<VolumeProcessingT> &
                 SurfaceNetVolumeSamplingSubdivisionProcessing<
@@ -540,14 +579,15 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         VolumeT,
                         VolumeProcessingT
                     >, //, 
-            SurfaceNetVolumeSamplingSubdivisionProcessingContext<
-                IndicesT,
-                VolumeLocationT,
-                VolumeSampleT,
-                VolumeSampleProcessingContextT,
-                VolumeSamplingContextT,
-                VolumeProcessingContextT
-            >
+            WithEncapsulating<VolumeProcessingContextT> &
+                SurfaceNetVolumeSamplingSubdivisionProcessingContext<
+                        IndicesT,
+                        VolumeLocationT,
+                        VolumeSampleT,
+                        VolumeSampleProcessingContextT,
+                        VolumeSamplingContextT,
+                        VolumeProcessingContextT
+                    >
             // VolumeSamplingSubdivisionProcessingContextWithDual<
             //         IndicesT,
             //         VolumeLocationT,
@@ -628,15 +668,23 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     }
                 }
             }
+
+            item[SubdivisionKey].recommendation.layers[layer][0]++
         }
         // else if (parent_layer === 0) {
             
         // }
         else {
-            const number_subdivided_primary_cells = subdivision.layer_sizes[layer]
-            const dual_cells = context[DualKey]
+            const number_subdivided_primary_cells = subdivision.layer_sizes[layer] / 8
+            const dual_cells = context[DualKey].cells
+            const dual_cells_vertices_layers = dual_cells.vertices.layers.layers
+            const dual_cells_vertices_localIndices = dual_cells.vertices.localIndices.layers
+            const dual_cells_neighbors_layers = dual_cells.neighbors.layers.layers
+            const dual_cells_neighbors_localIndices = dual_cells.neighbors.localIndices.layers
+            const dual_cells_lookup_corners_layers = dual_cells.lookup.corners.layers.layers
+            const dual_cells_lookup_corners_localIndices = dual_cells.lookup.corners.localIndices.layers
+
             const primary_samples = context.samples
-            const primary_parent_children_localIndex_offset_references = subdivision.references.local.layers[parent_layer]
             const new_dual_cells = item[DualKey]
             const number_new_dual_cells = new_dual_cells.cells.vertices.layers.length / 8
 
@@ -644,18 +692,27 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             const invalid_localIndex = subdivision.invalid
 
             const space = context[SpaceKey]
+            const space_positions = space.positions.layers
 
-            const surface_level = 0.5 //context[EncapsulatingKey][SamplingKey][VolumeSurfaces].surfaceLevel or context.surfaceLevel
+            const surface_level = context[EncapsulatingKey][VolumeSurfacesKey].surfaceLevel
 
-            const references_subdivided_children = subdivision.references.local.layers[parent_layer]
             const references_parents = subdivision.references.parents.layers[parent_layer]
 
-            const {
-                layers: new_polygon_edges_layers,
-                localIndices: new_polygon_edges_localIndices,
-            } = context[SurfaceNetKey].cells.polygons_by_edge.subdivide(12 * number_new_dual_cells)
+            const new_polygons_by_edge = context[SurfaceNetKey].cells.polygons_by_edge.subdivide(12 * number_new_dual_cells)
 
-            context[SurfaceNetKey].cells.surfacePoints.subdivide(number_new_dual_cells)
+            const {
+                layers: new_polygon_by_edges_layers,
+                localIndices: new_polygon_by_edges_localIndices,
+            } = new_polygons_by_edge
+
+            const cells_polygons_by_edge_layers = context[SurfaceNetKey].cells.polygons_by_edge.layers.layers
+            const cells_polygons_by_edge_localIndices = context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers
+
+            context[SurfaceNetKey].cells.surfacePoints.subdivide(3 * number_new_dual_cells)
+            const surfacePoints = context[SurfaceNetKey].cells.surfacePoints.layers
+            const polygons_vertices_offsets = context[SurfaceNetKey].polygons.vertices.offsets.layers
+            const polygon_vertices_dual_cells_layers = context[SurfaceNetKey].polygons.vertices.dual_cells.layers.layers
+            const polygon_vertices_dual_cells_localIndices = context[SurfaceNetKey].polygons.vertices.dual_cells.localIndices.layers
 
             /**
              * this recommendation will be, for each dual cell,
@@ -675,31 +732,31 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             ) {
                 // invalidate any polygon made around an edge of this dual cell
                 for (let edge = 0; edge < 12; edge++) {
-                    const polygon_layer = context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
+                    const polygon_layer = cells_polygons_by_edge_layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
                     if (polygon_layer !== invalid_layer) {
-                        const polygon_localIndex = context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
+                        const polygon_localIndex = cells_polygons_by_edge_localIndices[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
         
-                        context[SurfaceNetKey].polygons.edges.layers.layers[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_layer
-                        context[SurfaceNetKey].polygons.edges.layers.layers[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_layer
-                        context[SurfaceNetKey].polygons.edges.localIndices.layers[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_localIndex
-                        context[SurfaceNetKey].polygons.edges.localIndices.layers[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_localIndex
+                        cells_polygons_by_edge_layers[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_layer
+                        cells_polygons_by_edge_layers[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_layer
+                        cells_polygons_by_edge_localIndices[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_localIndex
+                        cells_polygons_by_edge_localIndices[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_localIndex
 
                         // const polygon_triangle_offset = context[SurfaceNetKey].polygons.triangles.offsets.layers[polygon_layer][polygon_localIndex]
                         // const polygon_triangle_offset_next = context[SurfaceNetKey].polygons.triangles.offsets.layers[polygon_layer][polygon_localIndex + 1]
                         // context[SurfaceNetKey].polygons.triangles.indices.layers[polygon_layer].fill(invalid_uint32, polygon_triangle_offset, polygon_triangle_offset_next)
         
-                        const polygon_dual_cells_offset = context[SurfaceNetKey].polygons.vertices.offsets.layers[polygon_layer][polygon_localIndex]
-                        const polygon_dual_cells_offset_next = context[SurfaceNetKey].polygons.vertices.offsets.layers[polygon_layer][polygon_localIndex + 1]
+                        const polygon_dual_cells_offset = polygons_vertices_offsets[polygon_layer][polygon_localIndex]
+                        const polygon_dual_cells_offset_next = polygons_vertices_offsets[polygon_layer][polygon_localIndex + 1]
                         for (let dual_cell_i = polygon_dual_cells_offset; dual_cell_i < polygon_dual_cells_offset_next; dual_cell_i++) {
-                            const dual_cell_layer = context[SurfaceNetKey].polygons.vertices.dual_cells.layers.layers[polygon_layer][dual_cell_i]
-                            const dual_cell_localIndex = context[SurfaceNetKey].polygons.vertices.dual_cells.localIndices.layers[polygon_layer][dual_cell_i]
+                            const dual_cell_layer = polygon_vertices_dual_cells_layers[polygon_layer][dual_cell_i]
+                            const dual_cell_localIndex = polygon_vertices_dual_cells_localIndices[polygon_layer][dual_cell_i]
 
                             for (let edge_1 = 0; edge_1 < 12; edge_1++) {
-                                const referenced_polygon_layer = context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
-                                const referenced_polygon_localIndex = context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
+                                const referenced_polygon_layer = cells_polygons_by_edge_layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
+                                const referenced_polygon_localIndex = cells_polygons_by_edge_localIndices[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
                                 if (referenced_polygon_layer === polygon_layer && referenced_polygon_localIndex === polygon_localIndex) {
-                                    context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge] = invalid_layer
-                                    context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge] = invalid_localIndex
+                                    cells_polygons_by_edge_layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge] = invalid_layer
+                                    cells_polygons_by_edge_localIndices[dual_cell_layer][(12 * dual_cell_localIndex) + edge] = invalid_localIndex
                                 }
                             }
                         }
@@ -709,13 +766,13 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
             // invalidate all polygons formed around edges of any of the previous triagonal neighbor dual cells
             // = the dual cells that used to be cornered by the primary parent vertex
-            for (let primary_parent_i = 0; primary_parent_i < number_subdivided_primary_cells; primary_parent_i++) {
-                const primary_parent_localIndex = references_parents[primary_parent_i]
-                // const primary_localIndex_offset = 8 * primary_parent_i
+            for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
+                const primary_parent_localIndex = references_parents[8 * primary_localIndex_group]
+
                 for (let corner = 0; corner < 8; corner++) {
-                    const dual_cell_layer = dual_cells.cells.lookup.corners.layers.layers[parent_layer][(8 * primary_parent_localIndex) | corner]
+                    const dual_cell_layer = dual_cells_lookup_corners_layers[parent_layer][(8 * primary_parent_localIndex) | corner]
                     if (dual_cell_layer !== invalid_layer) {
-                        const dual_cell_localIndex = dual_cells.cells.lookup.corners.localIndices.layers[parent_layer][(8 * primary_parent_localIndex) | corner]
+                        const dual_cell_localIndex = dual_cells_lookup_corners_localIndices[parent_layer][(8 * primary_parent_localIndex) | corner]
 
                         invalidate_polygons(dual_cell_layer, dual_cell_localIndex)
                     }
@@ -727,25 +784,29 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             // then 256 cases can be precalculated to know if there are multiple interior islands -
             // if there are at least two vertices at or above surface level that don't touch each other
             const dual_cell_state_hasMultipleInteriorIslands = new Uint8Array(256)
+            
+            const corner_adjacency = new Uint8Array([
+                0b00010110,
+                0b00101001,
+                0b01001001,
+                0b10000110,
+                0b01100001,
+                0b10010010,
+                0b10010100,
+                0b01101000
+            ])
+
             function precalculate_dual_cell_state_hasMultipleInteriorIslands() {
                 const islands = new Uint8Array(8)
-                const adjacency = new Uint8Array([
-                    0b01101000,
-                    0b10010100,
-                    0b10010010,
-                    0b01100001,
-                    0b10000110,
-                    0b01001001,
-                    0b00101001,
-                    0b00010110,
-                ])
+
                 for (let state = 0; state < 256; state++) {
-                    islands.fill(0)
+                    for (let vertex = 0; vertex < 8; vertex++)
+                        islands[vertex] = state & (1 << vertex)
                     
                     for (let power = 0; power < 4; power++) {
                         for (let vertex = 0; vertex < 8; vertex++) {
                             if ((state & (1 << vertex)) !== 0) {
-                                const vertex_adjacency = adjacency[vertex]
+                                const vertex_adjacency = corner_adjacency[vertex]
 
                                 for (let other_vertex = 0; other_vertex < 8; other_vertex++) {
                                     if (other_vertex === vertex) continue
@@ -788,20 +849,21 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             function update_surface_point(dual_cell_layer: number, dual_cell_localIndex: number) {
                 if (dual_cell_layer === invalid_layer)
                     return
-
-                if (!isNaN(context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer][dual_cell_localIndex]))
+                
+                if (!isNaN(surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0]))
                     return
                 
                 const dual_cell_corners_offset = (8 * dual_cell_localIndex)
                 
                 let vertex_layer: number, vertex_localIndex: number
                 for (let corner = 0; corner < 8; corner++) {
-                    vertex_layer = dual_cells.cells.vertices.layers.layers[dual_cell_layer][dual_cell_corners_offset | corner]
-                    vertex_localIndex = dual_cells.cells.vertices.localIndices.layers[dual_cell_layer][dual_cell_corners_offset | corner]
+                    vertex_layer = dual_cells_vertices_layers[dual_cell_layer][dual_cell_corners_offset | corner]
+                    vertex_localIndex = dual_cells_vertices_localIndices[dual_cell_layer][dual_cell_corners_offset | corner]
                     dual_cell_corners_alpha[corner] = primary_samples.layers[vertex_layer][vertex_localIndex].alpha
                     //read vertex positions
-                    for (let component = 0; component < 3; component++)
-                        dual_cell_corners_positions[(3 * corner) + component] = space.positions.layers[vertex_layer][(3 * vertex_localIndex) + component]
+                    dual_cell_corners_positions[(3 * corner) + 0] = space_positions[vertex_layer][(3 * vertex_localIndex) + 0]
+                    dual_cell_corners_positions[(3 * corner) + 1] = space_positions[vertex_layer][(3 * vertex_localIndex) + 1]
+                    dual_cell_corners_positions[(3 * corner) + 2] = space_positions[vertex_layer][(3 * vertex_localIndex) + 2]
                 }
 
                 let n_crossed_edges = 0
@@ -809,46 +871,30 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 let p_y = 0
                 let p_z = 0
 
-                for (let axis0 = 0; axis0 < 3; axis0++) {
-                    const axis1 = (axis0 + 1) % 3
-                    const axis2 = (axis0 + 2) % 3
+                for (let vertex_corner_a = 0; vertex_corner_a < 8; vertex_corner_a++) {
+                    const adjacency = corner_adjacency[vertex_corner_a]
+                    
+                    const vertex_alpha_a = dual_cell_corners_alpha[vertex_corner_a]
+                    const p_x_a = dual_cell_corners_positions[(3 * vertex_corner_a) + 0]
+                    const p_y_a = dual_cell_corners_positions[(3 * vertex_corner_a) + 1]
+                    const p_z_a = dual_cell_corners_positions[(3 * vertex_corner_a) + 2]
 
-                    const cell0 = 1 << axis0
-                    const cell1 = 1 << axis1
-                    const cell2 = 1 << axis2
+                    for (let vertex_corner_b = vertex_corner_a + 1; vertex_corner_b < 8; vertex_corner_b++) {
+                        if ((adjacency & (1 << vertex_corner_b)) !== 0) {
+                            const vertex_alpha_b = dual_cell_corners_alpha[vertex_corner_b]
 
-                    for (let quadrant_a = 0; quadrant_a < 4; quadrant_a++) {
-                        const quadrant_b = quadrant_a - 1
+                            if (((vertex_alpha_a < surface_level) && (vertex_alpha_b > surface_level)) ||
+                                ((vertex_alpha_a > surface_level) && (vertex_alpha_b < surface_level))) {
+                                const p_x_b = dual_cell_corners_positions[(3 * vertex_corner_b) + 0]
+                                const p_z_b = dual_cell_corners_positions[(3 * vertex_corner_b) + 2]
+                                const p_y_b = dual_cell_corners_positions[(3 * vertex_corner_b) + 1]
 
-                        const direction_1c = (quadrant_a >> 0) & 1
-                        const direction_2c = (quadrant_a >> 1) & 1
-                        const direction_1d = (quadrant_b >> 0) & 1
-                        const direction_2d = (quadrant_b >> 1) & 1
-
-                        for (let direction_0 = 0; direction_0 < 2; direction_0++) {
-                            const vertex_corner_c = (direction_0 === 0 ? 0 : cell0) | (direction_1c === 0 ? 0 : cell1) | (direction_2c === 0 ? 0 : cell2)
-                            const vertex_corner_d = (direction_0 === 0 ? 0 : cell0) | (direction_1d === 0 ? 0 : cell1) | (direction_2d === 0 ? 0 : cell2)
-
-                            const vertex_alpha_c = dual_cell_corners_alpha[vertex_corner_c]
-                            const vertex_alpha_d = dual_cell_corners_alpha[vertex_corner_d]
-
-                            if (((vertex_alpha_c < surface_level) && (vertex_corner_d > surface_level)) ||
-                                ((vertex_alpha_c > surface_level) && (vertex_alpha_d < surface_level))) {
-                                
-                                const p_x_c = dual_cell_corners_positions[(3 * vertex_alpha_c) + 0]
-                                const p_y_c = dual_cell_corners_positions[(3 * vertex_alpha_c) + 1]
-                                const p_z_c = dual_cell_corners_positions[(3 * vertex_alpha_c) + 2]
-
-                                const p_x_d = dual_cell_corners_positions[(3 * vertex_alpha_c) + 0]
-                                const p_z_d = dual_cell_corners_positions[(3 * vertex_alpha_c) + 2]
-                                const p_y_d = dual_cell_corners_positions[(3 * vertex_alpha_c) + 1]
-
-                                const t = (surface_level - vertex_alpha_c) / (vertex_alpha_d - vertex_alpha_c)
+                                const t = (surface_level - vertex_alpha_a) / (vertex_alpha_b - vertex_alpha_a)
                                 const s = 1 - t
 
-                                p_x += (s * p_x_c) + (t * p_x_d)
-                                p_y += (s * p_y_c) + (t * p_y_d)
-                                p_z += (s * p_z_c) + (t * p_z_d)
+                                p_x += (s * p_x_a) + (t * p_x_b)
+                                p_y += (s * p_y_a) + (t * p_y_b)
+                                p_z += (s * p_z_a) + (t * p_z_b)
 
                                 n_crossed_edges++
                             }
@@ -857,14 +903,14 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 }
 
                 if (n_crossed_edges > 0) {
-                    context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 0] = p_x / n_crossed_edges
-                    context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 1] = p_y / n_crossed_edges
-                    context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 2] = p_z / n_crossed_edges
+                    surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0] = p_x / n_crossed_edges
+                    surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 1] = p_y / n_crossed_edges
+                    surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 2] = p_z / n_crossed_edges
                 }
                 else {
-                    context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 0] = Infinity
-                    context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 1] = Infinity
-                    context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 2] = Infinity
+                    surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0] = Infinity
+                    surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 1] = Infinity
+                    surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 2] = Infinity
                 }
 
                 // TODO: recommend subdividing if there are two vertices below surface level that are not connected
@@ -875,17 +921,49 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 
                 if (dual_cell_state_hasMultipleInteriorIslands[cubeState] !== 0) {
                     for (let corner = 0; corner < 8; corner++) {
-                        const primary_vertex_layer = dual_cells.cells.vertices.layers.layers[dual_cell_layer][(8 * dual_cell_localIndex) | corner]
+                        const primary_vertex_layer = dual_cells_vertices_layers[dual_cell_layer][(8 * dual_cell_localIndex) | corner]
                         if (primary_vertex_layer === layer) {
-                            const primary_vertex_localIndex = dual_cells.cells.vertices.localIndices.layers[dual_cell_layer][(8 * dual_cell_localIndex) | corner]
+                            const primary_vertex_localIndex = dual_cells_vertices_localIndices[dual_cell_layer][(8 * dual_cell_localIndex) | corner]
                             subdivide_recommendation_isolateMultipleInteriorIslands[primary_vertex_localIndex] |= 1
                         }
                     }
                 }
             }
 
-            for (let primary_parent_localIndex = 0; primary_parent_localIndex < number_subdivided_primary_cells; primary_parent_localIndex++) {
-                const primary_children_localIndex_offset = primary_parent_children_localIndex_offset_references[primary_parent_localIndex]
+            function invalidate_surface_point(dual_cell_layer: number, dual_cell_localIndex: number) {
+                if (dual_cell_layer === invalid_layer)
+                    return
+                
+                if (isNaN(surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0]))
+                    return
+
+                surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0] = NaN
+                surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 1] = NaN
+                surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 2] = NaN
+            }
+
+            for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
+                const primary_children_localIndex_offset = 8 * primary_localIndex_group
+                // const dual_cell_interior_layer = layer
+                // const dual_cell_interior_localIndex = new_dual_cells.cells.lookup.corners.localIndices[(8 * primary_children_localIndex_offset) + 7]
+
+                // update surface points for each dual cell cornered by each primary child
+                for (let primary_child_subcell = 0; primary_child_subcell < 8; primary_child_subcell++) {
+                    const vertex_layer = layer
+                    const vertex_localIndex = primary_children_localIndex_offset | primary_child_subcell
+                    const vertex_localIndex_times_8 = 8 * vertex_localIndex
+
+                    for (let dual_cell_corner = 0; dual_cell_corner < 8; dual_cell_corner++) {
+                        invalidate_surface_point(
+                            dual_cells_lookup_corners_layers[vertex_layer][vertex_localIndex_times_8 | dual_cell_corner],
+                            dual_cells_lookup_corners_localIndices[vertex_layer][vertex_localIndex_times_8 | dual_cell_corner]
+                        )
+                    }
+                }
+            }
+
+            for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
+                const primary_children_localIndex_offset = 8 * primary_localIndex_group
                 // const dual_cell_interior_layer = layer
                 // const dual_cell_interior_localIndex = new_dual_cells.cells.lookup.corners.localIndices[(8 * primary_children_localIndex_offset) + 7]
 
@@ -897,8 +975,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                     for (let dual_cell_corner = 0; dual_cell_corner < 8; dual_cell_corner++) {
                         update_surface_point(
-                            dual_cells.cells.lookup.corners.layers.layers[vertex_layer][vertex_localIndex_times_8 | dual_cell_corner],
-                            dual_cells.cells.lookup.corners.localIndices.layers[vertex_layer][vertex_localIndex_times_8 | dual_cell_corner]
+                            dual_cells_lookup_corners_layers[vertex_layer][vertex_localIndex_times_8 | dual_cell_corner],
+                            dual_cells_lookup_corners_localIndices[vertex_layer][vertex_localIndex_times_8 | dual_cell_corner]
                         )
                     }
                 }
@@ -945,6 +1023,86 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 (2 * 1) | 1,
             ])
 
+            //TODO: this could be improved
+            // class EdgesSet {
+                // private currentBlock!: typeof this.blocks extends (infer T)[] ? T : never
+                // private currentBlockIndex!: number
+
+                // private readonly blocks: {
+                //     a_layer: Uint8Array
+                //     a_localIndex: IndicesT
+                //     b_layer: Uint8Array
+                //     b_localIndex: IndicesT
+                // }[] = []
+                // private readonly lookupBuckets: Map<number, number | number[]>[]
+
+                // constructor(
+                //         public readonly numberLookupBuckets = 256,
+                //         public readonly blockSize = 4096,
+                //     ) {
+                //     this.lookupBuckets = new Array(numberLookupBuckets)
+                //     for (let i = 0; i < numberLookupBuckets; i++)
+                //         this.lookupBuckets.push(new Map())
+
+                //     this.loadNewBlock()
+                // }
+
+                // private loadNewBlock() {
+                //     this.currentBlockIndex = 0
+                //     this.blocks.push(this.currentBlock = {
+                //         a_layer: new Uint8Array(this.blockSize),
+                //         b_layer: new Uint8Array(this.blockSize),
+                //         a_localIndex: new subdivision.typedArray(this.blockSize) as IndicesT,
+                //         b_localIndex: new subdivision.typedArray(this.blockSize) as IndicesT
+                //     })
+                // }
+
+                // private hashBucket(
+                //     a_layer: number, a_localIndex: number,
+                //     b_layer: number, b_localIndex: number) {
+                //     const hash = a_layer + b_layer + a_localIndex + b_localIndex
+                //     const bucket = this.lookupBuckets[hash % this.numberLookupBuckets]
+                //     return { hash, bucket }
+                // }
+                
+                // add(a_layer: number, a_localIndex: number,
+                //     b_layer: number, b_localIndex: number) {
+                //     if (this.currentBlockIndex === this.blockSize)
+                //         this.loadNewBlock()
+
+                //     const block = this.currentBlock
+                //     const index = this.currentBlockIndex++
+                //     block.a_layer[index] = a_layer
+                //     block.b_layer[index] = b_layer
+                //     block.a_localIndex[index] = a_localIndex
+                //     block.b_localIndex[index] = b_localIndex
+
+                //     const { hash, bucket } = this.hashBucket(a_layer, a_localIndex, b_layer, b_localIndex)
+                //     const existing = bucket.get(hash)
+                //     if (typeof existing === 'undefined')
+                //         bucket.set(hash, index)
+                //     else if (typeof existing === 'number')
+                //         bucket.set(hash, [existing, index])
+                //     else existing.push(index)
+                // }
+
+                // has(a_layer: number, a_localIndex: number,
+                //     b_layer: number, b_localIndex: number) {
+                //     const { hash, bucket } = this.hashBucket(a_layer, a_localIndex, b_layer, b_localIndex)
+                //     const existing = bucket.get(hash)
+
+                // }
+            // }
+
+            // const considered_edges = new EdgesSet()
+
+            const lookup_key_buffer_size_min = 2 * (subdivision.typedArray.BYTES_PER_ELEMENT + 1)
+            const lookup_key_buffer = Buffer.alloc(4 * Math.ceil(lookup_key_buffer_size_min / 4)).fill(0)
+            const lookup_key_localIndices = new subdivision.typedArray(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + 0, 2)
+            const lookup_key_layers = new Uint8Array(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + lookup_key_localIndices.byteLength, 2)
+            const lookup_value_buffer = Buffer.alloc(1)
+            const considered_edges = new HashTable(lookup_key_buffer.byteLength, 1, 0, number_subdivided_primary_cells * 8 * 8 * 4)
+
             // form polygons for every edge of every dual cell cornered by any primary child vertex
             function form_polygon(
                 dual_cell_layer_initial: number,
@@ -952,10 +1110,13 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 edge_axis: Axis,
                 edge_quadrant_initial: Quadrant,
             ) {
-                const edge_initial = (4 * edge_axis) | edge_quadrant_initial
+                const four_times_edge_axis = 4 * edge_axis
+                const edge_initial = four_times_edge_axis | edge_quadrant_initial
 
-                if (context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer_initial][(12 * dual_cell_localIndex_initial) + edge_initial] !== invalid_layer)
+                if (cells_polygons_by_edge_layers[dual_cell_layer_initial][(12 * dual_cell_localIndex_initial) + edge_initial] !== invalid_layer)
                     return false
+                
+                //TODO: record which edges have already been considered to remove duplicates
                 
                 const axis_1 = (edge_axis + 1) % 3
                 const axis_2 = (edge_axis + 2) % 3
@@ -968,24 +1129,44 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 const vertex_initial_a = (edge_initial_direction_1 === 0 ? 0 : cell_1) | (edge_initial_direction_2 === 0 ? 0 : cell_2)
                 const vertex_initial_b = vertex_initial_a | cell_0
 
-                const edge_vertex_layer_a = dual_cells.cells.vertices.layers.layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
-                const edge_vertex_layer_b = dual_cells.cells.vertices.layers.layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
-                const edge_vertex_localIndex_a = dual_cells.cells.vertices.localIndices.layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
-                const edge_vertex_localIndex_b = dual_cells.cells.vertices.localIndices.layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
+                const edge_vertex_layer_a = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
+                const edge_vertex_layer_b = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
+                const edge_vertex_localIndex_a = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
+                const edge_vertex_localIndex_b = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
 
                 if (edge_vertex_layer_a === edge_vertex_layer_b &&
                     edge_vertex_localIndex_a === edge_vertex_localIndex_b)
                     return false
 
-                const edge_vertex_value_a = context.samples.layers[edge_vertex_layer_a][edge_vertex_localIndex_a].alpha
-                const edge_vertex_value_b = context.samples.layers[edge_vertex_layer_b][edge_vertex_localIndex_b].alpha
+                const edge_vertex_value_a = primary_samples.layers[edge_vertex_layer_a][edge_vertex_localIndex_a].alpha
+                const edge_vertex_value_b = primary_samples.layers[edge_vertex_layer_b][edge_vertex_localIndex_b].alpha
                 const edge_vertex_above_a = edge_vertex_value_a > surface_level
                 const edge_vertex_above_b = edge_vertex_value_b > surface_level
 
                 if (edge_vertex_above_a === edge_vertex_above_b)
                     return false
+                
+                if (edge_vertex_above_a) {
+                    lookup_key_layers[0] = edge_vertex_layer_a
+                    lookup_key_layers[1] = edge_vertex_layer_b
+                    lookup_key_localIndices[0] = edge_vertex_localIndex_a
+                    lookup_key_localIndices[1] = edge_vertex_localIndex_b
+                }
+                else {
+                    lookup_key_layers[0] = edge_vertex_layer_b
+                    lookup_key_layers[1] = edge_vertex_layer_a
+                    lookup_key_localIndices[0] = edge_vertex_localIndex_b
+                    lookup_key_localIndices[1] = edge_vertex_localIndex_a
+                }
+
+                if (considered_edges.exist(lookup_key_buffer, 0))
+                    return false
+
+                considered_edges.set(lookup_key_buffer, 0, lookup_value_buffer, 0)
 
                 const polygon_vertices_offset = new_polygon_vertices_offsets[new_polygon_localIndex]
+
+                let polygon_points = 0
 
                 /**
                  * invalidates references for the half-formed polygon in context[SurfaceNetKey].cells.polygons_by_edge
@@ -993,8 +1174,6 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                  * @returns false for convenience
                  */
                 function invalidate() {
-                    let polygon_points = 0
-
                     // these faces are not ordered by edge_quadrant, but by a circular quadrant
                     // this number wraps around by adjacent quadrants, like in algebra
                     let circular_quadrant: Quadrant = (edge2circular_quadrant_mapping[edge_quadrant_initial] + 2) & 0b11
@@ -1002,19 +1181,19 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     let dual_cell_layer_current = dual_cell_layer_initial
                     let dual_cell_localIndex_current = dual_cell_localIndex_initial
 
-                    do {
+                    while(polygon_points-- > 0) {
                         const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
-                        const edge_current = (4 * edge_axis) | edge_quadrant_current
+                        const edge_current = four_times_edge_axis | edge_quadrant_current
                     
-                        context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_layer
-                        context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_localIndex
+                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_layer
+                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_localIndex
 
                         // new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
                         // new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
 
-                        const face_next = faces_next[circular_quadrant]
+                        const face_next = faces_next[four_times_edge_axis | circular_quadrant]
                     
-                        const dual_cell_layer_adjacent = dual_cells.cells.neighbors.layers.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                        const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                         if (dual_cell_layer_adjacent === invalid_layer) {
                             // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
                             // then continue in the previous direction that would have been before this dual cell
@@ -1030,24 +1209,24 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                             const vertex_test_b = vertex_test_a | cell_0
 
                             const test_matches = (
-                                (dual_cells.cells.vertices.layers.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
-                                (dual_cells.cells.vertices.layers.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
-                                (dual_cells.cells.vertices.localIndices.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
-                                (dual_cells.cells.vertices.localIndices.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
+                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
+                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
+                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
+                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
                             )
 
                             if (!test_matches)
                                 break
                         
-                            const edge_test = (4 * edge_axis) | edge_quadrant_test
-                            context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_layer
-                            context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_localIndex
+                            const edge_test = four_times_edge_axis | edge_quadrant_test
+                            cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_layer
+                            cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_localIndex
                         
                             const circular_quadrant_prev = (circular_quadrant + 3) & 0b11
-                            const face_next = faces_next[circular_quadrant_prev]
+                            const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
 
-                            const dual_cell_layer_adjacent = dual_cells.cells.neighbors.layers.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                            const dual_cell_localIndex_adjacent = dual_cells.cells.neighbors.localIndices.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                            const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
 
                             // it should be valid because a "tent" can only be formed between two triagonal corners 
 
@@ -1055,24 +1234,17 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                             dual_cell_localIndex_current = dual_cell_localIndex_adjacent
                         }
                         else {
-                            const dual_cell_localIndex_adjacent = dual_cells.cells.neighbors.localIndices.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                         
                             dual_cell_layer_current = dual_cell_layer_adjacent
                             dual_cell_localIndex_current = dual_cell_localIndex_adjacent
 
                             if (++circular_quadrant == 4) circular_quadrant = 0
                         }
-
-                        polygon_points++
-                    } while (!(
-                        (dual_cell_layer_current === dual_cell_layer_initial) &&
-                        (dual_cell_localIndex_current === dual_cell_localIndex_initial)
-                    ))
+                    }
                     
                     return false
                 }
-                
-                let polygon_points = 0
 
                 // these faces are not ordered by edge_quadrant, but by a circular quadrant
                 // this number wraps around by adjacent quadrants, like in algebra
@@ -1084,18 +1256,22 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 let triangulation_start_vertex = -1
 
                 do {
+                    const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
+                    if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
+                        return invalidate()
+
                     const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
-                    const edge_current = (4 * edge_axis) | edge_quadrant_current
+                    const edge_current = (four_times_edge_axis) | edge_quadrant_current
                     
-                    context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
-                    context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
+                    cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
+                    cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
 
                     new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
                     new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
 
-                    const face_next = faces_next[circular_quadrant]
+                    const face_next = faces_next[four_times_edge_axis | circular_quadrant]
                     
-                    const dual_cell_layer_adjacent = dual_cells.cells.neighbors.layers.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                    const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                     if (dual_cell_layer_adjacent === invalid_layer) {
                         // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
                         // then continue in the previous direction that would have been before this dual cell
@@ -1111,24 +1287,24 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         const vertex_test_b = vertex_test_a | cell_0
 
                         const test_matches = (
-                            (dual_cells.cells.vertices.layers.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
-                            (dual_cells.cells.vertices.layers.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
-                            (dual_cells.cells.vertices.localIndices.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
-                            (dual_cells.cells.vertices.localIndices.layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
+                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
+                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
+                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
+                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
                         )
 
                         if (!test_matches)
                             return invalidate()
                         
-                        const edge_test = (4 * edge_axis) | edge_quadrant_test
-                        context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
-                        context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
+                        const edge_test = (four_times_edge_axis) | edge_quadrant_test
+                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
+                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
                         
                         const circular_quadrant_prev = (circular_quadrant + 3) & 0b11
-                        const face_next = faces_next[circular_quadrant_prev]
+                        const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
 
-                        const dual_cell_layer_adjacent = dual_cells.cells.neighbors.layers.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                        const dual_cell_localIndex_adjacent = dual_cells.cells.neighbors.localIndices.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                        const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                        const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
 
                         // it should be valid because a "tent" can only be formed between two triagonal corners 
 
@@ -1136,7 +1312,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         dual_cell_localIndex_current = dual_cell_localIndex_adjacent
                     }
                     else {
-                        const dual_cell_localIndex_adjacent = dual_cells.cells.neighbors.localIndices.layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                        const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                         
                         dual_cell_layer_current = dual_cell_layer_adjacent
                         dual_cell_localIndex_current = dual_cell_localIndex_adjacent
@@ -1160,10 +1336,10 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 
                 new_polygon_vertices_offsets[new_polygon_localIndex] = polygon_vertices_offset + polygon_points
                 
-                new_polygon_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
-                new_polygon_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
-                new_polygon_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
-                new_polygon_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+                new_polygon_by_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
+                new_polygon_by_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
+                new_polygon_by_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+                new_polygon_by_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
 
                 //TODO: is this the right time to triangulate the polygon?
                 let x: number, y: number, z: number
@@ -1181,7 +1357,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     
                     const dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + index]
                     const dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + index]
-                    const array = context[SurfaceNetKey].cells.surfacePoints.layers[dual_cell_layer]
+                    const array = surfacePoints[dual_cell_layer]
                     x = array[(3 * dual_cell_localIndex) + 0]
                     y = array[(3 * dual_cell_localIndex) + 1]
                     z = array[(3 * dual_cell_localIndex) + 2]
@@ -1263,14 +1439,15 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 return true
             }
 
-            for (let primary_parent_i = 0; primary_parent_i < number_subdivided_primary_cells; primary_parent_i++) {
-                const primary_children_localIndex_offset = subdivision.references.local.layers[parent_layer][references_parents[primary_parent_i]]
+            for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
+                const primary_children_localIndex_offset = 8 * primary_localIndex_group
                 for (let primary_subcell = 0; primary_subcell < 8; primary_subcell++) {
                     const primary_child_layer = layer
                     const primary_child_localIndex = primary_children_localIndex_offset | primary_subcell
                     for (let corner = 0; corner < 8; corner++) {
-                        const dual_cell_layer = dual_cells.cells.lookup.corners.layers.layers[primary_child_layer][(8 * primary_child_localIndex) | corner]
-                        const dual_cell_localIndex = dual_cells.cells.lookup.corners.localIndices.layers[primary_child_layer][(8 * primary_child_localIndex) | corner]
+                        const dual_cell_layer = dual_cells_lookup_corners_layers[primary_child_layer][(8 * primary_child_localIndex) | corner]
+                        if (dual_cell_layer === invalid_layer) continue
+                        const dual_cell_localIndex = dual_cells_lookup_corners_localIndices[primary_child_layer][(8 * primary_child_localIndex) | corner]
                         for (let edge_axis = 0; edge_axis < 3; edge_axis++) {
                             for (let edge_quadrant = 0; edge_quadrant < 4; edge_quadrant++) {
                                 form_polygon(
@@ -1287,55 +1464,21 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
             // save results
             const number_polygons_added = new_polygon_localIndex
-            function copy<
-                T extends TypedArray<number>,
-                Groups extends MultiObjectsGroupsTemplateOrLeaf,
-                Dst extends MultiObjectsGroupsOrLeafMapped<Groups, T> = MultiObjectsGroupsOrLeafMapped<Groups, T>
-            >(
-                    src: MultiObjectsGroupsOrLeafMapped<Groups, T | number[]>,
-                    dst: Dst
-                ): Dst {
-                if (dst instanceof Array ||
-                    dst instanceof Uint8Array ||
-                    dst instanceof Uint8ClampedArray ||
-                    dst instanceof Int8Array ||
-                    dst instanceof Uint16Array ||
-                    dst instanceof Int16Array ||
-                    dst instanceof Uint32Array ||
-                    dst instanceof Int32Array ||
-                    dst instanceof Float32Array ||
-                    dst instanceof Float64Array) {
-                    if (src instanceof Array || dst instanceof Array)
-                        for (let i = 0; i < dst.length; i++)
-                            dst[i] = src[i]
-                    else
-                        dst.set((src as TypedArray<number>).subarray(0, dst.length))
-                }
-                else {
-                    for (const key of Reflect.ownKeys(src))
-                        copy((src as any)[key], dst[key])
-                }
-
-                return dst
-            }
 
             item[SurfaceNetKey] = {
                 cells: {
-                    surfacePoints: context[SurfaceNetKey].cells.surfacePoints.layers[layer],
-                    polygons_by_edge: {
-                        layers: context[SurfaceNetKey].cells.polygons_by_edge.layers.layers[layer],
-                        localIndices: context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers[layer]
-                    }
+                    surfacePoints: surfacePoints[layer],
+                    polygons_by_edge: new_polygons_by_edge
                 },
                 polygons: {
                     edges: {
                         // already in the context tree
-                        layers: new_polygon_edges_layers,
-                        localIndices: new_polygon_edges_localIndices,
+                        layers: new_polygon_by_edges_layers,
+                        localIndices: new_polygon_by_edges_localIndices,
                     },
                     vertices: {
-                        offsets: copy(new_polygon_vertices_offsets, context[SurfaceNetKey].polygons.vertices.offsets.subdivide(number_polygons_added + 1)),
-                        dual_cells: copy(
+                        offsets: arrayCopy(new_polygon_vertices_offsets, context[SurfaceNetKey].polygons.vertices.offsets.subdivide(number_polygons_added + 1)),
+                        dual_cells: arrayCopy(
                             {
                                 layers: new_polygon_vertices_dualCells_layers,
                                 localIndices: new_polygon_vertices_dualCells_localIndices
@@ -1343,20 +1486,21 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                             context[SurfaceNetKey].polygons.vertices.dual_cells.subdivide(new_polygon_vertices_offsets[new_polygon_localIndex])
                         ),
                     },
-                    triangulation_start: copy(new_polygon_triangulation_start, context[SurfaceNetKey].polygons.triangulation_start.subdivide(number_polygons_added)),
+                    triangulation_start: arrayCopy(new_polygon_triangulation_start, context[SurfaceNetKey].polygons.triangulation_start.subdivide(number_polygons_added)),
                 }
             }
             
             const subdivide_recommendation_surfaceIntersects_primary = new Uint8Array(8 * number_subdivided_primary_cells)
-            const dual_cells_lookup_corners_layers_newLayer = dual_cells.cells.lookup.corners.layers.layers[layer]
-            const dual_cells_lookup_corners_localIndices_newLayer = dual_cells.cells.lookup.corners.localIndices.layers[layer]
+            const dual_cells_lookup_corners_layers_newLayer = dual_cells_lookup_corners_layers[layer]
+            const dual_cells_lookup_corners_localIndices_newLayer = dual_cells_lookup_corners_localIndices[layer]
             
-            for (let primary_parent_i = 0; primary_parent_i < number_subdivided_primary_cells; primary_parent_i++) {
-                const primary_children_localIndex_offset = references_subdivided_children[references_parents[primary_parent_i]]
+            for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
+                const primary_children_localIndex_offset = 8 * primary_localIndex_group
                 for (let primary_child_subcell = 0; primary_child_subcell < 8; primary_child_subcell++) {
                     const primary_child_localIndex = primary_children_localIndex_offset | primary_child_subcell
                     for (let triagonal_corner = 0; triagonal_corner < 8; triagonal_corner++) {
                         const dual_cell_layer = dual_cells_lookup_corners_layers_newLayer[(8 * primary_child_localIndex) | triagonal_corner]
+                        if (dual_cell_layer === invalid_layer) continue
                         const dual_cell_localIndex = dual_cells_lookup_corners_localIndices_newLayer[(8 * primary_child_localIndex) | triagonal_corner]
                         if (dual_cell_subdivide_recommendation_surfaceIntersects.get(dual_cell_layer, dual_cell_localIndex)) {
                             subdivide_recommendation_surfaceIntersects_primary[primary_child_localIndex] |= 1

@@ -99,10 +99,22 @@ export class SurfaceNetMeshingProcessor<
 
         let vertex_prelim_next = 0
         const dual_cells_per_layer = dual_cells.vertices.layers.layers.map(vertices_layer => vertices_layer.length / 8)
-        const number_vertices_prelim = dual_cells_per_layer.reduce((sum, number_dual_cells) => sum + number_dual_cells)
-        const vertex_buffer_prelim = new Float32Array(3 * number_vertices_prelim)
         const vertex_buffer_lookup = new TypedArrayOctTree<number, Uint32Array>(Uint32Array, dual_cells_per_layer.map(layer_size => new Uint32Array(layer_size).fill(invalid_uint32)))
+        const surfacePoints = sampling[SurfaceNetKey].cells.surfacePoints.layers
         
+        let number_vertices_prelim = 0
+        for (let layer = 1; layer < dual_cells_per_layer.length; layer++) {
+            const dual_cells_in_layer = dual_cells_per_layer[layer]
+            const surfacePoints_layer = surfacePoints[layer]
+            for (let localIndex = 0; localIndex < dual_cells_in_layer; localIndex++) {
+                const surfacePoint_x = surfacePoints_layer[(3 * localIndex) + 0]
+                if (!Number.isNaN(surfacePoint_x) && Number.isFinite(surfacePoint_x))
+                    number_vertices_prelim++
+            }
+        }
+
+        const vertex_buffer_prelim = new Float32Array(3 * number_vertices_prelim)
+
         const dualCellReferences_buffer_prelim: OctTreeReferencesOctTreeLayersGrouped<IndicesT> = {
             layers: new Uint8Array(number_vertices_prelim),
             localIndices: new sampling[SubdivisionKey].typedArray(number_vertices_prelim) as IndicesT
@@ -135,9 +147,9 @@ export class SurfaceNetMeshingProcessor<
             const vertex = vertex_prelim_next++
             vertex_buffer_lookup.layers[dual_cell_layer][dual_cell_localIndex] = vertex
             
-            vertex_buffer_prelim[(3 * vertex) + 0] = surface_net.cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 0]
-            vertex_buffer_prelim[(3 * vertex) + 1] = surface_net.cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 1]
-            vertex_buffer_prelim[(3 * vertex) + 2] = surface_net.cells.surfacePoints.layers[dual_cell_layer][(3 * dual_cell_localIndex) + 2]
+            vertex_buffer_prelim[(3 * vertex) + 0] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0]
+            vertex_buffer_prelim[(3 * vertex) + 1] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 1]
+            vertex_buffer_prelim[(3 * vertex) + 2] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 2]
 
             dualCellReferences_buffer_prelim.layers[vertex] = dual_cell_layer
             dualCellReferences_buffer_prelim.localIndices[vertex] = dual_cell_localIndex
@@ -218,6 +230,8 @@ export class SurfaceNetMeshingProcessor<
         /** a flattened tree; each node references its parent or -1 if it is a root node */
         const islands = new Uint32Array(number_vertices_prelim).fill(invalid_uint32)
         
+        debugger
+
         function root_island(x: number) {
             let x_prev: number
             let depth = 0
@@ -237,9 +251,11 @@ export class SurfaceNetMeshingProcessor<
             const { root: root_a, depth: depth_a } = root_island(a)
             const { root: root_b, depth: depth_b } = root_island(b)
 
-            if (depth_a > depth_b)
-                islands[root_b] = root_a
-            else islands[root_a] = root_b
+            if (root_a !== root_b) {
+                if (depth_a > depth_b)
+                    islands[root_b] = root_a
+                else islands[root_a] = root_b
+            }
         }
 
         for (let polygon_layer = 0; polygon_layer < surface_net.polygons.vertices.offsets.layers.length; polygon_layer++) {

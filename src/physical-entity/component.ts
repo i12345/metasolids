@@ -2,9 +2,9 @@ import { Entity, GraphNode } from "playcanvas-extended";
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js";
 import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/trees/index.js";
-import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceCombinedTextureLocationT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSampling_MultiObjects_Template, VolumeSamplingContextT, VolumeSamplingSubdividingOctTreeGroupsTemplate, VolumeSurfaceProcessorT, VolumeT } from "./types.js";
+import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
-import { onlyOne, Reflect_entries, Reflect_fromEntries, TypedArrayConstructor } from "../utils/index.js";
+import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 import { ComponentSystem, SYSTEM_ID } from "./system.js";
 
 export class Component<ID = string> extends processing.Component<
@@ -51,10 +51,10 @@ export class Component<ID = string> extends processing.Component<
                     .map(child => [
                         child.name,
                         new volumes.volumes.TransformVolumeWithBoundingBox(
-                            compositeVolume(child)! as volumes.volumes.VolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeSamplingContextT>,
+                            compositeVolume(child)! as volumes.volumes.VolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeDomainSamplingContextT>,
                             child.getLocalTransform()
                         )
-                    ] as [string, volumes.volumes.TransformVolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeSamplingContextT>])
+                    ] as [string, volumes.volumes.TransformVolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeDomainSamplingContextT>])
                     .filter(([, { inner }]) => inner !== undefined)
             ] as [string, VolumeT][]
 
@@ -142,14 +142,15 @@ export class Component<ID = string> extends processing.Component<
         const sample_multiObjectsContext = makeClone(SampleProcessingContext_MultiObjects_Template)
         const surface_multiObjectsContext = makeClone(SurfaceProcessingContext_MultiObjects_Template)
         const volume_multiObjectsContext = makeClone(VolumeProcessingContext_MultiObjects_Template)
-        const volume_sampling_multiObjectsContext = makeClone(VolumeSampling_MultiObjects_Template)
+        const volume_sampling_multiObjectsContext = makeClone(VolumeSamplingContext_MultiObjects_Template)
+        const volume_domain_sampling_multiObjectsContext = makeClone(VolumeDomainSamplingContext_MultiObjects_Template)
 
         multiObjectsContext_insertGroups(sample_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
         multiObjectsContext_insertGroups(surface_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
 
         multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext)
         multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.texturing.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
-        multiObjectsContext_insertObjects(volume_multiObjectsContext as any)
+        multiObjectsContext_insertObjects(volume_multiObjectsContext)
 
         const sample_context: SampleProcessingContextT = {
             ...sample_multiObjectsContext,
@@ -174,7 +175,8 @@ export class Component<ID = string> extends processing.Component<
             surface: surface_context,
         }
 
-        const volume_domain_sampling_context: VolumeSamplingContextT = {
+        const volume_domain_sampling_context: VolumeDomainSamplingContextT = {
+            ...volume_domain_sampling_multiObjectsContext,
             [fields.SampleDomainLocationFieldKey]: fields.fields.FieldsField.merge<VolumeLocationT>(
                 volumes.defaultVolumeLocationField,
                 fields.fields.defaultField(this.extraLocationParameters ?? {}) as fields.fields.FieldsField<VolumeLocationT>

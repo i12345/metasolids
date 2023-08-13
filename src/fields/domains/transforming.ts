@@ -60,6 +60,8 @@ export abstract class TransformingSampleDomain<
     }
 
     protected transformContext(context: OuterContext): InnerContext {
+        //TODO: could use proxy
+
         const innerContext: TransformingDefaultInnerSamplingContext<OuterLocation, InnerLocation, OuterSample, OuterContext> = {
             ...context,
             [SampleDomainLocationFieldKey]: this.location_field,

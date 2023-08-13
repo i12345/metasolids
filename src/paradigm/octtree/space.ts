@@ -7,6 +7,7 @@ import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { MultiObjectsGroupsTemplateLeaf } from "../trees/multi-objects-groups.js"
 import { TypedArrayOctTree } from "./typed-array.js"
 import { Subdividable } from "./subdividable.js"
+import { NumberArrayLike } from "../../utils/typed-array.js"
 
 export interface OctTreeAddressWithOffset {
     address: OctTreeAddress
@@ -150,17 +151,18 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
             address[address_layer] = <OctTreeCell>cell
 
             if (!isLastLayerReached) {
-                const next_local_index_base = references_local[address_layer][local_index]
-                if (next_local_index_base === invalid)
+                if (address_layer === this.subdivisions.depth)
                     isLastLayerReached = true
                 else {
-                    local_index = next_local_index_base + cell
+                    const next_local_index_base = references_local[address_layer][local_index]
+                    if (next_local_index_base === invalid)
+                        isLastLayerReached = true
+                    else {
+                        local_index = next_local_index_base + cell
+                    }
                 }
 
                 subdivision_layer = address_layer
-
-                if (address_layer === this.subdivisions.depth)
-                    isLastLayerReached = true
                 
                 if (limitToRealSubdivisions && isLastLayerReached)
                     break
@@ -186,7 +188,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
         
         const references_parents = this.subdivisions.references.parents.layers
 
-        for (; layer > 0; layer--) {
+        while(layer > 0) {
             const i_subcell = octTreeSubcell(local_index)
             
             result.x /= 2
@@ -202,6 +204,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
             if ((i_subcell & 0x4) === 0) result.z += 1
             else result.z -= 1
 
+            layer--
             local_index = references_parents[layer][local_index >> 3]
         }
         if (local_index !== 0)
@@ -231,7 +234,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
-                (layer: number, local_indices: ArrayLike<number>) => Vec3[]
+                (layer: number, local_indices: NumberArrayLike) => Vec3[]
             >("positionOfVoxel", [1]),
             
             layers_individual: new VectorFunction<
@@ -240,7 +243,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
-                (layers: ArrayLike<number>, local_indices: ArrayLike<number>) => Vec3[]
+                (layers: NumberArrayLike, local_indices: NumberArrayLike) => Vec3[]
             >("positionOfVoxel", [0, 1])
         }
     }

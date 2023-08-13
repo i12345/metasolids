@@ -116,14 +116,20 @@ export class MultiObjectsVolume<
             key: PropertyKey,
             residual: MultiObjectsGroupsOmitted<SampleGroups/* , LeafSample */>
         ) {
-        const presence = (residual as VolumeSample).alpha
+        const residualAlpha = (residual as VolumeSample).alpha
+        const accumulatorAlpha = (accumulator as VolumeSample).alpha
+        const finalAlpha = (accumulatorAlpha === undefined || Number.isNaN(accumulatorAlpha)) ? residualAlpha : Math.max(accumulatorAlpha, residualAlpha)
+
         const influenceGroup = this.influenceGroupRef!.get(accumulator)
         if (influenceGroup === undefined)
-            this.influenceGroupRef!.set(accumulator, { [key]: presence })
+            this.influenceGroupRef!.set(accumulator, { [key]: residualAlpha })
         else if (influenceGroup[key] === undefined)
-            influenceGroup[key] = presence
+            influenceGroup[key] = residualAlpha
         // if key were in influenceGroup already, then it may've been set by a nested multi-objects volume
         
-        return super.combineResidualLeafSample(accumulator as any, key, residual)
+        const combined = super.combineResidualLeafSample(accumulator as any, key, residual);
+        (combined as VolumeSample).alpha = finalAlpha
+
+        return combined
     }
 }

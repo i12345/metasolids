@@ -23,5 +23,8 @@ export function encapsulated<T extends object, Encapsulating>(item: T, encapsula
                 return Reflect.get(target, p, receiver)
             else return Reflect.get(target, p)
         },
+        has(target, p) {
+            return p === EncapsulatingKey || Reflect.has(target, p)
+        },
     }) as any
 }

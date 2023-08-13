@@ -3,6 +3,7 @@ import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInflu
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { octtree } from "../paradigm/index.js";
+import { MultiObjectsDomainInternalPreservedGroupsKinds } from "../fields/domains/multi-objects.js";
 
 export type IndicesT = Uint32Array
 
@@ -157,21 +158,6 @@ export type VolumeSamplingSubdividingGroupsKindMappedGroupsT =
 
 export const VolumeSamplingSubdividingGroupsKindMappedGroupsTemplate: VolumeSamplingSubdividingGroupsKindMappedGroupsT = {
     [octtree.OctTreeSubdividingGroupsKindKey]: VolumeSamplingSubdividingOctTreeGroupsTemplate
-}
-
-export type VolumeSampling_MultiObjects =
-    VolumeSamplingSubdividingGroupsKindMappedGroupsT &
-    MultiObjectsGroupsProcessingContext<
-        VolumeSamplingSubdividingOctTreeGroupsT,
-        octtree.OctTreeSubdividingGroupsKind
-    >
-
-export const VolumeSampling_MultiObjects_Template: VolumeSampling_MultiObjects = {
-    ...VolumeSamplingSubdividingGroupsKindMappedGroupsTemplate,
-
-    [MultiObjectsProcessingContextGroupKinds]: {
-        ...octtree.OctTreeSubdividingGroupsKindTemplate
-    }
 }
 
 export type Volume_Context_PreservedGroupsT =
@@ -343,7 +329,7 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
     }
 }
 
-export type VolumeSamplingContextT =
+export type VolumeDomainSamplingContextT =
     volumes.VolumeSamplingContext<
             VolumeLocationT,
             SampleProcessingContextT
@@ -355,7 +341,42 @@ export type VolumeSamplingContextT =
     surfaces.sampling.VolumeSamplingContextWithSurfaceHints<
             VolumeLocationT,
             SampleProcessingContextT
+        > &
+    MultiObjectsGroupsProcessingContext<
+            Volume_Context_PreservedGroupsT,
+            Volume_Context_PreservedGroupsKinds
         >
+
+export type VolumeDomainSamplingContext_MultiObjects =
+    MultiObjectsGroupsProcessingContext<
+            Volume_Context_PreservedGroupsT,
+            Volume_Context_PreservedGroupsKinds
+        > &
+    {}
+
+export const VolumeDomainSamplingContext_MultiObjects_Template: VolumeDomainSamplingContext_MultiObjects = {
+    ...Volume_Context_PreservedGroupsKindsMappedGroupsTemplate,
+
+    [MultiObjectsProcessingContextGroupKinds]: {
+        ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
+    },
+}
+
+export type VolumeSamplingContext_MultiObjects =
+    VolumeSamplingSubdividingGroupsKindMappedGroupsT &
+    MultiObjectsGroupsProcessingContext<
+        VolumeSamplingSubdividingOctTreeGroupsT,
+        octtree.OctTreeSubdividingGroupsKind
+    > &
+    {}
+
+export const VolumeSamplingContext_MultiObjects_Template: VolumeSamplingContext_MultiObjects = {
+    ...VolumeSamplingSubdividingGroupsKindMappedGroupsTemplate,
+
+    [MultiObjectsProcessingContextGroupKinds]: {
+        ...octtree.OctTreeSubdividingGroupsKindTemplate,
+    },
+}
 
 /**
  * Customizeable
@@ -668,7 +689,7 @@ export type VolumeProcessingT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             VolumeT
         > &
     // volumes.sampling.VolumeProcessingWithSampling<
@@ -696,7 +717,7 @@ export type VolumeProcessingT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT //,
+            VolumeDomainSamplingContextT //,
             // ...
         > &
     volumes.sampling.VolumeProcessingWithSampling<
@@ -710,7 +731,7 @@ export type VolumeProcessingT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT //,
+            VolumeDomainSamplingContextT //,
             // ...
         > &
     volumes.sampling.VolumeProcessingWithSamplingWithAdjacency<
@@ -724,7 +745,7 @@ export type VolumeProcessingT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT //,
+            VolumeDomainSamplingContextT //,
             // ...
         > &
     surfaces.meshing.VolumeProcessingWithMeshing<
@@ -732,7 +753,7 @@ export type VolumeProcessingT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             VolumeT,
             SurfaceT
         > &
@@ -741,7 +762,7 @@ export type VolumeProcessingT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             VolumeT,
             SurfaceT
         > &
@@ -750,7 +771,7 @@ export type VolumeProcessingT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             VolumeT,
             SurfaceT,
             SolidT
@@ -762,7 +783,7 @@ export type VolumeProcessingInstanceT =
         VolumeLocationT,
         SampleT,
         SampleProcessingContextT,
-        VolumeSamplingContextT,
+        VolumeDomainSamplingContextT,
         VolumeT,
         SurfaceT,
         SurfaceInstanceT,
@@ -798,7 +819,7 @@ export type VolumeProcessingContextT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT //,
+            VolumeDomainSamplingContextT //,
             // ...
         > &
     volumes.sampling.VolumeProcessingContextWithSampling<
@@ -812,7 +833,7 @@ export type VolumeProcessingContextT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT //,
+            VolumeDomainSamplingContextT //,
             // ...
         > &
     surfaces.VolumeProcessingWithSurfacesContext<
@@ -824,7 +845,7 @@ export type VolumeProcessingContextT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             SurfaceProcessingContextT
         > &
     solids.VolumeProcessingWithSolidsContext<
@@ -832,52 +853,34 @@ export type VolumeProcessingContextT =
             SurfaceProcessingContextT,
             SolidProcessingContextT
         > &
-    MultiObjectsProcessingContext<
-            Objects,
-            Volume_Context_PreservedGroupsT,
-            MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>,
-            fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
-        > &
     {}
+
+export type VolumeProcessingContext_MultiObjects =
+    MultiObjectsGroupsProcessingContext<{}, {}> &
+    MultiObjectsProcessingContext<Objects, {}, MultiObjectsGroupsMapped<{}, Objects>, {}>
+
+export const VolumeProcessingContext_MultiObjects_Template: VolumeProcessingContext_MultiObjects = {
+    [MultiObjectsProcessingContextObjectsGrouped]: {
+    },
+    
+    [MultiObjectsProcessingContextGroupKinds]: {
+    }
+}
 
 export type VolumeT =
     volumes.volumes.VolumeWithBoundingBox<
         VolumeLocationT,
         SampleT,
         SampleProcessingContextT,
-        VolumeSamplingContextT
+        VolumeDomainSamplingContextT
     >
-
-export type VolumeProcessingContext_MultiObjects =
-    MultiObjectsProcessingContext<
-            Objects,
-            Volume_Context_PreservedGroupsT,
-            MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>,
-            fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
-        > &
-    {}
-
-export const VolumeProcessingContext_MultiObjects_Template: VolumeProcessingContext_MultiObjects = {
-    ...Volume_Context_PreservedGroupsKindsMappedGroupsTemplate,
-
-    [MultiObjectsProcessingContextObjectsGrouped]: {
-        ...(mapGroups(
-            Volume_Context_PreservedGroupsTemplate,
-            () => ({ [MultiObjectsGroupedObjectsKey]: {} as Objects })
-        ) as MultiObjectsGrouped<Objects, Volume_Context_PreservedGroupsT>),
-    },
-
-    [MultiObjectsProcessingContextGroupKinds]: {
-        ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
-    },
-}
 
 export type VolumeProcessorT =
     volumes.VolumeProcessor<
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             VolumeT,
             VolumeProcessingT,
             VolumeProcessingContextT
@@ -896,7 +899,7 @@ export type VolumeSurfaceProcessorT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             VolumeT,
             SurfaceT,
             SurfaceProcessingContextT,
@@ -918,7 +921,7 @@ export type VolumeSolidProcessorT =
             VolumeLocationT,
             SampleT,
             SampleProcessingContextT,
-            VolumeSamplingContextT,
+            VolumeDomainSamplingContextT,
             VolumeT,
             SurfaceT,
             SurfaceProcessingContextT,

@@ -11,6 +11,7 @@ import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.j
 import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroups, VolumeSamplingContextKey, SpaceKey, SamplingKey } from "./types.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"
 import { VolumeKey } from "../processor.js"
+import { Vec3 } from "playcanvas-extended"
 
 class VolumeDomainSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -245,19 +246,28 @@ class VolumeDomainSamplingSubdivisionProcessor<
         }
 
         //TODO: using separate typed arrays mapped by groups for many field points at once will make this much faster and more memory-efficient
-        const layer = context[SubdivisionKey].depth
-        const new_voxels = context[SubdivisionKey].layer_sizes.at(-1)!
+        const subdivision = context[SubdivisionKey]
+        const layer = subdivision.depth
+        const new_voxels = subdivision.layer_sizes.at(-1)!
         const locations = new Array<VolumeLocationT>(new_voxels)
         const space = context[SpaceKey]
         
-        const local_indices = new context[SubdivisionKey].typedArray(new_voxels)
-        for (let local_index = 0; local_index < local_indices.length; local_index++) local_indices[local_index] = local_index
+        const local_indices = new subdivision.typedArray(new_voxels)
+        for (let local_index = 0; local_index < local_indices.length; local_index++)
+            local_indices[local_index] = local_index
         
-        const positions = space.positions.layers[layer]
+        const positions_v3 = OctTreeSpace.vectorized.positionOfVoxel.layers_same.call(space, layer, local_indices)
+        const positions = space.positions.subdivide(3 * new_voxels)
 
         for (let local_index = 0; local_index < locations.length; local_index++) {
+            const position_v3 = positions_v3[local_index]
+
+            positions[(3 * local_index) + 0] = position_v3.x
+            positions[(3 * local_index) + 1] = position_v3.y
+            positions[(3 * local_index) + 2] = position_v3.z
+
             locations[local_index] = {
-                p: positions[local_index],
+                p: position_v3,
                 ...extraLocationParameters
             } as VolumeLocationT
         }

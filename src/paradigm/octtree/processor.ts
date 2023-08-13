@@ -686,6 +686,8 @@ export class OctTreeSubdividingProcessor<
         // It should also add its oct tree to the context during its first update
 
         for (let depth = 0; depth < settings.max_depth; depth++) {
+            subdivision_advice_recommendation.subdivide(subdivision_references.layer_sizes.at(-1)!)
+            
             for (const octtree_group of octtree_groups)
                 octtree_group.delete(subdivision_processing)
 
@@ -694,8 +696,6 @@ export class OctTreeSubdividingProcessor<
 
             if (subdivision_references.subdivide(subdivision_advice, settings) === 0)
                 break
-            
-            subdivision_advice_recommendation.subdivide(subdivision_references.layer_sizes.at(-1)!)
         }
 
         for (const octtree_group of octtree_groups) {
