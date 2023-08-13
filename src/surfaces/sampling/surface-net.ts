@@ -708,7 +708,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             const cells_polygons_by_edge_layers = context[SurfaceNetKey].cells.polygons_by_edge.layers.layers
             const cells_polygons_by_edge_localIndices = context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers
 
-            context[SurfaceNetKey].cells.surfacePoints.subdivide(3 * number_new_dual_cells)
+            context[SurfaceNetKey].cells.surfacePoints.subdivide(3 * number_new_dual_cells).fill(NaN)
             const surfacePoints = context[SurfaceNetKey].cells.surfacePoints.layers
             const polygons_vertices_offsets = context[SurfaceNetKey].polygons.vertices.offsets.layers
             const polygon_vertices_dual_cells_layers = context[SurfaceNetKey].polygons.vertices.dual_cells.layers.layers
@@ -1343,6 +1343,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                 //TODO: is this the right time to triangulate the polygon?
                 let x: number, y: number, z: number
+
+                // at this point, triangulation_start_vertex is >= 0
 
                 /**
                  * this index is relative to {@link triangulation_start_vertex},

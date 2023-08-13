@@ -211,6 +211,9 @@ export class SurfaceNetMeshingProcessor<
                     }
                 }
                 else {
+                    // reversing polygon_triangulation_start[polygon_localIndex] = -(1 + triangulation_start_vertex)
+                    triangulation_start_vertex = -1 - triangulation_start_vertex
+
                     for (let i = 0; i < triangles; i++) {
                         const isInverse = (i & 1) === 1
                         const a = i >> 1
@@ -229,8 +232,6 @@ export class SurfaceNetMeshingProcessor<
 
         /** a flattened tree; each node references its parent or -1 if it is a root node */
         const islands = new Uint32Array(number_vertices_prelim).fill(invalid_uint32)
-        
-        debugger
 
         function root_island(x: number) {
             let x_prev: number
@@ -289,6 +290,9 @@ export class SurfaceNetMeshingProcessor<
                     }
                 }
                 else {
+                    // reversing polygon_triangulation_start[polygon_localIndex] = -(1 + triangulation_start_vertex)
+                    triangulation_start_vertex = -1 - triangulation_start_vertex
+
                     for (let i = 0; i < triangles; i++) {
                         const isInverse = (i & 1) === 1
                         const a = i >> 1

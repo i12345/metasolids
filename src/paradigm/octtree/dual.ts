@@ -134,7 +134,7 @@ export type OctTreeWithDualOctTreesGrouped<IndicesT extends IndicesTypedArray = 
              * references to dual cells from dual cells, grouped 6 elements at a time
              */
             neighbors: OctTreeReferences<IndicesT>
-            
+
             lookup: {
                 /**
                  * references to dual cells from vertices, grouped 8 elements at a time
@@ -490,13 +490,15 @@ export class OctTreeWithDualSubdivisionProcessor<
                                 const primary_child_localIndex = primary_local_index_offset | primary_child_subcell
                                 
                                 // the corners pointing to the interior and to the adjacent cells
-                                const dual_corner_interior = primary_child_subcell ^ cell_mask_12 // diagonal opposite on the plane
-                                const dual_corner_adjacent = primary_child_subcell ^ 0b111 // triagonal opposite of primary_child_subcell
+                                const dual_corner_interior = primary_child_subcell ^ 0b111 // triagonal opposite of primary_child_subcell
+                                const dual_corner_adjacent = primary_child_subcell ^ cell_mask_12 // diagonal opposite on the plane
 
-                                new_dual_cells_lookup_corners_layers[(8 * primary_child_localIndex) | dual_corner_interior] = layer // new_dual_cell_adjacent_layer
-                                new_dual_cells_lookup_corners_layers[(8 * primary_child_localIndex) | dual_corner_adjacent] = layer // dual_neighbor_layer
-                                new_dual_cells_lookup_corners_localIndices[(8 * primary_child_localIndex) | dual_corner_interior] = new_dual_cell_interior_localIndex
-                                new_dual_cells_lookup_corners_localIndices[(8 * primary_child_localIndex) | dual_corner_adjacent] = dual_neighbor_localIndex
+                                const eight_times_primary_child_localIndex = 8 * primary_child_localIndex
+
+                                new_dual_cells_lookup_corners_layers[eight_times_primary_child_localIndex | dual_corner_interior] = layer // new_dual_cell_adjacent_layer
+                                new_dual_cells_lookup_corners_layers[eight_times_primary_child_localIndex | dual_corner_adjacent] = layer // dual_neighbor_layer
+                                new_dual_cells_lookup_corners_localIndices[eight_times_primary_child_localIndex | dual_corner_interior] = new_dual_cell_interior_localIndex
+                                new_dual_cells_lookup_corners_localIndices[eight_times_primary_child_localIndex | dual_corner_adjacent] = dual_neighbor_localIndex
                             }
                         }
                     }
