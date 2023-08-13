@@ -102,22 +102,22 @@ export class SurfaceNetMeshingProcessor<
         const vertex_buffer_lookup = new TypedArrayOctTree<number, Uint32Array>(Uint32Array, dual_cells_per_layer.map(layer_size => new Uint32Array(layer_size).fill(invalid_uint32)))
         const surfacePoints = sampling[SurfaceNetKey].cells.surfacePoints.layers
         
-        let number_vertices_prelim = 0
+        let max_number_vertices_prelim = 0
         for (let layer = 1; layer < dual_cells_per_layer.length; layer++) {
             const dual_cells_in_layer = dual_cells_per_layer[layer]
             const surfacePoints_layer = surfacePoints[layer]
             for (let localIndex = 0; localIndex < dual_cells_in_layer; localIndex++) {
                 const surfacePoint_x = surfacePoints_layer[(3 * localIndex) + 0]
                 if (!Number.isNaN(surfacePoint_x) && Number.isFinite(surfacePoint_x))
-                    number_vertices_prelim++
+                    max_number_vertices_prelim++
             }
         }
 
-        const vertex_buffer_prelim = new Float32Array(3 * number_vertices_prelim)
+        const vertex_buffer_prelim = new Float32Array(3 * max_number_vertices_prelim)
 
         const dualCellReferences_buffer_prelim: OctTreeReferencesOctTreeLayersGrouped<IndicesT> = {
-            layers: new Uint8Array(number_vertices_prelim),
-            localIndices: new sampling[SubdivisionKey].typedArray(number_vertices_prelim) as IndicesT
+            layers: new Uint8Array(max_number_vertices_prelim),
+            localIndices: new sampling[SubdivisionKey].typedArray(max_number_vertices_prelim) as IndicesT
         }
 
         const number_triangles_prelim = surface_net.polygons.vertices.offsets.layers.map(offsets => {
@@ -229,6 +229,9 @@ export class SurfaceNetMeshingProcessor<
         }
 
         // distinguish islands of faces
+
+        const number_vertices_prelim = vertex_prelim_next
+        console.assert(number_vertices_prelim <= max_number_vertices_prelim)
 
         /** a flattened tree; each node references its parent or -1 if it is a root node */
         const islands = new Uint32Array(number_vertices_prelim).fill(invalid_uint32)
