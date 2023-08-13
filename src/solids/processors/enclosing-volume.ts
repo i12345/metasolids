@@ -181,7 +181,7 @@ export class SolidWithEnclosingVolumeProcessor<
 
             for (let adjacent_direction = 0; adjacent_direction < 6; adjacent_direction++) {
                 const layout_offset = adjacency.layout.offset.layers[cell_layer][(6 * cell_localIndex) + adjacent_direction]
-                const layout_count = adjacency.layout.offset.layers[cell_layer][(6 * cell_localIndex) + adjacent_direction]
+                const layout_count = adjacency.layout.count.layers[cell_layer][(6 * cell_localIndex) + adjacent_direction]
 
                 for (let reference_localIndex = 0; reference_localIndex < layout_count; reference_localIndex++) {
                     const neighbor_layer = adjacency.references.layers.layers[cell_layer][layout_offset + reference_localIndex]

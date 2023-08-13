@@ -166,4 +166,7 @@ export class VolumeWithSamplingWithAdjacencyProcessor<
     process(item: VolumeProcessingT, context: VolumeProcessingContextT): void {
         item[SamplingKey][AdjacencyKey] = new SubdivisionAdjacency(item[SamplingKey][SubdivisionKey])
     }
+
+    private constructor() { }
+    public static readonly instance = new this()
 }

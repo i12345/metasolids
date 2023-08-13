@@ -62,6 +62,10 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
     readonly depth_offsets: number[] = [0]
     readonly layer_sizes: number[] = [1]
     
+    /**
+     * Total number of layers, including the children made from subdivision
+     * though not subdivided or having any children themselves
+     */
     get depth() {
         // this.references.global is one layer behind because it is only used
         // when indexing a next layer
@@ -334,32 +338,35 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
         
         const mask1 = <OctTreeCell>(1 << axis1)
         const mask2 = <OctTreeCell>(1 << axis2)
-        const other = <OctTreeCell>(0x7 ^ (mask1 | mask2))
+        const other1 = <OctTreeCell>(0x7 ^ mask1)
+        const other2 = <OctTreeCell>(0x7 ^ mask2)
         const next1 = direction1 === 1 ? mask1 : 0
         const prev1 = direction1 === 0 ? mask1 : 0
         const next2 = direction2 === 1 ? mask2 : 0
         const prev2 = direction2 === 0 ? mask2 : 0
-        const prev = prev1 | prev2
-        const next = next1 | next2
         
-        let leastSignificantBit: number
-        let leastSignificantBitFound1 = false
-        let leastSignificantBitFound2 = false
-        for (leastSignificantBit = layer - 1; leastSignificantBit >= 0; leastSignificantBit--) {
-            if ((address[leastSignificantBit] & mask1) === prev1)
-                leastSignificantBitFound1 = true
-            if ((address[leastSignificantBit] & mask2) === prev2)
-                leastSignificantBitFound2 = true
-            if (leastSignificantBitFound1 && leastSignificantBitFound2)
+        let leastSignificantBit1: number
+        let leastSignificantBit2: number
+
+        for (leastSignificantBit1 = layer - 1; leastSignificantBit1 >= 0; leastSignificantBit1--)
+            if ((address[leastSignificantBit1] & mask1) === prev1)
                 break
-        }
         
-        if (leastSignificantBit === -1)
+        for (leastSignificantBit2 = layer - 1; leastSignificantBit2 >= 0; leastSignificantBit2--)
+            if ((address[leastSignificantBit2] & mask2) === prev2)
+                break
+        
+        if (leastSignificantBit1 === -1 ||
+            leastSignificantBit2 === -1)
             return undefined
         
-        address[leastSignificantBit] = <OctTreeCell>((address[leastSignificantBit] & other) | next)
-        for (let i = leastSignificantBit + 1; i < address.length; i++)
-            address[i] = <OctTreeCell>((address[i] & other) | prev)
+        address[leastSignificantBit1] = <OctTreeCell>((address[leastSignificantBit1] & other1) | next1)
+        for (let i = leastSignificantBit1 + 1; i < address.length; i++)
+            address[i] = <OctTreeCell>((address[i] & other1) | prev1)
+
+        address[leastSignificantBit2] = <OctTreeCell>((address[leastSignificantBit2] & other2) | next2)
+        for (let i = leastSignificantBit2 + 1; i < address.length; i++)
+            address[i] = <OctTreeCell>((address[i] & other2) | prev2)
 
         return address
     }
@@ -391,36 +398,48 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
         const maskX = <OctTreeCell>(1 << 0)
         const maskY = <OctTreeCell>(1 << 1)
         const maskZ = <OctTreeCell>(1 << 2)
+        const otherX = <OctTreeCell>0b110
+        const otherY = <OctTreeCell>0b101
+        const otherZ = <OctTreeCell>0b011
         const nextX = directionX === 1 ? maskX : 0
         const prevX = directionX === 0 ? maskX : 0
         const nextY = directionY === 1 ? maskY : 0
         const prevY = directionY === 0 ? maskY : 0
         const nextZ = directionZ === 1 ? maskZ : 0
         const prevZ = directionZ === 0 ? maskZ : 0
-        const prev = <OctTreeCell>(prevX | prevY | prevZ)
-        const next = <OctTreeCell>(nextX | nextY | nextZ)
         
-        let leastSignificantBit: number
-        let leastSignificantBitFoundX = false
-        let leastSignificantBitFoundY = false
-        let leastSignificantBitFoundZ = false
-        for (leastSignificantBit = layer - 1; leastSignificantBit >= 0; leastSignificantBit--) {
-            if ((address[leastSignificantBit] & maskX) === prevX)
-                leastSignificantBitFoundX = true
-            if ((address[leastSignificantBit] & maskY) === prevY)
-                leastSignificantBitFoundY = true
-            if ((address[leastSignificantBit] & maskZ) === prevZ)
-                leastSignificantBitFoundZ = true
-            if (leastSignificantBitFoundX && leastSignificantBitFoundY && leastSignificantBitFoundZ)
+        let leastSignificantBitX: number
+        let leastSignificantBitY: number
+        let leastSignificantBitZ: number
+
+        for (leastSignificantBitX = layer - 1; leastSignificantBitX >= 0; leastSignificantBitX--)
+            if ((address[leastSignificantBitX] & maskX) === prevX)
                 break
-        }
         
-        if (leastSignificantBit === -1)
+        for (leastSignificantBitY = layer - 1; leastSignificantBitY >= 0; leastSignificantBitY--)
+            if ((address[leastSignificantBitY] & maskY) === prevY)
+                break
+
+        for (leastSignificantBitZ = layer - 1; leastSignificantBitZ >= 0; leastSignificantBitZ--)
+            if ((address[leastSignificantBitZ] & maskZ) === prevZ)
+                break
+        
+        if (leastSignificantBitX === -1 ||
+            leastSignificantBitY === -1 ||
+            leastSignificantBitZ === -1)
             return undefined
         
-        address[leastSignificantBit] = next
-        for (let i = leastSignificantBit + 1; i < address.length; i++)
-            address[i] = prev
+        address[leastSignificantBitX] = <OctTreeCell>((address[leastSignificantBitX] & otherX) | nextX)
+        for (let i = leastSignificantBitX + 1; i < address.length; i++)
+            address[i] = <OctTreeCell>((address[i] & otherX) | prevX)
+
+        address[leastSignificantBitY] = <OctTreeCell>((address[leastSignificantBitY] & otherY) | nextY)
+        for (let i = leastSignificantBitY + 1; i < address.length; i++)
+            address[i] = <OctTreeCell>((address[i] & otherY) | prevY)
+
+        address[leastSignificantBitZ] = <OctTreeCell>((address[leastSignificantBitZ] & otherZ) | nextZ)
+        for (let i = leastSignificantBitZ + 1; i < address.length; i++)
+            address[i] = <OctTreeCell>((address[i] & otherZ) | prevZ)
         
         return address
     }

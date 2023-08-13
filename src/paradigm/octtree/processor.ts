@@ -694,8 +694,9 @@ export class OctTreeSubdividingProcessor<
             //@ts-ignore
             graph.process(subdivision_processing, subdivision_context)
 
-            if (subdivision_references.subdivide(subdivision_advice, settings) === 0)
-                break
+            if ((depth + 1) < settings.max_depth)
+                if (subdivision_references.subdivide(subdivision_advice, settings) === 0)
+                    break
         }
 
         for (const octtree_group of octtree_groups) {

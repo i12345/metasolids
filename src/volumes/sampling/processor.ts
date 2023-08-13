@@ -606,6 +606,8 @@ export class VolumeSamplingSubdividingProcessor<
         const subdivisionContext = encapsulated(context[SamplingKey], context) as SubdividingProcessingContextT
         
         this.subdivisionProcessor.process(subdivisionItem as any, subdivisionContext)
+
+        item[SamplingKey][SpaceKey] = subdivisionContext[SpaceKey]
     }
 }
 

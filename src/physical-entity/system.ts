@@ -15,6 +15,7 @@ const processors: VolumeProcessorT[] = [
         surfaces.sampling.SurfaceHintVolumeSamplingSubdivisionProcessor.instance,
         solids.sampling.SolidHintVolumeSamplingSubdivisionProcessor.instance,
     ] as any[]) as unknown as VolumeProcessorT,
+    volumes.sampling.VolumeWithSamplingWithAdjacencyProcessor.instance as VolumeProcessorT,
     surfaces.meshing.SurfaceNetMeshingProcessor.instance as unknown as VolumeProcessorT,
     // surfaces.meshing.PaperThinMeshingProcessor.instance,
     new processing.processors.ParallelizingProcessor(
