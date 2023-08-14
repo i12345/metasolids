@@ -334,7 +334,7 @@ export class OctTreeWithDualSubdivisionProcessor<
              * Is this only needed for new pyramid dual cells?
              * face = (2 * axis) + direction = index in [x-, x+, y-, y+, z-, z+]
              */
-            const tmp_lookup_adjacent = new subdivision.typedArray(6 * number_subdivided_primary_cells)
+            const tmp_lookup_adjacent = new subdivision.typedArray(6 * number_subdivided_primary_cells).fill(invalid_localIndex)
 
             /**
              * tmp_lookup_diagonal[(12 * (local_index on parent_layer)) + direction_diagonal] = local index of dual cell in new layer
@@ -518,6 +518,8 @@ export class OctTreeWithDualSubdivisionProcessor<
 
                     // `a` and `b` denote when a variable is different for the third axis
                     const cell_mask_2: OctTreeCell = <OctTreeCell>(0b111 ^ (cell_mask_0 | cell_mask_1))
+                    const face_2a: AdjacentDirection = (2 * plane)
+                    const face_2b: AdjacentDirection = face_2a | 1
 
                     for (let quadrant = 0; quadrant < 4; quadrant++) {
                         const diagonal_direction = (plane * 4) | quadrant
@@ -621,6 +623,15 @@ export class OctTreeWithDualSubdivisionProcessor<
                                         new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_2b] = primary_parent_diagonal.layerLocalIndex.layer
                                         new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_2a] = primary_parent_diagonal.layerLocalIndex.local_index
                                         new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_2b] = primary_parent_diagonal.layerLocalIndex.local_index
+
+                                        // the primary_parent's triagonal corner dual cells are neighbors for this diagonal dual cell
+                                        const primary_subcell_a = cell_mask_next_0 | cell_mask_next_1
+                                        const primary_subcell_b = primary_subcell_a | cell_mask_2
+                                        
+                                        new_dual_cells_neighbors_layers[(6 * diagonal_neighbor_dual_cell_localIndex) + face_2a] = lookup_corners_parents_layers[(8 * primary_parent_local_index) | primary_subcell_a]
+                                        new_dual_cells_neighbors_layers[(6 * diagonal_neighbor_dual_cell_localIndex) + face_2b] = lookup_corners_parents_layers[(8 * primary_parent_local_index) | primary_subcell_b]
+                                        new_dual_cells_neighbors_localIndices[(6 * diagonal_neighbor_dual_cell_localIndex) + face_2a] = lookup_corners_parents_localIndices[(8 * primary_parent_local_index) | primary_subcell_a]
+                                        new_dual_cells_neighbors_localIndices[(6 * diagonal_neighbor_dual_cell_localIndex) + face_2b] = lookup_corners_parents_localIndices[(8 * primary_parent_local_index) | primary_subcell_b]
                                     }
                                     else {
                                         // use diagonal dual cell that was just made at this layer

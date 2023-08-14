@@ -165,11 +165,11 @@ export class SubdivisionReferences<IndicesT extends IndicesTypedArray = Uint32Ar
         }
 
         const next_layer_parents = this.references.parents.subdivide(next_layer_voxel_count / 8)
-        let next_parent_index = 0
-        for (let i = 0; i < last_layer_size; i++) {
-            const next_layer_local = references_active.local[i]
+        let next_localIndex_group = 0
+        for (let i_parent = 0; i_parent < last_layer_size; i_parent++) {
+            const next_layer_local = references_active.local[i_parent]
             if (next_layer_local !== invalid)
-                next_layer_parents[next_parent_index++] = next_layer_local / 8
+                next_layer_parents[next_localIndex_group++] = i_parent
         }
 
         this.layer_sizes.push(next_layer_voxel_count)

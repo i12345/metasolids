@@ -715,9 +715,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             const polygon_vertices_dual_cells_localIndices = context[SurfaceNetKey].polygons.vertices.dual_cells.localIndices.layers
 
             /**
-             * this recommendation will be, for each dual cell,
-             * the XOR of whether it used to be intersected
-             * by a polygon and whether it still is
+             * this is a bitmap for whether a dual cell is part of at least one polygon or not
              */
             const dual_cell_subdivide_recommendation_surfaceIntersects = new OctTreeCellsMaskOctTree()
             for (const layer_size of subdivision.layer_sizes)
@@ -982,6 +980,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 }
             }
 
+            debugger
+
             let new_polygon_localIndex = 0
             const max_number_new_polygons = (number_new_dual_cells * 12) + (9 * 8 * number_subdivided_primary_cells)
 
@@ -1116,8 +1116,6 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 if (cells_polygons_by_edge_layers[dual_cell_layer_initial][(12 * dual_cell_localIndex_initial) + edge_initial] !== invalid_layer)
                     return false
                 
-                //TODO: record which edges have already been considered to remove duplicates
-                
                 const axis_1 = (edge_axis + 1) % 3
                 const axis_2 = (edge_axis + 2) % 3
                 const cell_0 = 1 << edge_axis
@@ -1182,6 +1180,10 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     let dual_cell_localIndex_current = dual_cell_localIndex_initial
 
                     while(polygon_points-- > 0) {
+                        const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
+                        if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
+                            break
+    
                         const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
                         const edge_current = four_times_edge_axis | edge_quadrant_current
                     
@@ -1305,6 +1307,9 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                         const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                         const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+
+                        if (dual_cell_layer_adjacent === invalid_layer)
+                            return invalidate()
 
                         // it should be valid because a "tent" can only be formed between two triagonal corners 
 
@@ -1430,12 +1435,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]
                     const polygon_vertex_dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + point]
                     
-                    dual_cell_subdivide_recommendation_surfaceIntersects.set(
-                        polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex,
-                        !dual_cell_subdivide_recommendation_surfaceIntersects.get(
-                            polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex
-                        )
-                    )
+                    dual_cell_subdivide_recommendation_surfaceIntersects.set(polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex, true)
                 }
 
                 return true
