@@ -1,3 +1,6 @@
+import { groupsProxyOverwritten } from "./groups-proxy.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "./multi-objects-groups.js"
+
 export const EncapsulatingKey = Symbol("encapsulating")
 
 export type WithEncapsulating<EncapsulatingT> = {
@@ -15,16 +18,10 @@ export type WithoutEncapsulating<EncapsulatedT extends WithEncapsulating<any>> =
 // b.b // string
 
 export function encapsulated<T extends object, Encapsulating>(item: T, encapsulating: Encapsulating): T & WithEncapsulating<Encapsulating> {
-    return new Proxy(item, {
-        get(target, p, receiver) {
-            if (target === item && p === EncapsulatingKey)
-                return encapsulating
-            else if (receiver)
-                return Reflect.get(target, p, receiver)
-            else return Reflect.get(target, p)
-        },
-        has(target, p) {
-            return p === EncapsulatingKey || Reflect.has(target, p)
-        },
-    }) as any
+    return groupsProxyOverwritten<WithEncapsulating<MultiObjectsGroupsTemplateLeaf>, T, WithEncapsulating<Encapsulating>> (
+        { [EncapsulatingKey]: MultiObjectsGroupsTemplate_Leaf },
+        item,
+        { [EncapsulatingKey]: encapsulating },
+        false
+    ) as T & WithEncapsulating<Encapsulating>
 }

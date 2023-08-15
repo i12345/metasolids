@@ -121,7 +121,8 @@ export class MultiObjectsInfluencesNormalizingProcessor<
     //TODO: support vectorized field points
     process(results: Result[], context: Context): void {
         for (const { group } of groupKinds(context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroups)) {
-            for (const influences of results.map(result => group.get<MultiObjectsInfluences<Objects>>(result))) {
+            for (const result of results) {
+                const influences = group.get<MultiObjectsInfluences<Objects>>(result)
                 const objects_template = group.get<Objects>(context[MultiObjectsProcessingContextObjectsGrouped])
 
                 let sum = 0

@@ -1,5 +1,5 @@
 import { LeafInterface, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, PropertyPath, groups } from "../../trees/index.js";
-import { Reflect_entries, Reflect_fromEntries } from "../../../utils/index.js";
+import { Reflect_entries, Reflect_fromEntries, mergeObjects } from "../../../utils/index.js";
 import { ProcessorConnections, ProcessorInitialization } from "../processor.js";
 import { ParallelizedProcessor, Parallelizer } from "./parallel.js";
 import { EncapsulatingKey, WithEncapsulating, encapsulated } from "../../trees/encapsulating.js";
@@ -214,7 +214,14 @@ export abstract class GroupsParallelizer<
             const parallelizedContext_entries_new = Reflect_entries(parallelizedContextEncapsulated)
             const paralellizedContext_entries_added = parallelizedContext_entries_new.filter(([key,]) => !parallelizedContext_keys_original.includes(key))
             const parallelizedContext_additions = Reflect_fromEntries(paralellizedContext_entries_added)
-            parallelizedGroup.set(details.parallelizedContext_additions, parallelizedContext_additions)
+            
+            parallelizedGroup.set(
+                details.parallelizedContext_additions,
+                mergeObjects([
+                    parallelizedGroup.get(details.parallelizedContext_additions),
+                    parallelizedContext_additions
+                ])
+            )
         }
         
         return { connections }

@@ -980,8 +980,6 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 }
             }
 
-            debugger
-
             let new_polygon_localIndex = 0
             const max_number_new_polygons = (number_new_dual_cells * 12) + (9 * 8 * number_subdivided_primary_cells)
 

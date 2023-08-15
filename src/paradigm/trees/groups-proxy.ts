@@ -31,7 +31,8 @@ class GroupOverwritingProxyHandler<
     
     constructor(
         public readonly groups: Groups,
-        public readonly overwriting: Overwriting
+        public readonly overwriting: Overwriting,
+        public readonly enumerable = true
     ) { }
     
     apply(target: Original, thisArg: any, argArray: any[]) {
@@ -182,7 +183,8 @@ class GroupOverwritingProxyHandler<
 
     ownKeys(target: Original): ArrayLike<string | symbol> {
         const keys = new Set<string | symbol>(Reflect.ownKeys(target))
-        Reflect.ownKeys(this.groups).forEach(key => keys.add(key))
+        if (this.enumerable)
+            Reflect.ownKeys(this.groups).forEach(key => keys.add(key))
         return [...keys]
     }
 
@@ -206,14 +208,15 @@ class GroupOverwritingProxyHandler<
  */
 export function groupsProxyOverwritten<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        Original extends MultiObjectsGroupsMapped<Groups, any> = MultiObjectsGroupsMapped<Groups, any>,
+        Original extends object = object,
         Overwriting extends MultiObjectsGroupsMapped<Groups, any> = MultiObjectsGroupsMapped<Groups, any>
     >(
         groups: Groups,
         original: Original,
-        overwriting?: Overwriting
+        overwriting?: Overwriting,
+        enumerable = true
     ): MultiObjectsGroupsOverwritten<Groups, Original, Overwriting> {
-    return new Proxy(original, new GroupOverwritingProxyHandler(groups, overwriting ?? {} as Overwriting)) as any
+    return new Proxy(original, new GroupOverwritingProxyHandler(groups, overwriting ?? {} as Overwriting, enumerable)) as any
 }
 
 // let original = {

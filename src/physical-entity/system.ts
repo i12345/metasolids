@@ -46,10 +46,6 @@ const processors: VolumeProcessorT[] = [
             InterpolatingGroupsKindsTemplate
         ) as unknown as VolumeSurfaceProcessorT
     ),
-    new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer,
-        surfaces.rendering.SurfaceWithRenderingProcessor.instance as unknown as VolumeSurfaceProcessorT
-    ),
     solids.processors.VolumeSurfaceSolidificationProcessor.instance,
     new processing.processors.ParallelizingProcessor(
         solids.VolumeSolidsParallelizer,
@@ -59,6 +55,10 @@ const processors: VolumeProcessorT[] = [
         surfaces.VolumeSurfacesParallelizer,
         ///@ts-ignore
         textures.TextureableProcessor.instance as VolumeSurfaceProcessorT
+    ),
+    new processing.processors.ParallelizingProcessor(
+        surfaces.VolumeSurfacesParallelizer,
+        surfaces.rendering.SurfaceWithRenderingProcessor.instance as unknown as VolumeSurfaceProcessorT
     ),
 ]
 
