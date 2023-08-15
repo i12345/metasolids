@@ -42,7 +42,7 @@
   "dependencies": {
     "@ronomon/hash-table": "^2.0.8",
     "byte-rw": "^1.2.2",
-    "playcanvas-extended": "^1.65.2-dev",
+    "playcanvas-extended": "^1.66.2-dev",
     "playcanvas-extended-serializer": "^1.0.0",
     "simple-typed-serialization": "^1.1.8",
     "type-namespace": "^1.1.0",
