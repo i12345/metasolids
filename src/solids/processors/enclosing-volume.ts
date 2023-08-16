@@ -10,6 +10,7 @@ import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
+import HashTable from "@ronomon/hash-table"
 
 export const VolumeVoxelsKey = Symbol("voxels")
 export const TotalVolumeKey = "totalVolume"
@@ -157,18 +158,37 @@ export class SolidWithEnclosingVolumeProcessor<
             localIndices: <number[]>[]
         }
 
+        const lookup_key_buffer_size_min = subdivision.typedArray.BYTES_PER_ELEMENT + 1
+        const lookup_key_buffer = Buffer.alloc(4 * Math.ceil(lookup_key_buffer_size_min / 4)).fill(0)
+        const lookup_key_localIndex = new subdivision.typedArray(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + 0, 1)
+        const lookup_key_layer = new Uint8Array(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + lookup_key_localIndex.byteLength, 1)
+        const lookup_value_buffer = Buffer.alloc(1)
+        const voxels_lookup = new HashTable(lookup_key_buffer.byteLength, 1, 0, subdivision.layer_sizes.reduce((acc, size) => acc + size))
+
+        let layer: number, localIndex: number
+
+        function add() {
+            if (sampling.samples.layers[layer][localIndex].alpha < surfaceLevel)
+                return
+            
+            lookup_key_layer[0] = layer
+            lookup_key_localIndex[0] = localIndex
+            if (voxels_lookup.exist(lookup_key_buffer, 0))
+                return
+
+            voxels.layers.push(layer)
+            voxels.localIndices.push(localIndex)
+            voxels_lookup.set(lookup_key_buffer, 0, lookup_value_buffer, 0)
+        }
+
         const initial_dual_cell_layer = solid.surface.mesh.dualCellReferences.layers[0]
         const initial_dual_cell_localIndex = solid.surface.mesh.dualCellReferences.localIndices[0]
 
         for (let corner = 0; corner < 8; corner++){
-            const corner_primary_layer = sampling[DualKey].cells.vertices.layers.layers[initial_dual_cell_layer][(8 * initial_dual_cell_localIndex) + corner]
-            const corner_primary_localIndex = sampling[DualKey].cells.vertices.localIndices.layers[initial_dual_cell_layer][(8 * initial_dual_cell_localIndex) + corner]
+            layer = sampling[DualKey].cells.vertices.layers.layers[initial_dual_cell_layer][(8 * initial_dual_cell_localIndex) + corner]
+            localIndex = sampling[DualKey].cells.vertices.localIndices.layers[initial_dual_cell_layer][(8 * initial_dual_cell_localIndex) + corner]
             
-            if (sampling.samples.layers[corner_primary_layer][corner_primary_localIndex].alpha > surfaceLevel) {
-                voxels.layers.push(corner_primary_layer)
-                voxels.localIndices.push(corner_primary_localIndex)
-                break
-            }
+            add()
         }
 
         const layersVoxelsCount = new Uint32Array(subdivision.depth + 1).fill(0)
@@ -184,13 +204,10 @@ export class SolidWithEnclosingVolumeProcessor<
                 const layout_count = adjacency.layout.count.layers[cell_layer][(6 * cell_localIndex) + adjacent_direction]
 
                 for (let reference_localIndex = 0; reference_localIndex < layout_count; reference_localIndex++) {
-                    const neighbor_layer = adjacency.references.layers.layers[cell_layer][layout_offset + reference_localIndex]
-                    const neighbor_localIndex = adjacency.references.localIndices.layers[cell_layer][layout_offset + reference_localIndex]
+                    layer = adjacency.references.layers.layers[cell_layer][layout_offset + reference_localIndex]
+                    localIndex = adjacency.references.localIndices.layers[cell_layer][layout_offset + reference_localIndex]
 
-                    if (sampling.samples.layers[neighbor_layer][neighbor_localIndex].alpha < surfaceLevel) continue
-                    
-                    voxels.layers.push(neighbor_layer)
-                    voxels.localIndices.push(neighbor_localIndex)
+                    add()
                 }
             }
         }
