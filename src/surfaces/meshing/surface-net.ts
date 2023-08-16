@@ -93,6 +93,7 @@ export class SurfaceNetMeshingProcessor<
         const dual_cells = sampling[DualKey].cells
         const surface_net = sampling[SurfaceNetKey]
 
+        const invalid_layer = 0xFF
         const invalid_uint32 = new Uint32Array([-1])[0]
 
         // prepare vertex and index buffers
@@ -194,10 +195,13 @@ export class SurfaceNetMeshingProcessor<
             for (let polygon_localIndex = 0; polygon_localIndex < number_polygons; polygon_localIndex++) {
                 vertices_offset = polygon_vertices_offset[polygon_localIndex]
                 vertices_count = polygon_vertices_offset[polygon_localIndex + 1] - vertices_offset
-                triangulation_start_vertex = polygon_triangulation_start[polygon_localIndex]
-
-                const triangles = vertices_count - 2
                 
+                if (polygon_vertices_references_layers[vertices_offset] === invalid_layer)
+                    continue
+
+                triangulation_start_vertex = polygon_triangulation_start[polygon_localIndex]
+                const triangles = vertices_count - 2
+
                 if (triangulation_start_vertex >= 0) {
                     for (let i = 0; i < triangles; i++) {
                         const isInverse = (i & 1) === 1
@@ -262,55 +266,14 @@ export class SurfaceNetMeshingProcessor<
             }
         }
 
-        for (let polygon_layer = 0; polygon_layer < surface_net.polygons.vertices.offsets.layers.length; polygon_layer++) {
-            const polygon_triangulation_start = surface_net.polygons.triangulation_start.layers[polygon_layer]
-            const polygon_vertices_offset = surface_net.polygons.vertices.offsets.layers[polygon_layer]
-            polygon_vertices_references_layers = surface_net.polygons.vertices.dual_cells.layers.layers[polygon_layer]
-            polygon_vertices_references_localIndices = surface_net.polygons.vertices.dual_cells.localIndices.layers[polygon_layer]
+        let index_buffer_i = 0
+        while (index_buffer_i < index_buffer_prelim_index_next) {
+            const i0 = index_buffer_prelim[index_buffer_i++]
+            const i1 = index_buffer_prelim[index_buffer_i++]
+            const i2 = index_buffer_prelim[index_buffer_i++]
 
-            const number_polygons = polygon_triangulation_start.length
-
-            for (let polygon_localIndex = 0; polygon_localIndex < number_polygons; polygon_localIndex++) {
-                vertices_offset = polygon_vertices_offset[polygon_localIndex]
-                vertices_count = polygon_vertices_offset[polygon_localIndex + 1] - vertices_offset
-                triangulation_start_vertex = polygon_triangulation_start[polygon_localIndex]
-
-                const triangles = vertices_count - 2
-                
-                if (triangulation_start_vertex >= 0) {
-                    for (let i = 0; i < triangles; i++) {
-                        const isInverse = (i & 1) === 1
-                        const a = (i >> 1) + 1
-                        const b = isInverse ? -(1 + a) : -a
-                        const c = isInverse ? -a : (a - 1)
-                        
-                        const index_a = vertexIndex(a)
-                        const index_b = vertexIndex(b)
-                        const index_c = vertexIndex(c)
-
-                        joinIslands(index_a, index_b)
-                        joinIslands(index_a, index_c)
-                    }
-                }
-                else {
-                    // reversing polygon_triangulation_start[polygon_localIndex] = -(1 + triangulation_start_vertex)
-                    triangulation_start_vertex = -1 - triangulation_start_vertex
-
-                    for (let i = 0; i < triangles; i++) {
-                        const isInverse = (i & 1) === 1
-                        const a = i >> 1
-                        const b = isInverse ? (a + 1) : -(2 + a)
-                        const c = isInverse ? -(2 + a) : (b + 1)
-                        
-                        const index_a = vertexIndex(a)
-                        const index_b = vertexIndex(b)
-                        const index_c = vertexIndex(c)
-
-                        joinIslands(index_a, index_b)
-                        joinIslands(index_a, index_c)
-                    }
-                }
-            }
+            joinIslands(i0, i1)
+            joinIslands(i1, i2)
         }
 
         const island_IDs = new Set<number>()
