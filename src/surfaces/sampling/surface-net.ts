@@ -1511,11 +1511,17 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             }
 
             const subdivision_recommendation = item[SubdivisionKey].recommendation.layers[layer]
-            for (let primary_child_localIndex = 0; primary_child_localIndex < subdivision_recommendation.length; primary_child_localIndex++) {
-                subdivision_recommendation[primary_child_localIndex] += (
-                    subdivide_recommendation_isolateMultipleInteriorIslands[primary_child_localIndex] +
-                    subdivide_recommendation_surfaceIntersects_primary[primary_child_localIndex]
-                )
+            for (let primary_child_localIndex_group = 0; primary_child_localIndex_group < number_subdivided_primary_cells; primary_child_localIndex_group++) {
+                const primary_child_localIndex_offset = (8 * primary_child_localIndex_group)
+                
+                for (let primary_subcell = 0; primary_subcell < 8; primary_subcell++) {
+                    const primary_child_localIndex = primary_child_localIndex_offset | primary_subcell
+
+                    subdivision_recommendation[primary_child_localIndex] += (
+                        subdivide_recommendation_isolateMultipleInteriorIslands[primary_child_localIndex_group] +
+                        subdivide_recommendation_surfaceIntersects_primary[primary_child_localIndex]
+                    )
+                }
             }
         }
     }

@@ -334,7 +334,7 @@ export class OctTreeWithDualSubdivisionProcessor<
              * Is this only needed for new pyramid dual cells?
              * face = (2 * axis) + direction = index in [x-, x+, y-, y+, z-, z+]
              */
-            const tmp_lookup_adjacent = new subdivision.typedArray(6 * number_subdivided_primary_cells).fill(invalid_localIndex)
+            const tmp_lookup_adjacent = new subdivision.typedArray(6 * subdivision.layer_sizes.at(-2)!).fill(invalid_localIndex)
 
             /**
              * tmp_lookup_diagonal[(12 * (local_index on parent_layer)) + direction_diagonal] = local index of dual cell in new layer
@@ -504,6 +504,8 @@ export class OctTreeWithDualSubdivisionProcessor<
                     }
                     else {
                         interior_dual_cells_neighbors_adjacent_localIndices[adjacent_direction] = invalid_localIndex
+                        new_dual_cells_neighbors_layers[(6 * new_dual_cell_interior_localIndex) + adjacent_direction] = invalid_layer
+                        new_dual_cells_neighbors_localIndices[(6 * new_dual_cell_interior_localIndex) + adjacent_direction] = invalid_localIndex
                     }
                 }
 
