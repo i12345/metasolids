@@ -1098,6 +1098,23 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                 let polygon_points = 0
 
+                //TODO: optimize by copy-and-pasting separate version for vertex b above and below
+                // const circular_quadrant_offset_direction = edge_vertex_above_b ? 2 : 0
+                // const circular_quadrant_offset_direction_next = edge_vertex_above_b ? 3 : 1
+                // const circular_quadrant_offset_direction_prev = edge_vertex_above_b ? 1 : 3
+                // const circular_quadrant_offset_direction_prev_offset = edge_vertex_above_b ? 3 : 1
+
+                // TODO: optimize with these variables instead of swapping items after
+                const circular_quadrant_offset_direction = 0
+                const circular_quadrant_offset_direction_next = 1
+                const circular_quadrant_offset_direction_prev = 3
+                const circular_quadrant_offset_direction_prev_offset = 1
+
+                // const circular_quadrant_offset_direction = 2
+                // const circular_quadrant_offset_direction_next = 3
+                // const circular_quadrant_offset_direction_prev = 1
+                // const circular_quadrant_offset_direction_prev_offset = 3
+
                 /**
                  * invalidates references for the half-formed polygon in context[SurfaceNetKey].cells.polygons_by_edge
                  * modified copy-and-paste of the following code
@@ -1126,17 +1143,15 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = invalid_layer
                         new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = invalid_localIndex
     
-                        const face_next = faces_next[four_times_edge_axis | circular_quadrant]
+                        const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
                         
                         const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                         if (dual_cell_layer_adjacent === invalid_layer) {
                             // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
                             // then continue in the previous direction that would have been before this dual cell
                             // otherwise a polygon cannot be formed around this edge
-                            
-                            // edge_quadrant_test 
     
-                            const circular_quadrant_test = (circular_quadrant + 1) & 0b11
+                            const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
                             const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
                             const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
                             const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
@@ -1157,7 +1172,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                             cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_layer
                             cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_localIndex
                             
-                            const circular_quadrant_prev = (circular_quadrant + 3) & 0b11
+                            const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
                             const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
     
                             const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
@@ -1180,7 +1195,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                             if (triangulation_start_vertex === -1)
                                 triangulation_start_vertex = polygon_points
     
-                            if (++circular_quadrant == 4) circular_quadrant = 0
+                            circular_quadrant += circular_quadrant_offset_direction_next
+                            circular_quadrant &= 0b11
                         }
                     }
                     
@@ -1210,17 +1226,15 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
                     new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
 
-                    const face_next = faces_next[four_times_edge_axis | circular_quadrant]
+                    const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
                     
                     const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                     if (dual_cell_layer_adjacent === invalid_layer) {
                         // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
                         // then continue in the previous direction that would have been before this dual cell
                         // otherwise a polygon cannot be formed around this edge
-                        
-                        // edge_quadrant_test 
 
-                        const circular_quadrant_test = (circular_quadrant + 1) & 0b11
+                        const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
                         const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
                         const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
                         const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
@@ -1241,7 +1255,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
                         cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
                         
-                        const circular_quadrant_prev = (circular_quadrant + 3) & 0b11
+                        const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
                         const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
 
                         const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
@@ -1264,7 +1278,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         if (triangulation_start_vertex === -1)
                             triangulation_start_vertex = polygon_points
 
-                        if (++circular_quadrant == 4) circular_quadrant = 0
+                        circular_quadrant += circular_quadrant_offset_direction_next
+                        circular_quadrant &= 0b11
                     }
 
                     polygon_points++
@@ -1285,7 +1300,6 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 new_polygon_by_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
                 new_polygon_by_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
 
-                //TODO: is this the right time to triangulate the polygon?
                 let x: number, y: number, z: number
 
                 // at this point, triangulation_start_vertex is >= 0
@@ -1369,6 +1383,24 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 }
 
                 new_polygon_triangulation_start[polygon_index] = zigZagLength(0) > zigZagLength(1) ? triangulation_start_vertex : -(1 + triangulation_start_vertex)
+
+                if (edge_vertex_above_a) {
+                    // vertices will be swapped in place
+                    for (let i = Math.ceil(polygon_points / 2) - 1; i > 0; i--) {
+                        const vertex_index_H = polygon_vertices_offset + ((triangulation_start_vertex + i) % polygon_points)
+                        const vertex_index_T = polygon_vertices_offset + ((triangulation_start_vertex - i + polygon_points) % polygon_points)
+
+                        let vertex_layer_H = new_polygon_vertices_dualCells_layers[vertex_index_H]
+                        let vertex_layer_T = new_polygon_vertices_dualCells_layers[vertex_index_T]
+                        let vertex_localIndex_H = new_polygon_vertices_dualCells_localIndices[vertex_index_H]
+                        let vertex_localIndex_T = new_polygon_vertices_dualCells_localIndices[vertex_index_T]
+
+                        new_polygon_vertices_dualCells_layers[vertex_index_H] = vertex_layer_T
+                        new_polygon_vertices_dualCells_layers[vertex_index_T] = vertex_layer_H
+                        new_polygon_vertices_dualCells_localIndices[vertex_index_H] = vertex_localIndex_T
+                        new_polygon_vertices_dualCells_localIndices[vertex_index_T] = vertex_localIndex_H
+                    }
+                }
 
                 for (let point = 0; point < polygon_points; point++) {
                     const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]

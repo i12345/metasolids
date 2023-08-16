@@ -225,7 +225,6 @@ export class MaterialRendererIndividual<
     }
 
     updateFinal() {
-        this.implementation.cull = CULLFACE_NONE
         this.implementation.update()
     }
 
