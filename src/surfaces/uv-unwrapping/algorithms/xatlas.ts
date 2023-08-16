@@ -62,7 +62,8 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
             throw new Error("element not found. If this is raised, implement nearest neighbor lookup")
         }
 
-        for (let i_atlas = n_atlas - 1; i_atlas >= 0; i_atlas--) {
+        // for (let i_atlas = n_atlas - 1; i_atlas >= 0; i_atlas--) {
+        for (let i_atlas = 0; i_atlas < n_atlas; i_atlas++) {
             const i_original = original_vert_index(
                 atlas.vertex.vertices[(3 * i_atlas) + 0],
                 atlas.vertex.vertices[(3 * i_atlas) + 1],
