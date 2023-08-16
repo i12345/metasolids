@@ -1,4 +1,4 @@
-import { BasicMaterial, StandardMaterial } from "playcanvas-extended"
+import { BasicMaterial, CULLFACE_NONE, StandardMaterial } from "playcanvas-extended"
 import { MultiObjectsGroupsMapped, groups, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js"
 import { field_point_sum, field_point_primitives_sum, field_point_fraction, field_point_subtract, field_point_compare_gte, field_point_add_inplace } from "../../../fields/point.js"
 import { Texture, opaqueStagedTexture } from "../../../textures/index.js"
@@ -225,6 +225,7 @@ export class MaterialRendererIndividual<
     }
 
     updateFinal() {
+        this.implementation.cull = CULLFACE_NONE
         this.implementation.update()
     }
 

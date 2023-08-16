@@ -1,4 +1,4 @@
-import { Entity, MeshInstance, Vec3 } from "playcanvas-extended"
+import { Entity, MeshInstance } from "playcanvas-extended"
 import { VolumeLocation } from "../../volumes/volume.js"
 import { MaterialRendererIndividual, MaterialRendererShared } from "./material/renderer.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./mesh/renderer.js"
