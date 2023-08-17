@@ -6,7 +6,7 @@ import { makeInterpolator } from "../interpolation.js"
 import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf } from "../../paradigm/trees/index.js"
 import { FieldPoint, FieldsPoint, fields_point_map, field_point_add_inplace } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
-import { VectorFunction, vectorized } from "vectorized-functions"
+import { ArrayVectorFunction, VectorFunction, vectorized } from "vectorized-functions"
 
 export const MultiObjectsDomainInternalPreservedGroupsKindsKey = Symbol("groups-kind:multi-objects-domain:internal-preserved")
 export type MultiObjectsDomainInternalPreservedGroupsKinds = {
@@ -536,7 +536,7 @@ export class MultiObjectsSampleDomain<
     }
 
     protected static readonly vectorized = {
-        combineResidualLeafSample: new VectorFunction<
+        combineResidualLeafSample: new ArrayVectorFunction<
                 ({
                     combineResidualLeafSample(
                             accumulator: MultiObjectsSample<
@@ -571,7 +571,8 @@ export class MultiObjectsSampleDomain<
                         MultiObjectsTemplate,
                         MultiObjectsGroupsTemplate,
                         MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, FieldPoint>
-                        >,
+                    >,
+                [true, false, true],
                 (
                         accumulators: MultiObjectsSample<
                             MultiObjectsTemplate,
@@ -588,9 +589,9 @@ export class MultiObjectsSampleDomain<
                         MultiObjectsGroupsTemplate,
                         MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, FieldPoint>
                     >[]
-            >("combineResidualLeafSample", [0, 2]),
+            >("combineResidualLeafSample", [true, false, true]),
 
-        finalizeSamples: new VectorFunction<
+        finalizeSamples: new ArrayVectorFunction<
                 {
                     finalizeSample(
                             sample: MultiObjectsSample<
@@ -608,6 +609,7 @@ export class MultiObjectsSampleDomain<
                         MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, FieldPoint>
                     >
                 ) => FieldPoint,
+                [true],
                 (
                     samples: MultiObjectsSample<
                         MultiObjectsTemplate,
@@ -615,7 +617,7 @@ export class MultiObjectsSampleDomain<
                         MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, FieldPoint>
                     >[]
                 ) => FieldPoint[]
-            >("finalizeSample")
+            >("finalizeSample", [true])
     }
 
     static build<

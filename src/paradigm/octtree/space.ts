@@ -1,5 +1,5 @@
 import { Vec3 } from "playcanvas-extended"
-import { VectorFunction } from "vectorized-functions"
+import { ArrayVectorFunction, VectorFunction } from "vectorized-functions"
 import { LayerLocalIndex } from "./octtree.js"
 import {/*  Subdividable, */ SubdivisionReferences } from "./subdivision.js"
 import { OctTreeAddress, OctTreeCell, octTreeSubcell } from "./address.js"
@@ -218,33 +218,36 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
     }
 
     static readonly vectorized = {
-        indexOfPosition: new VectorFunction<
+        indexOfPosition: new ArrayVectorFunction<
                 {
                     indexOfPosition(p: Vec3): LayerLocalIndex
                 },
                 "indexOfPosition",
                 (p: Vec3) => LayerLocalIndex,
+                [true],
                 (p: Vec3[]) => LayerLocalIndex[]
-            >("indexOfPosition", [0]),
+            >("indexOfPosition", [true]),
         
         positionOfVoxel: {
-            layers_same: new VectorFunction<
+            layers_same: new ArrayVectorFunction<
                 {
                     positionOfVoxel(layer: number, local_index: number): Vec3
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
+                [false, true],
                 (layer: number, local_indices: NumberArrayLike) => Vec3[]
-            >("positionOfVoxel", [1]),
+            >("positionOfVoxel", [false, true]),
             
-            layers_individual: new VectorFunction<
+            layers_individual: new ArrayVectorFunction<
                 {
                     positionOfVoxel(layer: number, local_index: number): Vec3
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
+                [true, true],
                 (layers: NumberArrayLike, local_indices: NumberArrayLike) => Vec3[]
-            >("positionOfVoxel", [0, 1])
+            >("positionOfVoxel", [true, true])
         }
     }
 }

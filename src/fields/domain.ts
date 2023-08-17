@@ -1,4 +1,4 @@
-import { VectorFunction } from "vectorized-functions"
+import { ArrayVectorFunction, VectorFunction } from "vectorized-functions"
 import { Field } from "./field.js"
 import { FieldPoint, FieldPointVectorized } from "./point.js"
 
@@ -33,12 +33,13 @@ export interface SampleDomain<
 // }
 
 const SampleDomain_vectorized_impl = {
-    sample: new VectorFunction<
+    sample: new ArrayVectorFunction<
             SampleDomain<FieldPoint, FieldPoint>,
             "sample",
             (location: FieldPoint, context: SamplingContext<FieldPoint>) => FieldPoint,
+            [true, false],
             (locations: FieldPoint[], context: SamplingContext<FieldPoint>) => FieldPoint[]
-        >("sample", [0])
+        >("sample", [true, false])
 }
 
 export const SampleDomain_vectorized = {

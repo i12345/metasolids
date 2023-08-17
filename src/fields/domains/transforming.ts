@@ -3,7 +3,7 @@ import { SampleDomain, SampleDomainLocationFieldKey, SampleDomain_vectorized, Sa
 import { Field } from '../field.js'
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from './encapsulating.js'
 import { PropertyPath } from '../../paradigm/trees/path.js'
-import { VectorFunction, vectorized } from 'vectorized-functions'
+import { ArrayVectorFunction, VectorFunction, vectorized } from 'vectorized-functions'
 
 export type TransformingDefaultInnerSamplingContext<
         OuterLocation extends FieldPoint = FieldPoint,
@@ -153,7 +153,7 @@ export abstract class TransformingSampleDomain<
     }
 
     protected static readonly vectorized = {
-        transformLocation: new VectorFunction<
+        transformLocation: new ArrayVectorFunction<
                 {
                     transformLocation(
                         location: FieldPoint,
@@ -165,13 +165,14 @@ export abstract class TransformingSampleDomain<
                     location: FieldPoint,
                     context: { outer: SamplingContext, inner: SamplingContext }
                 ) => FieldPoint,
+                [true, false],
                 (
                     locations: FieldPoint[],
                     context: { outer: SamplingContext, inner: SamplingContext }
                 ) => FieldPoint[]
-            >("transformLocation"),
+            >("transformLocation", [true, false]),
         
-        transformSample: new VectorFunction <
+        transformSample: new ArrayVectorFunction<
                 {
                     transformSample(
                         sample: FieldPoint,
@@ -185,11 +186,12 @@ export abstract class TransformingSampleDomain<
                     location: { outer: FieldPoint, inner: FieldPoint },
                     context: { outer: SamplingContext, inner: SamplingContext }
                 ) => FieldPoint,
+                [true, true, false],
                 (
                     samples: FieldPoint[],
                     locations: { outer: FieldPoint, inner: FieldPoint }[],
                     context: { outer: SamplingContext, inner: SamplingContext }
                 ) => FieldPoint[]
-            >("transformSample", [0, 1]),
+            >("transformSample", [true, true, false]),
     }
 }

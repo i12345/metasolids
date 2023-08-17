@@ -1,4 +1,4 @@
-import { VectorFunction, vectorized } from "vectorized-functions"
+import { ArrayVectorFunction, VectorFunction, vectorized } from "vectorized-functions"
 import { SampleDomain, SampleDomain_vectorized, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
@@ -82,12 +82,13 @@ export class CompositeSampleDomain<
     }
 
     protected static readonly vectorized = {
-        composite: new VectorFunction<
+        composite: new ArrayVectorFunction<
             { composite(accumulator: FieldPoint | undefined, addition: FieldPoint): FieldPoint },
             // CompositeSampleDomain,
             "composite",
             (accumulator: FieldPoint | undefined, addition: FieldPoint) => FieldPoint,
+            [true, true],
             (accumulator: (FieldPoint | undefined)[], addition: FieldPoint[]) => FieldPoint[]
-        >("composite")
+        >("composite", [true, true])
     }
 }
