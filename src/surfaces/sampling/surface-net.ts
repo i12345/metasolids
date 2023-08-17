@@ -28,12 +28,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups = {
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
              * 
-             * diagonal directions = (4 * plane) | quadrant
-             * 
-             * * 0 = (y- z-)
-             * * 1 = (y+ z-)
-             * * 2 = (y- z+)
-             * * 3 = (y+ z+)
+             * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeGroups
         }
@@ -82,12 +77,7 @@ export const SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroupsTemplate:
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
              * 
-             * diagonal directions = (4 * plane) | quadrant
-             * 
-             * * 0 = (y- z-)
-             * * 1 = (y+ z-)
-             * * 2 = (y- z+)
-             * * 3 = (y+ z+)
+             * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeGroupsTemplate,
         },
@@ -138,12 +128,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped = 
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
              * 
-             * diagonal directions = (4 * plane) | quadrant
-             * 
-             * * 0 = (y- z-)
-             * * 1 = (y+ z-)
-             * * 2 = (y- z+)
-             * * 3 = (y+ z+)
+             * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeValuesGrouped
         }
@@ -194,12 +179,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped<In
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
              * 
-             * diagonal directions = (4 * plane) | quadrant
-             * 
-             * * 0 = (y- z-)
-             * * 1 = (y+ z-)
-             * * 2 = (y- z+)
-             * * 3 = (y+ z+)
+             * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeLayersGrouped<IndicesT>
         }
@@ -248,12 +228,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped<Indices
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
              * 
-             * diagonal directions = (4 * plane) | quadrant
-             * 
-             * * 0 = (y- z-)
-             * * 1 = (y+ z-)
-             * * 2 = (y- z+)
-             * * 3 = (y+ z+)
+             * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferences<IndicesT>
         }
@@ -711,11 +686,23 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             context[SurfaceNetKey].cells.surfacePoints.subdivide(3 * number_new_dual_cells).fill(NaN)
             const surfacePoints = context[SurfaceNetKey].cells.surfacePoints.layers
             const polygons_vertices_offsets = context[SurfaceNetKey].polygons.vertices.offsets.layers
+            const polygon_edges_layers = context[SurfaceNetKey].polygons.edges.layers.layers
+            const polygon_edges_localIndices = context[SurfaceNetKey].polygons.edges.localIndices.layers
             const polygon_vertices_dual_cells_layers = context[SurfaceNetKey].polygons.vertices.dual_cells.layers.layers
             const polygon_vertices_dual_cells_localIndices = context[SurfaceNetKey].polygons.vertices.dual_cells.localIndices.layers
             const polygon_triangulation_start = context[SurfaceNetKey].polygons.triangulation_start.layers
 
+            let new_polygon_localIndex = 0
+            const max_number_new_polygons = (number_new_dual_cells * 12) + (9 * 8 * number_subdivided_primary_cells)
+
+            const new_polygon_vertices_offsets = new Uint32Array(max_number_new_polygons).fill(0)
+            const new_polygon_vertices_dualCells_layers: NumberArrayLike = [] // new Uint8Array(max_number_new_polygons * max_number_vertices_per_polygon)
+            const new_polygon_vertices_dualCells_localIndices: NumberArrayLike = [] // new subdivision.typedArray(max_number_new_polygons * max_number_vertices_per_polygon)
+            const new_polygon_edges_layers = new Uint8Array(2 * max_number_new_polygons)
+            const new_polygon_edges_localIndices = <IndicesT>new subdivision.typedArray(2 * max_number_new_polygons)
+
             const invalid_int32 = (2 << 31) - 1
+            const new_polygon_triangulation_start = new Int32Array(max_number_new_polygons).fill(invalid_int32)
 
             /**
              * this is a bitmap for whether a dual cell is part of at least one polygon or not
@@ -727,6 +714,52 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             //TODO: compute whether each dual cell used to be intersected
             // perhaps this isn't even desired if the it is desired that the surface have an even positioning of vertices
 
+            // function validate_polygons(
+            //     initial_dual_cell_layer: number,
+            //     initial_dual_cell_localIndex: number,
+            // ) {
+            //     const isNewInitialDualCell = (initial_dual_cell_layer === layer)
+
+            //     for (let edge = 0; edge < 12; edge++) {
+            //         const polygon_layer = (isNewInitialDualCell ? new_polygon_by_edges_layers : cells_polygons_by_edge_layers[initial_dual_cell_layer])[(12 * initial_dual_cell_localIndex) + edge]
+            //         if (polygon_layer !== invalid_layer) {
+            //             const polygon_localIndex = (isNewInitialDualCell ? new_polygon_by_edges_localIndices : cells_polygons_by_edge_localIndices[initial_dual_cell_layer])[(12 * initial_dual_cell_localIndex) + edge]
+            //             let initial_dual_cell_member: boolean | undefined = undefined
+
+            //             const isNewPolygon = (polygon_layer === layer)
+                        
+            //             const polygon_dual_cells_offset = (isNewPolygon ? new_polygon_vertices_offsets : polygons_vertices_offsets[polygon_layer])[polygon_localIndex]
+            //             const polygon_dual_cells_offset_next = (isNewPolygon ? new_polygon_vertices_offsets : polygons_vertices_offsets[polygon_layer])[polygon_localIndex + 1]
+            //             for (let dual_cell_i = polygon_dual_cells_offset; dual_cell_i < polygon_dual_cells_offset_next; dual_cell_i++) {
+            //                 const dual_cell_layer = (isNewPolygon ? new_polygon_vertices_dualCells_layers : polygon_vertices_dual_cells_layers[polygon_layer])[dual_cell_i]
+            //                 const dual_cell_localIndex = (isNewPolygon ? new_polygon_vertices_dualCells_localIndices : polygon_vertices_dual_cells_localIndices[polygon_layer])[dual_cell_i]
+
+            //                 const isNewDualCell = (dual_cell_layer === layer)
+
+            //                 let polygon_member = false
+
+            //                 initial_dual_cell_member ??= false
+            //                 if (dual_cell_layer === initial_dual_cell_layer &&
+            //                     dual_cell_localIndex === initial_dual_cell_localIndex)
+            //                     initial_dual_cell_member ||= true
+
+            //                 for (let edge_1 = 0; edge_1 < 12; edge_1++) {
+            //                     const referenced_polygon_layer = (isNewDualCell ? new_polygon_by_edges_layers : cells_polygons_by_edge_layers[dual_cell_layer])[(12 * dual_cell_localIndex) + edge_1]
+            //                     const referenced_polygon_localIndex = (isNewDualCell ? new_polygon_by_edges_localIndices : cells_polygons_by_edge_localIndices[dual_cell_layer])[(12 * dual_cell_localIndex) + edge_1]
+            //                     if (referenced_polygon_layer === polygon_layer && referenced_polygon_localIndex === polygon_localIndex)
+            //                         polygon_member ||= true
+            //                 }
+
+            //                 if (polygon_member === false)
+            //                     debugger
+            //             }
+
+            //             if (initial_dual_cell_member === false)
+            //                 debugger
+            //         }
+            //     }
+            // }
+
             function invalidate_polygons(
                 dual_cell_layer: number,
                 dual_cell_localIndex: number,
@@ -737,10 +770,10 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     if (polygon_layer !== invalid_layer) {
                         const polygon_localIndex = cells_polygons_by_edge_localIndices[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
         
-                        cells_polygons_by_edge_layers[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_layer
-                        cells_polygons_by_edge_layers[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_layer
-                        cells_polygons_by_edge_localIndices[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_localIndex
-                        cells_polygons_by_edge_localIndices[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_localIndex
+                        polygon_edges_layers[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_layer
+                        polygon_edges_layers[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_layer
+                        polygon_edges_localIndices[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_localIndex
+                        polygon_edges_localIndices[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_localIndex
                         polygon_triangulation_start[polygon_layer][polygon_localIndex] = invalid_int32
 
                         // const polygon_triangle_offset = context[SurfaceNetKey].polygons.triangles.offsets.layers[polygon_layer][polygon_localIndex]
@@ -772,13 +805,13 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             // invalidate all polygons formed around edges of any of the previous triagonal neighbor dual cells
             // = the dual cells that used to be cornered by the primary parent vertex
             for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
-                const primary_parent_localIndex = references_parents[8 * primary_localIndex_group]
+                const primary_parent_localIndex = references_parents[primary_localIndex_group]
 
                 for (let corner = 0; corner < 8; corner++) {
                     const dual_cell_layer = dual_cells_lookup_corners_layers[parent_layer][(8 * primary_parent_localIndex) | corner]
                     if (dual_cell_layer !== invalid_layer) {
                         const dual_cell_localIndex = dual_cells_lookup_corners_localIndices[parent_layer][(8 * primary_parent_localIndex) | corner]
-
+                        
                         invalidate_polygons(dual_cell_layer, dual_cell_localIndex)
                     }
                 }
@@ -987,15 +1020,6 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 }
             }
 
-            let new_polygon_localIndex = 0
-            const max_number_new_polygons = (number_new_dual_cells * 12) + (9 * 8 * number_subdivided_primary_cells)
-
-            const new_polygon_vertices_offsets = new Uint32Array(max_number_new_polygons).fill(0)
-            const new_polygon_vertices_dualCells_layers: NumberArrayLike = [] // new Uint8Array(max_number_new_polygons * max_number_vertices_per_polygon)
-            const new_polygon_vertices_dualCells_localIndices: NumberArrayLike = [] // new subdivision.typedArray(max_number_new_polygons * max_number_vertices_per_polygon)
-
-            const new_polygon_triangulation_start = new Int32Array(max_number_new_polygons).fill(invalid_int32)
-
             const edge2circular_quadrant_mapping: { [edge_quadrant: number]: Quadrant } = [2, 3, 1, 0]
             const circular2edge_quadrant_mapping: { [circular_quadrant: number]: Quadrant } = [3, 2, 0, 1]
 
@@ -1097,6 +1121,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 const polygon_vertices_offset = new_polygon_vertices_offsets[new_polygon_localIndex]
 
                 let polygon_points = 0
+                let polygon_points_updated_partial = 0
 
                 //TODO: optimize by copy-and-pasting separate version for vertex b above and below
                 // const circular_quadrant_offset_direction = edge_vertex_above_b ? 2 : 0
@@ -1128,8 +1153,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     let dual_cell_layer_current = dual_cell_layer_initial
                     let dual_cell_localIndex_current = dual_cell_localIndex_initial
 
-                    let n_polygon_points = polygon_points
-                    for (let polygon_points = 0; polygon_points < n_polygon_points; polygon_points++) {
+                    for (let polygon_points = 0; polygon_points < polygon_points_updated_partial; polygon_points++) {
                         const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
                         if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
                             break
@@ -1213,6 +1237,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 let triangulation_start_vertex = -1
 
                 do {
+                    polygon_points_updated_partial++;
+
                     const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
                     if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
                         return invalidate()
@@ -1295,10 +1321,10 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 
                 new_polygon_vertices_offsets[new_polygon_localIndex] = polygon_vertices_offset + polygon_points
                 
-                new_polygon_by_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
-                new_polygon_by_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
-                new_polygon_by_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
-                new_polygon_by_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+                new_polygon_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
+                new_polygon_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
+                new_polygon_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+                new_polygon_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
 
                 let x: number, y: number, z: number
 
@@ -1421,6 +1447,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         const dual_cell_layer = dual_cells_lookup_corners_layers[primary_child_layer][(8 * primary_child_localIndex) | corner]
                         if (dual_cell_layer === invalid_layer) continue
                         const dual_cell_localIndex = dual_cells_lookup_corners_localIndices[primary_child_layer][(8 * primary_child_localIndex) | corner]
+
                         for (let edge_axis = 0; edge_axis < 3; edge_axis++) {
                             for (let edge_quadrant = 0; edge_quadrant < 4; edge_quadrant++) {
                                 form_polygon(
@@ -1444,11 +1471,13 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     polygons_by_edge: new_polygons_by_edge
                 },
                 polygons: {
-                    edges: {
-                        // already in the context tree
-                        layers: new_polygon_by_edges_layers,
-                        localIndices: new_polygon_by_edges_localIndices,
-                    },
+                    edges: arrayCopy(
+                        {
+                            layers: new_polygon_edges_layers,
+                            localIndices: new_polygon_edges_localIndices,
+                        },
+                        context[SurfaceNetKey].polygons.edges.subdivide(2 * number_polygons_added)
+                    ),
                     vertices: {
                         offsets: arrayCopy(new_polygon_vertices_offsets, context[SurfaceNetKey].polygons.vertices.offsets.subdivide(number_polygons_added + 1)),
                         dual_cells: arrayCopy(
@@ -1456,7 +1485,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                                 layers: new_polygon_vertices_dualCells_layers,
                                 localIndices: new_polygon_vertices_dualCells_localIndices
                             },
-                            context[SurfaceNetKey].polygons.vertices.dual_cells.subdivide(new_polygon_vertices_offsets[new_polygon_localIndex])
+                            context[SurfaceNetKey].polygons.vertices.dual_cells.subdivide(new_polygon_vertices_offsets[number_polygons_added])
                         ),
                     },
                     triangulation_start: arrayCopy(new_polygon_triangulation_start, context[SurfaceNetKey].polygons.triangulation_start.subdivide(number_polygons_added)),
