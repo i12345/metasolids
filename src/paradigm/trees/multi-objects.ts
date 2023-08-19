@@ -1,3 +1,5 @@
+import { IndicesTypedArray } from '../../utils/indices-array.js';
+import { TypedArrayConstructor } from '../../utils/typed-array.js';
 import { PropertyPath } from './path.js'
 import { pathsToNodeWithKey, intract, leavesByValue, iterTreeByLeavesValue, pathsToValue, makeLeafInterface } from "./tree.js";
 
@@ -16,6 +18,16 @@ export type MultiObjectsMapped<
         Objects[K] extends MultiObjectsTemplate ?
             MultiObjectsMapped<Objects[K], T> :
             T
+}
+
+export interface MultiObjectsIDs<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+    > {
+    IDsType: TypedArrayConstructor<number, ObjIDsT>
+    template: Objects
+    IDs: MultiObjectsMapped<Objects, number>
+    paths: PropertyPath[]
 }
 
 export const MultiObjectsCombinedValue = Symbol("combined")
