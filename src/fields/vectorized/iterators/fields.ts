@@ -2,9 +2,10 @@ import { MultiObjectsIDs, MultiObjectsTemplate } from "../../../paradigm/trees/m
 import { extract, intract } from "../../../paradigm/trees/tree.js"
 import { IndicesTypedArray } from "../../../utils/indices-array.js"
 import { Reflect_entries } from "../../../utils/reflect-entries.js"
+import { TypedArrayList } from "../../../utils/typed-array-list.js"
 import { FieldsPoint, FieldPoint, FieldPointType, field_point_map, FieldPointMapped } from "../../point.js"
 import { FieldPointVectorIterator } from "../iterator.js"
-import { FieldPointVectorContainer, FieldPointVector, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic } from "../point.js"
+import { FieldPointVectorContainer, FieldPointVector, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, IsDynamicVectorContainer, isDynamicVectorContainer } from "../point.js"
 import { vectorIterator } from "./factory.js"
 
 export class FieldsFieldPointVectorIterator<
@@ -20,10 +21,10 @@ export class FieldsFieldPointVectorIterator<
 
     constructor(
         public readonly types: FieldPointType<Point>,
-        public readonly multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>,
-        public readonly useDynamicContainer: Container extends FieldPointVectorContainerDynamic ? true : false
+        public readonly isDynamicContainer?: IsDynamicVectorContainer<Container>,
+        public readonly multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
     ) {
-        this.typeIterators = Reflect_entries(types).map(([key, type]) => [key, vectorIterator(multiObjectsIDs, type, useDynamicContainer)])
+        this.typeIterators = Reflect_entries(types).map(([key, type]) => [key, vectorIterator(type, isDynamicContainer, multiObjectsIDs)])
     }
 
     copyStatic(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic> {
@@ -104,7 +105,7 @@ export class FieldsFieldPointVectorIterator<
             type => type instanceof Function,
             (type, path) => {
                 const subvectorized = extract<FieldPointVector>(vectorized, path)
-                const iterator = vectorIterator(this.multiObjectsIDs, <FieldPointType>type)
+                const iterator = vectorIterator(<FieldPointType>type, isDynamicVectorContainer(<FieldPointVectorContainer>subvectorized), this.multiObjectsIDs)
 
                 if (iterator.canGetByReference) {
                     const subresult = extract<FieldPoint>(result, path)
@@ -130,7 +131,7 @@ export class FieldsFieldPointVectorIterator<
             type => type instanceof Function,
             (type, path) => {
                 const subvectorized = extract<FieldPointVector>(vectorized, path)
-                const iterator = vectorIterator(this.multiObjectsIDs, <FieldPointType>type)
+                const iterator = vectorIterator(<FieldPointType>type, isDynamicVectorContainer(<FieldPointVectorContainer>subvectorized), this.multiObjectsIDs)
 
                 if (iterator.canGetByReference) {
                     const subvalue = extract<FieldPoint>(value, path)

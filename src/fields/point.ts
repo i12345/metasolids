@@ -67,6 +67,7 @@ export type FieldPointType<Point extends FieldPoint = FieldPoint> =
     ):
     Point extends FieldsPoint ? {
         [K in keyof Point]:
+            //TODO: there can be separate PointType type
             K extends typeof MultiObjectsGroupedObjectsKey ?
                 FieldPointType :
                 FieldPointType<Point[K]>

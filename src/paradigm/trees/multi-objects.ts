@@ -30,6 +30,14 @@ export interface MultiObjectsIDs<
     paths: PropertyPath[]
 }
 
+export const MultiObjectsIDsKey = Symbol("multi-objects-IDs")
+export interface WithMultiObjectsIDs<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+    > {
+    [MultiObjectsIDsKey]: MultiObjectsIDs<Objects, ObjIDsT>
+}
+
 export const MultiObjectsCombinedValue = Symbol("combined")
 
 export type MultiObjectsCombined<Combined> =

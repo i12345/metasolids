@@ -19,6 +19,31 @@ export type TypedArray<T extends number | bigint = number | bigint> =
 
 export type NumberArrayLike<T extends number | bigint = number> = TypedArray<T> | T[]
 
+export function isNumberTypedArray<TArray>(x: TArray): TArray extends TypedArray<number> ? true : false {
+    return <TArray extends TypedArray<number> ? true : false>(
+        x instanceof Uint8Array ||
+        x instanceof Uint8ClampedArray ||
+        x instanceof Int8Array ||
+        x instanceof Uint16Array ||
+        x instanceof Int16Array ||
+        x instanceof Uint32Array ||
+        x instanceof Int32Array ||
+        x instanceof Float32Array ||
+        x instanceof Float64Array
+    )
+}
+
+export function isBigIntTypedArray<TArray>(x: TArray): TArray extends TypedArray<bigint> ? true : false {
+    return <TArray extends TypedArray<bigint> ? true : false>(
+        x instanceof BigInt64Array ||
+        x instanceof BigUint64Array
+    )
+}
+
+export function isTypedArray<TArray>(x: TArray): TArray extends TypedArray ? true : false {
+    return <TArray extends TypedArray ? true : false>(isNumberTypedArray(x) || isBigIntTypedArray(x))
+}
+
 // export type TypedArrayConstructor =
 //     Uint8ArrayConstructor |
 //     Uint8ClampedArrayConstructor |
