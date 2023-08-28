@@ -1,16 +1,20 @@
 import { Field } from "../field.js";
 import { VectorInterpolationType } from "../interpolators/vector.js";
 import { Vector } from "../point.js";
+import { FuseMode, fuseModes } from "../vectorized/index.js";
 import { ScalarField } from "./scalar.js";
 
 export class VectorField implements Field<Vector> {
     readonly interpolationType = new VectorInterpolationType()
+
+    readonly elementType = Float64Array
     
     constructor(
+        public readonly fuseMode: FuseMode<Vector>,
         public range: [min: number, max: number] = [
             Number.NEGATIVE_INFINITY,
             Number.POSITIVE_INFINITY
-        ]
+        ],
     ) { }
 
     distance(x: Vector, y: Vector): number {
@@ -24,5 +28,5 @@ export class VectorField implements Field<Vector> {
         return distance
     }
 
-    static readonly instance = new this()
+    // static readonly instance = new this()
 }

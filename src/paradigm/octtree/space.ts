@@ -1,13 +1,13 @@
 import { Vec3 } from "playcanvas-extended"
-import { ArrayVectorFunction, VectorFunction } from "vectorized-functions"
 import { LayerLocalIndex } from "./octtree.js"
-import {/*  Subdividable, */ SubdivisionReferences } from "./subdivision.js"
+import { SubdivisionReferences } from "./subdivision.js"
 import { OctTreeAddress, OctTreeCell, octTreeSubcell } from "./address.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { MultiObjectsGroupsTemplateLeaf } from "../trees/multi-objects-groups.js"
 import { TypedArrayOctTree } from "./typed-array.js"
 import { Subdividable } from "./subdividable.js"
-import { NumberArrayLike } from "../../utils/typed-array.js"
+import { FieldPointVectorFunction } from "../../fields/vectorized/function.js"
+import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js"
 
 export interface OctTreeAddressWithOffset {
     address: OctTreeAddress
@@ -218,36 +218,39 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
     }
 
     static readonly vectorized = {
-        indexOfPosition: new ArrayVectorFunction<
+        indexOfPosition: new FieldPointVectorFunction<
                 {
                     indexOfPosition(p: Vec3): LayerLocalIndex
                 },
                 "indexOfPosition",
                 (p: Vec3) => LayerLocalIndex,
-                [true],
-                (p: Vec3[]) => LayerLocalIndex[]
-            >("indexOfPosition", [true]),
+                [typeof Vec3],
+                [FieldPointVectorContainerStatic<Float64Array>],
+                FieldPointVectorContainerStatic<IndicesTypedArray>
+            >("indexOfPosition", [Vec3], { layer: Number, local_index: Number }),
         
         positionOfVoxel: {
-            layers_same: new ArrayVectorFunction<
+            layers_same: new FieldPointVectorFunction<
                 {
                     positionOfVoxel(layer: number, local_index: number): Vec3
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
-                [false, true],
-                (layer: number, local_indices: NumberArrayLike) => Vec3[]
-            >("positionOfVoxel", [false, true]),
+                [undefined, typeof Number],
+                [undefined, FieldPointVectorContainerStatic<IndicesTypedArray>],
+                FieldPointVectorContainerStatic<Float64Array>
+            >("positionOfVoxel", [undefined, Number], Vec3),
             
-            layers_individual: new ArrayVectorFunction<
+            layers_individual: new FieldPointVectorFunction<
                 {
                     positionOfVoxel(layer: number, local_index: number): Vec3
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
-                [true, true],
-                (layers: NumberArrayLike, local_indices: NumberArrayLike) => Vec3[]
-            >("positionOfVoxel", [true, true])
+                [typeof Number, typeof Number],
+                [FieldPointVectorContainerStatic<IndicesTypedArray>, FieldPointVectorContainerStatic<IndicesTypedArray>],
+                FieldPointVectorContainerStatic<Float64Array>
+            >("positionOfVoxel", [Number, Number], Vec3)
         }
     }
 }

@@ -44,6 +44,51 @@ export function isTypedArray<TArray>(x: TArray): TArray extends TypedArray ? tru
     return <TArray extends TypedArray ? true : false>(isNumberTypedArray(x) || isBigIntTypedArray(x))
 }
 
+export function sum<T extends number | bigint, TArray extends TypedArray<T> = TypedArray<T>>(array: TArray): T {
+    if (array.length === 0)
+        return <T>(new (<TypedArrayConstructor<T>>array.constructor)(1)[0])
+    
+    let result = <T>array[0]
+    for (let i = 1; i < array.length; i++)
+        result += <any>array[i]
+
+    return result
+}
+
+export function add<T extends number | bigint, AccumulatorT extends TypedArray<T>, AddendT extends TypedArray<T>>(accumulator: AccumulatorT, ...addends: AddendT[]) {
+    for (const addend of addends) {
+        if (addend.length !== accumulator.length)
+            throw new Error(`accumulator.length (${accumulator.length}) !== addend.length (${addend.length})`)
+
+        for (let i = 0; i < accumulator.length; i++)
+            accumulator[i] += <any>addend[i]
+    }
+
+    return accumulator
+}
+
+export function addDeltas<T extends number | bigint, AccumulatorT extends TypedArray<T>, OffsetsT extends TypedArray<T>>(deltasAccumulator: AccumulatorT, offsets: OffsetsT | T): void {
+    if (isTypedArray(offsets)) {
+        let prev = <T>(isNumberTypedArray(deltasAccumulator) ? 0 : 0n)
+        let next: T
+        for (let i = 0; i < deltasAccumulator.length; i++) {
+            next = <T>(<OffsetsT>offsets)[i]
+            deltasAccumulator[i] = (next - prev)
+            prev = next
+        }
+    }
+    else {
+        for (let i = 0; i < deltasAccumulator.length; i++)
+            deltasAccumulator[i] += <any>offsets
+    }
+}
+
+export function typedArrayClone<T extends number | bigint, TypedArrayT extends TypedArray<T> = TypedArray<T>>(array: TypedArrayT): TypedArrayT {
+    const clone = <TypedArrayT>(new (typedArrayConstructor(array))(array.length))
+    clone.set(<ArrayLike<bigint> & ArrayLike<number>><unknown>array)
+    return clone
+}
+
 // export type TypedArrayConstructor =
 //     Uint8ArrayConstructor |
 //     Uint8ClampedArrayConstructor |
@@ -91,3 +136,9 @@ export type TypedArrayConstructor<
 // let a10: TypedArrayConstructor<bigint> = BigUint64Array // ok (expected)
 // let a11: TypedArrayConstructor<number, BigInt64Array> // err (expected)
 // let a12: TypedArrayConstructor<bigint, Int32Array> // err (expected)
+
+export function typedArrayConstructor<T extends number | bigint, TArray extends TypedArray<T> = TypedArray<T>>(typedArrayOrConstructor: TArray | TypedArrayConstructor<T, TArray>): TypedArrayConstructor<T, TArray> {
+    if ([Uint8Array, Int8Array, Uint8ClampedArray, Uint16Array, Int16Array, Uint32Array, Int32Array, Float32Array, Float64Array, BigUint64Array, BigInt64Array].includes(<TypedArrayConstructor<T, TArray>>typedArrayOrConstructor))
+        return <TypedArrayConstructor<T, TArray>>typedArrayOrConstructor
+    return <TypedArrayConstructor<T, TArray>>typedArrayOrConstructor.constructor
+}

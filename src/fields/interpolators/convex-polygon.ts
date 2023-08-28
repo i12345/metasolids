@@ -30,10 +30,11 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
         const extractor = makeExtractor<Vec2>(path_vec2)
         const q = keypoints.map(({ location }) => extractor(location))
 
-        const order = findPolygonOrder(q)
+        const center = findPolygonCenter(q)
+        const order = findPolygonOrder(q, center)
         reorder(q, order)
 
-        if(!isConvexPolygon(q)) return undefined
+        if(!isConvexPolygon(q, center)) return undefined
 
         const n = q.length
 
@@ -50,7 +51,13 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
             triangles[(3 * (i - 2)) + 2] = i
         }
 
-        const collider = new Triangles2DMeshCollider(Triangles2DMesh.build(q, triangles), 1)
+        const q_data = new Float64Array(2 * q.length)
+        for (let i = 0; i < q.length; i++) {
+            q_data[(2 * i) + 0] = q[i].x
+            q_data[(2 * i) + 1] = q[i].y
+        }
+
+        const collider = new Triangles2DMeshCollider(Triangles2DMesh.build(q_data, triangles), 1)
         const invalid = field_point_invalid(samples[0])
 
         return (location: Location) => {
@@ -112,15 +119,18 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
     }
 }
 
-function findPolygonOrder(polygon: Vec2[]) {
+function findPolygonCenter(polygon: Vec2[]) {
     const mean = new Vec2()
     for (const p of polygon)
         mean.add(p)
     mean.divScalar(polygon.length)
+    return mean
+}
 
+function findPolygonOrder(polygon: Vec2[], center: Vec2) {
     const i_theta = polygon.map((p, i) => {
-        const dx = p.x - mean.x
-        const dy = p.y - mean.y
+        const dx = p.x - center.x
+        const dy = p.y - center.y
         return { i, theta: Math.atan2(dy, dx) }
     })
 
@@ -134,64 +144,47 @@ function reorder<T>(arr: T[], order: number[]): void {
         arr[order[i]] = items[i]
 }
 
-function isConvexPolygon(polygon: Vec2[]): boolean {
-    // translated from Rory Daulton's answer to the question
-    // "How do I efficiently determine if a polygon is convex, non-convex or complex?"
-    // https://stackoverflow.com/a/45372025
-
-    /**
-    Return True if the polynomial defined by the sequence of 2D
-    points is 'strictly convex': points are valid, side lengths non-
-    zero, interior angles are strictly between zero and a straight
-    angle, and the polygon does not intersect itself.
-
-    NOTES:  1.  Algorithm: the signed changes of the direction angles
-                from one side to the next side must be all positive or
-                all negative, and their sum must equal plus-or-minus
-                one full turn (2 pi radians). Also check for too few,
-                invalid, or repeated points.
-            2.  No check is explicitly done for zero internal angles
-                (180 degree direction-change angle) as this is covered
-                in other ways, including the `n < 3` check.
-     */
+function isConvexPolygon(polygon: Vec2[], center: Vec2): boolean {
+    const
+        rA = new Vec2(),
+        rB = new Vec2(),
+        rC = new Vec2()
     
-    // Check for too few points
-    if (polygon.length < 3)
-        return false
-    // Get starting information
-    let { x: old_x, y: old_y } = polygon.at(-2)!
-    let { x: new_x, y: new_y } = polygon.at(-1)!
-    let old_direction: number
-    let new_direction = Math.atan2(new_y - old_y, new_x - old_x)
-    let angle_sum = 0.0
-    // Check each point (the side ending there, its angle) and accum. angles
-    let orientation: number
-    for (const [ndx, newpoint] of polygon.entries()) {
-        // Update point coordinates and side directions, check side length
-        [old_x, old_y, old_direction] = [new_x, new_y, new_direction];
-        new_x = newpoint.x
-        new_y = newpoint.y
-        new_direction = Math.atan2(new_y - old_y, new_x - old_x)
-        if (old_x == new_x && old_y == new_y)
-            return false  // repeated consecutive points
-        // Calculate & check the normalized direction - change angle
-        let angle = new_direction - old_direction
-        if (angle <= -Pi)
-            angle += TwoPi  // make it in half - open interval(-Pi, Pi]
-        else if(angle > Pi)
-            angle -= TwoPi
-        if (ndx == 0) { // if first time through loop, initialize orientation
-            if (angle == 0.0)
-                return false
-            orientation = (angle > 0.0) ? 1.0 : -1.0
-        }
-        else {  // if other time through loop, check orientation is stable
-            if (orientation! * angle <= 0.0)  // not both pos.or both neg.
-                return false
-        }
-        // Accumulate the direction - change angle
-        angle_sum += angle
+    let t0AB_times_2: number,
+        t0BC_times_2: number,
+        tABC_times_2: number,
+        t0AC_times_2: number
+    
+    for (let i = 0; i < polygon.length; i++) {
+        rA.sub2(polygon.at(i + 0)!, center)
+        rB.sub2(polygon.at(i + 1)!, center)
+        rC.sub2(polygon.at(i + 2)!, center)
+        t0AB_times_2 = (rA.x * rB.y) - (rA.y * rB.x)
+        t0BC_times_2 = (rB.x * rC.y) - (rB.y * rC.x)
+        t0AC_times_2 = (rA.x * rC.y) - (rA.y * rC.x)
+        rA.sub(rB)
+        rC.sub(rB)
+        tABC_times_2 = (rA.x * rC.y) - (rA.y * rC.x)
+
+        if ((tABC_times_2 + t0AC_times_2) - (t0AB_times_2 + t0BC_times_2) > 0.001)
+            return false
     }
-    // Check that the total number of full turns is plus-or-minus 1
-    return Math.abs(Math.round(angle_sum / TwoPi)) == 1
+
+    return true
+
+    // let p0: Vec2, p1: Vec2, p2: Vec2
+    // const r0 = new Vec2(), r1 = new Vec2()
+    // let a0: number, a1: number, a$: number
+
+    // for (let i = 0; i < polygon.length; i++) {
+    //     p0 = polygon.at(i + 0)!
+    //     p1 = polygon.at(i + 1)!
+    //     p2 = polygon.at(i + 2)!
+    //     r0.sub2(p1, p0)
+    //     r1.sub2(p2, p1)
+    //     a0 = Math.atan2(r0.y, r0.x)
+    //     a1 = Math.atan2(r1.y, r1.x)
+        
+    //     a$ = (a0 < 0 && a1 > 0) ? (TwoPi + a1 - a0) : (a1 - a0)
+    // }
 }

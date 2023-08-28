@@ -3,20 +3,23 @@ import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/mult
 import { PropertyPath } from "../../paradigm/trees/path.js"
 import { extract } from "../../paradigm/trees/tree.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
-import { FieldPointType, FieldPoint } from "../point.js"
+import { FieldPoint } from "../point.js"
+import { FieldPointType } from "../type.js"
 import { vectorizedIteratorGetSetLengthCurried } from "./iterators/factory.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, WithMultiObjects, field_point_vectorized_multi_objects_new } from "./point.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, field_point_vectorized_multi_objects_new } from "./point.js"
+import { TypedArray } from "../../utils/typed-array.js"
 
-export type VectorizedTypes = (FieldPointType | undefined)[]
+export const VectorCallManager = Symbol()
+export type VectorizedTypes = (FieldPointType | undefined | typeof VectorCallManager)[]
 
 export type VectorizedTypesFlags<VectorizedTypesT extends VectorizedTypes> = {
-    [i in keyof VectorizedTypesT]: VectorizedTypesT[i] extends undefined ? false : true
+    [i in keyof VectorizedTypesT]: VectorizedTypesT[i] extends (undefined | typeof VectorCallManager) ? false : true
 }
 
 export type SingleOrVectorized<
         Vectorized extends boolean[],
         T extends FieldPoint[],
-        Container extends FieldPointVectorContainer = FieldPointVectorContainer,
+        Containers extends (FieldPointVectorContainer<TypedArray> | undefined)[] = (FieldPointVectorContainer | undefined)[],
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainer<ObjIDsT>
     > = {
@@ -25,8 +28,12 @@ export type SingleOrVectorized<
             T[K] :
             K extends keyof Vectorized ?
                 Vectorized[K] extends true ?
-                    FieldPointVector<T[K], Container> |            
-                    FieldPointVectorWithMultiObjects<T[K], Container, ObjIDsT, ObjIDsContainer> :
+                    K extends keyof Containers ?
+                        Containers[K] extends FieldPointVectorContainer<TypedArray> ?
+                            FieldPointVector<T[K], Containers[K]> |
+                            FieldPointVectorWithMultiObjects<T[K], Containers[K], ObjIDsT, ObjIDsContainer> :
+                            T[K] :
+                        T[K] :
                     T[K] :
                 T[K]
     }
@@ -34,9 +41,10 @@ export type SingleOrVectorized<
 export type FieldPointVectorizedFunction<
         Target extends object,
         MethodName extends (keyof Target) & (string | symbol),
-        Method extends Target[MethodName] & ((this: Target, ...args: any[]) => FieldPoint),
+        Method extends Target[MethodName] & ((this: Target, ...args: any[]) => FieldPoint | void),
         VectorizedArgs extends boolean[],
-        Container extends FieldPointVectorContainer = FieldPointVectorContainer,
+        ParameterContainers extends (FieldPointVectorContainer<TypedArray> | undefined)[] = (FieldPointVectorContainer | undefined)[],
+        ReturnTypeContainer extends FieldPointVectorContainer<TypedArray> | undefined = FieldPointVectorContainer | undefined,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainer<ObjIDsT>
     > =
@@ -45,39 +53,45 @@ export type FieldPointVectorizedFunction<
         ...args: SingleOrVectorized<
             VectorizedArgs,
             Parameters<Method>,
-            Container,
+            ParameterContainers,
             ObjIDsT,
             ObjIDsContainer
         >
-    ) => FieldPointVectorWithMultiObjects<
-        ReturnType<Method>,
-        FieldPointVectorContainer,
-        ObjIDsT,
-        ObjIDsContainer
-    >
+    ) => ReturnType<Method> extends FieldPoint ?
+        ReturnTypeContainer extends FieldPointVectorContainer<TypedArray> ?
+            FieldPointVectorWithMultiObjects<
+                ReturnType<Method>,
+                ReturnTypeContainer,
+                ObjIDsT,
+                ObjIDsContainer
+            > :
+            void :
+        void
 
 export class FieldPointVectorFunction<
         Target extends object,
         MethodName extends (keyof Target) & (string | symbol),
-        Method extends Target[MethodName] & ((this: Target, ...args: any[]) => FieldPoint),
+        Method extends Target[MethodName] & ((this: Target, ...args: any[]) => FieldPoint | void),
         VectorizedArgsTypes extends VectorizedTypes,
-        Container extends FieldPointVectorContainer = FieldPointVectorContainer,
+        // template containers with nesting
+        ParameterContainers extends (FieldPointVectorContainer<TypedArray> | undefined)[] = (FieldPointVectorContainer | undefined)[],
+        ReturnTypeContainer extends FieldPointVectorContainer<TypedArray> | undefined = FieldPointVectorContainer | undefined,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
-        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainer<ObjIDsT>
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainer<ObjIDsT>,
     >
     extends
     VectorFunction<
             Target,
             MethodName,
             Method,
-            Parameters<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, Container, ObjIDsT, ObjIDsContainer>>,
-            FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, Container, ObjIDsT, ObjIDsContainer>
+            Parameters<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>>,
+            FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>
         > {
     constructor(
         method: MethodName,
         public readonly vectorizedParameterTypes: VectorizedTypes,
-        public readonly returnType: FieldPointType<ReturnType<Method>>,
+        public readonly returnType: ReturnType<Method> extends FieldPoint ? FieldPointType<ReturnType<Method>> : undefined,
 
         /**
          * parameter index and property path to a {@link MultiObjectsIDs} object
@@ -90,9 +104,10 @@ export class FieldPointVectorFunction<
     protected vectorizeSingularCall(
             target: Target,
             singularMethod: Method,
-            params: SingleOrVectorized<VectorizedTypesFlags<VectorizedArgsTypes>, Parameters<Method>, Container, ObjIDsT, ObjIDsContainer>
-        ): ReturnType<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, Container, ObjIDsT, ObjIDsContainer>> {
+            params: SingleOrVectorized<VectorizedTypesFlags<VectorizedArgsTypes>, Parameters<Method>, ParameterContainers, ObjIDsT, ObjIDsContainer>
+        ): ReturnType<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>> {
         const args = new Array(params.length)
+        let argIndexNext = 0
         
         let vectorizedLength: undefined | number = undefined
 
@@ -100,17 +115,18 @@ export class FieldPointVectorFunction<
 
         const multiObjectsIDs = this.multiObjectsContextParamPath ? extract<MultiObjectsIDs<Objects, ObjIDsT>>(params, this.multiObjectsContextParamPath) : undefined
 
-        params.forEach((paramValue: FieldPoint | FieldPointVector<FieldPoint, Container> | FieldPointVectorWithMultiObjects<FieldPoint, Container, ObjIDsT, ObjIDsContainer>, paramIndex: number) => {
+        params.forEach((paramValue: FieldPoint | FieldPointVector | FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>, paramIndex: number) => {
             const type = this.vectorizedParameterTypes[paramIndex]
             if (type === undefined)
-                args[paramIndex] = paramValue
+                args[argIndexNext++] = paramValue
+            else if (type === VectorCallManager) { }
             else {
                 const { get, length } = vectorizedIteratorGetSetLengthCurried(
                     type,
                     paramValue as any,
                     {
                         obj: args,
-                        property: paramIndex
+                        property: argIndexNext++
                     },
                     multiObjectsIDs,
                 )
@@ -120,30 +136,40 @@ export class FieldPointVectorFunction<
             }
         })
 
-        const result = field_point_vectorized_multi_objects_new<ReturnType<Method>, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>(
-            this.returnType,
-            length,
-            false,
-            <any>multiObjectsIDs?.IDsType,
-        )
+        if (this.returnType) {
+            const result = field_point_vectorized_multi_objects_new(
+                this.returnType,
+                length,
+                false,
+                multiObjectsIDs?.IDsType,
+            )
 
-        const result_objRef = { value: <any>undefined }
-        const result_iterator = vectorizedIteratorGetSetLengthCurried<ReturnType<Method>, FieldPointVectorContainer, Objects, ObjIDsT, ObjIDsContainer>(
-            this.returnType,
-            result,
-            {
-                obj: result_objRef,
-                property: "value"
-            },
-            multiObjectsIDs,
-        )
+            const result_objRef = { value: <any>undefined }
+            const result_iterator = vectorizedIteratorGetSetLengthCurried(
+                this.returnType,
+                result,
+                {
+                    obj: result_objRef,
+                    property: "value"
+                },
+                multiObjectsIDs,
+            )
 
-        for (let i = 0; i < length; i++){
-            getters.forEach(getter => getter(i))
-            result_objRef.value = singularMethod.call(target, ...args)
-            result_iterator.set(i)
+            for (let i = 0; i < length; i++) {
+                getters.forEach(getter => getter(i))
+                result_objRef.value = singularMethod.call(target, ...args)
+                result_iterator.set(i)
+            }
+
+            return <ReturnType<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>>>result
         }
+        else {
+            for (let i = 0; i < length; i++) {
+                getters.forEach(getter => getter(i))
+                singularMethod.call(target, ...args)
+            }
 
-        return result
+            return <ReturnType<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedTypesFlags<VectorizedArgsTypes>, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>>>undefined
+        }
     }
 }

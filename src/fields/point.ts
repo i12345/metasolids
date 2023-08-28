@@ -40,54 +40,6 @@ export type FieldsPointMapped<Point extends FieldsPoint, T> = {
     [K in keyof Point]: FieldPointMapped<Point[K], T>
 }
 
-export type FieldPointType<Point extends FieldPoint = FieldPoint> =
-    Point extends FieldPointPrimitive ? (
-        Point extends number ? typeof Number :
-        Point extends Vec2 ? typeof Vec2 :
-        Point extends Vec3 ? typeof Vec3 :
-        Point extends Vec4 ? typeof Vec4 :
-        Point extends Quat ? typeof Quat :
-        Point extends Mat3 ? typeof Mat3 :
-        Point extends Mat4 ? typeof Mat4 :
-        Point extends Color ? typeof Color :
-        Point extends Vector ? (
-            Point extends Uint8Array ? typeof Uint8Array :
-            Point extends Uint8ClampedArray ? typeof Uint8ClampedArray :
-            Point extends Int8Array ? typeof Int8Array :
-            Point extends Uint16Array ? typeof Uint16Array :
-            Point extends Int16Array ? typeof Int16Array :
-            Point extends Uint32Array ? typeof Uint32Array :
-            Point extends Int32Array ? typeof Int32Array :
-            Point extends Float32Array ? typeof Float32Array :
-            Point extends Float64Array ? typeof Float64Array :
-            Point extends Array<number> ? typeof Array :
-            never
-        ) :
-        never
-    ):
-    Point extends FieldsPoint ? {
-        [K in keyof Point]:
-            //TODO: there can be separate PointType type
-            K extends typeof MultiObjectsGroupedObjectsKey ?
-                FieldPointType :
-                FieldPointType<Point[K]>
-    } :
-    never
-
-export function field_point_new<Point extends FieldPoint = FieldPoint>(type: FieldPointType<Point>): Point {
-    if (type instanceof Function)
-        return <Point>(new (<FieldPointType<FieldPointPrimitive>>type)())
-    else {
-        const result: any = {}
-
-        for (const [key, subtype] of Reflect_entries(type))
-            if (key !== MultiObjectsGroupedObjectsKey)
-                result[key] = field_point_new(<any>subtype)
-
-        return result
-    }
-}
-
 export const FieldsPoint_Omit_Leaf = Symbol('omit')
 export type FieldsPointOmitted<
         Point extends FieldsPoint,
@@ -210,61 +162,6 @@ export type ExtraFields<
 //         w: new Vec3()
 //     }
 // } as unknown as typeof extraFields_example1
-
-function field_point_fits_type_obj<
-        Point extends FieldPoint,
-        Objects extends MultiObjectsTemplate
-    >(
-        p: MultiObjectsMapped<Objects, Point>,
-        objType: FieldPointType<Point>,
-        objectsTemplate: Objects,
-        subObjectsTemplate: MultiObjectsTemplate = objectsTemplate
-    ): boolean {
-    for (const [key, subP] of Reflect_entries(p)) {
-        if (!(key in subObjectsTemplate))
-            return false
-        
-        const subSubObjectsTemplate = subObjectsTemplate[key]
-        if (subSubObjectsTemplate === MultiObjectsTemplate_Leaf) {
-            if (!field_point_fits_type(<Point>subP, objType, objectsTemplate))
-                return false
-        }
-        else if (!field_point_fits_type_obj(<MultiObjectsMapped<Objects, Point>>subP, objType, objectsTemplate, subSubObjectsTemplate))
-            return false
-    }
-    return true
-}
-
-export function field_point_fits_type<
-        Point extends FieldPoint,
-        Objects extends MultiObjectsTemplate
-    >(
-        p: Point,
-        type: FieldPointType<Point>,
-        objectsTemplate: Objects
-    ): boolean {
-    if (type instanceof Function) {
-        if (<Function>type === Number)
-            return typeof p === 'number'
-        else return p instanceof type
-    }
-    else {
-        if (!(typeof p === 'object') || p === null)
-            return false
-
-        for (const key of Reflect.ownKeys(type)) {
-            if (key === MultiObjectsGroupedObjectsKey) {
-                if (!field_point_fits_type_obj(<MultiObjectsMapped<Objects, FieldPoint>>(<any>p)[key], <FieldPointType>type[key], objectsTemplate))
-                    return false
-            }
-            else if (!(key in p))
-                return false
-            else if (!field_point_fits_type(<FieldPoint>(p as any)[key], type[key], objectsTemplate))
-                return false
-        }
-        return true
-    }
-}
 
 export function field_point_is<Point = any>(p: Point): Point extends FieldPoint ? true : false {
     if (field_point_isPrimitive(p as FieldPoint))
@@ -1241,6 +1138,67 @@ export function field_point_fraction<Point extends FieldPoint>(a: Point, b: Poin
     }
     else {
         return fields_point_fraction(a as Point & FieldsPoint, b as Point & FieldsPoint)
+    }
+}
+
+export function field_point_square<Point extends FieldPoint>(a: Point): Point {
+    return field_point_pow(a, 2)
+}
+
+export function field_point_sqrt<Point extends FieldPoint>(a: Point): Point {
+    return field_point_pow(a, 0.5)
+}
+
+export function field_point_pow<Point extends FieldPoint>(base: Point, exponent: number): Point {
+    if (base === undefined)
+        return undefined!
+    else if (typeof base === 'number')
+        return <Point>(base ** exponent)
+    else if (base instanceof Vec2)
+        return <Point>new Vec2(base.x ** exponent, base.y ** exponent)
+    else if (base instanceof Vec3)
+        return <Point>new Vec3(base.x ** exponent, base.y ** exponent, base.z ** exponent)
+    else if (base instanceof Vec4)
+        return <Point>new Vec4(base.x ** exponent, base.y ** exponent, base.z ** exponent, base.w ** exponent)
+    else if (base instanceof Quat)
+        return <Point>new Quat(base.x ** exponent, base.y ** exponent, base.z ** exponent, base.w ** exponent)
+    else if (base instanceof Color)
+        return <Point>new Color(base.r ** exponent, base.g ** exponent, base.b ** exponent, base.a ** exponent)
+    else if (base instanceof Mat3) {
+        if (exponent === -1) {
+            const res = new Mat3()
+            mat4_from_mat3(base).invertTo3x3(res)
+            return <Point>res
+        }
+        else if (exponent === 0)
+            return <Point>new Mat3()
+        else if ((exponent % 1) === 0) {
+            const a = new Mat4()
+            const b = mat4_from_mat3(base)
+            for (let i = 0; i < exponent; i++)
+                a.mul(b)
+            return <Point>(new Mat3().setFromMat4(a))
+        }
+        else throw new Error("cannot have fractional exponent")
+    }
+    else if (base instanceof Mat4) {
+        if (exponent === -1) 
+            return <Point>base.clone().invert()
+        else if (exponent === 0)
+            return <Point>new Mat4()
+        else if ((exponent % 1) === 0) {
+            const a = new Mat4()
+            for (let i = 0; i < exponent; i++)
+                a.mul(base)
+            return <Point>a
+        }
+        else throw new Error("cannot have fractional exponent")
+    }
+    else {
+        const res = <FieldsPoint>{}
+        for (const key of Reflect.ownKeys(base))
+            res[key] = field_point_pow((<FieldsPoint>base)[key], exponent)
+        return <Point>res
     }
 }
 

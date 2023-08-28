@@ -1,12 +1,13 @@
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../../paradigm/trees/multi-objects.js"
-import { extract, intract } from "../../../paradigm/trees/tree.js"
+import { extract, hasPath, intract } from "../../../paradigm/trees/tree.js"
 import { IndicesTypedArray } from "../../../utils/indices-array.js"
 import { Reflect_entries } from "../../../utils/reflect-entries.js"
-import { TypedArrayList } from "../../../utils/typed-array-list.js"
-import { FieldsPoint, FieldPoint, FieldPointType, field_point_map, FieldPointMapped } from "../../point.js"
+import { FieldsPoint, FieldPoint, field_point_map, FieldPointMapped, FieldPointPrimitive } from "../../point.js"
+import { FieldPointType } from "../../type.js"
 import { FieldPointVectorIterator } from "../iterator.js"
-import { FieldPointVectorContainer, FieldPointVector, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, IsDynamicVectorContainer, isDynamicVectorContainer } from "../point.js"
+import { FieldPointVectorContainer, FieldPointVector, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, IsDynamicVectorContainer, isDynamicVectorContainer, FieldPointVectorContainerType } from "../point.js"
 import { vectorIterator } from "./factory.js"
+import { PrimitiveFieldPointVectorIterator } from "./primitive.js"
 
 export class FieldsFieldPointVectorIterator<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -27,34 +28,38 @@ export class FieldsFieldPointVectorIterator<
         this.typeIterators = Reflect_entries(types).map(([key, type]) => [key, vectorIterator(type, isDynamicContainer, multiObjectsIDs)])
     }
 
-    copyStatic(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic> {
-        const result = <FieldPointVector<Point, FieldPointVectorContainerStatic>>{}
+    copyStatic(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>> {
+        const result = <FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>{}
 
         field_point_map<Point, Function, void>(
             <FieldPointMapped<Point, Function>>this.types,
             type => type instanceof Function,
             (type, path) => {
-                const typeIterator = extract<FieldPointVectorIterator>(this.typeIterators, path)
-                const subvector = extract<FieldPointVector<FieldPoint, Container>>(result, path)
-                const subresult = typeIterator.copyStatic(subvector, vectorizedRoot)
-                intract(result, path, subresult)
+                if (hasPath(vectorized, path)) {
+                    const typeIterator = <PrimitiveFieldPointVectorIterator<FieldPointPrimitive, Container>><unknown>type
+                    const subvector = extract<Container>(vectorized, path)
+                    const subresult = typeIterator.copyStatic(subvector, vectorizedRoot)
+                    intract(result, path, subresult)
+                }
             }
         )
 
         return result
     }
 
-    copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointMapped<Point, FieldPointVectorContainerDynamic> {
-        const result = <FieldPointVector<Point, FieldPointVectorContainerDynamic>>{}
+    copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointMapped<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
+        const result = <FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>{}
 
         field_point_map<Point, Function, void>(
             <FieldPointMapped<Point, Function>>this.types,
             type => type instanceof Function,
             (type, path) => {
-                const typeIterator = extract<FieldPointVectorIterator>(this.typeIterators, path)
-                const subvector = extract<FieldPointVector<FieldPoint, Container>>(result, path)
-                const subresult = typeIterator.copyDynamic(subvector, vectorizedRoot)
-                intract(result, path, subresult)
+                if (hasPath(vectorized, path)) {
+                    const typeIterator = <PrimitiveFieldPointVectorIterator<FieldPointPrimitive, Container>><unknown>type
+                    const subvector = extract<Container>(vectorized, path)
+                    const subresult = typeIterator.copyDynamic(subvector, vectorizedRoot)
+                    intract(result, path, subresult)
+                }
             }
         )
 
@@ -78,23 +83,27 @@ export class FieldsFieldPointVectorIterator<
         let result: any = {}
 
         for (let [key, typeIterator] of this.typeIterators)
-            result[key] = typeIterator.get_returnValue(vectorized[key], vectorizedRoot, index)
+            if (key in vectorized)
+                result[key] = typeIterator.get_returnValue(vectorized[key], vectorizedRoot, index)
 
         return <Point>result
     }
 
     get_returnParam(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, result: Point, index: number): void {
         for (let [key, typeIterator] of this.typeIterators) {
-            if (typeIterator.canGetByReference)
-                typeIterator.get_returnParam(vectorized[key], vectorizedRoot, (result as any)[key], index)
-            else
-                (result as any)[key] = typeIterator.get_returnValue(vectorized[key], vectorizedRoot, index)
+            if (key in vectorized) {
+                if (typeIterator.canGetByReference)
+                    typeIterator.get_returnParam(vectorized[key], vectorizedRoot, (result as any)[key], index)
+                else
+                    (result as any)[key] = typeIterator.get_returnValue(vectorized[key], vectorizedRoot, index)
+            }
         }
     }
 
     set(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, value: Point, index: number): void {
         for (let [key, typeIterator] of this.typeIterators)
-            typeIterator.set(vectorized[key], vectorizedRoot, (value as any)[key], index)
+            if (key in vectorized)
+                typeIterator.set(vectorized[key], vectorizedRoot, (value as any)[key], index)
     }
 
     curryGet(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, result: Point): (index: number) => void {
@@ -104,7 +113,7 @@ export class FieldsFieldPointVectorIterator<
             <FieldPointMapped<Point, Function>>this.types,
             type => type instanceof Function,
             (type, path) => {
-                const subvectorized = extract<FieldPointVector>(vectorized, path)
+                const subvectorized = extract<FieldPointVector<FieldPoint, Container>>(vectorized, path)
                 const iterator = vectorIterator(<FieldPointType>type, isDynamicVectorContainer(<FieldPointVectorContainer>subvectorized), this.multiObjectsIDs)
 
                 if (iterator.canGetByReference) {
@@ -130,12 +139,12 @@ export class FieldsFieldPointVectorIterator<
             <FieldPointMapped<Point, Function>>this.types,
             type => type instanceof Function,
             (type, path) => {
-                const subvectorized = extract<FieldPointVector>(vectorized, path)
+                const subvectorized = extract<FieldPointVector<FieldPoint, Container>>(vectorized, path)
                 const iterator = vectorIterator(<FieldPointType>type, isDynamicVectorContainer(<FieldPointVectorContainer>subvectorized), this.multiObjectsIDs)
 
                 if (iterator.canGetByReference) {
                     const subvalue = extract<FieldPoint>(value, path)
-                    functions.push(iterator.set.bind(iterator, subvectorized, vectorizedRoot, subvalue))
+                    functions.push(iterator.set.bind(iterator, <any>subvectorized, vectorizedRoot, subvalue))
                 }
                 else {
                     const subvalue_parent = extract<FieldsPoint>(value, path.slice(0, -1))

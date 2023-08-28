@@ -18,7 +18,7 @@ export class TypedArrayList<
         if (length > this.capacity) {
             const deficit = length - this.capacity
             const newBlockSize = Math.max(deficit, this.defaultBlockSize)
-            this.blocks.push(<TypedArrayT>new this.internal(newBlockSize))
+            this.blocks.push(<TypedArrayT>new this.type(newBlockSize))
         }
     }
 
@@ -28,7 +28,7 @@ export class TypedArrayList<
 
     set capacity(capacity) {
         if(capacity > this._capacity)
-            this.blocks.push(<TypedArrayT>new this.internal(capacity - this._capacity))
+            this.blocks.push(<TypedArrayT>new this.type(capacity - this._capacity))
         else if (capacity < this._capacity) {
             while (capacity < this._capacity) {
                 const excess = capacity - this._capacity
@@ -46,10 +46,10 @@ export class TypedArrayList<
     }
 
     constructor(
-        public readonly internal: TypedArrayT extends TypedArray<T> ? TypedArrayConstructor<T, TypedArrayT> : never,
+        public readonly type: TypedArrayT extends TypedArray<T> ? TypedArrayConstructor<T, TypedArrayT> : never,
         size: number = 0,
         // I'm not sure how to best page align this array
-        public readonly defaultBlockSize = (4096 - 8 - 8) / internal.BYTES_PER_ELEMENT
+        public readonly defaultBlockSize = (4096 - 8 - 8) / type.BYTES_PER_ELEMENT
     ) {
         this.length = size
     }
@@ -107,7 +107,7 @@ export class TypedArrayList<
     }
 
     clone() {
-        const result = new TypedArrayList<TypedArrayT, T>(this.internal, 0, this.defaultBlockSize)
+        const result = new TypedArrayList<TypedArrayT, T>(this.type, 0, this.defaultBlockSize)
         const array = this.arrayView(false)
         result.blocks.push(array)
         result._capacity = result._length = array.length
@@ -118,7 +118,7 @@ export class TypedArrayList<
         if (canReferenceForSingleBlock && this.blocks.length === 1)
             return this.blocks[0]
         
-        const result = <TypedArrayT>new this.internal(this.length)
+        const result = <TypedArrayT>new this.type(this.length)
         let offset = 0
         for (const block of this.blocks) {
             const write = Math.min(result.length - offset, block.length)

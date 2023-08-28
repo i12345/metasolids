@@ -1,4 +1,3 @@
-import { SampleDomain_vectorized } from "../../fields/domain.js"
 import { SubdivisionKey, OctTreeSubdividingProcessor, OctTreeSubdividingProcessingForSubdivisionProcessing, OctTreeSubdividingProcessingContextForSubdivisionProcessingContext } from "../../paradigm/octtree/processor.js"
 import { OctTreeSpace } from "../../paradigm/octtree/space.js"
 import { ArrayLikeTemplated, OctTreesTemplated } from "../../paradigm/octtree/templated.js"
@@ -11,7 +10,11 @@ import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.j
 import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroups, VolumeSamplingContextKey, SpaceKey, SamplingKey } from "./types.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"
 import { VolumeKey } from "../processor.js"
-import { Vec3 } from "playcanvas-extended"
+import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js"
+import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
+import { vectorIterator } from "../../fields/vectorized/iterators/factory.js"
+import { SampleDomainLocationFieldKey } from "../../fields/domain.js"
 
 class VolumeDomainSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -227,12 +230,27 @@ class VolumeDomainSamplingSubdivisionProcessor<
     }
 
     process(item: SubdivisionProcessingT, context: SubdivisionProcessingContextT): void {
+        type ObjIDsT = Uint32Array
+
+        type VectorContextT = VectorSamplingContext<
+            VolumeLocationT,
+            FieldPointVectorContainerStatic,
+            VolumeSampleT,
+            FieldPointVectorContainerStatic,
+            MultiObjectsTemplate,
+            ObjIDsT,
+            FieldPointVectorContainerStatic<ObjIDsT>,
+            VolumeSamplingContextT
+        >
+
         const volume = item[EncapsulatingKey][VolumeKey]
-        const samplingContext = context[VolumeSamplingContextKey]
+        const samplingContext = <VectorContextT>context[VolumeSamplingContextKey]
 
         const extraLocationParameters = item[EncapsulatingKey][SamplingKey].extraLocationParameters
 
         if (!context[SpaceKey]) {
+            makeVectorSamplingContext(volume, samplingContext)
+
             volume.init(samplingContext)
 
             const min = volume.boundingBox.getMin()
@@ -249,30 +267,30 @@ class VolumeDomainSamplingSubdivisionProcessor<
         const subdivision = context[SubdivisionKey]
         const layer = subdivision.depth
         const new_voxels = subdivision.layer_sizes.at(-1)!
-        const locations = new Array<VolumeLocationT>(new_voxels)
         const space = context[SpaceKey]
         
         const local_indices = new subdivision.typedArray(new_voxels)
         for (let local_index = 0; local_index < local_indices.length; local_index++)
             local_indices[local_index] = local_index
         
-        const positions_v3 = OctTreeSpace.vectorized.positionOfVoxel.layers_same.call(space, layer, local_indices)
-        const positions = space.positions.subdivide(3 * new_voxels)
+        const positions = OctTreeSpace.vectorized.positionOfVoxel.layers_same.call(space, layer, local_indices)
+        // const positions = space.positions.subdivide(3 * new_voxels)
+        space.positions.layers.push(positions)
 
-        for (let local_index = 0; local_index < locations.length; local_index++) {
-            const position_v3 = positions_v3[local_index]
+        //TODO: support extra location parameters
+        const extraLocationParameters_objects = undefined
 
-            positions[(3 * local_index) + 0] = position_v3.x
-            positions[(3 * local_index) + 1] = position_v3.y
-            positions[(3 * local_index) + 2] = position_v3.z
+        const multiObjectsIDs = samplingContext[MultiObjectsIDsKey]
+        const locations_type = samplingContext[SampleDomainLocationFieldKey].elementType
+        const locations_iterator = vectorIterator(locations_type, <any>false, multiObjectsIDs)
+        const locations = field_point_vectorized_multi_objects_new(locations_type, new_voxels, <any>false, multiObjectsIDs?.IDsType, extraLocationParameters_objects)
+        
+        locations.p = positions
+        if (extraLocationParameters)
+            for (let i = 0; i < new_voxels; i++)
+                locations_iterator.set(locations, locations, <VolumeLocationT>extraLocationParameters, i)
 
-            locations[local_index] = {
-                p: position_v3,
-                ...extraLocationParameters
-            } as VolumeLocationT
-        }
-
-        const samples = SampleDomain_vectorized.sample(volume, locations, samplingContext)
+        const samples = samplingContext[VectorSampleFunction](volume, <FieldPointVector<VolumeLocationT, FieldPointVectorContainerStatic<Float64Array>>>locations, samplingContext)
         item.samples = samples
         context.samples.layers.push(samples)
     }

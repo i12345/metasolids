@@ -5,9 +5,14 @@ import { trs } from "../../utils/matrix.js";
 import { Vec3Field } from "./vec3.js";
 import { QuatField } from "./quat.js";
 import { Ratio3Field } from "./ratio3.js";
+import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";
 
 export class Mat4Field implements Field<Mat4> {
     interpolationType = new Mat4InterpolationType()
+
+    readonly elementType = Mat4
+
+    constructor(public readonly fuseMode: PrimitiveFuseMode<Mat4>) { }
 
     distance(x: Mat4, y: Mat4): number {
         const trs_x = trs(x)
@@ -26,5 +31,5 @@ export class Mat4Field implements Field<Mat4> {
         scale: Ratio3Field.instance
     }
 
-    static readonly instance = new this()
+    static readonly instance = new this(<FuseMode<Mat4>>fuseModes.ArithmeticPrimitiveFuseMode.multiply)
 }

@@ -9,7 +9,7 @@ export function Reflect_entries<T = any>(o: T) {
     return result
 }
 
-export function Reflect_fromEntries<T = any>(entries: [keyof T, T[keyof T]][]) {
+export function Reflect_fromEntries<T = any>(entries: Iterable<[keyof T, T[keyof T]]>) {
     const result = {} as T
     for (const [key, value] of entries)
         result[key] = value

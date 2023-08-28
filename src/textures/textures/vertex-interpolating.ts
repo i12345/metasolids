@@ -1,12 +1,14 @@
 import { Vec2 } from "playcanvas-extended";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../paradigm/trees/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_identity } from "../../fields/index.js";
-import { Texture, TextureLocation } from "../texture.js";
+import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
 import { IndicesArray } from "../../utils/indices-array.js";
 import { defaultField } from "../../fields/fields/default.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../fields/vectorized/point.js";
 
 export type VertexInterpolatingTexturesTemplated<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationT extends TextureLocation = TextureLocation,
         TexelType extends FieldPoint = FieldPoint,
         TexelTypesGrouped extends
             MultiObjectsGroupsMapped<Groups, TexelType> =
@@ -15,27 +17,35 @@ export type VertexInterpolatingTexturesTemplated<
     [K in keyof TexelTypesGrouped]:
         Groups[K] extends MultiObjectsGroupsTemplate ?
             (TexelTypesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelType> ?
-                VertexInterpolatingTexturesTemplated<Groups[K], TexelTypesGrouped[K]> :
+                VertexInterpolatingTexturesTemplated<Groups[K], TextureLocationT, TexelType, TexelTypesGrouped[K]> :
                 never) :
-            VertexInterpolatingTexture<TexelTypesGrouped[K]>
+            VertexInterpolatingTexture<TextureLocationT, TexelTypesGrouped[K]>
     }
 
-export class VertexInterpolatingTexture
-    <VertexSample extends FieldPoint = FieldPoint>
-    implements
+export class VertexInterpolatingTexture<
+        TextureLocationT extends TextureLocation = TextureLocation,
+        VertexSample extends FieldPoint = FieldPoint,
+        VertexSampleContainer extends FieldPointVectorContainer = FieldPointVectorContainer,
+        VertexSampleVector extends
+            FieldPointVector<VertexSample, VertexSampleContainer> =
+            FieldPointVector<VertexSample, VertexSampleContainer>,
+        Context extends
+            TextureSamplingContext<TextureLocationT> & Partial<WithMultiObjectsIDs> =
+            TextureSamplingContext<TextureLocationT> & Partial<WithMultiObjectsIDs>
+    > implements
     Texture<
-        TextureLocation,
-        VertexSample
+        TextureLocationT,
+        VertexSample,
+        Context
     > {
     private collider?: Triangles2DMeshCollider
     private interpolator?: Triangles2DMeshInterpolator<VertexSample>
 
     constructor(
-        //TODO: support vectorized vertices and UVs
-        public vertices: VertexSample[],
-        public uv: Vec2[],
+        public vertices: VertexSampleVector,
+        public uv: FieldPointVectorStatic<Vec2, FieldPointVectorContainerStatic>,
         public triangles: IndicesArray,
-        public readonly field: Field<VertexSample> = vertices.length > 0 ? defaultField(vertices[0]) : undefined!
+        public readonly field: Field<VertexSample>
     ) {
     }
 
@@ -43,15 +53,15 @@ export class VertexInterpolatingTexture
         const collision = this.collider!.collision_first(location.uv)
 
         if (collision === undefined)
-            return field_point_identity(this.vertices[0])
+            return undefined!
         
         const { tri, w1, w2 } = collision
         return this.interpolator!.interpolate(tri, w1, w2)
     }
 
-    init(): void {
+    init(context: Context): void {
         const mesh = Triangles2DMesh.build(this.uv, this.triangles)
         this.collider = new Triangles2DMeshCollider(mesh)
-        this.interpolator = new Triangles2DMeshInterpolator(this.vertices, this.triangles)
+        this.interpolator = new Triangles2DMeshInterpolator(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
     }
 }

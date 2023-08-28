@@ -1,13 +1,16 @@
 import { BoundingBox } from 'playcanvas-extended'
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, groups, groupKinds, MultiObjectsGroupsOmitted, MultiObjectsGroupsProcessingContext, MultiObjectsGroupedObjectsAndRegularValues } from "../../paradigm/trees/index.js"
-import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKinds } from '../../fields/index.js'
-import { Volume, VolumeLocation, VolumeSample, VolumeSampleKey, VolumeSamplingContext } from '../volume.js'
-import { GeneratorType, onlyOne } from '../../utils/index.js'
-import { MultiObjectsSamplingContext, MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsSample, MultiObjectsSampleDomain } from '../../fields/domains/index.js'
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, groups, groupKinds, MultiObjectsGroupsProcessingContext } from "../../paradigm/trees/index.js"
+import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKinds, Field } from '../../fields/index.js'
+import { Volume, VolumeLocation, VolumeSample, VolumeSampleKey } from '../volume.js'
+import { GeneratorType, IndicesTypedArray, onlyOne } from '../../utils/index.js'
+import { MultiObjectsSamplingContext, MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsSampleDomain } from '../../fields/domains/index.js'
 import { VolumeWithBoundingBox } from './bounded.js'
+import { FieldPointVectorContainerStatic } from '../../fields/vectorized/index.js'
 
 export class MultiObjectsVolume<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SampleGroups extends InfluenceGroup = InfluenceGroup,
         SampleGroupKinds extends
@@ -19,16 +22,18 @@ export class MultiObjectsVolume<
         ContextGroupKinds extends
             MultiObjectsDomainInternalPreservedGroupsKinds =
             MultiObjectsDomainInternalPreservedGroupsKinds,
-        Location extends VolumeLocation = VolumeLocation//,
-        // LeafSample extends
-        //     VolumeSample & MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
-        //     VolumeSample & MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
+        Location extends VolumeLocation = VolumeLocation,
+        LeafSample extends
+            VolumeSample & MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
+            VolumeSample & MultiObjectsGroupsMapped<SampleGroups, FieldPoint> //,
         // LeafContext extends
         //     VolumeSamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
         //     VolumeSamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
     >
     extends MultiObjectsSampleDomain<
         Objects,
+        ObjIDsT,
+        ObjIDsContainer,
         SampleGroups,
         SampleGroupKinds,
         ContextGroups,
@@ -79,9 +84,10 @@ export class MultiObjectsVolume<
                 groupsTemplate?: SampleGroups
             }
         },
+        childField: Field<LeafSample>,
         public influenceGroup?: InfluenceGroup
     ) {
-        super(children as any, multiObj)
+        super(children as any, multiObj, undefined, childField)
     }
 
     protected override sampleContext(context: any): MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds> {
@@ -109,27 +115,5 @@ export class MultiObjectsVolume<
             MultiObjectsInfluencesGroupKindsTemplate,
             this.influenceGroup
         )).group
-    }
-
-    protected override combineResidualLeafSample(
-            accumulator: MultiObjectsSample<Objects, SampleGroups, MultiObjectsGroupsMapped<SampleGroups, FieldPoint>>,
-            key: PropertyKey,
-            residual: MultiObjectsGroupsOmitted<SampleGroups/* , LeafSample */>
-        ) {
-        const residualAlpha = (residual as VolumeSample).alpha
-        const accumulatorAlpha = (accumulator as VolumeSample).alpha
-        const finalAlpha = (accumulatorAlpha === undefined || Number.isNaN(accumulatorAlpha)) ? residualAlpha : Math.max(accumulatorAlpha, residualAlpha)
-
-        const influenceGroup = this.influenceGroupRef!.get(accumulator)
-        if (influenceGroup === undefined)
-            this.influenceGroupRef!.set(accumulator, { [key]: residualAlpha })
-        else if (influenceGroup[key] === undefined)
-            influenceGroup[key] = residualAlpha
-        // if key were in influenceGroup already, then it may've been set by a nested multi-objects volume
-        
-        const combined = super.combineResidualLeafSample(accumulator as any, key, residual);
-        (combined as VolumeSample).alpha = finalAlpha
-
-        return combined
     }
 }

@@ -1,20 +1,23 @@
-import { Vec3, calculateNormals } from "playcanvas-extended";
-import { DualKey, OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
+import { calculateNormals } from "playcanvas-extended";
+import { DualKey } from "../../paradigm/octtree/dual.js";
 import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { IndicesTypedArray, indicesArrayType } from "../../utils/indices-array.js";
-import { VolumeKey, VolumeProcessing, VolumeProcessingContext, VolumeProcessor } from "../../volumes/processor.js";
-import { SamplingKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey } from "../../volumes/sampling/types.js";
-import { VolumeLocation, VolumeSample, VolumeSamplingContext, Volume } from "../../volumes/volume.js";
+import { VolumeKey, VolumeProcessor } from "../../volumes/processor.js";
+import { SamplingKey, VolumeSamplingContextKey } from "../../volumes/sampling/types.js";
+import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { SurfaceProcessingContext } from "../processing.js";
-import { SurfaceNetKey, SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups, SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer, SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue, SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped, SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped } from "../sampling/surface-net.js";
+import { SurfaceNetKey } from "../sampling/surface-net.js";
 import { Surface } from "../surface.js";
-import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeSurfacesKey } from "../volume-surfaces.js";
-import { SampleDomain_vectorized } from "../../fields/domain.js";
+import { VolumeSurfacesKey } from "../volume-surfaces.js";
 import { OctTreeReferencesOctTreeLayersGrouped } from "../../paradigm/octtree/references.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { VolumeProcessingContextWithMeshing, VolumeProcessingWithMeshing } from "./processing.js";
+import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js";
+import { FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js";
+import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/multi-objects.js";
+import { SampleDomainLocationFieldKey } from "../../fields/domain.js";
 
 export class SurfaceNetMeshingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -339,23 +342,34 @@ export class SurfaceNetMeshingProcessor<
 
             const mesh_normals = new Float32Array(calculateNormals(mesh_vertices as unknown as number[], mesh_triangles as unknown as number[]))
 
+            const volumeSamplingContext = <VolumeSamplingContextT>context[SamplingKey][VolumeSamplingContextKey]
+
+            const multiObjectsIDs = (<WithMultiObjectsIDs><unknown>volumeSamplingContext)[MultiObjectsIDsKey]
+
+            type VolumeLocationContainerT = FieldPointVectorContainerStatic
+
             // samples can be calculated for the precise position of each vertex
-            const locations: VolumeLocationT[] = new Array(number_vertices)
-            for (let i = 0; i < locations.length; i++) {
-                const p = new Vec3(
-                    mesh_vertices[(3 * i) + 0],
-                    mesh_vertices[(3 * i) + 1],
-                    mesh_vertices[(3 * i) + 2]
-                )
+            const locations = field_point_vectorized_multi_objects_new<VolumeLocationT, VolumeLocationContainerT>(
+                volumeSamplingContext[SampleDomainLocationFieldKey].elementType,
+                mesh_triangles.length / 3,
+                <IsDynamicVector<VolumeLocationT, VolumeLocationContainerT>>false,
+                multiObjectsIDs?.IDsType,
+            )
 
-                locations[i] = {
-                    ...item[SamplingKey].extraLocationParameters,
-                    p
-                } as VolumeLocationT
-            }
+            type VectorContextT = VectorSamplingContext<
+                VolumeLocationT,
+                FieldPointVectorContainerStatic,
+                VolumeSampleT,
+                FieldPointVectorContainerStatic,
+                MultiObjectsTemplate,
+                IndicesTypedArray,
+                FieldPointVectorContainerStatic<IndicesTypedArray>,
+                VolumeSamplingContextT
+            >
 
-
-            const samples = SampleDomain_vectorized.sample(item[VolumeKey], locations, context[SamplingKey][VolumeSamplingContextKey] as VolumeSamplingContextT)
+            const vectorContext = <VectorContextT>volumeSamplingContext
+            makeVectorSamplingContext(item[VolumeKey], vectorContext)
+            const samples = vectorContext[VectorSampleFunction](item[VolumeKey], locations, vectorContext)
 
             const surface: Surface<IndicesT, VolumeSampleT> = {
                 mesh: {

@@ -1,11 +1,11 @@
 import { Texture, TextureLocation, TextureSample } from "../../../textures/texture.js";
 import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from "../../../textures/index.js";
-import { GeneratorType, Reflect_entries, onlyOne } from "../../../utils/index.js";
+import { GeneratorType, Reflect_entries, mergeObjects, onlyOne } from "../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
-import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js";
-import { field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator } from "../../../fields/index.js";
-import { CompositeHadamardProductSampleDomain, CompositeSampleDomain, ConstantSampleDomain } from "../../../fields/domains/index.js"
+import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate, MultiObjectsIDs, extract } from "../../../paradigm/trees/index.js";
+import { field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator, field_point_new, field_point_map, FieldPointType, SampleDomainLocationFieldKey } from "../../../fields/index.js";
+import { MultiObjectsSampleDomain, ConstantSampleDomain } from "../../../fields/domains/index.js"
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Immediate, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
 import { Material_Groups } from "./groups.js";
 import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial, Vec2 } from "playcanvas-extended";
@@ -17,6 +17,11 @@ import { Material_Groups_TextureContexts, Material_Texture_Context, Material_Tex
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "../surface.js";
 import { Material_Groups_Textures } from "./material-texture.js";
 import { MeshData } from "../../../surfaces/mesh-data.js";
+import { vectorIterator } from "../../../fields/vectorized/iterators/factory.js";
+import { FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new, isDynamicVector } from "../../../fields/vectorized/point.js";
+import { fusePoints } from "../../../fields/vectorized/fusing.js";
+import { ArithmeticPrimitiveFuseMode, ArithmeticPrimitiveFuseModeOp } from "../../../fields/vectorized/fuse-modes/arithmetic.js";
+import { field_point_vector_stdDev, field_point_vector_stdDev_aggregate } from "../../../fields/vectorized/index.js";
 
 const MaterialGroup_ImplementationType_NotSupported = Symbol("not supported")
 
@@ -451,22 +456,45 @@ function qualityMetrics_compute<
             >,
         textureContext: Material_Texture_Context<VolumeLocationT>,
         UVunwrapping: SurfaceUVUnwrapping,
-        implementation: Material_Group_Implementations
+        implementation: Material_Group_Implementations,
+        multiObjectsIDs?: MultiObjectsIDs
     ): QualityMetrics {
+    const location_type = textureContext[SampleDomainLocationFieldKey].elementType
+    const sample_type = texture.field.elementType
     
     function perfect_constancy(texture: Texture): FieldPoint | undefined {
         if (texture instanceof ConstantSampleDomain)
             return texture.value
-        else if (texture instanceof VertexInterpolatingTexture &&
-            texture.vertices.every(vertex => field_point_equal(vertex, texture.vertices[0])))
-            return texture.vertices[0]
-        else if (texture instanceof CompositeSampleDomain) {
-            const child_constants = texture.children.map(perfect_constancy)
-            if (child_constants.every(child_constant => child_constant !== undefined)) {
-                if (texture instanceof CompositeHadamardProductSampleDomain)
-                    return undefined //TODO
-                else return undefined
+        else if (texture instanceof VertexInterpolatingTexture) {
+            const vertices = texture.vertices
+            const vertexIterator = vectorIterator(sample_type, <any>isDynamicVector(vertices), vertices)
+            const length = vertexIterator.length(vertices, vertices)
+            
+            if (length === 0)
+                return field_point_new(sample_type)
+            else if (length === 1)
+                return vertexIterator.get_returnValue(vertices, vertices, 0)
+            else {
+                const constant = vertexIterator.get_returnValue(vertices, vertices, 0)
+                for (let i = 1; i < length; i++) {
+                    const item = vertexIterator.get_returnValue(vertices, vertices, i)
+                    if (!field_point_equal(constant, item))
+                        return undefined
+                }
+                return constant
             }
+        }
+        else if (texture instanceof MultiObjectsSampleDomain) {
+            const child_constants = Reflect_entries(texture.children).map(([, child]) => perfect_constancy(child))
+            if (!child_constants.every(child_constant => child_constant !== undefined))
+                return undefined
+
+            return fusePoints(
+                sample_type,
+                texture.fuseMode ?? texture.field.fuseMode,
+                child_constants.map(value => ({ value })),
+                multiObjectsIDs
+            )
         }
         return undefined
     }
@@ -475,7 +503,8 @@ function qualityMetrics_compute<
         if (texture instanceof VertexInterpolatingTexture ||
             texture instanceof ConstantSampleDomain)
             return true
-        else if (texture instanceof CompositeSampleDomain)
+        else if (texture instanceof MultiObjectsSampleDomain &&
+            texture.isCompositeArithmetic(ArithmeticPrimitiveFuseModeOp.none, ArithmeticPrimitiveFuseModeOp.add, ArithmeticPrimitiveFuseModeOp.subtract))
             return texture.children.every(perfect_triangleMonotonicity)
         return false
     }
@@ -505,20 +534,30 @@ function qualityMetrics_compute<
     /** indices in UV-unwrapped, not decimated vertices */
     const indices = UVunwrapping.finalIndices ?? mesh.triangles
 
-    /** indices in UV-unwrapped, not decimated vertices, divided by 3 */
-    const tri_i_s = new Set<number>()
-    const tri_n = UVunwrapping.finalIndices.length / 3
-    for (let i = 0; i < Math.min(64, tri_n); i++) {
+    /** indices in UV-unwrapped, not decimated vertices, divided by 3 (indices in UV-unwrapped, not decimated, triangles) */
+    const tri_n_max = UVunwrapping.finalIndices.length / 3
+    const tri_n = Math.min(64, tri_n_max)
+    const tri_i_s = new Uint32Array(tri_n).fill(-1)
+    for (let i = 0; i < tri_n; i++) {
         let tri_i: number
         do tri_i = Math.min(tri_n - 1, Math.floor(tri_n * Math.random()))
-        while (tri_i_s.has(tri_i))
-        tri_i_s.add(tri_i)
+        while (tri_i_s.includes(tri_i))
+        tri_i_s[i] = tri_i
     }
 
-    const samples: TexelTypeT[] = []
+    const samples = field_point_vectorized_multi_objects_new<TexelTypeT>(
+        sample_type,
+        0,
+        <IsDynamicVector<TexelTypeT>>true,
+        multiObjectsIDs?.IDsType,
+        undefined
+    )
+
+    const samples_iterator = vectorIterator<TexelTypeT>(texture.field.elementType, <any>isDynamicVector(samples), multiObjectsIDs)
+    const samples_add = (sample: TexelTypeT) => samples_iterator.set(samples, samples, sample, samples_iterator.length(samples, samples))
 
     function calculate_constancy() {
-        const sample_stdDev = field_point_stdDev(samples)
+        const sample_stdDev = field_point_vector_stdDev_aggregate(sample_type, samples, multiObjectsIDs)
         //TODO: experiment to find ideal factor
         return Math.exp(-5 * sample_stdDev)
     }
@@ -547,7 +586,7 @@ function qualityMetrics_compute<
         if (!vertex_texture_samples.has(vertex_original_)) {
             const texture_location = vertex_texture_locations.get(vertex)!
             const texture_sample = texture.sample(texture_location, textureContext)
-            samples.push(texture_sample)
+            samples_add(texture_sample)
             vertex_texture_samples.set(vertex_original_, texture_sample)
         }
         
@@ -557,28 +596,49 @@ function qualityMetrics_compute<
         }
     }
 
-    const interpolator_values_locations: Material_Texture_Location<VolumeLocationT>[] = []
-    const interpolator_values_samples: TexelTypeT[] = []
+    const interpolator_values_locations = field_point_vectorized_multi_objects_new<Material_Texture_Location<VolumeLocationT>>(
+        location_type,
+        3 * tri_n,
+        <IsDynamicVector<Material_Texture_Location<VolumeLocationT>>>false,
+        multiObjectsIDs?.IDsType,
+        undefined
+    )
+
+    const interpolator_values_locations_iterator = vectorIterator<Material_Texture_Location<VolumeLocationT>>(location_type, <any>isDynamicVector(interpolator_values_locations), multiObjectsIDs)
+
+    const interpolator_values_samples = field_point_vectorized_multi_objects_new<TexelTypeT>(
+        sample_type,
+        3 * tri_n,
+        <IsDynamicVector<TexelTypeT>>false,
+        multiObjectsIDs?.IDsType,
+        undefined
+    )
+
+    const interpolator_values_samples_iterator = vectorIterator<TexelTypeT>(sample_type, <any>isDynamicVector(interpolator_values_samples), multiObjectsIDs)
+    
     const interpolator_triangles = []
 
     let meanValue: TexelTypeT | undefined = undefined
 
+    //TODO: optimize with field_point_vector_gather() and _vector_add()
     for (const tri_i of tri_i_s) {
         for (let index_i = 0; index_i < 3; index_i++) {
-            const vertex_i = indices[(tri_i * 3) + index_i]
+            const offset = (tri_i * 3) + index_i
+            const vertex_i = indices[offset]
             const { location, sample } = vertex_texture_info(vertex_i)
-            interpolator_values_locations.push(location)
-            interpolator_values_samples.push(sample)
+            interpolator_values_locations_iterator.set(interpolator_values_locations, interpolator_values_locations, location, offset)
+            interpolator_values_samples_iterator.set(interpolator_values_samples, interpolator_values_samples, sample, offset)
             interpolator_triangles.push(interpolator_triangles.length)
             meanValue = meanValue === undefined ? sample : field_point_add_inplace(meanValue, sample)
         }
     }
 
-    meanValue = field_point_divide(meanValue!, interpolator_values_samples.length)
+    meanValue = field_point_divide(meanValue!, tri_n)
 
     if (perfect_triangleMonotonicity(texture)) {
         const effectiveTexelSizeUV_dist: number[] = []
 
+        const UVs = UVunwrapping.UVs
         for (const tri_i of tri_i_s) {
             for (let i0 = 0; i0 < 3; i0++) {
                 const i1 = (i0 + 1) % 3
@@ -586,11 +646,11 @@ function qualityMetrics_compute<
                 const v0 = indices[(tri_i * 3) + i0]
                 const v1 = indices[(tri_i * 3) + i1]
 
-                const uv0x = UVunwrapping.UVs[(2 * v0) + 0]
-                const uv0y = UVunwrapping.UVs[(2 * v0) + 1]
+                const uv0x = UVs[(2 * v0) + 0]
+                const uv0y = UVs[(2 * v0) + 1]
 
-                const uv1x = UVunwrapping.UVs[(2 * v1) + 0]
-                const uv1y = UVunwrapping.UVs[(2 * v1) + 1]
+                const uv1x = UVs[(2 * v1) + 0]
+                const uv1y = UVs[(2 * v1) + 1]
 
                 const dist_01 = Math.sqrt(((uv0x - uv1x) ** 2) + ((uv0y - uv1y) ** 2))
 
@@ -611,15 +671,15 @@ function qualityMetrics_compute<
         }
     }
 
-    const interpolator_texture_location = new Triangles2DMeshInterpolator(interpolator_values_locations, interpolator_triangles)
-    const interpolator_texture_sample = new Triangles2DMeshInterpolator(interpolator_values_samples, interpolator_triangles)
+    const interpolator_texture_location = new Triangles2DMeshInterpolator(location_type, interpolator_values_locations, interpolator_triangles, multiObjectsIDs)
+    const interpolator_texture_sample = new Triangles2DMeshInterpolator(sample_type, interpolator_values_samples, interpolator_triangles, multiObjectsIDs)
 
     const textureValuePerUV_dist: number[] = []
     
     let triangleInterpolating_error_total = 0
     let triangleInterpolating_error_eval = 0
 
-    for (let i_tri = 0; i_tri < tri_i_s.size; i_tri++) {
+    for (let i_tri = 0; i_tri < tri_n; i_tri++) {
         let texture_location_prev: Material_Texture_Location<VolumeLocationT> | undefined = undefined
         let texture_sample_prev: TexelTypeT | undefined = undefined
         for (let w = 0; w < 0.5; w += 0.02) {
@@ -627,7 +687,7 @@ function qualityMetrics_compute<
             const texture_sample_interpolated = interpolator_texture_sample.interpolate(i_tri, w, w)
 
             const texture_sample_real = texture.sample(texture_location_interpolated, textureContext)
-            samples.push(texture_sample_real)
+            samples_add(texture_sample_real)
 
             if (texture_location_prev) {
                 const textureValuePerUV =
@@ -717,7 +777,7 @@ export function* material_group_implementations<
     // const texture_resolutions = [64, 128, 256, 512, 1024, 2048]
     const texture_resolutions = [1024, 2048]
 
-    type CompositeTextureT = CompositeSampleDomain<TextureLocationT, TexelTypeT, TextureContextT>
+    type CompositeTextureT = Texture<TextureLocationT, TexelTypeT, TextureContextT> & MultiObjectsSampleDomain
 
     function* decomposeStagedComponents(
             texture: TextureT,
@@ -727,9 +787,9 @@ export function* material_group_implementations<
         const [parentStage, parentTexture] = parent
 
         if (isNaN(parentStage) &&
-            parentTexture instanceof CompositeSampleDomain &&
-            isDecomposition(parentTexture)) {
-            for (const child of parentTexture.children)
+            parentTexture instanceof MultiObjectsSampleDomain &&
+            isDecomposition(<any>parentTexture)) {
+            for (const [, child] of Reflect_entries(parentTexture.children))
                 yield* decomposeStagedComponents(child, isDecomposition)
         }
         else yield parent
@@ -800,8 +860,12 @@ export function* material_group_implementations<
         const factors = bestDecomposition(
             texture,
             canUse3factors ? 3 : 2,
-            composite => composite instanceof CompositeHadamardProductSampleDomain,
-            components => new CompositeHadamardProductSampleDomain(components)
+            composite => composite.isCompositeArithmetic(ArithmeticPrimitiveFuseModeOp.multiply),
+            components => <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
+                ArithmeticPrimitiveFuseModeOp.multiply,
+                texture.field,
+                ...(<any[]>components)
+            )
         )
 
         if (factors.length >= 2) {
@@ -886,7 +950,11 @@ export function* material_group_implementations<
                     factors[1] :
                     [
                         Math.max(factors[1][0], factors[2][0]),
-                        new CompositeHadamardProductSampleDomain([factors[1][1], factors[2][1]])
+                        <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
+                            ArithmeticPrimitiveFuseModeOp.multiply,
+                            <any>factors[1][1],
+                            <any>factors[2][1]
+                        )
                     ] as StageAndTexture
             
                 const qualityMetrics_0 = qualityMetrics[0]
@@ -1061,8 +1129,12 @@ export function* material_group_implementations<
         const terms = bestDecomposition(
             texture,
             2,
-            composite => composite instanceof CompositeHadamardProductSampleDomain,
-            components => new CompositeHadamardProductSampleDomain(components)
+            composite => composite.isCompositeArithmetic(ArithmeticPrimitiveFuseModeOp.multiply),
+            components => <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
+                ArithmeticPrimitiveFuseModeOp.multiply,
+                texture.field,
+                ...(<any[]>components)
+            )
         )
 
         if (terms.length === 2) {

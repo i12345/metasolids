@@ -2,9 +2,11 @@ import { MultiObjectsGroupedObjectsKey } from "../../../paradigm/trees/multi-obj
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { TypedArrayList } from "../../../utils/typed-array-list.js";
-import { FieldPoint, FieldPointPrimitive, FieldPointType, FieldsPoint } from "../../point.js";
+import { TypedArray } from "../../../utils/typed-array.js";
+import { FieldPoint, FieldPointPrimitive, FieldsPoint } from "../../point.js";
+import { FieldPointType } from "../../type.js"
 import { FieldPointVectorIterator } from "../iterator.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorWithMultiObjects, IsDynamicVector, IsDynamicVectorContainer, isDynamicVector, isDynamicVectorContainer } from "../point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorWithMultiObjects, IsDynamicVector, isDynamicVector } from "../point.js";
 import { FieldsFieldPointVectorIterator } from "./fields.js";
 import { MultiObjectsFieldPointVectorIterator } from "./multi-objects.js";
 
@@ -21,7 +23,7 @@ export function vectorIteratorFactory<Point extends FieldPointPrimitive, IsDynam
 
 export function vectorIterator<
         Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer = FieldPointVectorContainer,
+        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
     >(
@@ -59,7 +61,7 @@ export function vectorizedIteratorGetSetLengthCurried<
             obj: object,
             property: PropertyKey
         },
-        multiObjectsIDs?: MultiObjectsIDs<Objects>,
+        multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
     ): {
         get(index: number): void
         set(index: number): void
@@ -83,9 +85,9 @@ export function vectorizedIteratorGetSetLengthCurried<
         }
     }
     else {
-        const fieldsPoint_iterator = iterator as FieldPointVectorIterator<FieldsPoint> as FieldsFieldPointVectorIterator<Objects, ObjIDsT, FieldsPoint>
+        const fieldsPoint_iterator = iterator as FieldPointVectorIterator<FieldsPoint, Container> as FieldsFieldPointVectorIterator<Objects, ObjIDsT, FieldsPoint, Container>
         const fieldsPoint_result = (item.obj as any)[item.property] as FieldsPoint
-        const fieldsPoint_vectorized = vectorized as FieldPointVector<FieldsPoint>
+        const fieldsPoint_vectorized = vectorized as FieldPointVector<FieldsPoint, Container>
         const get = fieldsPoint_iterator.curryGet(fieldsPoint_vectorized, vectorized, fieldsPoint_result)
         const set = fieldsPoint_iterator.currySet(fieldsPoint_vectorized, vectorized, fieldsPoint_result)
 

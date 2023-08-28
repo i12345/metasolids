@@ -22,7 +22,7 @@ export type MultiObjectsMapped<
 
 export interface MultiObjectsIDs<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+        ObjIDsT extends IndicesTypedArray = Uint32Array
     > {
     IDsType: TypedArrayConstructor<number, ObjIDsT>
     template: Objects
@@ -33,7 +33,7 @@ export interface MultiObjectsIDs<
 export const MultiObjectsIDsKey = Symbol("multi-objects-IDs")
 export interface WithMultiObjectsIDs<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+        ObjIDsT extends IndicesTypedArray = Uint32Array
     > {
     [MultiObjectsIDsKey]: MultiObjectsIDs<Objects, ObjIDsT>
 }

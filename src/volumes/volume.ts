@@ -1,6 +1,7 @@
 import { Vec3 } from "playcanvas-extended";
-import { Field, FieldsPoint, FieldsPointMapped, SampleDomain, SamplingContext } from "../fields/index.js"
+import { SampleDomain, SamplingContext } from "../fields/index.js"
 import { FieldsField, ScalarField, Vec3Field } from "../fields/fields/index.js";
+import { FuseMode, fuseModes } from "../fields/vectorized/index.js";
 
 export type VolumeLocation = {
     /**
@@ -10,7 +11,7 @@ export type VolumeLocation = {
 }
 
 export const defaultVolumeLocationField = new FieldsField<VolumeLocation>({
-    p: new Vec3Field()
+    p: Vec3Field.instance
 })
 
 export type VolumeSample = {
@@ -31,7 +32,7 @@ export type VolumeSample = {
 }
 
 export const defaultVolumeSampleField = new FieldsField<VolumeSample>({
-    alpha: ScalarField.instance,
+    alpha: new ScalarField(<FuseMode<number>>fuseModes.ArithmeticPrimitiveFuseMode.max),
     gradient: Vec3Field.instance,
 })
 

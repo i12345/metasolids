@@ -39,7 +39,8 @@ export function defaultField<Point extends FieldPoint = FieldPoint>(p: Point): F
         p instanceof Int32Array ||
         p instanceof Float32Array ||
         p instanceof Float64Array)
-        return VectorField.instance as unknown as Field<Point>
+        // return VectorField.instance as unknown as Field<Point>
+        throw new Error()
     else if (p === undefined)
         return new FieldsField({}) as unknown as Field<Point>
     else return new FieldsField(fields_point_map(

@@ -1,9 +1,10 @@
+import { TypedArray } from "../../utils/typed-array.js"
 import { FieldPoint } from "../point.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic } from "./point.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType } from "./point.js"
 
 export interface FieldPointVectorIterator<
         Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer = FieldPointVectorContainer,
+        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
         VectorizedRoot = any,
         VectorizedPoint extends FieldPoint = Point
     > {
@@ -14,6 +15,6 @@ export interface FieldPointVectorIterator<
     get_returnParam(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot, result: Point, index: number): void
     set(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot, value: Point, index: number): void
 
-    copyStatic(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<VectorizedPoint, FieldPointVectorContainerStatic>
-    copyDynamic(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<VectorizedPoint, FieldPointVectorContainerDynamic>
+    copyStatic(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<VectorizedPoint, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>
+    copyDynamic(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<VectorizedPoint, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>
 }

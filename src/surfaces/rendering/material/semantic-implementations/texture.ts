@@ -1,8 +1,8 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate, groups } from "../../../../paradigm/trees/index.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsIDsKey, WithMultiObjectsIDs, groups } from "../../../../paradigm/trees/index.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../fields/range.js"
 import { textures } from "../../../../index.js"
-import { TextureSample } from "../../../../textures/texture.js"
+import { TextureLocation, TextureSample } from "../../../../textures/texture.js"
 import { GeneratorType } from "../../../../utils/generator-type.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"
 import { Cost_Space_Texture, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
@@ -13,6 +13,8 @@ import { Material_Texture_Context, Material_Texture_Location } from "../material
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 import { VertexInterpolatingTexture } from "../../../../textures/index.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, IsDynamicVector, field_point_vectorized_multi_objects_new } from "../../../../fields/vectorized/point.js"
+import { SampleDomainLocationFieldKey } from "../../../../fields/domain.js"
 
 export type MaterialSemanticImplementation_Texture_SideEffect<
         VolumeLocationT extends VolumeLocation = VolumeLocation
@@ -91,24 +93,43 @@ export class MaterialSemanticImplementation_Texture<
         const buffer = new (this.hdr ? Float32Array : Uint8Array)(this.channels * (this.resolution ** 2))
 
         const texture_context = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
+        const multiObjectsIDs = (<Partial<WithMultiObjectsIDs>>texture_context)[MultiObjectsIDsKey]
+        const texture_location_field = texture_context[SampleDomainLocationFieldKey]
 
         const { UVs, finalIndices } = renderer.shared.surfaceUVUnwrapping
 
-        const UVs_tmp = new Array<Vec2>(UVs.length / 2)
-        for (let i = 0; i < UVs_tmp.length; i++)
-            UVs_tmp[i] = new Vec2(UVs[(2 * i) + 0], UVs[(2 * i) + 1])
+        // const UVs_tmp = new Array<Vec2>(UVs.length / 2)
+        // for (let i = 0; i < UVs_tmp.length; i++)
+        //     UVs_tmp[i] = new Vec2(UVs[(2 * i) + 0], UVs[(2 * i) + 1])
 
-        const texture_location_interpolator = new VertexInterpolatingTexture(
+        const locations = field_point_vectorized_multi_objects_new<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic>(
+            texture_location_field.elementType,
+            finalIndices.length / 3,
+            <IsDynamicVector<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic>>false,
+            multiObjectsIDs?.IDsType,
+            undefined //TODO
+        );
+
+        (<FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>>locations).uv = <Float64Array><unknown>UVs
+
+        const texture_location_interpolator = new VertexInterpolatingTexture <
+                TextureLocation,    
+                Material_Texture_Location<VolumeLocationT>
+            >(
             //TODO: integrate other location fields
-            UVs_tmp.map(uv => ({ uv }) as Material_Texture_Location<VolumeLocationT>),
-            UVs_tmp,
-            finalIndices
+            // UVs_tmp.map(uv => ({ uv }) as Material_Texture_Location<VolumeLocationT>),
+            // UVs_tmp,
+            locations,
+            <Float64Array><unknown>UVs,
+            finalIndices,
+            texture_location_field
         )
 
-        texture_location_interpolator.init()
+        texture_location_interpolator.init(texture_context)
 
         const sample_texture_values = new Array<FieldPoint>(this.resolution ** 2)
         
+        //TODO: use vector function
         for (let y = this.resolution - 1; y >= 0; y--) {
             for (let x = this.resolution - 1; x >= 0; x--) {
                 const uv = new Vec2(x, y).divScalar(this.resolution)

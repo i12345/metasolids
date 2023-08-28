@@ -43,6 +43,7 @@ export const intract = <T>
     for (let i = 0; i < path.length - 1; i++)
         tree = (tree[path[i]] ??= {})
     tree[path[path.length - 1]] = value
+    return value
 }
 
 export const hasPath =

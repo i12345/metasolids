@@ -9,6 +9,7 @@ export * from './mat3.js'
 export * from './mat4.js'
 export * from './color.js'
 export * from './vector.js'
+export * from './multi-objects.js'
 export * from './fields.js'
 
 export * from './ratio3.js'

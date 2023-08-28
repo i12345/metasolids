@@ -2,11 +2,16 @@ import { Vec3 } from "playcanvas-extended";
 import { Field } from "../field.js";
 import { Vec3InterpolationType } from "../interpolators/vec3.js";
 import { ScalarField } from "./scalar.js";
+import { PrimitiveFuseMode } from "../vectorized/index.js";
+import { ArithmeticPrimitiveFuseMode } from "../vectorized/fuse-modes/index.js";
 
 export class Vec3Field implements Field<Vec3> {
     readonly interpolationType = new Vec3InterpolationType()
 
+    readonly elementType = Vec3
+    
     constructor(
+        public readonly fuseMode: PrimitiveFuseMode<Vec3>,
         public range: [min: Vec3, max: Vec3] = [
             new Vec3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY),
             new Vec3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
@@ -21,5 +26,5 @@ export class Vec3Field implements Field<Vec3> {
         )
     }
 
-    static readonly instance = new this()
+    static readonly instance = new this(<ArithmeticPrimitiveFuseMode<Vec3>>ArithmeticPrimitiveFuseMode.add)
 }

@@ -1,4 +1,6 @@
-import { CompositeHadamardProductSampleDomain, CompositeSampleDomain } from "../../fields/domains/index.js";
+// import { CompositeHadamardProductSampleDomain, CompositeSampleDomain } from "../../fields/domains/index.js";
+import { MultiObjectsSampleDomain } from "../../fields/domains/multi-objects.js";
+import { ArithmeticPrimitiveFuseModeOp } from "../../fields/vectorized/fuse-modes/arithmetic.js";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "../texture.js";
 import { Texturer } from "../texturer.js";
@@ -54,7 +56,7 @@ export class CompositionTexturer<
         TextureSampleT,
         InputTexelTypesGrouped<TextureLocationT, TextureSampleT, TexelTypeT>
     > {
-    constructor(public readonly mode: "add" | "multiply") {
+    constructor(public readonly op: ArithmeticPrimitiveFuseModeOp) {
         super(template)
     }
     
@@ -74,21 +76,26 @@ export class CompositionTexturer<
                     TextureContextT
                 >
             > {
-        let factory: typeof CompositeSampleDomain
+        // let factory: typeof MultiObjectsSampleDomain
 
-        switch (this.mode) {
-            case "add":
-                factory = CompositeSampleDomain
-                break
-            case "multiply":
-                factory = CompositeHadamardProductSampleDomain
-                break
-            default:
-                throw new Error(`mode "${this.mode}" not recognized`)
-        }
+        // switch (this.mode) {
+        //     case "add":
+        //         factory = CompositeSampleDomain
+        //         break
+        //     case "multiply":
+        //         factory = CompositeHadamardProductSampleDomain
+        //         break
+        //     default:
+        //         throw new Error(`mode "${this.mode}" not recognized`)
+        // }
+        
+        // return {
+        //     value: new factory([a, b])
+        // }
         
         return {
-            value: new factory([a, b])
+            ///@ts-ignore
+            value: MultiObjectsSampleDomain.compositeArithmetic(this.op, a, b)
         }
     }    
 }

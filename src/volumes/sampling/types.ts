@@ -1,4 +1,5 @@
 import { ExtraFields } from "../../fields/index.js"
+import { FieldPointVector } from "../../fields/vectorized/point.js"
 import { ArrayLikeTemplated, OctTree, OctTreeSpace, OctTreesTemplated } from "../../paradigm/octtree/index.js"
 import { OctTreeSubdividingProcessing, OctTreeSubdividingProcessingContextForSubdivisionProcessingContext, OctTreeSubdivisionProcessing, OctTreeSubdivisionProcessingContext, OctTreeSubdivisionProcessor, SubdivisionKey } from "../../paradigm/octtree/processor.js"
 import { EncapsulatingKey, WithEncapsulating } from "../../paradigm/trees/encapsulating.js"
@@ -29,22 +30,22 @@ export const VolumeSamplingContextKey = Symbol("volume.sampling-context")
 export type VolumeSamplingSubdivisionSamplesGroups<
         VolumeSampleT extends VolumeSample = VolumeSample
     > = {
-    samples: MultiObjectsGroupsTemplateLeaf
+    samples: FieldPointVector<VolumeSampleT>
 }
 
 export const VolumeSamplingSubdivisionSamplesGroupsTemplate = <
         VolumeSampleT extends VolumeSample = VolumeSample
     >(): VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT> => ({
-    samples: MultiObjectsGroupsTemplate_Leaf
+    // samples: FieldPointMapped<VolumeSampleT, MultiObjectsGroupsTemplateLeaf>
 })
 
 export type VolumeSamplingSubdivisionSamplesValue<VolumeSampleT extends VolumeSample = VolumeSample> = VolumeSampleT
 export type VolumeSamplingSubdivisionSamplesValuesGrouped<VolumeSampleT extends VolumeSample = VolumeSample> =
-    MultiObjectsGroupsMapped<VolumeSamplingSubdivisionSamplesGroups, VolumeSampleT>
+    MultiObjectsGroupsMapped<VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>, VolumeSampleT>
 
 export type VolumeSamplingSubdivisionSamplesLayer<VolumeSampleT extends VolumeSample = VolumeSample> = VolumeSampleT[]
 export type VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT extends VolumeSample = VolumeSample> =
-    MultiObjectsGroupsMapped<VolumeSamplingSubdivisionSamplesGroups, VolumeSampleT[]>
+    MultiObjectsGroupsMapped<VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>, VolumeSampleT[]>
 
 export type VolumeSamplingSubdivisionSamplesOctTreesGrouped<VolumeSampleT extends VolumeSample = VolumeSample> =
     OctTreesTemplated<

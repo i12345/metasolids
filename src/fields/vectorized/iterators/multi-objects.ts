@@ -1,10 +1,11 @@
 import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsIDs } from "../../../paradigm/trees/multi-objects.js"
 import { intract, hasPath, extract } from "../../../paradigm/trees/tree.js"
-import { FieldPointType, FieldPointMapped, FieldPoint, FieldPointPrimitive } from "../../point.js"
+import { FieldPointMapped, FieldPoint, FieldPointPrimitive } from "../../point.js"
+import { FieldPointType } from "../../type.js"
 import { vectorIterator } from "./factory.js"
 import { FieldPointVectorIterator } from "../iterator.js"
-import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../point.js"
-import { IndicesTypedArray } from "../../../utils/indices-array.js"
+import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector } from "../point.js"
+import { IndicesTypedArray, invalidIndex } from "../../../utils/indices-array.js"
 import { PrimitiveFieldPointVectorIterator } from "./primitive.js"
 
 export class MultiObjectsFieldPointVectorIterator<
@@ -28,13 +29,13 @@ export class MultiObjectsFieldPointVectorIterator<
 
     constructor(
         public readonly type: FieldPointType<Point>,
-        public readonly multiObjectsIDs: MultiObjectsIDs<Objects>
+        public readonly multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-        this.typeIterator = vectorIterator<Objects, ObjIDsT, Point, Container>(multiObjectsIDs, type, <Container extends FieldPointVectorContainerDynamic ? true : false>true)
+        this.typeIterator = vectorIterator<Point, Container, Objects, ObjIDsT>(type, <IsDynamicVector<Point, Container>>true, multiObjectsIDs)
     }
 
     length(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot): number {
-        return vectorizedRoot[ItemObjValuesOffsetsKey].length - 1
+        return vectorizedRoot[ItemObjValuesOffsetsKey].length
     }
 
     get_returnValue(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, index: number): MultiObjectsMapped<Objects, Point> {
@@ -44,8 +45,8 @@ export class MultiObjectsFieldPointVectorIterator<
     }
 
     get_returnParam(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, result: MultiObjectsMapped<Objects, Point>, index: number): void {
-        const offset_start = vectorizedRoot[ItemObjValuesOffsetsKey][index + 0]
-        const offset_end = vectorizedRoot[ItemObjValuesOffsetsKey][index + 1]
+        const offset_start = index > 0 ? vectorizedRoot[ItemObjValuesOffsetsKey][index - 1] : 0
+        const offset_end = vectorizedRoot[ItemObjValuesOffsetsKey][index]
 
         for (const key of Reflect.ownKeys(result))
             delete result[key]
@@ -59,7 +60,11 @@ export class MultiObjectsFieldPointVectorIterator<
     }
 
     set(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, value: MultiObjectsMapped<Objects, Point>, index: number): void {
-        let offset = vectorizedRoot[ItemObjValuesOffsetsKey][index + 0]
+        let offset = index > 0 ? vectorizedRoot[ItemObjValuesOffsetsKey][index - 1] : 0
+
+        //TODO: support inserting in TypedArrayList
+        if (vectorizedRoot[ItemObjValuesOffsetsKey][index] !== invalidIndex(vectorizedRoot[ItemObjValuesOffsetsKey]))
+            throw new Error("cannot set obj value again; item is in array")
 
         //TODO: this could be optimized with recursively traversing the objects template
 
@@ -77,7 +82,7 @@ export class MultiObjectsFieldPointVectorIterator<
             }
         }
 
-        vectorizedRoot[ItemObjValuesOffsetsKey][index + 1] = offset
+        vectorizedRoot[ItemObjValuesOffsetsKey][index] = offset
     }
 
     makeContainer(length: number): Container {

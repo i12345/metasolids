@@ -1,4 +1,4 @@
-import { Entity, MeshInstance } from "playcanvas-extended"
+import { Entity, MeshInstance, Vec2 } from "playcanvas-extended"
 import { VolumeLocation } from "../../volumes/volume.js"
 import { MaterialRendererIndividual, MaterialRendererShared } from "./material/renderer.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./mesh/renderer.js"
@@ -11,6 +11,7 @@ import { ExtraFields, Field, FieldsPoint, FieldsPointMapped, SampleDomainLocatio
 import { FieldsField, Vec2Field, defaultField } from "../../fields/fields/index.js"
 import { preDeserializer, serializableClass, serializableProperty } from "simple-typed-serialization"
 import 'reflect-metadata'
+import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js"
 
 @serializableClass()
 export class SurfaceRendererShared<
@@ -61,7 +62,7 @@ export class SurfaceRendererShared<
             [SampleDomainLocationFieldKey]: FieldsField.merge(
                 defaultField(extraLocationParameters) as FieldsField<TextureLocationT>,
                 new FieldsField<TextureLocationT>({
-                    uv: new Vec2Field()
+                    uv: new Vec2Field(<ArithmeticPrimitiveFuseMode<Vec2>>ArithmeticPrimitiveFuseMode.none)
                 } as FieldsPointMapped<TextureLocationT, Field>)
             )
         } as TextureContextT

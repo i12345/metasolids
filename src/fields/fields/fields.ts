@@ -2,10 +2,15 @@ import { Field } from "../field.js";
 import { FieldsInterpolationType } from "../interpolators/fields.js";
 import { FieldInterpolationType, makeInterpolator } from "../interpolation.js";
 import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped, FieldsPointOmitted, FieldsPoint_Omit_Leaf, fields_point_map } from "../point.js";
+import { FieldPointType } from "../type.js"
 import { deletePath, extract, pathsToValue } from "../../paradigm/trees/index.js";
+import { FuseMode } from "../vectorized/fusing.js";
 
 export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     implements Field<Point> {
+    readonly elementType: FieldPointType<Point>
+    readonly fuseMode: FuseMode<Point>
+    
     get interpolationType(): FieldInterpolationType<Point> {
         return new FieldsInterpolationType<Point>(
             fields_point_map<Point, Field, FieldInterpolationType>(
@@ -18,7 +23,19 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
         )
     }
 
-    constructor(public fields: FieldsPointMapped<Point, Field>) { }
+    constructor(public fields: FieldsPointMapped<Point, Field>) {
+        this.elementType = <FieldPointType<Point>>fields_point_map(
+            fields,
+            field => (field.interpolationType && field.interpolationType[makeInterpolator]) !== undefined,
+            field => field.elementType
+        )
+
+        this.fuseMode = <FuseMode<Point>>fields_point_map(
+            fields,
+            field => (field.interpolationType && field.interpolationType[makeInterpolator]) !== undefined,
+            field => field.fuseMode
+        )
+    }
 
     distance(x: Point, y: Point): number {
         let distance = 0

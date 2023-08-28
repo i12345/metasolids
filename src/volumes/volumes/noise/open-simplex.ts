@@ -2,17 +2,91 @@ import { BoundingBox, Vec3 } from "playcanvas-extended";
 import { Field } from "../../../fields/field.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext, defaultVolumeLocationField, defaultVolumeSampleField } from "../../volume.js";
 import { openSimplex } from "../../../fields/domains/noise/open-simplex.js";
-import { SeededSamplingContext, TransformingSampleDomain } from "../../../fields/domains/index.js";
+import { FusedVectorSamplingContext, SeededSamplingContext, TransformingSampleDomain } from "../../../fields/domains/index.js";
 import { Vec3Field } from "../../../fields/fields/vec3.js";
+import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
+import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../../fields/vectorized/index.js";
 
-export class OpenSimlpexNoiseVolume
+export class OpenSimlpexNoiseVolume<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        VolumeSampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleProcessingContextT = any,
+        ContextT extends
+            VolumeSamplingContext<VolumeLocationT, SampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, SampleProcessingContextT>,
+        LocationVector extends
+            FieldPointVector<VolumeLocationT, VolumeLocationContainer> =
+            FieldPointVector<VolumeLocationT, VolumeLocationContainer>,
+        SampleVector extends 
+            FieldPointVectorWithMultiObjects<
+                    VolumeSample,
+                    VolumeSampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                > =
+            FieldPointVectorWithMultiObjects<
+                    VolumeSample,
+                    VolumeSampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                >,
+        VectorContext extends
+            FusedVectorSamplingContext<
+                    VolumeLocationT,
+                    VolumeLocationContainer,
+                    VolumeSample,
+                    VolumeSampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    ContextT,
+                    LocationVector,
+                    SampleVector
+                > =
+            FusedVectorSamplingContext<
+                    VolumeLocation,
+                    VolumeLocationContainer,
+                    VolumeSample,
+                    VolumeSampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    ContextT,
+                    LocationVector,
+                    SampleVector
+                >,
+    >
     extends TransformingSampleDomain<
-        VolumeLocation, VolumeSample, VolumeSamplingContext,
-        Vec3, number, SeededSamplingContext<Vec3>
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        
+        VolumeLocationT,
+        VolumeLocationContainer,
+        VolumeSample,
+        VolumeSampleContainer,
+        ContextT,
+        LocationVector,
+        SampleVector,
+        VectorContext,
+
+        Vec3,
+        VolumeLocationContainer,
+        number,
+        VolumeSampleContainer,
+        SeededSamplingContext<Vec3>
     >
     implements Volume {
     private _version!: keyof typeof openSimplex[3]
     
+    protected readonly transformsLocation = true
+    protected readonly transformsSample = true
+
     get version() {
         return this._version
     }
@@ -39,11 +113,18 @@ export class OpenSimlpexNoiseVolume
         return defaultVolumeSampleField
     }
 
+    //TODO: implement vectorized
     protected transformLocation(location: VolumeLocation, context: { outer: VolumeSamplingContext<VolumeLocation>; inner: SeededSamplingContext<Vec3>; }): Vec3 {
         return location.p
     }
 
-    protected transformSample(sample: number, location: { outer: VolumeLocation; inner: Vec3; }, context: { outer: VolumeSamplingContext<VolumeLocation>; inner: SeededSamplingContext<Vec3>; }): VolumeSample {
+    //TODO: implement vectorized
+    protected transformSample(
+            sample: number,
+            innerLocation: Vec3,
+            outerLocation: VolumeLocationT,
+            context: { outer: ContextT; inner: SeededSamplingContext<Vec3>; }
+        ): VolumeSample {
         return { alpha: sample, gradient: Vec3.ZERO }
     }
 }

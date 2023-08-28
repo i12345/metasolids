@@ -1,28 +1,78 @@
 import { Vec2 } from "playcanvas-extended"
-import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace, field_point_clone } from "./point.js"
-import { IndicesArray } from "../utils/indices-array.js"
+import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
+import { FieldPointType } from "./type.js"
+import { IndicesArray, IndicesTypedArray } from "../utils/indices-array.js"
+import { NumberArrayLike } from "../utils/typed-array.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
+import { vectorIterator } from "./vectorized/iterators/factory.js"
+import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
 
-export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> {
-    private v0:  Point[]
-    private v01: Point[]
-    private v02: Point[]
+export class Triangles2DMeshInterpolator<
+        VertexPoint extends FieldPoint = FieldPoint,
+        VertexContainer extends FieldPointVectorContainer = FieldPointVectorContainer,
+        VertexVector extends FieldPointVector<VertexPoint, VertexContainer> = FieldPointVector<VertexPoint, VertexContainer>,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainer<ObjIDsT>
+    > {
+    private readonly v0:  VertexVector
+    private readonly v01: VertexVector
+    private readonly v02: VertexVector
+
+    private readonly get_v0: (index: number) => VertexPoint
+    private readonly get_v01: (index: number) => VertexPoint
+    private readonly get_v02: (index: number) => VertexPoint
 
     constructor(
-        public vertices: Point[],
-        public triangles: IndicesArray
+        public readonly vertexType: FieldPointType<VertexPoint>,
+        public readonly vertices: VertexVector,
+        public readonly triangles: IndicesArray,
+        public readonly multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-        this.v0 = new Array(triangles.length / 3)
-        this.v01 = new Array(triangles.length / 3)
-        this.v02 = new Array(triangles.length / 3)
+        const iterator = vectorIterator(vertexType, <IsDynamicVector<VertexPoint, VertexContainer>>false, multiObjectIDs)
         
-        for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
-            const v0 = this.vertices[triangles[i + 0]]
-            const v1 = this.vertices[triangles[i + 1]]
-            const v2 = this.vertices[triangles[i + 2]]
+        this.v0 = <VertexVector><unknown>field_point_vectorized_multi_objects_new<VertexPoint, VertexContainer, ObjIDsT, ObjIDsContainer>(
+            vertexType,
+            triangles.length / 3,
+            undefined,
+            multiObjectIDs?.IDsType,
+            <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
+        )
 
-            this.v0[tri] = v0
-            this.v01[tri] = field_point_subtract(v1, v0)
-            this.v02[tri] = field_point_subtract(v2, v0)
+        this.v01 = <VertexVector><unknown>field_point_vectorized_multi_objects_new<VertexPoint, VertexContainer, ObjIDsT, ObjIDsContainer>(
+            vertexType,
+            triangles.length / 3,
+            undefined,
+            multiObjectIDs?.IDsType,
+            <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
+        )
+
+        this.v02 = <VertexVector><unknown>field_point_vectorized_multi_objects_new<VertexPoint, VertexContainer, ObjIDsT, ObjIDsContainer>(
+            vertexType,
+            triangles.length / 3,
+            undefined,
+            multiObjectIDs?.IDsType,
+            <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
+        )
+
+        this.get_v0 = iterator.get_returnValue.bind(iterator, this.v0, this.v0)
+        this.get_v01 = iterator.get_returnValue.bind(iterator, this.v01, this.v01)
+        this.get_v02 = iterator.get_returnValue.bind(iterator, this.v02, this.v02)
+
+        const get_vertex = iterator.get_returnValue.bind(iterator, vertices, vertices)
+        const set_v0 = iterator.set.bind(iterator, this.v0, this.v0)
+        const set_v01 = iterator.set.bind(iterator, this.v0, this.v01)
+        const set_v02 = iterator.set.bind(iterator, this.v0, this.v02)
+        
+        //TODO: use non-reduced arithmetic fuse mode
+        for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
+            const v0 = get_vertex(triangles[i + 0])
+            const v1 = get_vertex(triangles[i + 1])
+            const v2 = get_vertex(triangles[i + 2])
+
+            set_v0(v0, tri)
+            set_v01(field_point_subtract(v1, v0), tri)
+            set_v02(field_point_subtract(v2, v0), tri)
         }
     }
 
@@ -30,20 +80,20 @@ export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> 
             tri: number,
             w1: number,
             w2: number
-        ): Point {
-        let result = { value: field_point_clone(this.v0[tri]) }
+        ): VertexPoint {
+        let result = { value: this.get_v0(tri) }
 
         fields_point_add_inplace_weighted(
             result,
             'value',
-            this.v01[tri],
+            this.get_v01(tri),
             w1
         )
 
         fields_point_add_inplace_weighted(
             result,
             'value',
-            this.v02[tri],
+            this.get_v02(tri),
             w2
         )
 
@@ -60,20 +110,20 @@ export class Triangles2DMeshInterpolator<Point extends FieldPoint = FieldPoint> 
         fields_point_add_inplace(
             result,
             key,
-            this.v0[tri]
+            this.get_v0(tri)
         )
 
         fields_point_add_inplace_weighted(
             result,
             key,
-            this.v01[tri],
+            this.get_v01(tri),
             w1
         )
 
         fields_point_add_inplace_weighted(
             result,
             key,
-            this.v02[tri],
+            this.get_v02(tri),
             w2
         )
     }
@@ -134,15 +184,18 @@ export class Triangles2DMeshCollider {
 
 export class Triangles2DMesh {
     private constructor(
-        public readonly vertices: Vec2[],
-        public readonly triangles: ArrayLike<number>,
+        public readonly vertices: NumberArrayLike,
+        public readonly triangles: NumberArrayLike,
         public readonly v0: Float64Array,
         public readonly tri_vec_inv: Float64Array,
         public readonly bounds: { readonly origin: Vec2, readonly size: Vec2 }
     ) {
     }
 
-    static build(vertices: Vec2[], triangles: ArrayLike<number>) {
+    static build(
+            vertices: NumberArrayLike,
+            triangles: NumberArrayLike,
+        ) {
         const n = triangles.length / 3
 
         /**
@@ -161,18 +214,47 @@ export class Triangles2DMesh {
          */
         const tri_vec_inv = new Float64Array(4 * n)
 
+        let i0: number, i1: number, i2: number
+        let v0_x: number, v0_y: number,
+            v1_x: number, v1_y: number,
+            v2_x: number, v2_y: number
+
+        let v_min_x = Number.POSITIVE_INFINITY, v_min_y = Number.POSITIVE_INFINITY,
+            v_max_x = Number.NEGATIVE_INFINITY, v_max_y = Number.NEGATIVE_INFINITY
+        
         for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
-            const v0_i = vertices[triangles[i + 0]]
-            const v1_i = vertices[triangles[i + 1]]
-            const v2_i = vertices[triangles[i + 2]]
+            i0 = triangles[i + 0]
+            i1 = triangles[i + 1]
+            i2 = triangles[i + 2]
 
-            v0[(2 * tri) + 0] = v0_i.x
-            v0[(2 * tri) + 1] = v0_i.y
+            v0_x = vertices[(2 * i0) + 0]
+            v0_y = vertices[(2 * i0) + 1]
+            v1_x = vertices[(2 * i1) + 0]
+            v1_y = vertices[(2 * i1) + 1]
+            v2_x = vertices[(2 * i2) + 0]
+            v2_y = vertices[(2 * i2) + 1]
 
-            const xy01_x = v1_i.x - v0_i.x
-            const xy01_y = v1_i.y - v0_i.y
-            const xy02_x = v2_i.x - v0_i.x
-            const xy02_y = v2_i.y - v0_i.y
+            if (v_min_x > v0_x) v_min_x = v0_x
+            if (v_max_x < v0_x) v_max_x < v0_x
+            if (v_min_x > v1_x) v_min_x = v1_x
+            if (v_max_x < v1_x) v_max_x < v1_x
+            if (v_min_x > v2_x) v_min_x = v1_x
+            if (v_max_x < v2_x) v_max_x < v1_x
+
+            if (v_min_y > v0_y) v_min_y = v0_y
+            if (v_max_y < v0_y) v_max_y < v0_y
+            if (v_min_y > v1_y) v_min_y = v1_y
+            if (v_max_y < v1_y) v_max_y < v1_y
+            if (v_min_y > v2_y) v_min_y = v1_y
+            if (v_max_y < v2_y) v_max_y < v1_y
+
+            v0[(2 * tri) + 0] = v0_x
+            v0[(2 * tri) + 1] = v0_y
+
+            const xy01_x = v1_x - v0_x
+            const xy01_y = v1_y - v0_y
+            const xy02_x = v2_x - v0_x
+            const xy02_y = v2_y - v0_y
 
             const det = (xy01_x * xy02_y) - (xy02_x * xy01_y)
             tri_vec_inv[(4 * tri) + 0] =  xy02_y / det
@@ -181,13 +263,8 @@ export class Triangles2DMesh {
             tri_vec_inv[(4 * tri) + 3] =  xy01_x / det
         }
 
-        const verts_min_x = Math.min(...vertices.map(v => v.x))
-        const verts_max_x = Math.max(...vertices.map(v => v.x))
-        const verts_min_y = Math.min(...vertices.map(v => v.y))
-        const verts_max_y = Math.max(...vertices.map(v => v.y))
-
-        const origin = new Vec2(verts_min_x, verts_min_y)
-        const size = new Vec2(verts_max_x, verts_max_y).sub(origin)
+        const origin = new Vec2(v_min_x, v_min_y)
+        const size = new Vec2(v_max_x, v_max_y).sub(origin)
 
         return new Triangles2DMesh(vertices, triangles, v0, tri_vec_inv, { origin, size })
     }
@@ -205,15 +282,31 @@ class Triangles2DMeshQuad {
         public mesh: Triangles2DMesh,
         public bounds: { min: Vec2, max: Vec2 }
     ) {
-        for (let i = 0, tri = 0; i < this.mesh.triangles.length; i += 3) {
-            let v0 = this.mesh.vertices[this.mesh.triangles[i + 0]]
-            let v1 = this.mesh.vertices[this.mesh.triangles[i + 1]]
-            let v2 = this.mesh.vertices[this.mesh.triangles[i + 2]]
+        const { vertices, triangles } = mesh
 
-            const min_x = Math.min(v0.x, v1.x, v2.x)
-            const max_x = Math.max(v0.x, v1.x, v2.x)
-            const min_y = Math.min(v0.y, v1.y, v2.y)
-            const max_y = Math.max(v0.y, v1.y, v2.y)
+        let i0: number, i1: number, i2: number
+        let v0_x: number, v0_y: number,
+            v1_x: number, v1_y: number,
+            v2_x: number, v2_y: number
+        let min_x: number, min_y: number,
+            max_x: number, max_y: number
+        
+        for (let i = 0, tri = 0; i < this.mesh.triangles.length; i += 3) {
+            i0 = triangles[i + 0]
+            i1 = triangles[i + 1]
+            i2 = triangles[i + 2]
+
+            v0_x = vertices[(2 * i0) + 0]
+            v0_y = vertices[(2 * i0) + 1]
+            v1_x = vertices[(2 * i1) + 0]
+            v1_y = vertices[(2 * i1) + 1]
+            v2_x = vertices[(2 * i2) + 0]
+            v2_y = vertices[(2 * i2) + 1]
+
+            max_x = Math.max(v0_x, v1_x, v2_x)
+            min_x = Math.min(v0_x, v1_x, v2_x)
+            min_y = Math.min(v0_y, v1_y, v2_y)
+            max_y = Math.max(v0_y, v1_y, v2_y)
 
             if (min_x >= bounds.max.x ||
                 max_x <= bounds.min.x ||
@@ -228,7 +321,8 @@ class Triangles2DMeshQuad {
         const margin = size.length() / (4 * 1024)
         this.margins = {
             min: -margin,
-            max: 1 + (2 * margin)
+            max: 1 + margin
+            // max: 1 + (2 * margin)
         }
     }
 
@@ -236,20 +330,29 @@ class Triangles2DMeshQuad {
         const { v0, tri_vec_inv } = this.mesh
         const { min: margin_min, max: margin_max } = this.margins
 
+        const p_x = point.x, p_y = point.y
+        let v0_x: number, v0_y: number
+        let x: number, y: number
+        let tri_vec_inv_a: number,
+            tri_vec_inv_b: number,
+            tri_vec_inv_c: number,
+            tri_vec_inv_d: number
+        let w1: number, w2: number
+
         for (let tri of this.filtered_triangles) {
-            const v0_x = v0[(2 * tri) + 0]
-            const v0_y = v0[(2 * tri) + 1]
+            v0_x = v0[(2 * tri) + 0]
+            v0_y = v0[(2 * tri) + 1]
 
-            const x = point.x - v0_x
-            const y = point.y - v0_y
+            x = p_x - v0_x
+            y = p_y - v0_y
 
-            const tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
-            const tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
-            const tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
-            const tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+            tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
+            tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
+            tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
+            tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
 
-            const w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
-            const w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+            w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+            w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
             if (w1 < margin_min || w2 < margin_min ||
                 w1 + w2 >= margin_max)
@@ -263,20 +366,29 @@ class Triangles2DMeshQuad {
         const { v0, tri_vec_inv } = this.mesh
         const { min: margin_min, max: margin_max } = this.margins
 
+        const p_x = point.x, p_y = point.y
+        let v0_x: number, v0_y: number
+        let x: number, y: number
+        let tri_vec_inv_a: number,
+            tri_vec_inv_b: number,
+            tri_vec_inv_c: number,
+            tri_vec_inv_d: number
+        let w1: number, w2: number
+
         for (let tri of this.filtered_triangles) {
-            const v0_x = v0[(2 * tri) + 0]
-            const v0_y = v0[(2 * tri) + 1]
+            v0_x = v0[(2 * tri) + 0]
+            v0_y = v0[(2 * tri) + 1]
 
-            const x = point.x - v0_x
-            const y = point.y - v0_y
+            x = p_x - v0_x
+            y = p_y - v0_y
 
-            const tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
-            const tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
-            const tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
-            const tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+            tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
+            tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
+            tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
+            tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
 
-            const w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
-            const w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+            w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+            w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
             if (w1 < margin_min || w2 < margin_min ||
                 w1 + w2 >= margin_max)

@@ -1,17 +1,26 @@
+import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended";
+import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { TypedArrayList } from "../../../utils/typed-array-list.js";
 import { FieldPointMapped, FieldPointPrimitive } from "../../point.js";
+import { FieldPointType, field_point_type_size } from "../../type.js"
+import { FuseMode, FusingFieldPointVectorWithMultiObjects, PrimitiveFuseMode } from "../fusing.js";
 import { FieldPointVectorIterator } from "../iterator.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic } from "../point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType, FieldPointVectorWithMultiObjRoot } from "../point.js";
+import { NumberTypedArray, TypedArray, typedArrayClone, typedArrayConstructor } from "../../../utils/typed-array.js";
 
 export abstract class PrimitiveFieldPointVectorIterator<
         Point extends FieldPointPrimitive = FieldPointPrimitive,
-        Container extends FieldPointVectorContainer = FieldPointVectorContainer,
+        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
         VectorizedRoot = any
     > implements
     FieldPointVectorIterator<Point, Container, VectorizedRoot, Point> {
     abstract get canGetByReference(): boolean
 
-    protected abstract get elementSize(): number
+    abstract get elementType(): FieldPointType<Point>
+
+    get elementSize() {
+        return field_point_type_size(this.elementType)
+    }
 
     length(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): number {
         return vectorized.length / this.elementSize
@@ -22,52 +31,187 @@ export abstract class PrimitiveFieldPointVectorIterator<
     abstract get_returnParam(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot, result: Point, index: number): void
 
     abstract set(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot, value: Point, index: number): void
+    
+    abstract makeContainer(
+        length: number,
+        value?: Point
+    ): Container
 
-    abstract makeContainer(length: number): Container
+    abstract copyStatic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>
 
-    abstract copyStatic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic>
+    abstract copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>
 
-    abstract copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerDynamic>
+    fuse(
+            results: FieldPointVectorWithMultiObjRoot<
+                Point,
+                Container,
+                IndicesTypedArray,
+                FieldPointVectorContainerStatic<IndicesTypedArray>,
+                FusingFieldPointVectorWithMultiObjects
+            >,
+            points: FieldPointVectorWithMultiObjRoot<Point, Container>[],
+            mode: FuseMode<Point>,
+            isMultiObjMapped?: {
+                points: boolean
+                result: boolean
+            }
+    ): void {
+        (<PrimitiveFuseMode<Point>>mode).fuseVector(this.elementType, results, points, isMultiObjMapped)
+    }
 }
 
 export abstract class PrimitiveFieldPointVectorIteratorStatic<
         Point extends FieldPointPrimitive = FieldPointPrimitive,
-        Container extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        Container extends FieldPointVectorContainerStatic<TypedArray> = FieldPointVectorContainerStatic,
         VectorizedRoot = any
     >
     extends PrimitiveFieldPointVectorIterator<Point, Container, VectorizedRoot> {
-    makeContainer(length: number): Container {
-        return <Container>new Float64Array(this.elementSize * length)
+    makeContainer(length: number, value?: Point): Container {
+        const container = <Container>new Float64Array(this.elementSize * length)
+
+        if (value !== undefined) {
+            let insertIndex = 0
+
+            if (typeof value === 'number')
+                (<NumberTypedArray>container).fill(value)
+            else if (value instanceof Vec2) {
+                for (let i = 0; i < length; i++) {
+                    container[insertIndex++] = value.x
+                    container[insertIndex++] = value.y
+                }
+            }
+            else if (value instanceof Vec3) {
+                for (let i = 0; i < length; i++) {
+                    container[insertIndex++] = value.x
+                    container[insertIndex++] = value.y
+                    container[insertIndex++] = value.z
+                }
+            }
+            else if (value instanceof Vec4) {
+                for (let i = 0; i < length; i++) {
+                    container[insertIndex++] = value.x
+                    container[insertIndex++] = value.y
+                    container[insertIndex++] = value.z
+                    container[insertIndex++] = value.w
+                }
+            }
+            else if (value instanceof Quat) {
+                for (let i = 0; i < length; i++) {
+                    container[insertIndex++] = value.x
+                    container[insertIndex++] = value.y
+                    container[insertIndex++] = value.z
+                    container[insertIndex++] = value.w
+                }
+            }
+            else if (value instanceof Color) {
+                for (let i = 0; i < length; i++) {
+                    container[insertIndex++] = value.r
+                    container[insertIndex++] = value.g
+                    container[insertIndex++] = value.b
+                    container[insertIndex++] = value.a
+                }
+            }
+            else if (value instanceof Mat3)
+                for (let i = 0; i < length; i++)
+                    for (let j = 0; j < 9; j++)
+                        container[insertIndex++] = value.data[j]
+            else if (value instanceof Mat4)
+                for (let i = 0; i < length; i++)
+                    for (let j = 0; j < 16; j++)
+                        container[insertIndex++] = value.data[j]
+            else
+                throw new Error()
+        }
+
+        return container
     }
 
-    copyStatic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic> {
-        const container = new Float64Array(vectorized.length)
-        container.set(vectorized)
-        return <FieldPointMapped<Point, FieldPointVectorContainerStatic>>container
+    copyStatic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>> {
+        const container = typedArrayClone(<FieldPointVectorContainerType<Container>><unknown>vectorized)
+        return <FieldPointMapped<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>>container
     }
 
-    copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerDynamic> {
-        const container = new TypedArrayList<Float64Array>(Float64Array)
+    copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
+        const container = new TypedArrayList(typedArrayConstructor(<TypedArray><unknown>vectorized))
         container.appendBlock(this.copyStatic(vectorized, vectorizedRoot))
-        return <FieldPointMapped<Point, FieldPointVectorContainerDynamic>>container
+        return <FieldPointMapped<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>container
     }
 }
 
 export abstract class PrimitiveFieldPointVectorIteratorDynamic<
         Point extends FieldPointPrimitive = FieldPointPrimitive,
-        Container extends FieldPointVectorContainerDynamic = FieldPointVectorContainerDynamic,
+        Container extends FieldPointVectorContainerDynamic<TypedArray> = FieldPointVectorContainerDynamic,
         VectorizedRoot = any
     >
     extends PrimitiveFieldPointVectorIterator<Point, Container, VectorizedRoot> {
-    makeContainer(length: number): Container {
-        return <Container>new TypedArrayList(Float64Array, (2 * length))
+    makeContainer(length: number, value?: Point): Container {
+        const container = <Container>new TypedArrayList(Float64Array, (this.elementSize * length))
+
+        if (value !== undefined) {
+            let insertIndex = 0
+
+            if (typeof value === 'number') {
+                for (let i = 0; i < length; i++) {
+                    container.set(i, value)
+                }
+            }
+            else if (value instanceof Vec2) {
+                for (let i = 0; i < length; i++) {
+                    container.set(insertIndex++, value.x)
+                    container.set(insertIndex++, value.y)
+                }
+            }
+            else if (value instanceof Vec3) {
+                for (let i = 0; i < length; i++) {
+                    container.set(insertIndex++, value.x)
+                    container.set(insertIndex++, value.y)
+                    container.set(insertIndex++, value.z)
+                }
+            }
+            else if (value instanceof Vec4) {
+                for (let i = 0; i < length; i++) {
+                    container.set(insertIndex++, value.x)
+                    container.set(insertIndex++, value.y)
+                    container.set(insertIndex++, value.z)
+                    container.set(insertIndex++, value.w)
+                }
+            }
+            else if (value instanceof Quat) {
+                for (let i = 0; i < length; i++) {
+                    container.set(insertIndex++, value.x)
+                    container.set(insertIndex++, value.y)
+                    container.set(insertIndex++, value.z)
+                    container.set(insertIndex++, value.w)
+                }
+            }
+            else if (value instanceof Color) {
+                for (let i = 0; i < length; i++) {
+                    container.set(insertIndex++, value.r)
+                    container.set(insertIndex++, value.g)
+                    container.set(insertIndex++, value.b)
+                    container.set(insertIndex++, value.a)
+                }
+            }
+            else if (value instanceof Mat3)
+                for (let i = 0; i < length; i++)
+                    for (let j = 0; j < 9; j++)
+                        container.set(insertIndex++, value.data[j])
+            else if (value instanceof Mat4)
+                for (let i = 0; i < length; i++)
+                    for (let j = 0; j < 16; j++)
+                        container.set(insertIndex++, value.data[j])
+            else
+                throw new Error()
+        }
+
+        return container
     }
 
-    copyStatic(vectorized: TypedArrayList<Float64Array>, vectorizedRoot: any): FieldPointVector<Point, FieldPointVectorContainerStatic> {
-        return <FieldPointVector<Point, FieldPointVectorContainerStatic>>vectorized.arrayView(false)
+    copyStatic(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: any): FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>> {
+        return <FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>>vectorized.arrayView(false)
     }
 
-    copyDynamic(vectorized: TypedArrayList<Float64Array>, vectorizedRoot: any): FieldPointVector<Point, FieldPointVectorContainerDynamic> {
-        return <FieldPointVector<Point, FieldPointVectorContainerDynamic>>vectorized.clone()
+    copyDynamic(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: any): FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
+        return <FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>vectorized.clone()
     }
 }

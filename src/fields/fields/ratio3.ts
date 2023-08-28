@@ -1,11 +1,14 @@
 import { Vec3 } from "playcanvas-extended";
 import { Field } from "../field.js";
 import { Ratio3InterpolationType } from "../interpolators/ratio3.js";
+import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";
 
 export class Ratio3Field implements Field<Vec3> {
     readonly interpolationType = new Ratio3InterpolationType()
 
-    constructor() { }
+    readonly elementType = Vec3
+    
+    constructor(public readonly fuseMode: PrimitiveFuseMode<Vec3>) { }
 
     distance(x: Vec3, y: Vec3): number {
         return (
@@ -15,5 +18,5 @@ export class Ratio3Field implements Field<Vec3> {
         )
     }
 
-    static readonly instance = new this()
+    static readonly instance = new this(<FuseMode<Vec3>>fuseModes.ArithmeticPrimitiveFuseMode.multiply)
 }
