@@ -4,7 +4,7 @@ import { GeneratorType, Reflect_entries, mergeObjects, onlyOne } from "../../../
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
 import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate, MultiObjectsIDs, extract } from "../../../paradigm/trees/index.js";
-import { field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, field_point_stdDev, FieldPoint, field_point_identity, Triangles2DMeshInterpolator, field_point_new, field_point_map, FieldPointType, SampleDomainLocationFieldKey } from "../../../fields/index.js";
+import { field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, FieldPoint, field_point_identity, Triangles2DMeshInterpolator, field_point_new, field_point_map, FieldPointType, SampleDomainLocationFieldKey } from "../../../fields/index.js";
 import { MultiObjectsSampleDomain, ConstantSampleDomain } from "../../../fields/domains/index.js"
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Immediate, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
 import { Material_Groups } from "./groups.js";
@@ -596,15 +596,15 @@ function qualityMetrics_compute<
         }
     }
 
-    const interpolator_values_locations = field_point_vectorized_multi_objects_new<Material_Texture_Location<VolumeLocationT>>(
+    const interpolator_values_locations = field_point_vectorized_multi_objects_new/*<Material_Texture_Location<VolumeLocationT>>*/(
         location_type,
         3 * tri_n,
-        <IsDynamicVector<Material_Texture_Location<VolumeLocationT>>>false,
+        <any>/* <IsDynamicVector<Material_Texture_Location<VolumeLocationT>>> */false,
         multiObjectsIDs?.IDsType,
         undefined
     )
 
-    const interpolator_values_locations_iterator = vectorIterator<Material_Texture_Location<VolumeLocationT>>(location_type, <any>isDynamicVector(interpolator_values_locations), multiObjectsIDs)
+    const interpolator_values_locations_iterator = vectorIterator/* <Material_Texture_Location<VolumeLocationT>> */(location_type, <any>isDynamicVector(interpolator_values_locations), multiObjectsIDs)
 
     const interpolator_values_samples = field_point_vectorized_multi_objects_new<TexelTypeT>(
         sample_type,
@@ -683,7 +683,7 @@ function qualityMetrics_compute<
         let texture_location_prev: Material_Texture_Location<VolumeLocationT> | undefined = undefined
         let texture_sample_prev: TexelTypeT | undefined = undefined
         for (let w = 0; w < 0.5; w += 0.02) {
-            const texture_location_interpolated = interpolator_texture_location.interpolate(i_tri, w, w)
+            const texture_location_interpolated = <Material_Texture_Location<VolumeLocationT>>interpolator_texture_location.interpolate(i_tri, w, w)
             const texture_sample_interpolated = interpolator_texture_sample.interpolate(i_tri, w, w)
 
             const texture_sample_real = texture.sample(texture_location_interpolated, textureContext)

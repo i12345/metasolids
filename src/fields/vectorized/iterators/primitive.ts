@@ -1,12 +1,12 @@
 import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { TypedArrayList } from "../../../utils/typed-array-list.js";
-import { FieldPointMapped, FieldPointPrimitive } from "../../point.js";
+import { FieldPoint, FieldPointMapped, FieldPointPrimitive } from "../../point.js";
 import { FieldPointType, field_point_type_size } from "../../type.js"
 import { FuseMode, FusingFieldPointVectorWithMultiObjects, PrimitiveFuseMode } from "../fusing.js";
 import { FieldPointVectorIterator } from "../iterator.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType, FieldPointVectorWithMultiObjRoot } from "../point.js";
-import { NumberTypedArray, TypedArray, typedArrayClone, typedArrayConstructor } from "../../../utils/typed-array.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType, FieldPointVectorWithMultiObjRoot, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../point.js";
+import { NumberTypedArray, TypedArray, isTypedArray, typedArrayClone, typedArrayConstructor, typedArrayInvalid } from "../../../utils/typed-array.js";
 
 export abstract class PrimitiveFieldPointVectorIterator<
         Point extends FieldPointPrimitive = FieldPointPrimitive,
@@ -58,6 +58,12 @@ export abstract class PrimitiveFieldPointVectorIterator<
     ): void {
         (<PrimitiveFuseMode<Point>>mode).fuseVector(this.elementType, results, points, isMultiObjMapped)
     }
+
+    abstract scatter(
+        dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
+        src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
+        indices: IndicesTypedArray
+    ): void
 }
 
 export abstract class PrimitiveFieldPointVectorIteratorStatic<
@@ -136,6 +142,180 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
         container.appendBlock(this.copyStatic(vectorized, vectorizedRoot))
         return <FieldPointMapped<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>container
     }
+
+    scatter(
+            dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
+            src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
+            /** indices[dst_index] = src_index */
+            indices: IndicesTypedArray,
+            isMultiObjMapped?: boolean
+        ): void {
+        const indices_invalid = indices ? typedArrayInvalid(indices) : undefined
+        const elementSize = this.elementSize
+        const n_items = dst_vectorized.length / elementSize
+        let dst_item: number
+        let src_item: number
+        let element: number
+        let dst_offset: number
+        let src_offset: number
+
+        if (isMultiObjMapped) {
+            let dst_objOffset: number
+            let dst_objOffset_prev = 0
+            let dst_objOffset_next: number
+
+            let src_objOffset: number
+            let src_objOffset_prev = 0
+            let src_objOffset_next: number
+
+            let objID: number
+
+            type ObjIDsT = IndicesTypedArray
+
+            const src_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjIDsKey]
+            const dst_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjIDsKey]
+
+            if (isTypedArray(src_objIDs_container)) {
+                const src_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>src_objIDs_container
+                const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
+                
+                if (isTypedArray(dst_objIDs_container)) {
+                    const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs[src_objOffset]
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs[dst_objOffset])
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized[dst_offset++] = src_vectorized[src_offset++]
+                        }
+                    }
+                }
+                else {
+                    const dst_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs[src_objOffset]
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs.get(dst_objOffset))
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized[dst_offset++] = src_vectorized[src_offset++]
+                        }
+                    }
+                }
+            }
+            else {
+                const src_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>src_objIDs_container
+                const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
+                
+                if (isTypedArray(dst_objIDs_container)) {
+                    const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs.get(src_objOffset)
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs[dst_objOffset])
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized[dst_offset++] = src_vectorized[src_offset++]
+                        }
+                    }
+                }
+                else {
+                    const dst_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs.get(src_objOffset)
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs.get(dst_objOffset))
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized[dst_offset++] = src_vectorized[src_offset++]
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            dst_offset = 0
+            
+            for (dst_item = 0; dst_item < indices.length; dst_item++) {
+                src_item = indices[dst_item]
+                if (src_item === indices_invalid) {
+                    dst_offset += elementSize
+                    continue
+                }
+
+                // dst_offset = elementSize * dst_item
+                src_offset = elementSize * src_item
+
+                for (element = elementSize; element > 0; element--)
+                    dst_vectorized[dst_offset++] = src_vectorized[src_offset++]
+            }
+        }
+    }
 }
 
 export abstract class PrimitiveFieldPointVectorIteratorDynamic<
@@ -213,5 +393,179 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
 
     copyDynamic(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: any): FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
         return <FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>vectorized.clone()
+    }
+
+    scatter(
+            dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
+            src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
+            /** indices[dst_index] = src_index */
+            indices: IndicesTypedArray,
+            isMultiObjMapped?: boolean
+        ): void {
+        const indices_invalid = indices ? typedArrayInvalid(indices) : undefined
+        const elementSize = this.elementSize
+        const n_items = dst_vectorized.length / elementSize
+        let dst_item: number
+        let src_item: number
+        let element: number
+        let dst_offset: number
+        let src_offset: number
+
+        if (isMultiObjMapped) {
+            let dst_objOffset: number
+            let dst_objOffset_prev = 0
+            let dst_objOffset_next: number
+
+            let src_objOffset: number
+            let src_objOffset_prev = 0
+            let src_objOffset_next: number
+
+            let objID: number
+
+            type ObjIDsT = IndicesTypedArray
+
+            const src_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjIDsKey]
+            const dst_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjIDsKey]
+
+            if (isTypedArray(src_objIDs_container)) {
+                const src_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>src_objIDs_container
+                const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
+                
+                if (isTypedArray(dst_objIDs_container)) {
+                    const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs[src_objOffset]
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs[dst_objOffset])
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
+                        }
+                    }
+                }
+                else {
+                    const dst_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs[src_objOffset]
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs.get(dst_objOffset))
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
+                        }
+                    }
+                }
+            }
+            else {
+                const src_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>src_objIDs_container
+                const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
+                
+                if (isTypedArray(dst_objIDs_container)) {
+                    const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs.get(src_objOffset)
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs[dst_objOffset])
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
+                        }
+                    }
+                }
+                else {
+                    const dst_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>dst_objIDs_container
+                    const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
+
+                    for (dst_item = 0; dst_item < n_items; dst_item++) {
+                        src_item = indices[dst_item]
+                        if(src_item === indices_invalid) continue
+                        src_objOffset_next = src_objOffsets[src_item]
+                        dst_objOffset_next = dst_objOffsets[dst_item]
+
+                        for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
+                            objID = src_objIDs.get(src_objOffset)
+                            
+                            for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
+                                if (objID === dst_objIDs.get(dst_objOffset))
+                                    break
+                            
+                            if (dst_objOffset === dst_objOffset_next)
+                                throw new Error("objID in src not in dst")
+
+                            src_offset = elementSize * src_objOffset
+                            dst_offset = elementSize * dst_objOffset
+
+                            for (element = elementSize; element > 0; element--)
+                                dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            dst_offset = 0
+            
+            for (dst_item = 0; dst_item < indices.length; dst_item++) {
+                src_item = indices[dst_item]
+                if (src_item === indices_invalid) {
+                    dst_offset += elementSize
+                    continue
+                }
+
+                // dst_offset = elementSize * dst_item
+                src_offset = elementSize * src_item
+
+                for (element = elementSize; element > 0; element--)
+                    dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
+            }
+        }
     }
 }

@@ -66,9 +66,7 @@ export class SurfaceWithRenderingProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -89,9 +87,7 @@ export class SurfaceWithRenderingProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,

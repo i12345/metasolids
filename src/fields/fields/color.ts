@@ -8,7 +8,7 @@ export class ColorField implements Field<Color> {
 
     readonly elementType = Color
 
-    constructor(public readonly fuseMode: PrimitiveFuseMode<Color>) { }
+    constructor(public readonly fuseMode: PrimitiveFuseMode<Color> = <PrimitiveFuseMode<Color>>fuseModes.ArithmeticPrimitiveFuseMode.add) { }
 
     distance(x: Color, y: Color): number {
         //TODO: use HSV

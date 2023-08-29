@@ -1,6 +1,6 @@
 import { MultiObjectsTemplate, MultiObjectsIDs } from "../../../paradigm/trees/multi-objects.js"
 import { IndicesTypedArray } from "../../../utils/indices-array.js"
-import { typedArrayClone } from "../../../utils/typed-array.js"
+import { TypedArray, typedArrayClone } from "../../../utils/typed-array.js"
 import { FieldPointPrimitive, FieldPoint } from "../../point.js"
 import { FieldPointType, field_point_type_size } from "../../type.js"
 import { PrimitiveFuseMode, FusingFieldPointVectorWithMultiObjects, ItemNextObjectIndexKey, FieldPointWithMultiObjectPath } from "../fusing.js"
@@ -30,7 +30,7 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
     }
 
     fuseVector<
-            Container extends FieldPointVectorContainer,
+            Container extends FieldPointVectorContainer<TypedArray>,
             ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>
         >(

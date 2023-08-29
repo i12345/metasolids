@@ -391,7 +391,7 @@ export function fuseVectors<
 
     const resultWithRoot: FieldPointVectorWithMultiObjRoot<Point, Container, ObjIDsT, ObjIDsContainer, FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>> = {
         vectorized: results,
-        vectorizedRoot: results
+        vectorizedRoot: <any>results
     }
 
     // iterator.fuse(<any>resultWithRoot, vectorizedWithRoots, fuseMode)

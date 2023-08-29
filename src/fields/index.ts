@@ -18,4 +18,6 @@ export * from './curve.js'
 
 export * from './object-algebra.js'
 export * from './multi-objects.js'
+export * from './processing.js'
+
 export * from './triangles-2D-mesh.js'

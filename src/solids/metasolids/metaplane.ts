@@ -42,7 +42,7 @@ export class MetaPlane<
     readonly field = FieldsField.merge<Sample>(
         MetaSolidVolume.defaultFields.sample as FieldsField<Sample>,
         new FieldsField({
-            side: new SignField(),
+            side: SignField.instance,
         } as FieldsPointMapped<Sample, Field>)
     )
 

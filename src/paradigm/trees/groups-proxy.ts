@@ -4,15 +4,15 @@ import { MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroup
 export type MultiObjectsGroupsOverwritten<
         Groups extends MultiObjectsGroupsTemplate,
         Original extends any,
-        Overwriting extends MultiObjectsGroupsMapped<Groups, any>
+        Overwriting extends any
     > = {
     [K in keyof Original]:
         Groups[K] extends MultiObjectsGroupsTemplate ?
-            Overwriting[K] extends MultiObjectsGroupsTemplate ?
+            K extends keyof Overwriting ? Overwriting[K] extends MultiObjectsGroupsTemplate ?
                 MultiObjectsGroupsOverwritten<Groups[K], Original[K], Overwriting[K]> :
-                never :
+                never : never :
         Groups[K] extends MultiObjectsGroupsTemplateLeaf ?
-            Overwriting[K] :
+            K extends keyof Overwriting ? Overwriting[K] : never :
         Original[K]
 } & Overwriting
 

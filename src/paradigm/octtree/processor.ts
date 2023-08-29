@@ -4,7 +4,7 @@ import { ProcessingPair, Processor, ProcessorInitialization } from "../processin
 import { GraphProcessor } from "../processing/processors/graph.js";
 import { OctTree } from "./octtree.js";
 import { OctTreeSubdivisionSettings, SubdivisionAdviceGroups, SubdivisionAdviceLayer, SubdivisionAdviceLayerConstructor, SubdivisionAdviceOctTrees, SubdivisionAdviceT, SubdivisionReferences } from "./subdivision.js";
-import { ArrayLikeTemplated, OctTreesTemplated } from "./templated.js";
+import { OctTreesTemplated } from "./templated.js";
 import { TypedArrayOctTree } from "./typed-array.js";
 import { MultiObjectsGroupsOverwritten, groupsProxyOverwritten } from "../trees/groups-proxy.js";
 import { groupsFromPaths } from "../trees/index.js";
@@ -22,14 +22,8 @@ export const SubdivisionKey = Symbol("subdivision")
 
 export type OctTreeSubdivisionProcessing<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = //& ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped> //& ArrayLikeTemplated<Groups, T, TGrouped>
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
     > = {
         [SubdivisionKey]: SubdivisionAdviceOctTrees
     } &
@@ -51,66 +45,62 @@ export type OctTreeSubdivisionProcessing<
 export type OctTreeSubdivisionProcessingContext<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = //& ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, //& ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
     > =
-    OctTreeSubdividingProcessing<IndicesT, Groups, T, TGrouped, Layer, LayersGrouped, OctTreesGrouped> &
+    OctTreeSubdividingProcessing<IndicesT, Groups, TGrouped, LayersGrouped, OctTreesGrouped> &
     MultiObjectsGroupsProcessingContext<Groups, OctTreeSubdividingGroupsKind>
 
 export interface OctTreeSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = // & ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, // & ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>,
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
         SubdivisionProcessingT extends
             OctTreeSubdivisionProcessing<
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped
                 > =
             OctTreeSubdivisionProcessing<
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped
                 >,
         SubdivisionProcessingContextT extends
             OctTreeSubdivisionProcessingContext<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 > =
             OctTreeSubdivisionProcessingContext<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 >
@@ -123,17 +113,19 @@ export interface OctTreeSubdivisionProcessor<
 export type OctTreeSubdividingProcessing<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = //& ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, //& ArrayLikeTemplated<Groups, T, TGrouped>,
+        OctTreeTGrouped extends any = any,
+        OctTreeLayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>
+            OctTreesTemplated<
+                    Groups,
+                    OctTreeTGrouped,
+                    OctTreeLayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    OctTreeTGrouped,
+                    OctTreeLayersGrouped
+                >,
     > = {
         [SubdivisionKey]: SubdivisionReferences<IndicesT>
     } &
@@ -150,33 +142,31 @@ export interface OctTreeSubdividingProcessingContext<
 export type OctTreeSubdivisionProcessingForSubdividingProcessing<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = // & ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, // & ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>,
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
         SubdividingProcessingT extends
             OctTreeSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 > =
             OctTreeSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 >
@@ -184,7 +174,7 @@ export type OctTreeSubdivisionProcessingForSubdividingProcessing<
     MultiObjectsGroupsOverwritten<
         Groups & { [SubdivisionKey]: MultiObjectsGroupsTemplateLeaf },
         SubdividingProcessingT,
-        OctTreeSubdivisionProcessing<Groups, T, TGrouped, Layer, LayersGrouped>
+        OctTreeSubdivisionProcessing<Groups, TGrouped, LayersGrouped>
     >
 
 // type SubdividingP1 = OctTreeSubdividingProcessing<
@@ -261,53 +251,53 @@ export type OctTreeSubdivisionProcessingForSubdividingProcessing<
 export type OctTreeSubdividingProcessingForSubdivisionProcessing<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = // & ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, // & ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>,
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
         SubdivisionProcessingT extends
             OctTreeSubdivisionProcessing<
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped
                 > =
             OctTreeSubdivisionProcessing<
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped
                 >
     > =
     MultiObjectsGroupsOverwritten<
         Groups & { [SubdivisionKey]: SubdivisionAdviceGroups },
         SubdivisionProcessingT,
-        OctTreeSubdividingProcessing<IndicesT, Groups, T, TGrouped, Layer, LayersGrouped, OctTreesGrouped>
+        OctTreeSubdividingProcessing<IndicesT, Groups, TGrouped, LayersGrouped, OctTreesGrouped>
     >
 
 export type OctTreeSubdivisionProcessingContextForSubdividingProcessing<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = // & ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, // & ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>,
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
         SubdividingProcessingContextT extends
             OctTreeSubdividingProcessingContext<
                     IndicesT,
@@ -322,9 +312,7 @@ export type OctTreeSubdivisionProcessingContextForSubdividingProcessing<
     OctTreeSubdivisionProcessingContext<
             IndicesT,
             Groups,
-            T,
             TGrouped,
-            Layer,
             LayersGrouped,
             OctTreesGrouped
         >
@@ -332,33 +320,31 @@ export type OctTreeSubdivisionProcessingContextForSubdividingProcessing<
 export type OctTreeSubdividingProcessingContextForSubdivisionProcessingContext<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = // & ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, // & ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>,
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
         SubdivisionProcessingContextT extends
             OctTreeSubdivisionProcessingContext<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 > =
             OctTreeSubdivisionProcessingContext<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 >
@@ -381,33 +367,31 @@ const OctTreeSubdividingProcessorPrivateKey = Symbol("octtree-subdividing-proces
 interface OctTreeSubdividingProcessingContextPrivate<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = // & ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, // & ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>,
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
         SubdividingProcessingT extends
             OctTreeSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 > =
             OctTreeSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 >,
@@ -426,9 +410,7 @@ interface OctTreeSubdividingProcessingContextPrivate<
             OctTreeSubdivisionProcessingForSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped,
                     SubdividingProcessingT
@@ -444,33 +426,31 @@ interface OctTreeSubdividingProcessingContextPrivate<
 export class OctTreeSubdividingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        T = any,
-        TGrouped extends
-            MultiObjectsGroupsMapped<Groups, T> =
-            MultiObjectsGroupsMapped<Groups, T>,
-        Layer extends ArrayLike<T> = ArrayLike<T>,
-        LayersGrouped extends
-            ArrayLikeTemplated<Groups, T, TGrouped> = // & ArrayLikeTemplated<Groups, T, TGrouped> =
-            ArrayLikeTemplated<Groups, T, TGrouped>, // & ArrayLikeTemplated<Groups, T, TGrouped>,
+        TGrouped extends any = any,
+        LayersGrouped extends any = any,
         OctTreesGrouped extends
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped> =
-            OctTreesTemplated<Groups, T, TGrouped, Layer, LayersGrouped>,
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                > =
+            OctTreesTemplated<
+                    Groups,
+                    TGrouped,
+                    LayersGrouped
+                >,
         SubdividingProcessingT extends
             OctTreeSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 > =
             OctTreeSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped
                 >,
@@ -487,9 +467,7 @@ export class OctTreeSubdividingProcessor<
             OctTreeSubdivisionProcessingForSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped,
                     SubdividingProcessingT
@@ -497,9 +475,7 @@ export class OctTreeSubdividingProcessor<
             OctTreeSubdivisionProcessingForSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped,
                     SubdividingProcessingT
@@ -508,9 +484,7 @@ export class OctTreeSubdividingProcessor<
             OctTreeSubdivisionProcessingContextForSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped,
                     SubdividingProcessingContextT
@@ -518,9 +492,7 @@ export class OctTreeSubdividingProcessor<
             OctTreeSubdivisionProcessingContextForSubdividingProcessing<
                     IndicesT,
                     Groups,
-                    T,
                     TGrouped,
-                    Layer,
                     LayersGrouped,
                     OctTreesGrouped,
                     SubdividingProcessingContextT
@@ -531,9 +503,7 @@ export class OctTreeSubdividingProcessor<
         public readonly processors: OctTreeSubdivisionProcessor<
                 IndicesT,
                 Groups,
-                T,
                 TGrouped,
-                Layer,
                 LayersGrouped,
                 OctTreesGrouped,
                 SubdivisionProcessingT,
@@ -545,9 +515,7 @@ export class OctTreeSubdividingProcessor<
                     OctTreeSubdivisionProcessingForSubdividingProcessing<
                             IndicesT,
                             Groups,
-                            T,
                             TGrouped,
-                            Layer,
                             LayersGrouped,
                             OctTreesGrouped,
                             SubdividingProcessingT
@@ -555,9 +523,7 @@ export class OctTreeSubdividingProcessor<
                     OctTreeSubdivisionProcessingContextForSubdividingProcessing<
                             IndicesT,
                             Groups,
-                            T,
                             TGrouped,
-                            Layer,
                             LayersGrouped,
                             OctTreesGrouped,
                             SubdividingProcessingContextT
@@ -571,9 +537,7 @@ export class OctTreeSubdividingProcessor<
         type ContextPrivateT = OctTreeSubdividingProcessingContextPrivate<
             IndicesT,
             Groups,
-            T,
             TGrouped,
-            Layer,
             LayersGrouped,
             OctTreesGrouped,
             SubdividingProcessingT,
@@ -606,9 +570,7 @@ export class OctTreeSubdividingProcessor<
         type ContextPrivateT = OctTreeSubdividingProcessingContextPrivate<
             IndicesT,
             Groups,
-            T,
             TGrouped,
-            Layer,
             LayersGrouped,
             OctTreesGrouped,
             SubdividingProcessingT,
@@ -635,9 +597,7 @@ export class OctTreeSubdividingProcessor<
         type PreSubdivisionProcessingT = OctTreeSubdivisionProcessingForSubdividingProcessing<
                 IndicesT,
                 Groups,
-                T,
                 TGrouped,
-                Layer,
                 LayersGrouped,
                 OctTreesGrouped,
                 SubdividingProcessingT
@@ -646,9 +606,7 @@ export class OctTreeSubdividingProcessor<
         type PreSubdivisionProcessingContextT = OctTreeSubdivisionProcessingContextForSubdividingProcessing<
                 IndicesT,
                 Groups,
-                T,
                 TGrouped,
-                Layer,
                 LayersGrouped,
                 OctTreesGrouped,
                 SubdividingProcessingContextT
@@ -671,12 +629,12 @@ export class OctTreeSubdividingProcessor<
         
         const subdivision_processing_overwriting = {
             [SubdivisionKey]: subdivision_advice
-        } as OctTreeSubdivisionProcessing<Groups, T, TGrouped, Layer, LayersGrouped>
+        } as OctTreeSubdivisionProcessing<Groups, TGrouped, LayersGrouped>
 
         const subdivision_processing_pre = groupsProxyOverwritten(
             proxyGroupsTemplate,
             item,
-            subdivision_processing_overwriting
+            <MultiObjectsGroupsMapped<ProxyGroups, any>>subdivision_processing_overwriting
         ) as PreSubdivisionProcessingT
 
         const { item: subdivision_processing, context: subdivision_context } = this.subdivision_preprocessor({ item: subdivision_processing_pre, context: subdivision_context_pre })

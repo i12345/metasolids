@@ -1,13 +1,18 @@
-import { FieldPoint, FieldsPoint, fields_point_add_inplace, field_point_divide, field_point_multiply, fields_point_add_inplace_weighted } from "../../fields/point.js"
+import { FieldPoint, FieldsPoint, fields_point_add_inplace, field_point_divide, field_point_multiply, fields_point_add_inplace_weighted, field_point_map, FieldPointPrimitive } from "../../fields/point.js"
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js"
-import { makeExtractor, iterTreeByLeavesValues, TreeByValue, TreeByValueMapped, leavesByValues, EncapsulatingKey } from "../../paradigm/trees/index.js"
+import { makeExtractor, iterTreeByLeavesValues, TreeByValue, TreeByValueMapped, leavesByValues, EncapsulatingKey, extract, MultiObjectsGroupedObjectsKey, intract, WithEncapsulating, WithMultiObjectsIDs, MultiObjectsIDsKey } from "../../paradigm/trees/index.js"
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/index.js"
 import { SolidProcessingContext, SolidProcessor } from "../processor.js"
 import { SolidWithEnclosingVolume, TotalVolumeKey, VolumeVoxelsKey } from "./enclosing-volume.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
-import { VolumeProcessingWithSolids, VolumeProcessingWithSolidsContext, VolumeSolidProcessing, VolumeSolidProcessor } from "../volume-solids.js"
-import { SamplingKey, SpaceKey, VolumeProcessingWithSampling } from "../../volumes/sampling/types.js"
+import { VolumeProcessingWithSolids, VolumeProcessingWithSolidsContext, VolumeSolidProcessing, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../volume-solids.js"
+import { SamplesKey, SamplingKey, SpaceKey, VolumeProcessingWithSampling, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from "../../volumes/sampling/types.js"
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js"
+import { OctTree } from "../../utils/index.js"
+import { FieldPointVectorContainerStatic, FieldPointVectorStatic, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../../fields/vectorized/point.js"
+import { FieldPointType, field_point_new } from "../../fields/type.js"
+import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js"
+import { vectorizedIteratorGetSetLengthCurried } from "../../fields/vectorized/iterators/factory.js"
 
 export const PhysicalPropertiesTemplate_Leaf_Intensive = Symbol('physical-property:intensive')
 export const PhysicalPropertiesTemplate_Leaf_Extensive = Symbol('physical-property:extensive')
@@ -115,9 +120,7 @@ export class SolidWithPhysicalPropertiesProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -139,9 +142,7 @@ export class SolidWithPhysicalPropertiesProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -177,7 +178,8 @@ export class SolidWithPhysicalPropertiesProcessor<
             VolumeProcessingContextT
         > {
     constructor(
-            public physicalPropertiesTemplate: PhysicalPropertiesTemplateT
+            public readonly physicalPropertiesTemplate: PhysicalPropertiesTemplateT,
+            public readonly physicalPropertiesTypes: TreeByValueMapped<PhysicalPropertiesTemplate_Leaf_T, PhysicalPropertiesTemplateT, FieldPointType<PhysicalPropertiesValueT>>
         ) { }
     
     init(context: SolidProcessingContextT) {
@@ -194,43 +196,104 @@ export class SolidWithPhysicalPropertiesProcessor<
         return { connections }
     }
 
-    process(solid: VolumeSolidProcessing<
-            IndicesT,
-            VolumeLocationT,
-            VolumeSampleT,
-            VolumeSampleProcessingContextT,
-            VolumeSamplingContextT,
-            VolumeT,
-            SurfaceT,
-            SolidT,
-            VolumeProcessingT
-        >): void {
+    process(
+            solid: VolumeSolidProcessing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeSampleT,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT,
+                    SolidT,
+                    VolumeProcessingT
+                >,
+            context: WithEncapsulating<VolumeProcessingContextT>
+        ): void {
         const sampling = solid[EncapsulatingKey][SamplingKey]
-        const samples = sampling.samples.layers
-        const voxelSizes = new Float64Array(samples.length).fill(0).map((_, layer) => 8 ** (samples.length - layer))
+        const sampling_depth_plus_1 = (<VolumeSamplingSubdivisionSamplesOctTreesGrouped><unknown>solid[EncapsulatingKey])[SamplesKey].alpha.layers.length
+        const voxelSizes = new Float64Array(sampling_depth_plus_1).fill(0).map((_, layer) => 8 ** (sampling_depth_plus_1 - layer))
+
+        const multiObjectsIDs = (<WithMultiObjectsIDs><unknown>context[EncapsulatingKey])[MultiObjectsIDsKey]
+
+        type ObjIDsT = Uint32Array
+
+        const sampling_objIDs = <TypedArrayOctTree<number, ObjIDsT>>(<any>sampling)[ItemObjIDsKey]
+        const sampling_objOffsets = <TypedArrayOctTree<number, Uint32Array>>(<any>sampling)[ItemObjValuesOffsetsKey]
 
         iterTreeByLeavesValues(
             solid,
             this.physicalPropertiesTemplate,
             [PhysicalPropertiesTemplate_Leaf_Extensive, PhysicalPropertiesTemplate_Leaf_Intensive],
-            (value, key, fullpath, propertyKind) => {
-                const extractor = makeExtractor(fullpath)
+            (solid_value, solid_key, fullpath, propertyKind) => {
+                const sample_type = extract<FieldPointType>(this.physicalPropertiesTypes, fullpath)
+                const sample_octtrees = extract<FieldPointVectorStatic>(sampling, fullpath)
                 
+                const sample_layers_results: { result: PhysicalPropertiesValueT }[] = []
+                const sample_layer_getters: ((index: number) => void)[][] = []
+
+                field_point_map(
+                    sample_type,
+                    type => type instanceof Function,
+                    (primitive_type, path) => {
+                        const result_path = ['result', ...path]
+                        const result_subpath = result_path.slice(0, -1)
+                        const result_key = result_path.at(-1)!
+
+                        const multiObjIndex = path.indexOf(MultiObjectsGroupedObjectsKey)
+                        const isMultiObj = !(multiObjIndex === -1)
+                        const nonMultiObjPath = !isMultiObj ? path : [...path.slice(0, multiObjIndex), ...path.slice(multiObjIndex + 1)]
+                        const primitive_octtree = extract<TypedArrayOctTree<number, FieldPointVectorContainerStatic>>(sample_octtrees, nonMultiObjPath)
+                        
+                        const elementType_nonMultiObj = { [result_key]: <FieldPointType<FieldPointPrimitive>>primitive_type }
+                        const elementType = !isMultiObj ? elementType_nonMultiObj : { [MultiObjectsGroupedObjectsKey]: elementType_nonMultiObj }
+
+                        return primitive_octtree.layers.map((layer, layer_index) => {
+                            const primitive_sample_result = sample_layers_results[layer_index] ??= { result: undefined! }
+                            intract(primitive_sample_result, result_path, field_point_new(primitive_type))
+                            const primitive_obj = extract<FieldsPoint>(primitive_sample_result, result_subpath)
+
+                            const { get } = vectorizedIteratorGetSetLengthCurried<FieldsPoint, FieldPointVectorContainerStatic>(
+                                elementType,
+                                <any>(!isMultiObj ?
+                                    { [result_key]: layer } :
+                                    {
+                                        [result_key]: layer,
+                                        [ItemObjIDsKey]: sampling_objIDs?.layers[layer_index],
+                                        [ItemObjValuesOffsetsKey]: sampling_objOffsets?.layers[layer_index]
+                                    }
+                                ),
+                                {
+                                    obj: primitive_obj,
+                                    property: result_key
+                                },
+                                multiObjectsIDs
+                            )
+
+                            const layer_getters = sample_layer_getters[layer_index] ??= []
+                            layer_getters.push(get)
+                        })
+                    }
+                )
+
                 const { layers, localIndices } = solid[VolumeVoxelsKey]
                 let totalSize = 0
 
                 for (let i = 0; i < layers.length; i++) {
                     const layer = layers[i]
                     const localIndex = localIndices[i]
-                    const sample = samples[layer][localIndex]
-                    const value = extractor(sample) as PhysicalPropertiesValueT
+                    
+                    for (const getter of sample_layer_getters[layer])
+                        getter(localIndex)
+                    
+                    const value = sample_layers_results[layer].result
                     const size = voxelSizes[layer]
                     
                     totalSize += size
 
                     fields_point_add_inplace_weighted<any, PhysicalPropertiesValueT>(
-                        value,
-                        key,
+                        solid_value,
+                        solid_key,
                         value,
                         size
                     )
@@ -238,11 +301,11 @@ export class SolidWithPhysicalPropertiesProcessor<
 
                 switch (propertyKind) {
                     case PhysicalPropertiesTemplate_Leaf_Intensive:
-                        value[key] = field_point_divide(value[key], totalSize)
+                        solid_value[solid_key] = field_point_divide(solid_value[solid_key], totalSize)
                         break
                     
                     case PhysicalPropertiesTemplate_Leaf_Extensive:
-                        value[key] = field_point_divide(value[key], totalSize / solid[TotalVolumeKey])
+                        solid_value[solid_key] = field_point_divide(solid_value[solid_key], totalSize / solid[TotalVolumeKey])
                         break
                 }
             })
@@ -349,9 +412,7 @@ export class StandardPhysicalPropertiesSolidProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -373,9 +434,7 @@ export class StandardPhysicalPropertiesSolidProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -413,16 +472,27 @@ export class StandardPhysicalPropertiesSolidProcessor<
         VolumeProcessingContextT
     > {
     constructor() {
-        super({
-            density: PhysicalPropertiesTemplate_Leaf_Intensive,
-            pressure: PhysicalPropertiesTemplate_Leaf_Intensive,
-            specificHeatCapacity: PhysicalPropertiesTemplate_Leaf_Intensive,
-            heat: PhysicalPropertiesTemplate_Leaf_Extensive
-        } as StandardPhysicalPropertiesTemplate)
+        super(
+            {
+                density: PhysicalPropertiesTemplate_Leaf_Intensive,
+                pressure: PhysicalPropertiesTemplate_Leaf_Intensive,
+                specificHeatCapacity: PhysicalPropertiesTemplate_Leaf_Intensive,
+                heat: PhysicalPropertiesTemplate_Leaf_Extensive
+            } as StandardPhysicalPropertiesTemplate,
+            {
+                density: Number,
+                pressure: Number,
+                specificHeatCapacity: Number,
+                heat: Number,
+            } as TreeByValueMapped<PhysicalPropertiesTemplate_Leaf_T, StandardPhysicalPropertiesTemplate, FieldPointType<number>>
+        )
     }
 
-    override process(solid: VolumeSolidProcessing<IndicesT, VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT, VolumeT, SurfaceT, SolidT, VolumeProcessingT>): void {
-        super.process(solid)
+    override process(
+            solid: VolumeSolidProcessing<IndicesT, VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT, VolumeT, SurfaceT, SolidT, VolumeProcessingT>,
+            context: VolumeSolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT, SolidProcessingContextT, VolumeProcessingContextT>
+        ): void {
+        super.process(solid, context)
 
         solid.mass = solid.totalVolume * solid.density
         //TODO: specificHeatCapacity should be an intensive property with weighted average by density

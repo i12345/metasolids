@@ -1,5 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
-import { IndicesArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { MeshData } from "../mesh-data.js";
 
 export interface SurfaceUVUnwrapping {
@@ -9,13 +8,13 @@ export interface SurfaceUVUnwrapping {
      * Final vertices are made from surface mesh vertices concat'd with
      * surface mesh vertices indexed by each one of these indices. 
      */
-    duplicatedVerts: IndicesArray
+    duplicatedVerts: IndicesTypedArray
 
     /**
      * Final indices; same length as surface mesh indices except some
      * indices are replaced with duplicated vertex indices.
      */
-    finalIndices: IndicesArray
+    finalIndices: IndicesTypedArray
 
     /**
      * UVs (packed xy) per final vertices

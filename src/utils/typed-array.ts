@@ -142,3 +142,15 @@ export function typedArrayConstructor<T extends number | bigint, TArray extends 
         return <TypedArrayConstructor<T, TArray>>typedArrayOrConstructor
     return <TypedArrayConstructor<T, TArray>>typedArrayOrConstructor.constructor
 }
+
+const invalid_lookup = new Map<TypedArrayConstructor, number | bigint>()
+export function typedArrayInvalid<T extends number | bigint, TypedArrayT extends TypedArray<T>>(array: TypedArrayT | TypedArrayConstructor<T, TypedArrayT>): T {
+    const type = typedArrayConstructor(array)
+    if (invalid_lookup.has(type))
+        return <T>invalid_lookup.get(type)!
+
+    const invalid_array = <TypedArrayT>new type()
+    invalid_array[0] = isNumberTypedArray(type) ? -1 : -1n
+    invalid_lookup.set(type, invalid_array[0])
+    return <T>invalid_array[0]
+}

@@ -162,13 +162,11 @@ export type OctTreeWithDualOctTreesGrouped<IndicesT extends IndicesTypedArray = 
 
 // let c: typeof b extends typeof a ? true : false = true
 
-export type OctTreeWithDualSubdivisionProcessing =
+export type OctTreeWithDualSubdivisionProcessing<IndicesT extends IndicesTypedArray = IndicesTypedArray> =
     OctTreeSubdivisionProcessing<
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer, // <IndicesT>,
-            OctTreeWithDualLayersGrouped // <IndicesT>
+            OctTreeWithDualLayersGrouped<IndicesT>
         >
 
 export type OctTreeWithDualSubdivisionProcessingContext<
@@ -177,9 +175,7 @@ export type OctTreeWithDualSubdivisionProcessingContext<
     OctTreeSubdivisionProcessingContext<
             IndicesT,
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer, //<IndicesT>,
             OctTreeWithDualLayersGrouped, //<IndicesT>,
             OctTreeWithDualOctTreesGrouped //<IndicesT>
         >
@@ -190,9 +186,7 @@ export class OctTreeWithDualSubdivisionProcessor<
     OctTreeSubdivisionProcessor<
             IndicesT,
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer, // <IndicesT>,
             OctTreeWithDualLayersGrouped, /// <IndicesT>,
             OctTreeWithDualOctTreesGrouped // <IndicesT>
         > {

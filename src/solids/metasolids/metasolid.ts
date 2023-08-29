@@ -2,14 +2,18 @@ import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
 import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, field_point_invalid } from "../../fields/index.js";
 import { SampleDomain, SampleDomainLocationFieldKey } from "../../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/texture.js";
-import { extract, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
+import { extract, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { VolumeLocation, VolumeSample, VolumeSampleKey } from "../../volumes/index.js";
 import { VolumeSurfacesKey, texturing } from "../../surfaces/index.js";
-import { TransformingSampleDomain } from "../../fields/domains/index.js";
+import { FusedVectorSamplingContext, TransformingSampleDomain } from "../../fields/domains/index.js";
 import { ScalarField, Vec2Field, Vec3Field, FieldsField  } from "../../fields/fields/index.js";
 import { VolumeSamplingContextWithSolidHints } from "../sampling/hints.js";
 import { VolumeSamplingContextWithSurfaceHints } from "../../surfaces/sampling/hints.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
+import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js";
+import { FuseMode } from "../../fields/vectorized/fusing.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../fields/vectorized/point.js";
 
 export type MetaSolidLocation = VolumeLocation
 
@@ -193,7 +197,7 @@ export interface MetaSolidShape<
 }
 
 export class MetaSolidVolume<
-        Location extends MetaSolidLocation = MetaSolidLocation,
+        Location extends MetaSolidLocation = MetaSolidLocation,        
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         InnerSample extends
@@ -209,13 +213,50 @@ export class MetaSolidVolume<
         Context extends
             MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
             MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+        
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
     > extends
     TransformingSampleDomain<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
         Location,
+        LocationContainer,
         MetaSolidVolumeSample<TxSample, InnerSample>,
+        SampleContainer,
         VolumeContext,
+        FieldPointVector<Location, LocationContainer>,
+        FieldPointVectorWithMultiObjects<
+                MetaSolidVolumeSample<TxSample, InnerSample>,
+                SampleContainer,
+                ObjIDsT,
+                ObjIDsContainer
+            >,
+        FusedVectorSamplingContext<
+                Location,
+                LocationContainer,
+                MetaSolidVolumeSample<TxSample, InnerSample>,
+                SampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                VolumeContext,
+                FieldPointVector<Location, LocationContainer>,
+                FieldPointVectorWithMultiObjects<
+                        MetaSolidVolumeSample<TxSample, InnerSample>,
+                        SampleContainer,
+                        ObjIDsT,
+                        ObjIDsContainer
+                    >
+            >,
         Location,
+        LocationContainer,
         InnerSample,
+        SampleContainer,
         Context
     > implements
     VolumeWithBoundingBox<
@@ -224,6 +265,9 @@ export class MetaSolidVolume<
         OuterSampleProcessingContextT,
         VolumeContext
     > {
+    protected readonly transformsLocation = false
+    protected readonly transformsSample = true
+    
     get boundingBox(): BoundingBox {
         return this.shape?.boundingBox
     }
@@ -272,7 +316,7 @@ export class MetaSolidVolume<
                     p: FieldsPoint_Omit_Leaf
                 } as FieldsPointMapped<Location, typeof FieldsPoint_Omit_Leaf>) as any as FieldsField<MetaSolidTxLocation<Location, TxLocation>>,
                 new FieldsField<MetaSolidTxLocation<Location, TxLocation>>({
-                    uv: new Vec2Field(),
+                    uv: Vec2Field.instance,
                 } as FieldsPointMapped<MetaSolidTxLocation<Location, TxLocation>, Field>)
             )
         } as any as TextureContext
@@ -303,7 +347,7 @@ export class MetaSolidVolume<
 
     protected override init_make_field(innerField: Field<InnerSample>, context: { inner: Context }): Field<MetaSolidVolumeSample<TxSample, InnerSample>> {
         const presenceField = new FieldsField({
-            presence: new ScalarField()
+            presence: ScalarField.instance
         })
 
         const textureLocationField = new FieldsField({
@@ -350,7 +394,8 @@ export class MetaSolidVolume<
 
     protected override transformSample(
             sample: InnerSample,
-            location: { outer: Location },
+            innerLocation: Location,
+            outerLocation: Location,
             context: { outer: VolumeContext, inner: Context }
         ): MetaSolidVolumeSample<TxSample, InnerSample> {
         const texture_location_field =
@@ -412,11 +457,11 @@ export class MetaSolidVolume<
 
     private static defaultFields_parametersIn = new FieldsField({
         falloff: {
-            bias: new ScalarField(),
+            bias: ScalarField.instance,
         },
         unit: {
-            height: new ScalarField([0, Infinity]),
-            length: new ScalarField([0, Infinity]),
+            height: new ScalarField(<FuseMode<number>>ArithmeticPrimitiveFuseMode.add, [0, Infinity]),
+            length: new ScalarField(<FuseMode<number>>ArithmeticPrimitiveFuseMode.add, [0, Infinity]),
         }
     } as any as FieldsPointMapped<MetaSolidParametersIn, Field>)
 
@@ -427,9 +472,9 @@ export class MetaSolidVolume<
             falloff: this.defaultFields_parametersIn.fields.falloff,
             unit: this.defaultFields_parametersIn.fields.unit,
             
-            distance: new ScalarField([0, Infinity]),
-            gradient: new Vec3Field(),
-            uv: new Vec2Field(),
+            distance: new ScalarField(<FuseMode<number>>ArithmeticPrimitiveFuseMode.add, [0, Infinity]),
+            gradient: Vec3Field.instance,
+            uv: Vec2Field.instance,
         } as any as FieldsPointMapped<MetaSolidSample, Field>),
     }
 

@@ -1,3 +1,4 @@
+import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { TypedArray } from "../../utils/typed-array.js"
 import { FieldPoint } from "../point.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType } from "./point.js"
@@ -17,4 +18,12 @@ export interface FieldPointVectorIterator<
 
     copyStatic(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<VectorizedPoint, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>
     copyDynamic(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<VectorizedPoint, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>
+
+    scatter(
+        dst_vectorized: FieldPointVector<VectorizedPoint, Container>, dst_vectorizedRoot: VectorizedRoot,
+        src_vectorized: FieldPointVector<VectorizedPoint, Container>, src_vectorizedRoot: VectorizedRoot,
+        /** indices[dst_index] = src_index */
+        indices: IndicesTypedArray,
+        isMultiObjMapped?: boolean
+    ): void
 }

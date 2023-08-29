@@ -6,7 +6,7 @@ import { FieldPointType, field_point_type_size } from "../../type.js"
 import { FieldPointWithMultiObjectPath, FusingFieldPointVectorWithMultiObjects, PrimitiveFuseMode } from "../fusing.js"
 import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, FieldPointVectorDynamic, FieldPointVectorStatic, ItemObjValuesOffsetsKey, FieldPointVectorContainer, isDynamicVector, ItemObjIDsKey } from "../point.js"
 import { mat4_from_mat3 } from "../../../utils/matrix.js"
-import { isTypedArray } from "../../../utils/typed-array.js"
+import { TypedArray, isTypedArray } from "../../../utils/typed-array.js"
 
 export enum ArithmeticPrimitiveFuseModeOp {
     none,
@@ -459,7 +459,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
     }
 
     fuseVector<
-            Container extends FieldPointVectorContainer,
+            Container extends FieldPointVectorContainer<TypedArray>,
             ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>
         >(

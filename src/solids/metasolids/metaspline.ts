@@ -11,9 +11,10 @@ import { MetaSolidShape, MetaSolidLocation, MetaSolidLocationExtraFields, MetaSo
 import { VolumeSurfacesKey, meshing } from "../../surfaces/index.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { ScalarField } from "../../fields/fields/scalar.js";
+import { FuseMode, fuseModes } from "../../fields/vectorized/index.js";
 
 export type MetaSplineSegmentFigureLocation<Location extends MetaSolidLocation = MetaSolidLocation> =
-    MetaSolidLocationExtraFields<Location> & { theta: number, phi: number }
+    { theta: number, phi: number } //& MetaSolidLocationExtraFields<Location>
 
 export type MetaSplineSegmentFigureSample<Sample extends MetaSolidSample = MetaSolidSample> =
     MetaSolidSampleExtraFields<Sample> & FieldsPointOptional<MetaSolidParametersIn>
@@ -534,8 +535,8 @@ export class MetaSplineSegment<
     static defaultFields = {
         t: new ScalarField(),
         figureLocation: new FieldsField<MetaSplineSegmentFigureLocation>({
-            phi: new ScalarField([-PiOver2, PiOver2]),
-            theta: new ScalarField([-Pi, Pi]),
+            phi: new ScalarField(<FuseMode<number>>fuseModes.ArithmeticPrimitiveFuseMode.add, [-PiOver2, PiOver2]),
+            theta: new ScalarField(<FuseMode<number>>fuseModes.ArithmeticPrimitiveFuseMode.add, [-Pi, Pi]),
         } as FieldsPointMapped<MetaSplineSegmentFigureLocation, Field>)
     }
 }

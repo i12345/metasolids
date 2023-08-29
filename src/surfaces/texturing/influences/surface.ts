@@ -1,3 +1,5 @@
+import { Field, MultiObjectsWithGroupFieldsProcessingContext } from "../../../fields/index.js";
+import { ScalarField, MultiObjectsField } from "../../../fields/fields/index.js";
 import { MultiObjectsInfluences, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupKindsTemplate } from "../../../fields/multi-objects.js";
 import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { Texture, TextureLocation } from "../../../textures/texture.js";
@@ -21,13 +23,16 @@ export type SurfaceSampleWithInfluences<
 
 export type SurfaceSampleProcessingContextWithInfluences<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        // ObjIDsT extends IndicesTypedArray = Uint32Array
     > =
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
             Objects,
             InfluencesGroup,
             MultiObjectsGrouped<Objects, InfluencesGroup>,
-            MultiObjectsInfluencesGroupKinds
+            MultiObjectsInfluencesGroupKinds,
+            MultiObjectsInfluences<Objects>//,
+            // MultiObjectsField<Objects, ObjIDsT, MultiObjectsInfluences<Objects>>
         > &
     SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
         InfluencesGroup,

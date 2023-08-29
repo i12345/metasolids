@@ -1,9 +1,9 @@
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { TypedArrayConstructor } from "../../utils/typed-array.js"
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsOrLeafMapped, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplateOrLeaf } from "../trees/index.js"
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf } from "../trees/index.js"
 import { Processor } from "../processing/processor.js"
-import { Axis, Direction, OctTreeAddress, OctTreeCell, OctTreeCellsMask, octTreeSubcell } from "./address.js"
-import { LayerLocalIndex, OctTree } from "./octtree.js"
+import { Axis, Direction, OctTreeAddress, OctTreeCell, octTreeSubcell } from "./address.js"
+import { LayerLocalIndex } from "./octtree.js"
 import { OctTreesTemplated } from "./templated.js"
 import { TypedArrayOctTree } from "./typed-array.js"
 
@@ -26,9 +26,7 @@ export const SubdivisionAdviceLayerConstructor: TypedArrayConstructor<number, Su
 export type SubdivisionAdviceLayersGrouped = MultiObjectsGroupsMapped<SubdivisionAdviceGroups, SubdivisionAdviceLayer>
 export type SubdivisionAdviceOctTrees = OctTreesTemplated<
         SubdivisionAdviceGroups,
-        SubdivisionAdviceT,
         SubdivisionAdviceTGrouped,
-        SubdivisionAdviceLayer,
         SubdivisionAdviceLayersGrouped
     >
 

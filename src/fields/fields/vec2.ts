@@ -11,7 +11,7 @@ export class Vec2Field implements Field<Vec2> {
     readonly elementType = Vec2
     
     constructor(
-        public readonly fuseMode: PrimitiveFuseMode<Vec2>,
+        public readonly fuseMode: PrimitiveFuseMode<Vec2> = <ArithmeticPrimitiveFuseMode<Vec2>>ArithmeticPrimitiveFuseMode.add,
         public range: [min: Vec2, max: Vec2] = [
             new Vec2(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY),
             new Vec2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)

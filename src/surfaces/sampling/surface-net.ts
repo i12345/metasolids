@@ -11,7 +11,7 @@ import { ProcessorInitialization } from "../../paradigm/processing/processor.js"
 import { EncapsulatingKey, WithEncapsulating } from "../../paradigm/trees/encapsulating.js";
 import { MultiObjectsGroupsOrLeafMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplateOrLeaf, MultiObjectsGroupsTemplate_Leaf, groupPaths, isGroupLeaf } from "../../paradigm/trees/multi-objects-groups.js";
 import { VolumeProcessing } from "../../volumes/processor.js";
-import { VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionProcessingWithDual, VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessingContextWithDual, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessing, SamplingKey, SpaceKey } from "../../volumes/sampling/index.js";
+import { VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionProcessingWithDual, VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessingContextWithDual, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessing, SamplingKey, SpaceKey, VolumeSamplingSubdivisionSamplesOctTreesGrouped, SamplesKey } from "../../volumes/sampling/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { VolumeProcessingContextWithMeshing } from "../meshing/processing.js";
@@ -334,9 +334,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessing<
     VolumeSamplingSubdivisionProcessing<
         IndicesT,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-        SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-        SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer, // <IndicesT>,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
         VolumeLocationT,
@@ -359,9 +357,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
@@ -380,9 +376,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
@@ -410,9 +404,7 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
     VolumeSamplingSubdivisionProcessingContext<
         IndicesT,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-        SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-        SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer, // <IndicesT>,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
         VolumeLocationT,
@@ -440,9 +432,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
                     OctTreeWithDualLayersGrouped, /// <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
@@ -454,9 +444,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
                     OctTreeWithDualLayersGrouped, /// <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
@@ -469,9 +457,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
@@ -490,9 +476,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
@@ -512,10 +496,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
     VolumeSamplingSubdivisionProcessor<
             IndicesT,
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer, // <IndicesT>,
-            OctTreeWithDualLayersGrouped, /// <IndicesT>,
+            OctTreeWithDualLayersGrouped, // <IndicesT>,
             OctTreeWithDualOctTreesGrouped, // <IndicesT>
             VolumeLocationT,
             VolumeSampleT,
@@ -526,10 +508,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
-                    OctTreeWithDualLayersGrouped, /// <IndicesT>,
+                    OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
                     VolumeSampleT,
@@ -659,7 +639,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             const dual_cells_lookup_corners_layers = dual_cells.lookup.corners.layers.layers
             const dual_cells_lookup_corners_localIndices = dual_cells.lookup.corners.localIndices.layers
 
-            const primary_samples = context.samples
+            const primary_alpha = (<VolumeSamplingSubdivisionSamplesOctTreesGrouped>context)[SamplesKey].alpha.layers
             const new_dual_cells = item[DualKey]
             const number_new_dual_cells = new_dual_cells.cells.vertices.layers.length / 8
 
@@ -897,7 +877,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 for (let corner = 0; corner < 8; corner++) {
                     vertex_layer = dual_cells_vertices_layers[dual_cell_layer][dual_cell_corners_offset | corner]
                     vertex_localIndex = dual_cells_vertices_localIndices[dual_cell_layer][dual_cell_corners_offset | corner]
-                    dual_cell_corners_alpha[corner] = primary_samples.layers[vertex_layer][vertex_localIndex].alpha
+                    dual_cell_corners_alpha[corner] = primary_alpha[vertex_layer][vertex_localIndex]
                     //read vertex positions
                     dual_cell_corners_positions[(3 * corner) + 0] = space_positions[vertex_layer][(3 * vertex_localIndex) + 0]
                     dual_cell_corners_positions[(3 * corner) + 1] = space_positions[vertex_layer][(3 * vertex_localIndex) + 1]
@@ -1092,8 +1072,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     edge_vertex_localIndex_a === edge_vertex_localIndex_b)
                     return false
 
-                const edge_vertex_value_a = primary_samples.layers[edge_vertex_layer_a][edge_vertex_localIndex_a].alpha
-                const edge_vertex_value_b = primary_samples.layers[edge_vertex_layer_b][edge_vertex_localIndex_b].alpha
+                const edge_vertex_value_a = primary_alpha[edge_vertex_layer_a][edge_vertex_localIndex_a]
+                const edge_vertex_value_b = primary_alpha[edge_vertex_layer_b][edge_vertex_localIndex_b]
                 const edge_vertex_above_a = edge_vertex_value_a > surface_level
                 const edge_vertex_above_b = edge_vertex_value_b > surface_level
 

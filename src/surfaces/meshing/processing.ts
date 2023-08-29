@@ -35,9 +35,7 @@ export type VolumeProcessingWithMeshing<
         VolumeProcessingWithSampling<
                 IndicesT,
                 OctTreeWithDualGroups,
-                OctTreeWithDualValue,
                 OctTreeWithDualValuesGrouped,
-                OctTreeWithDualLayer, // <IndicesT>,
                 OctTreeWithDualLayersGrouped, // <IndicesT>,
                 OctTreeWithDualOctTreesGrouped, // <IndicesT>,
                 VolumeLocationT,
@@ -49,9 +47,7 @@ export type VolumeProcessingWithMeshing<
         VolumeProcessingWithSampling<
                 IndicesT,
                 SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-                SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
                 SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-                SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer, // <IndicesT>,
                 SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
                 SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
                 VolumeLocationT,
@@ -80,9 +76,7 @@ export type VolumeProcessingContextWithMeshing<
     VolumeProcessingContextWithSampling<
             IndicesT,
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer, // <IndicesT>,
             OctTreeWithDualLayersGrouped, // <IndicesT>,
             OctTreeWithDualOctTreesGrouped, // <IndicesT>,
             VolumeLocationT,
@@ -93,9 +87,7 @@ export type VolumeProcessingContextWithMeshing<
     VolumeProcessingContextWithSampling<
             IndicesT,
             SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-            SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
             SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-            SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer, // <IndicesT>,
             SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
             SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
             VolumeLocationT,

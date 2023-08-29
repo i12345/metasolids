@@ -2,14 +2,14 @@ import { Vec2 } from "playcanvas-extended"
 import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
 import { FieldPointType } from "./type.js"
 import { IndicesArray, IndicesTypedArray } from "../utils/indices-array.js"
-import { NumberArrayLike } from "../utils/typed-array.js"
+import { NumberArrayLike, TypedArray } from "../utils/typed-array.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
 
 export class Triangles2DMeshInterpolator<
         VertexPoint extends FieldPoint = FieldPoint,
-        VertexContainer extends FieldPointVectorContainer = FieldPointVectorContainer,
+        VertexContainer extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
         VertexVector extends FieldPointVector<VertexPoint, VertexContainer> = FieldPointVector<VertexPoint, VertexContainer>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,

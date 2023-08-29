@@ -10,7 +10,7 @@ export class Mat3Field implements Field<Mat3> {
 
     readonly elementType = Mat3
 
-    constructor(public readonly fuseMode: PrimitiveFuseMode<Mat3>) { }
+    constructor(public readonly fuseMode: PrimitiveFuseMode<Mat3> = <PrimitiveFuseMode<Mat3>>fuseModes.ArithmeticPrimitiveFuseMode.multiply) { }
 
     distance(x: Mat3, y: Mat3): number {
         const trs_x = trs(mat4_from_mat3(x))

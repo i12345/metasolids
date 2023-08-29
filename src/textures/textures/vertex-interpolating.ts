@@ -5,6 +5,7 @@ import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js"
 import { IndicesArray } from "../../utils/indices-array.js";
 import { defaultField } from "../../fields/fields/default.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../fields/vectorized/point.js";
+import { NumberTypedArray, TypedArray } from "../../utils/typed-array.js";
 
 export type VertexInterpolatingTexturesTemplated<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -25,7 +26,7 @@ export type VertexInterpolatingTexturesTemplated<
 export class VertexInterpolatingTexture<
         TextureLocationT extends TextureLocation = TextureLocation,
         VertexSample extends FieldPoint = FieldPoint,
-        VertexSampleContainer extends FieldPointVectorContainer = FieldPointVectorContainer,
+        VertexSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         VertexSampleVector extends
             FieldPointVector<VertexSample, VertexSampleContainer> =
             FieldPointVector<VertexSample, VertexSampleContainer>,
@@ -39,11 +40,11 @@ export class VertexInterpolatingTexture<
         Context
     > {
     private collider?: Triangles2DMeshCollider
-    private interpolator?: Triangles2DMeshInterpolator<VertexSample>
+    private interpolator?: Triangles2DMeshInterpolator<VertexSample, VertexSampleContainer, VertexSampleVector>
 
     constructor(
         public vertices: VertexSampleVector,
-        public uv: FieldPointVectorStatic<Vec2, FieldPointVectorContainerStatic>,
+        public uv: FieldPointVectorStatic<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>,
         public triangles: IndicesArray,
         public readonly field: Field<VertexSample>
     ) {
@@ -62,6 +63,6 @@ export class VertexInterpolatingTexture<
     init(context: Context): void {
         const mesh = Triangles2DMesh.build(this.uv, this.triangles)
         this.collider = new Triangles2DMeshCollider(mesh)
-        this.interpolator = new Triangles2DMeshInterpolator(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
+        this.interpolator = new Triangles2DMeshInterpolator<VertexSample, VertexSampleContainer, VertexSampleVector>(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
     }
 }

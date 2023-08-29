@@ -1,13 +1,13 @@
-import { PROPERTYKEY_ALL, PropertyPath, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js";
+import { PROPERTYKEY_ALL, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsTemplate, WithMultiObjectsIDs, MultiObjectsIDsKey } from "../../../paradigm/trees/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
-import { FieldPoint } from "../../../fields/index.js";
-import { TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { IndicesTypedArray, onlyOne } from "../../../utils/index.js";
+import { Field, FieldPoint, MultiObjectsGroupsWithFieldsProcessingContext, groupKindsWithFields } from "../../../fields/index.js";
+import { TextureLocation, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
+import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/index.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
 import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
-import { Vec2 } from "playcanvas-extended";
+import { FieldPointVector, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/index.js";
 
 // type A = {
 //     a: {
@@ -43,11 +43,13 @@ export type SurfaceSampleWithIndividualInterpolatingValueTexturesUsingSurfaceUVU
 
 export type SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        InterpolatingGroupsKind extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
+        InterpolatingGroupsKind extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
+        InterpolatingValue extends FieldPoint = FieldPoint,
     > =
-    MultiObjectsGroupsProcessingContext<
+    MultiObjectsGroupsWithFieldsProcessingContext<
         InterpolatingGroups,
-        InterpolatingGroupsKind
+        InterpolatingGroupsKind,
+        InterpolatingValue
     >
 
 export type SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
@@ -89,16 +91,19 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapp
 
 export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,    
         InterpolatingGroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
+        InterpolatingValue extends FieldPoint = FieldPoint,
         SampleProcessingContextT extends
             SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                 InterpolatingGroups,
-                InterpolatingGroupKinds
+                InterpolatingGroupKinds,
+                InterpolatingValue
             > =
             SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                 InterpolatingGroups,
-                InterpolatingGroupKinds
+                InterpolatingGroupKinds,
+                InterpolatingValue
             >
     > =
     SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
@@ -106,9 +111,10 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
         SampleProcessingContextT,
         InterpolatingGroups
     > &
-    MultiObjectsGroupsProcessingContext<
+    MultiObjectsGroupsWithFieldsProcessingContext<
         InterpolatingGroups,
-        InterpolatingGroupKinds
+        InterpolatingGroupKinds,
+        InterpolatingValue
     >
 
 export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor<
@@ -134,11 +140,13 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
         SurfaceSampleProcessingContextT extends
             SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                 InterpolatingGroups,
-                InterpolatingGroupKinds
+                InterpolatingGroupKinds,
+                InterpolatingValue
             > =
             SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                 InterpolatingGroups,
-                InterpolatingGroupKinds
+                InterpolatingGroupKinds,
+                InterpolatingValue
             >
     > implements
     Processor<
@@ -154,13 +162,14 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     SurfaceUVUnwrappingGroup,
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
+                    InterpolatingValue,
                     SurfaceSampleProcessingContextT
                 >
         > {
     constructor(
-        public interpolatingGroupsKinds?: InterpolatingGroupKinds,
-        public interpolatingGroups?: InterpolatingGroups,
-        public surfaceUVunwrappingGroup?: SurfaceUVUnwrappingGroup
+        public readonly interpolatingGroupsKinds?: InterpolatingGroupKinds,
+        public readonly interpolatingGroups?: InterpolatingGroups,
+        public readonly surfaceUVunwrappingGroup?: SurfaceUVUnwrappingGroup
     ) {
     }
     
@@ -168,6 +177,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     SurfaceUVUnwrappingGroup,
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
+                    InterpolatingValue,
                     SurfaceSampleProcessingContextT
                 >) {
         const { group: surfaceUVUnwrappingGroup } =
@@ -210,6 +220,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     SurfaceUVUnwrappingGroup,
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
+                    InterpolatingValue,
                     SurfaceSampleProcessingContextT
                 >
         ): void {
@@ -223,26 +234,41 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
         const UVunwrapping = surfaceUVunwrappingGroup.get<SurfaceUVUnwrapping>(surface)
 
         const interpolatingGroups =
-            groupKinds(
+            groupKindsWithFields<
+                    InterpolatingGroups,
+                    InterpolatingGroupKinds,
+                    InterpolatingValue,
+                    Field<InterpolatingValue>
+                >(
                     context.samples,
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )
         
+        type ObjIDsT = Uint32Array
+        type InterpolatingContainer = FieldPointVectorContainerStatic<NumberTypedArray>
+        type InterpolatingVector = FieldPointVector<InterpolatingValue, InterpolatingContainer>
+
+        const multiObjectsIDs = (<WithMultiObjectsIDs><unknown>context)[MultiObjectsIDsKey]
+        
         for (const { group: interpolatingGroup } of interpolatingGroups) {
-            const values = surface.samples.map(sample => interpolatingGroup.get<InterpolatingValue>(sample))
-            for (const duplicatedVert of UVunwrapping.duplicatedVerts)
-                values.push(values[duplicatedVert])
+            const values_original = interpolatingGroup.get<InterpolatingVector>(surface.samples)
             
-            const uvs = new Array<Vec2>(UVunwrapping.UVs.length / 2)
-            for (let i = 0; i < uvs.length; i++) {
-                uvs[i] = new Vec2(
-                    UVunwrapping.UVs[(2 * i) + 0],
-                    UVunwrapping.UVs[(2 * i) + 1]
+            const values_UVunwrapped = field_point_vector_append_scattered_same<
+                    InterpolatingValue,
+                    InterpolatingContainer,
+                    MultiObjectsTemplate,
+                    ObjIDsT,
+                    FieldPointVectorContainerStatic<ObjIDsT>,
+                    InterpolatingVector
+                >(
+                    interpolatingGroup.field.elementType,
+                    values_original,
+                    UVunwrapping.duplicatedVerts,
+                    multiObjectsIDs
                 )
-            }
             
-            const texture = new VertexInterpolatingTexture(values, uvs, UVunwrapping.finalIndices)
+            const texture = new VertexInterpolatingTexture<TextureLocation, InterpolatingValue, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, interpolatingGroup.field)
             interpolatingGroup.set(surface, texture)
         }
     }

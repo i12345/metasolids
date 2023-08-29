@@ -8,6 +8,7 @@ import { TypedArrayOctTree } from "./typed-array.js"
 import { Subdividable } from "./subdividable.js"
 import { FieldPointVectorFunction } from "../../fields/vectorized/function.js"
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js"
+import { NumberTypedArray } from "../../utils/typed-array.js"
 
 export interface OctTreeAddressWithOffset {
     address: OctTreeAddress
@@ -225,7 +226,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
                 "indexOfPosition",
                 (p: Vec3) => LayerLocalIndex,
                 [typeof Vec3],
-                [FieldPointVectorContainerStatic<Float64Array>],
+                [FieldPointVectorContainerStatic<NumberTypedArray>],
                 FieldPointVectorContainerStatic<IndicesTypedArray>
             >("indexOfPosition", [Vec3], { layer: Number, local_index: Number }),
         

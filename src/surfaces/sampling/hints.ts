@@ -2,7 +2,7 @@ import { Vec3 } from "playcanvas-extended";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { SamplingKey, SpaceKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroupsTemplate } from "../../volumes/sampling/index.js";
+import { SpaceKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroupsTemplate } from "../../volumes/sampling/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { VolumeProcessingWithSurfacesContext, VolumeSurfacesKey } from "../volume-surfaces.js";
@@ -60,9 +60,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer,
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
@@ -74,9 +72,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
@@ -88,9 +84,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer,
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
@@ -102,9 +96,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
@@ -121,9 +113,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer,
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
@@ -135,9 +125,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
@@ -153,9 +141,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer,
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
@@ -167,9 +153,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-                    SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
@@ -182,9 +166,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
     VolumeSamplingSubdivisionProcessor<
             IndicesT,
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer,
             OctTreeWithDualLayersGrouped,
             OctTreeWithDualOctTreesGrouped,
             VolumeLocationT,
@@ -273,19 +255,14 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
 
         for (const hint_array of context[VolumeSamplingContextKey][VolumeSurfacesKey].hints) {
             //TODO: support different parameter & return types for vectorized functions
-
-            const positions = new Array<Vec3>(hint_array.length / 3)
-            let hint_array_offset = 0
-            for (let i = 0; i < positions.length; i++)
-                positions[i] = new Vec3(hint_array[hint_array_offset++], hint_array[hint_array_offset++], hint_array[hint_array_offset++])
             
-            const layerLocalIndices = OctTreeSpace.vectorized.indexOfPosition.call(context[SpaceKey], positions)
+            const { layer: layers, local_index: local_indices } = OctTreeSpace.vectorized.indexOfPosition.call(context[SpaceKey], hint_array)
 
-            for (let i = 0; i < layerLocalIndices.length; i++) {
-                if (layerLocalIndices[i].layer === layer) {
-                    const localIndex = layerLocalIndices[i].local_index
+            for (let i = 0; i < layers.length; i++) {
+                if (layers[i] === layer) {
+                    const localIndex = local_indices[i]
                     
-                    const is_interior = item.samples[localIndex].alpha >= surfaceLevel
+                    const is_interior = item.samples.alpha[localIndex] >= surfaceLevel
 
                     let hasPolygon = false
 

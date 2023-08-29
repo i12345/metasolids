@@ -709,9 +709,7 @@ export type VolumeProcessingT =
     volumes.sampling.VolumeProcessingWithSampling<
             IndicesT,
             {},
-            any,
             {},
-            any,
             {},
             {},
             VolumeLocationT,
@@ -723,9 +721,7 @@ export type VolumeProcessingT =
     volumes.sampling.VolumeProcessingWithSampling<
             IndicesT,
             octtree.OctTreeWithDualGroups,
-            octtree.OctTreeWithDualValue,
             octtree.OctTreeWithDualValuesGrouped,
-            octtree.OctTreeWithDualLayer,
             octtree.OctTreeWithDualLayersGrouped,
             octtree.OctTreeWithDualOctTreesGrouped,
             VolumeLocationT,
@@ -737,9 +733,7 @@ export type VolumeProcessingT =
     volumes.sampling.VolumeProcessingWithSamplingWithAdjacency<
             IndicesT,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
             VolumeLocationT,
@@ -811,9 +805,7 @@ export type VolumeProcessingContextT =
     volumes.sampling.VolumeProcessingContextWithSampling<
             IndicesT,
             octtree.OctTreeWithDualGroups,
-            octtree.OctTreeWithDualValue,
             octtree.OctTreeWithDualValuesGrouped,
-            octtree.OctTreeWithDualLayer,
             octtree.OctTreeWithDualLayersGrouped,
             octtree.OctTreeWithDualOctTreesGrouped,
             VolumeLocationT,
@@ -825,9 +817,7 @@ export type VolumeProcessingContextT =
     volumes.sampling.VolumeProcessingContextWithSampling<
             IndicesT,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups,
-            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValue,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped,
-            surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayer,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
             VolumeLocationT,

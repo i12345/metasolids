@@ -4,7 +4,7 @@ import { FieldPointMapped, FieldPoint, FieldPointPrimitive } from "../../point.j
 import { FieldPointType } from "../../type.js"
 import { vectorIterator } from "./factory.js"
 import { FieldPointVectorIterator } from "../iterator.js"
-import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector } from "../point.js"
+import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, FieldPointVectorContainerType } from "../point.js"
 import { IndicesTypedArray, invalidIndex } from "../../../utils/indices-array.js"
 import { PrimitiveFieldPointVectorIterator } from "./primitive.js"
 
@@ -92,11 +92,29 @@ export class MultiObjectsFieldPointVectorIterator<
         return (<PrimitiveFieldPointVectorIterator<FieldPointPrimitive, Container, VectorizedRoot>><FieldPointVectorIterator<FieldPointPrimitive>>this.typeIterator).makeContainer(length)
     }
 
-    copyStatic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic> {
+    copyStatic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>> {
         return this.typeIterator.copyStatic(vectorized, vectorizedRoot)
     }
 
-    copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerDynamic> {
+    copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
         return this.typeIterator.copyDynamic(vectorized, vectorizedRoot)
+    }
+
+    scatter(
+            dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
+            src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
+            /** indices[dst_index] = src_index */
+            indices: IndicesTypedArray,
+            isMultiObjMapped?: boolean
+        ): void {
+        if (isMultiObjMapped)
+            throw new Error()
+
+        this.typeIterator.scatter(
+            dst_vectorized, dst_vectorizedRoot,
+            src_vectorized, src_vectorizedRoot,
+            indices,
+            true
+        )
     }
 }

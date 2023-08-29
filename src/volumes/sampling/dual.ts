@@ -1,4 +1,4 @@
-import { OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
+import { OctTreeWithDualGroups, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { VolumeProcessing } from "../processor.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js";
@@ -61,11 +61,9 @@ export type VolumeSamplingSubdivisionProcessingWithDual<
     VolumeSamplingSubdivisionProcessing<
             IndicesT,
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer, // <IndicesT>,
             OctTreeWithDualLayersGrouped, // <IndicesT>,
-            OctTreeWithDualOctTreesGrouped, // <IndicesT>
+            OctTreeWithDualOctTreesGrouped, // <IndicesT>,
             VolumeLocationT,
             VolumeSampleT,
             VolumeSampleProcessingContextT,
@@ -86,11 +84,9 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
-                    OctTreeWithDualLayersGrouped, // <IndicesT>,
-                    OctTreeWithDualOctTreesGrouped, // <IndicesT>
+                    OctTreeWithDualLayersGrouped, //<IndicesT>,
+                    OctTreeWithDualOctTreesGrouped, //<IndicesT>,
                     VolumeLocationT,
                     VolumeSampleT,
                     VolumeSampleProcessingContextT,
@@ -100,11 +96,9 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
-                    OctTreeWithDualLayersGrouped, // <IndicesT>,
-                    OctTreeWithDualOctTreesGrouped, // <IndicesT>
+                    OctTreeWithDualLayersGrouped, //<IndicesT>,
+                    OctTreeWithDualOctTreesGrouped, //<IndicesT>,
                     VolumeLocationT,
                     VolumeSampleT,
                     VolumeSampleProcessingContextT,
@@ -115,11 +109,9 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
     VolumeSamplingSubdivisionProcessingContext<
             IndicesT,
             OctTreeWithDualGroups,
-            OctTreeWithDualValue,
             OctTreeWithDualValuesGrouped,
-            OctTreeWithDualLayer, // <IndicesT>,
             OctTreeWithDualLayersGrouped, // <IndicesT>,
-            OctTreeWithDualOctTreesGrouped, // <IndicesT>
+            OctTreeWithDualOctTreesGrouped, //<IndicesT>,
             VolumeLocationT,
             VolumeSampleT,
             VolumeSampleProcessingContextT,

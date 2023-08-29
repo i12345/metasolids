@@ -3,65 +3,37 @@ import { OctTreeSpace } from "../../paradigm/octtree/space.js"
 import { ArrayLikeTemplated, OctTreesTemplated } from "../../paradigm/octtree/templated.js"
 import { ProcessorInitialization, Processor } from "../../paradigm/processing/processor.js"
 import { EncapsulatingKey, WithEncapsulating, encapsulated } from "../../paradigm/trees/encapsulating.js"
-import { MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate_Leaf, groupPaths } from "../../paradigm/trees/multi-objects-groups.js"
-import { OctTree } from "../../utils/index.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate_Leaf, groupPaths, MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
+import { OctTree, TypedArray, TypedArrayConstructor, isTypedArray } from "../../utils/index.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js"
-import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroups, VolumeSamplingContextKey, SpaceKey, SamplingKey } from "./types.js"
+import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroups, VolumeSamplingContextKey, SpaceKey, SamplingKey, SamplesKey, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from "./types.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"
 import { VolumeKey } from "../processor.js"
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js"
-import { FieldPointVector, FieldPointVectorContainerStatic, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js"
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js"
 import { SampleDomainLocationFieldKey } from "../../fields/domain.js"
+import { FieldPoint, FieldPointMapped, field_point_map } from "../../fields/point.js"
+import { extract, intract } from "../../paradigm/trees/tree.js"
+import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js"
+import { FieldPointType } from "../../fields/type.js"
 
 class VolumeDomainSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        OctTreeT = any,
-        OctTreeTGrouped extends
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                > =
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                >,
-        OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-        OctTreeLayersGrouped extends
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                > =
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                >,
+        OctTreeTGrouped extends any = any,
+        OctTreeLayersGrouped extends any = any,
         OctTreesGrouped extends
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 > =
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -77,9 +49,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -91,9 +61,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -106,9 +74,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -121,9 +87,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -137,9 +101,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessing<
                     IndicesT,    
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -152,9 +114,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessing<
                     IndicesT,    
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -168,9 +128,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -182,9 +140,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -197,9 +153,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
     VolumeSamplingSubdivisionProcessor<
         IndicesT,
         OctTreeGroups,
-        OctTreeT,
         OctTreeTGrouped,
-        OctTreeLayer,
         OctTreeLayersGrouped,
         OctTreesGrouped,
         VolumeLocationT,
@@ -213,18 +167,13 @@ class VolumeDomainSamplingSubdivisionProcessor<
         SubdivisionProcessingContextT
     > {
     init(context: SubdivisionProcessingContextT): ProcessorInitialization {
-        //TODO: replace with separate oct trees per field
-        const volumeSamplingSubdivisionSamplesGroupsTemplate: VolumeSamplingSubdivisionSamplesGroups<VolumeSample> = {
-            samples: MultiObjectsGroupsTemplate_Leaf
-        }
-
         return {
             connections: {
                 inputs: [
                     [EncapsulatingKey, VolumeKey],
                     [EncapsulatingKey, SamplingKey, 'extraLocationParameters']
                 ],
-                outputs: [...groupPaths(volumeSamplingSubdivisionSamplesGroupsTemplate)]
+                outputs: [[SamplesKey]]
             }
         }
     }
@@ -245,6 +194,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
 
         const volume = item[EncapsulatingKey][VolumeKey]
         const samplingContext = <VectorContextT>context[VolumeSamplingContextKey]
+        const multiObjectsIDs = samplingContext[MultiObjectsIDsKey]
 
         const extraLocationParameters = item[EncapsulatingKey][SamplingKey].extraLocationParameters
 
@@ -260,7 +210,20 @@ class VolumeDomainSamplingSubdivisionProcessor<
             const exponentOfTwo = Math.ceil(Math.log2(largestDistance))
             
             context[SpaceKey] = new OctTreeSpace(context[SubdivisionKey], exponentOfTwo)
-            context.samples = new OctTree()
+            
+            const context_samples = <VolumeSamplingSubdivisionSamplesOctTreesGrouped/* <VolumeSampleT> */[typeof SamplesKey]>(context[SamplesKey] = <any>{})
+            field_point_map<VolumeSampleT, FieldPointType, void>(
+                <FieldPointMapped<VolumeSampleT, FieldPointType>>volume.field.elementType,
+                type => type instanceof Function,
+                (type, path) => {
+                    const multiObjIndex = path.indexOf(MultiObjectsGroupedObjectsKey)
+                    const nonMultiObjPath = multiObjIndex === -1 ? path : [...path.slice(0, multiObjIndex), ...path.slice(multiObjIndex + 1)]
+                    const octtree = new TypedArrayOctTree(Float64Array)
+                    intract(context_samples, nonMultiObjPath, octtree)
+                }
+            );
+            (<any>context_samples)[ItemObjIDsKey] = new TypedArrayOctTree<number, ObjIDsT>(multiObjectsIDs.IDsType);
+            (<any>context_samples)[ItemObjValuesOffsetsKey] = new TypedArrayOctTree(Uint32Array);
         }
 
         //TODO: using separate typed arrays mapped by groups for many field points at once will make this much faster and more memory-efficient
@@ -280,7 +243,6 @@ class VolumeDomainSamplingSubdivisionProcessor<
         //TODO: support extra location parameters
         const extraLocationParameters_objects = undefined
 
-        const multiObjectsIDs = samplingContext[MultiObjectsIDsKey]
         const locations_type = samplingContext[SampleDomainLocationFieldKey].elementType
         const locations_iterator = vectorIterator(locations_type, <any>false, multiObjectsIDs)
         const locations = field_point_vectorized_multi_objects_new(locations_type, new_voxels, <any>false, multiObjectsIDs?.IDsType, extraLocationParameters_objects)
@@ -292,7 +254,20 @@ class VolumeDomainSamplingSubdivisionProcessor<
 
         const samples = samplingContext[VectorSampleFunction](volume, <FieldPointVector<VolumeLocationT, FieldPointVectorContainerStatic<Float64Array>>>locations, samplingContext)
         item.samples = samples
-        context.samples.layers.push(samples)
+
+        const context_samples = <VolumeSamplingSubdivisionSamplesOctTreesGrouped/* <VolumeSampleT> */>context.samples
+        field_point_map<VolumeSampleT, TypedArray, void>(
+            samples,
+            array => isTypedArray(array),
+            (array, path) => {
+                const multiObjIndex = path.indexOf(MultiObjectsGroupedObjectsKey)
+                const nonMultiObjPath = multiObjIndex === -1 ? path : [...path.slice(0, multiObjIndex), ...path.slice(multiObjIndex + 1)]
+                const octtree = extract<TypedArrayOctTree>(context_samples, nonMultiObjPath)
+                octtree.layers.push(array)
+            }
+        );
+        (<TypedArrayOctTree<number, ObjIDsT>>(<any>context_samples)[ItemObjIDsKey]).layers.push((<any>samples)[ItemObjIDsKey]);
+        (<TypedArrayOctTree<number, Uint32Array>>(<any>context_samples)[ItemObjValuesOffsetsKey]).layers.push((<any>samples)[ItemObjValuesOffsetsKey]);
     }
 
     static readonly instance = new this()
@@ -301,49 +276,17 @@ class VolumeDomainSamplingSubdivisionProcessor<
 export class VolumeSamplingSubdividingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        OctTreeT = any,
-        OctTreeTGrouped extends
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                > =
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                >,
-        OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-        OctTreeLayersGrouped extends
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                > =
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                >,
+        OctTreeTGrouped extends any = any,
+        OctTreeLayersGrouped extends any = any,
         OctTreesGrouped extends
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 > =
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -359,9 +302,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -373,9 +314,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -388,9 +327,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -402,9 +339,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -417,9 +352,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeSamplingSubdivisionProcessing<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,    
                     VolumeLocationT,
@@ -432,9 +365,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeSamplingSubdivisionProcessing<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -448,9 +379,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -462,9 +391,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -477,9 +404,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeSamplingSubdivisionProcessor<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -495,9 +420,7 @@ export class VolumeSamplingSubdividingProcessor<
             VolumeSamplingSubdivisionProcessor<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -568,9 +491,7 @@ export class VolumeSamplingSubdividingProcessor<
                 OctTreeSubdividingProcessingContextForSubdivisionProcessingContext<
                         IndicesT,
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped,
                         OctTreesGrouped,
                         SubdivisionProcessingContextT
@@ -596,9 +517,7 @@ export class VolumeSamplingSubdividingProcessor<
                 OctTreeSubdividingProcessingForSubdivisionProcessing<
                         IndicesT,
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped,
                         OctTreesGrouped,
                         SubdivisionProcessingT
@@ -612,9 +531,7 @@ export class VolumeSamplingSubdividingProcessor<
                 OctTreeSubdividingProcessingContextForSubdivisionProcessingContext<
                         IndicesT,
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped,
                         OctTreesGrouped,
                         SubdivisionProcessingContextT

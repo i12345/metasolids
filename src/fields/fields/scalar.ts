@@ -1,5 +1,6 @@
 import { Field } from "../field.js";
 import { ScalarInterpolationType } from "../interpolators/scalar.js";
+import { ArithmeticPrimitiveFuseMode } from "../vectorized/fuse-modes/arithmetic.js";
 import { FuseMode, fuseModes } from "../vectorized/index.js";
 
 export class ScalarField implements Field<number> {
@@ -8,7 +9,7 @@ export class ScalarField implements Field<number> {
     readonly elementType = Number
 
     constructor(
-        public readonly fuseMode: FuseMode<number>,
+        public readonly fuseMode: FuseMode<number> = <ArithmeticPrimitiveFuseMode<number>>ArithmeticPrimitiveFuseMode.add,
         public range: [min: number, max: number] = [
             Number.NEGATIVE_INFINITY,
             Number.POSITIVE_INFINITY

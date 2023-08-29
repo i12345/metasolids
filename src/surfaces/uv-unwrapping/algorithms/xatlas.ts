@@ -87,7 +87,7 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
         xAtlasAPI.destroyAtlas()
 
         return {
-            duplicatedVerts,
+            duplicatedVerts: new (indicesArrayType(mesh.vertices.length))(duplicatedVerts),
             finalIndices,
             UVs
         }

@@ -1,8 +1,8 @@
 import { SubdivisionAdjacency } from "../../paradigm/octtree/adjacency.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
-import { ArrayLikeTemplated, OctTreesTemplated } from "../../paradigm/octtree/templated.js";
+import { OctTreesTemplated } from "../../paradigm/octtree/templated.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
-import { MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped } from "../../paradigm/trees/multi-objects-groups.js";
+import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/multi-objects-groups.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { VolumeProcessingContext, VolumeProcessor } from "../processor.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js";
@@ -14,49 +14,17 @@ export const AdjacencyKey = Symbol("adjacency")
 export interface VolumeProcessingWithSamplingWithAdjacency<
             IndicesT extends IndicesTypedArray = IndicesTypedArray,
             OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-            OctTreeT = any,
-            OctTreeTGrouped extends
-                MultiObjectsGroupsMapped<
-                        OctTreeGroups,
-                        OctTreeT
-                    > =
-                MultiObjectsGroupsMapped<
-                        OctTreeGroups,
-                        OctTreeT
-                    >,
-            OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-            OctTreeLayersGrouped extends
-                // MultiObjectsGroupsMapped<
-                //         OctTreeGroups,
-                //         OctTreeLayer
-                //     > &
-                ArrayLikeTemplated<
-                        OctTreeGroups,
-                        OctTreeT,
-                        OctTreeTGrouped
-                    > =
-                // MultiObjectsGroupsMapped<
-                //         OctTreeGroups,
-                //         OctTreeLayer
-                //     > &
-                ArrayLikeTemplated<
-                        OctTreeGroups,
-                        OctTreeT,
-                        OctTreeTGrouped
-                    >,
+            OctTreeTGrouped extends any = any,
+            OctTreeLayersGrouped extends any = any,
             OctTreesGrouped extends
                 OctTreesTemplated<
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped
                     > =
                 OctTreesTemplated<
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped
                     >,
             VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -72,9 +40,7 @@ export interface VolumeProcessingWithSamplingWithAdjacency<
     extends VolumeProcessingWithSampling<
             IndicesT,
             OctTreeGroups,
-            OctTreeT,
             OctTreeTGrouped,
-            OctTreeLayer,
             OctTreeLayersGrouped,
             OctTreesGrouped,
             VolumeLocationT,
@@ -86,9 +52,7 @@ export interface VolumeProcessingWithSamplingWithAdjacency<
     [SamplingKey]: VolumeProcessingWithSampling<
         IndicesT,
         OctTreeGroups,
-        OctTreeT,
         OctTreeTGrouped,
-        OctTreeLayer,
         OctTreeLayersGrouped,
         OctTreesGrouped,
         VolumeLocationT,
@@ -116,9 +80,7 @@ export class VolumeWithSamplingWithAdjacencyProcessor<
             VolumeProcessingWithSamplingWithAdjacency<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -130,9 +92,7 @@ export class VolumeWithSamplingWithAdjacencyProcessor<
             VolumeProcessingWithSamplingWithAdjacency<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,

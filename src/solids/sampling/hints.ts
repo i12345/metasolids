@@ -1,12 +1,11 @@
 import { Vec3 } from "playcanvas-extended";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { SamplingKey, SpaceKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroupsTemplate } from "../../volumes/sampling/index.js";
+import { SpaceKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroupsTemplate } from "../../volumes/sampling/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { OctTreeSpace } from "../../paradigm/octtree/space.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
-import { EncapsulatingKey } from "../../paradigm/trees/encapsulating.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { VolumeProcessingWithSurfacesContext } from "../../surfaces/volume-surfaces.js";
 import { groupPaths } from "../../paradigm/trees/multi-objects-groups.js";
@@ -49,9 +48,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -63,9 +60,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -82,9 +77,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -100,9 +93,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -115,9 +106,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
     VolumeSamplingSubdivisionProcessor<
             IndicesT,
             {},
-            any,
             {},
-            any,
             {},
             {},
             VolumeLocationT,
@@ -128,7 +117,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             VolumeProcessingT,
             VolumeProcessingContextT
     > {
-    init(context: VolumeSamplingSubdivisionProcessingContext<IndicesT, {}, any, {}, any, {}, {}, VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT, VolumeProcessingContextT>): ProcessorInitialization {
+    init(context: VolumeSamplingSubdivisionProcessingContext<IndicesT, {}, {}, {}, {}, VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT, VolumeProcessingContextT>): ProcessorInitialization {
         context[VolumeSamplingContextKey][VolumeSolidsKey] = {
             // surfaceLevel: context[EncapsulatingKey][VolumeSurfacesKey].surfaceLevel,
             hints: []
@@ -147,9 +136,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             item: VolumeSamplingSubdivisionProcessing<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -162,9 +149,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             context: VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     {},
-                    any,
                     {},
-                    any,
                     {},
                     {},
                     VolumeLocationT,
@@ -182,18 +167,13 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
         for (const hint_array of context[VolumeSamplingContextKey][VolumeSolidsKey].hints) {
             //TODO: support different parameter & return types for vectorized functions
 
-            const positions = new Array<Vec3>(hint_array.length / 3)
-            let hint_array_offset = 0
-            for (let i = 0; i < positions.length; i++)
-                positions[i] = new Vec3(hint_array[hint_array_offset++], hint_array[hint_array_offset++], hint_array[hint_array_offset++])
-            
-            const layerLocalIndices = OctTreeSpace.vectorized.indexOfPosition.call(context[SpaceKey], positions)
+            const { layer: layers, local_index: local_indices } = OctTreeSpace.vectorized.indexOfPosition.call(context[SpaceKey], hint_array)
 
-            for (let i = 0; i < layerLocalIndices.length; i++) {
-                if (layerLocalIndices[i].layer === layer) {
-                    const localIndex = layerLocalIndices[i].local_index
+            for (let i = 0; i < layers.length; i++) {
+                if (layers[i] === layer) {
+                    const localIndex = local_indices[i]
                     
-                    const is_interior = item.samples[localIndex].alpha === 1
+                    const is_interior = item.samples.alpha[localIndex] === 1
 
                     if (!is_interior)
                         recommendation_pre[localIndex]++

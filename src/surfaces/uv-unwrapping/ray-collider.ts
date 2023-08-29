@@ -9,6 +9,7 @@ import { VolumeWithSurfacesRayCollider, VolumeWithSurfacesTriangleRayCollider, V
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSamplingContext } from "../../volumes/volume.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { TypedArray } from "../../utils/typed-array.js";
 
 export interface VolumeWithSurfacesUVRayCollision extends VolumeWithSurfacesTriangleRayCollision {
     uv: Vec2
@@ -191,7 +192,7 @@ interface VolumeWithSurfacesUVRayColliderProcessingContextPrivate<
         VolumeProcessingInstanceT,
         VolumeProcessingContextT
     > {
-    UVinterpolators: Triangles2DMeshInterpolator<Vec2>[]
+    UVinterpolators: Triangles2DMeshInterpolator<Vec2, TypedArray>[]
 }
 
 //TODO: re-write using transforming sample domain <Ray, SurfaceUVRayCollision>
@@ -349,15 +350,7 @@ export class VolumeWithSurfacesUVRayCollider<
         context_private.UVinterpolators = surfaces.map(surface => {
             const UVunwrapping = UVunwrapping_group.get<SurfaceUVUnwrapping>(surface.shared)
             
-            const uvs = new Array<Vec2>(UVunwrapping.UVs.length / 2)
-            for (let i = 0; i < uvs.length; i++) {
-                uvs[i] = new Vec2(
-                    UVunwrapping.UVs[(2 * i) + 0],
-                    UVunwrapping.UVs[(2 * i) + 1]
-                )
-            }
-
-            return new Triangles2DMeshInterpolator(uvs, UVunwrapping.finalIndices)
+            return new Triangles2DMeshInterpolator<Vec2, Float32Array>(Vec2, UVunwrapping.UVs, UVunwrapping.finalIndices)
         })
 
         this.triCollider.init(context)

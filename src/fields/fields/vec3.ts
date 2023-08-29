@@ -11,7 +11,7 @@ export class Vec3Field implements Field<Vec3> {
     readonly elementType = Vec3
     
     constructor(
-        public readonly fuseMode: PrimitiveFuseMode<Vec3>,
+        public readonly fuseMode: PrimitiveFuseMode<Vec3> = <ArithmeticPrimitiveFuseMode<Vec3>>ArithmeticPrimitiveFuseMode.add,
         public range: [min: Vec3, max: Vec3] = [
             new Vec3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY),
             new Vec3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)

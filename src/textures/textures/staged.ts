@@ -1,4 +1,4 @@
-import { CompositeSampleDomain, FusedVectorSamplingContext, LocationFieldObserverSampleDomain, MultiObjectsSampleDomain, TransformingSampleDomain } from "../../fields/domains/index.js";
+import { FusedVectorSamplingContext, LocationFieldObserverSampleDomain, MultiObjectsSampleDomain, TransformingSampleDomain } from "../../fields/domains/index.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../fields/vectorized/index.js";
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
@@ -81,6 +81,9 @@ export class StagedTexture<
         SampleVector,
         VectorContext
     > {
+    protected readonly transformsLocation = false
+    protected readonly transformsSample = false
+
     constructor(
             inner: Texture<Location, Sample, Context>,
             public stage = 0

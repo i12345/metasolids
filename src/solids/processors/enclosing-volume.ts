@@ -1,6 +1,6 @@
 import { Surface, SurfaceProcessingContext } from "../../surfaces/index.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/index.js";
-import { AdjacencyKey, SamplingKey, SpaceKey, VolumeProcessingWithSamplingWithAdjacency } from '../../volumes/sampling/index.js'
+import { AdjacencyKey, SamplesKey, SamplingKey, SpaceKey, VolumeProcessingWithSamplingWithAdjacency, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from '../../volumes/sampling/index.js'
 import { SolidProcessingContext } from "../processor.js";
 import { VolumeProcessingWithSolids, VolumeSolidProcessing, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../volume-solids.js"
 import { Solid } from "../solid.js";
@@ -79,9 +79,7 @@ export class SolidWithEnclosingVolumeProcessor<
             VolumeProcessingWithSamplingWithAdjacency<
                     IndicesT,
                     OctTreeWithDualGroups,
-                    OctTreeWithDualValue,
                     OctTreeWithDualValuesGrouped,
-                    OctTreeWithDualLayer, // <IndicesT>,
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>,
                     VolumeLocationT,
@@ -131,9 +129,7 @@ export class SolidWithEnclosingVolumeProcessor<
                     VolumeProcessingWithSamplingWithAdjacency<
                             IndicesT,
                             OctTreeWithDualGroups,
-                            OctTreeWithDualValue,
                             OctTreeWithDualValuesGrouped,
-                            OctTreeWithDualLayer, // <IndicesT>,
                             OctTreeWithDualLayersGrouped, // <IndicesT>,
                             OctTreeWithDualOctTreesGrouped, // <IndicesT>,
                             VolumeLocationT,
@@ -149,6 +145,7 @@ export class SolidWithEnclosingVolumeProcessor<
             >
         ): void {
         const sampling = solid[EncapsulatingKey][SamplingKey]
+        const sample_alpha = (<VolumeSamplingSubdivisionSamplesOctTreesGrouped>sampling)[SamplesKey].alpha.layers
         const subdivision = sampling[SubdivisionKey]
         const adjacency = sampling[AdjacencyKey]
         const surfaceLevel = context.surface.surfaceLevel
@@ -168,7 +165,7 @@ export class SolidWithEnclosingVolumeProcessor<
         let layer: number, localIndex: number
 
         function add() {
-            if (sampling.samples.layers[layer][localIndex].alpha < surfaceLevel)
+            if (sample_alpha[layer][localIndex] < surfaceLevel)
                 return
             
             lookup_key_layer[0] = layer

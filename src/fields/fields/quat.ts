@@ -8,7 +8,7 @@ export class QuatField implements Field<Quat> {
 
     readonly elementType = Quat
 
-    constructor(public readonly fuseMode: PrimitiveFuseMode<Quat>) { }
+    constructor(public readonly fuseMode: PrimitiveFuseMode<Quat> = <PrimitiveFuseMode<Quat>>fuseModes.ArithmeticPrimitiveFuseMode.multiply) { }
 
     distance(x: Quat, y: Quat): number {
         return x.distance(y)

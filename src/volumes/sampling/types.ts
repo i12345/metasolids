@@ -1,5 +1,6 @@
-import { ExtraFields } from "../../fields/index.js"
-import { FieldPointVector } from "../../fields/vectorized/point.js"
+import { Vec3 } from "playcanvas-extended"
+import { ExtraFields, FieldPoint, FieldPointMapped, FieldPointPrimitive } from "../../fields/index.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../../fields/vectorized/point.js"
 import { ArrayLikeTemplated, OctTree, OctTreeSpace, OctTreesTemplated } from "../../paradigm/octtree/index.js"
 import { OctTreeSubdividingProcessing, OctTreeSubdividingProcessingContextForSubdivisionProcessingContext, OctTreeSubdivisionProcessing, OctTreeSubdivisionProcessingContext, OctTreeSubdivisionProcessor, SubdivisionKey } from "../../paradigm/octtree/processor.js"
 import { EncapsulatingKey, WithEncapsulating } from "../../paradigm/trees/encapsulating.js"
@@ -9,10 +10,12 @@ import { RemoveEmptyStructs } from "../../utils/remove-empty-structs.js"
 import { VolumeProcessing, VolumeProcessingContext } from "../processor.js"
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"
+import { MultiObjectsIDsKey } from "../../paradigm/trees/multi-objects.js"
 
 export const SamplingKey = Symbol("volume.sampling")
 export const SpaceKey = Symbol("space")
 export const VolumeSamplingContextKey = Symbol("volume.sampling-context")
+export const SamplesKey = "samples"
 
 /**
  * These types can be made generic if individual fields of a sample are directly put in distinct storage oct trees
@@ -30,78 +33,52 @@ export const VolumeSamplingContextKey = Symbol("volume.sampling-context")
 export type VolumeSamplingSubdivisionSamplesGroups<
         VolumeSampleT extends VolumeSample = VolumeSample
     > = {
-    samples: FieldPointVector<VolumeSampleT>
+    [SamplesKey]: (
+        FieldPointMapped<VolumeSampleT, MultiObjectsGroupsTemplateLeaf> & {
+            [ItemObjIDsKey]: MultiObjectsGroupsTemplateLeaf
+            [ItemObjValuesOffsetsKey]: MultiObjectsGroupsTemplateLeaf
+        }
+    )
 }
 
 export const VolumeSamplingSubdivisionSamplesGroupsTemplate = <
         VolumeSampleT extends VolumeSample = VolumeSample
-    >(): VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT> => ({
-    // samples: FieldPointMapped<VolumeSampleT, MultiObjectsGroupsTemplateLeaf>
+    >() => <VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>><unknown>({
+    samples: MultiObjectsGroupsTemplate_Leaf
 })
 
-export type VolumeSamplingSubdivisionSamplesValue<VolumeSampleT extends VolumeSample = VolumeSample> = VolumeSampleT
-export type VolumeSamplingSubdivisionSamplesValuesGrouped<VolumeSampleT extends VolumeSample = VolumeSample> =
-    MultiObjectsGroupsMapped<VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>, VolumeSampleT>
+export type VolumeSamplingSubdivisionSamplesValuesGrouped<VolumeSampleT extends VolumeSample = VolumeSample> = {
+    [SamplesKey]: FieldPointMapped<VolumeSampleT, number>
+}
 
-export type VolumeSamplingSubdivisionSamplesLayer<VolumeSampleT extends VolumeSample = VolumeSample> = VolumeSampleT[]
-export type VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT extends VolumeSample = VolumeSample> =
-    MultiObjectsGroupsMapped<VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>, VolumeSampleT[]>
+export type VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT extends VolumeSample = VolumeSample> = {
+    [SamplesKey]: FieldPointVector<VolumeSampleT, FieldPointVectorContainerStatic>
+}
 
 export type VolumeSamplingSubdivisionSamplesOctTreesGrouped<VolumeSampleT extends VolumeSample = VolumeSample> =
     OctTreesTemplated<
             VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>,
-            VolumeSamplingSubdivisionSamplesValue<VolumeSampleT>,
             VolumeSamplingSubdivisionSamplesValuesGrouped<VolumeSampleT>,
-            VolumeSamplingSubdivisionSamplesLayer<VolumeSampleT>,
             VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT>
         >
+
+let a!: VolumeSamplingSubdivisionSamplesOctTreesGrouped
+a[SamplesKey].alpha
 
 export type VolumeSamplingSubdivisionProcessing<
             IndicesT extends IndicesTypedArray = IndicesTypedArray,
             OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-            OctTreeT = any,
-            OctTreeTGrouped extends
-                MultiObjectsGroupsMapped<
-                        OctTreeGroups,
-                        OctTreeT
-                    > =
-                MultiObjectsGroupsMapped<
-                        OctTreeGroups,
-                        OctTreeT
-                    >,
-            OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-            OctTreeLayersGrouped extends
-                // MultiObjectsGroupsMapped<
-                //         OctTreeGroups,
-                //         OctTreeLayer
-                //     > &
-                ArrayLikeTemplated<
-                        OctTreeGroups,
-                        OctTreeT,
-                        OctTreeTGrouped
-                    > =
-                // MultiObjectsGroupsMapped<
-                //         OctTreeGroups,
-                //         OctTreeLayer
-                //     > &
-                ArrayLikeTemplated<
-                        OctTreeGroups,
-                        OctTreeT,
-                        OctTreeTGrouped
-                    >,
+            OctTreeTGrouped extends any = any,
+            OctTreeLayersGrouped extends any = any,
             OctTreesGrouped extends
                 OctTreesTemplated<
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped
                     > =
                 OctTreesTemplated<
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped
                     >,
             VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -158,16 +135,12 @@ export type VolumeSamplingSubdivisionProcessing<
     WithEncapsulating<VolumeProcessingT> &
     OctTreeSubdivisionProcessing<
             OctTreeGroups,
-            OctTreeT,
             OctTreeTGrouped,
-            OctTreeLayer,
             OctTreeLayersGrouped
         > &
     OctTreeSubdivisionProcessing<
             VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>,
-            VolumeSamplingSubdivisionSamplesValue<VolumeSampleT>,
             VolumeSamplingSubdivisionSamplesValuesGrouped<VolumeSampleT>,
-            VolumeSamplingSubdivisionSamplesLayer<VolumeSampleT>,
             VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT>
         >
     // OctTreeSubdivisionProcessing<
@@ -226,49 +199,17 @@ export type VolumeSamplingSubdivisionProcessing<
 export interface VolumeProcessingWithSampling<
             IndicesT extends IndicesTypedArray = IndicesTypedArray,
             OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-            OctTreeT = any,
-            OctTreeTGrouped extends
-                MultiObjectsGroupsMapped<
-                        OctTreeGroups,
-                        OctTreeT
-                    > =
-                MultiObjectsGroupsMapped<
-                        OctTreeGroups,
-                        OctTreeT
-                    >,
-            OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-            OctTreeLayersGrouped extends
-                // MultiObjectsGroupsMapped<
-                //         OctTreeGroups,
-                //         OctTreeLayer
-                //     > &
-                ArrayLikeTemplated<
-                        OctTreeGroups,
-                        OctTreeT,
-                        OctTreeTGrouped
-                    > =
-                // MultiObjectsGroupsMapped<
-                //         OctTreeGroups,
-                //         OctTreeLayer
-                //     > &
-                ArrayLikeTemplated<
-                        OctTreeGroups,
-                        OctTreeT,
-                        OctTreeTGrouped
-                    >,
+            OctTreeTGrouped extends any = any,
+            OctTreeLayersGrouped extends any = any,
             OctTreesGrouped extends
                 OctTreesTemplated<
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped
                     > =
                 OctTreesTemplated<
                         OctTreeGroups,
-                        OctTreeT,
                         OctTreeTGrouped,
-                        OctTreeLayer,
                         OctTreeLayersGrouped
                     >,
             VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -305,18 +246,14 @@ export interface VolumeProcessingWithSampling<
         OctTreeSubdividingProcessing<
                 IndicesT,
                 OctTreeGroups,
-                OctTreeT,
                 OctTreeTGrouped,
-                OctTreeLayer,
                 OctTreeLayersGrouped,
                 OctTreesGrouped
             > &
         OctTreeSubdividingProcessing<
                 IndicesT,
                 VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>,
-                VolumeSamplingSubdivisionSamplesValue<VolumeSampleT>,
                 VolumeSamplingSubdivisionSamplesValuesGrouped<VolumeSampleT>,
-                VolumeSamplingSubdivisionSamplesLayer<VolumeSampleT>,
                 VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT>,
                 VolumeSamplingSubdivisionSamplesOctTreesGrouped<VolumeSampleT>
             >
@@ -353,49 +290,17 @@ export interface VolumeProcessingWithSampling<
 export type VolumeSamplingSubdivisionProcessingContext<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        OctTreeT = any,
-        OctTreeTGrouped extends
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                > =
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                >,
-        OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-        OctTreeLayersGrouped extends
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                > =
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                >,
+        OctTreeTGrouped extends any = any,
+        OctTreeLayersGrouped extends any = any,
         OctTreesGrouped extends
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 > =
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -424,30 +329,24 @@ export type VolumeSamplingSubdivisionProcessingContext<
     OctTreeSubdivisionProcessingContext<
             IndicesT,
             OctTreeGroups,
-            OctTreeT,
             OctTreeTGrouped,
-            OctTreeLayer,
             OctTreeLayersGrouped,
             OctTreesGrouped
         > &
     OctTreeSubdivisionProcessingContext<
             IndicesT,
             VolumeSamplingSubdivisionSamplesGroups<VolumeSampleT>,
-            VolumeSamplingSubdivisionSamplesValue<VolumeSampleT>,
             VolumeSamplingSubdivisionSamplesValuesGrouped<VolumeSampleT>,
-            VolumeSamplingSubdivisionSamplesLayer<VolumeSampleT>,
             VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT>,
             VolumeSamplingSubdivisionSamplesOctTreesGrouped<VolumeSampleT>
         >
 
 // type A5 = VolumeSamplingSubdivisionProcessingContext<
 //     Uint32Array,
-//     { a: MultiObjectsGroupsTemplateLeaf },
-//     string,
-//     { a: string },
-//     string[],
-//     {a : string[]},
-//     { a: OctTree<string, string[]> },
+//     { result: { a: MultiObjectsGroupsTemplateLeaf, b: MultiObjectsGroupsTemplateLeaf } },
+//     { result: { a: string, b: boolean } },
+//     { result: { a: string[], b: boolean[] } },
+//     { result: { a: OctTree<string, string[]>, b: OctTree<boolean, boolean[]> } },
 //     VolumeLocation,
 //     VolumeSample
 //     // VolumeSamplingContextT,
@@ -456,6 +355,8 @@ export type VolumeSamplingSubdivisionProcessingContext<
 // >
 
 // let a5!: A5
+// a5.result.b
+// a5[SamplesKey].alpha.layers[4]
 // let a6 = a5[SubdivisionKey]
 
 // let b2!: VolumeSamplingSubdivisionProcessingContext
@@ -464,49 +365,17 @@ export type VolumeSamplingSubdivisionProcessingContext<
 export interface VolumeProcessingContextWithSampling<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        OctTreeT = any,
-        OctTreeTGrouped extends
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                > =
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                >,
-        OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-        OctTreeLayersGrouped extends
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                > =
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                >,
+        OctTreeTGrouped extends any = any,
+        OctTreeLayersGrouped extends any = any,
         OctTreesGrouped extends
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 > =
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -522,9 +391,7 @@ export interface VolumeProcessingContextWithSampling<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -536,9 +403,7 @@ export interface VolumeProcessingContextWithSampling<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -553,9 +418,7 @@ export interface VolumeProcessingContextWithSampling<
         OctTreeSubdividingProcessingContextForSubdivisionProcessingContext<
             IndicesT,
             OctTreeGroups,
-            OctTreeT,
             OctTreeTGrouped,
-            OctTreeLayer,
             OctTreeLayersGrouped,
             OctTreesGrouped,
             VolumeSamplingSubdivisionProcessingContextT
@@ -589,49 +452,17 @@ export interface VolumeProcessingContextWithSampling<
 export interface VolumeSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         OctTreeGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        OctTreeT = any,
-        OctTreeTGrouped extends
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                > =
-            MultiObjectsGroupsMapped<
-                    OctTreeGroups,
-                    OctTreeT
-                >,
-        OctTreeLayer extends ArrayLike<OctTreeT> = ArrayLike<OctTreeT>,
-        OctTreeLayersGrouped extends
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                > =
-            // MultiObjectsGroupsMapped<
-            //         OctTreeGroups,
-            //         OctTreeLayer
-            //     > &
-            ArrayLikeTemplated<
-                    OctTreeGroups,
-                    OctTreeT,
-                    OctTreeTGrouped
-                >,
+        OctTreeTGrouped extends any = any,
+        OctTreeLayersGrouped extends any = any,
         OctTreesGrouped extends
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 > =
             OctTreesTemplated<
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -647,9 +478,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -661,9 +490,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeProcessingWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -676,9 +503,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -690,9 +515,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -705,9 +528,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessing<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -720,9 +541,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessing<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -736,9 +555,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -750,9 +567,7 @@ export interface VolumeSamplingSubdivisionProcessor<
             VolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     OctTreeGroups,
-                    OctTreeT,
                     OctTreeTGrouped,
-                    OctTreeLayer,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
@@ -765,9 +580,7 @@ export interface VolumeSamplingSubdivisionProcessor<
     OctTreeSubdivisionProcessor<
         IndicesT,
         OctTreeGroups,
-        OctTreeT,
         OctTreeTGrouped,
-        OctTreeLayer,
         OctTreeLayersGrouped,
         OctTreesGrouped,
         SubdivisionProcessingT,
