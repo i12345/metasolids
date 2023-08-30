@@ -10,15 +10,22 @@ export type MultiObjectsTemplate = {
         typeof MultiObjectsTemplate_Leaf
 }
 
+export type MultiObjectsTemplateOrLeaf = MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf
+
 export type MultiObjectsMapped<
         Objects extends MultiObjectsTemplate,
         T,
     > = {
-    [K in keyof Objects]:
-        Objects[K] extends MultiObjectsTemplate ?
-            MultiObjectsMapped<Objects[K], T> :
-            T
+    [K in keyof Objects]: MultiObjectsMappedOrLeaf<Objects[K], T>
 }
+
+export type MultiObjectsMappedOrLeaf<
+        Objects extends MultiObjectsTemplateOrLeaf,
+        T,
+    > = 
+    Objects extends MultiObjectsTemplate ?
+        MultiObjectsMapped<Objects, T> :
+        T
 
 export interface MultiObjectsIDs<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

@@ -1,8 +1,10 @@
-import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped } from "../paradigm/trees/index.js";
+import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsIDs } from "../paradigm/trees/index.js";
 import { Processor } from "../paradigm/processing/processor.js";
-import { onlyOne } from "../utils/index.js";
+import { IndicesTypedArray, onlyOne } from "../utils/index.js";
 import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
-import { MultiObjectsWithGroupFieldsProcessingContext } from "./processing.js";
+import { GroupFieldKey, GroupWithField, MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext } from "./processing.js";
+import { MultiObjectsField } from "./fields/multi-objects.js";
+import { ScalarField } from "./fields/scalar.js";
 
 export type MultiObjectsFieldPoint<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -55,6 +57,16 @@ export type MultiObjectsInfluencesGroupsDefault = {
 export const MultiObjectsInfluencesGroupsDefaultTemplate: MultiObjectsInfluencesGroupsDefault = {
     [MultiObjectsInfluencesGroupsDefaultKey]: MultiObjectsGroupsTemplate_Leaf
 }
+
+export const MultiObjectsInfluencesGroupsDefaultField = <
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+    >(multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>):
+    MultiObjectsGroupsMapped<MultiObjectsInfluencesGroupsDefault, GroupWithField<MultiObjectsField<number, Objects, ObjIDsT>>> => ({
+    [MultiObjectsInfluencesGroupsDefaultKey]: {
+        [GroupFieldKey]: new MultiObjectsField(ScalarField.instance, multiObjectsIDs)
+    }
+})
 
 export type MultiObjectsInfluencesGroupsKindsMappedGroupsDefault =
     MultiObjectsGroupsKindsTemplateMapped<

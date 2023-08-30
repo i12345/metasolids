@@ -1,23 +1,60 @@
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped } from "../paradigm/trees/index.js";
-import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext } from "../fields/index.js"
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped, MultiObjectsIDs } from "../paradigm/trees/index.js";
+import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, GroupWithField, GroupFieldKey } from "../fields/index.js"
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { octtree } from "../paradigm/index.js";
-import { MultiObjectsDomainInternalPreservedGroupsKinds } from "../fields/domains/multi-objects.js";
+import { MultiObjectsField } from "../fields/fields/multi-objects.js";
+import { TypedArrayConstructor } from "../utils/typed-array.js";
+import { mergeObjects } from "../utils/merge-objects.js";
 
 export type IndicesT = Uint32Array
 
 export type VolumeLocationT = volumes.VolumeLocation
 
 export type Objects = MultiObjectsTemplate
+export type ObjIDsT = Uint32Array
+export const ObjIDsType: TypedArrayConstructor<number, ObjIDsT> = Uint32Array
+
 export type InfluenceGroup = MultiObjectsInfluencesGroupsDefault
 export const InfluenceGroupTemplate = MultiObjectsInfluencesGroupsDefaultTemplate
 export type ObjectsInfluencesGrouped = MultiObjectsGrouped<Objects, InfluenceGroup>
+
+export type SurfaceIndividualTextureLocationsGroupsT = surfaces.texturing.SurfaceIndividualTextureLocationsGroupDefault
 
 export type SurfaceObjectsTextureLocationsGroupsT = surfaces.texturing.SurfaceObjectsTextureLocationsGroupsDefault
 export type ObjectsSurfaceObjectsTextureLocationsGrouped = MultiObjectsGrouped<Objects, SurfaceObjectsTextureLocationsGroupsT>
 
 export const SurfaceObjectsTextureLocationsGroupsTemplate: SurfaceObjectsTextureLocationsGroupsT = surfaces.texturing.SurfaceObjectsTextureLocationsGroupsDefaultTemplate
+
+export type SurfaceIndividualTextureLocationT = textures.TextureLocation
+export type SurfaceObjectsTextureLocationsT = textures.TextureLocation
+export type SurfaceCombinedTextureLocationT = textures.TextureLocation
+
+export const SurfaceIndividualTextureLocationsGroupsField = ():
+    MultiObjectsGroupsMapped<SurfaceIndividualTextureLocationsGroupsT, GroupWithField<fields.Field<SurfaceIndividualTextureLocationT>>> =>
+    mapGroups(
+        surfaces.texturing.SurfaceIndividualTextureLocationsGroupDefaultTemplate,
+        () => ({
+            [GroupFieldKey]: textures.defaultTextureLocationField
+        })
+    )
+
+export const SurfaceObjectsTextureLocationsGroupsField = (multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>):
+    MultiObjectsGroupsMapped<SurfaceObjectsTextureLocationsGroupsT, GroupWithField<fields.fields.MultiObjectsField<SurfaceObjectsTextureLocationsT, Objects, ObjIDsT>>> =>
+    mapGroups(
+        SurfaceObjectsTextureLocationsGroupsTemplate,
+        () => ({
+            [GroupFieldKey]: new MultiObjectsField(textures.defaultTextureLocationField, multiObjectsIDs)
+        })
+    )
+
+export const SurfaceTextureLocationsGroupsFields = (multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>):
+    ReturnType<typeof SurfaceIndividualTextureLocationsGroupsField> &
+    ReturnType<typeof SurfaceObjectsTextureLocationsGroupsField> =>
+    mergeObjects(<any[]>[
+        SurfaceIndividualTextureLocationsGroupsField(),
+        SurfaceObjectsTextureLocationsGroupsField(multiObjectsIDs),
+    ])
 
 export type SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsT = 
     MultiObjectsGroupsKindsTemplateMapped<
@@ -30,9 +67,6 @@ export const SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsTemplate: Surf
     [surfaces.texturing.SurfaceObjectsTextureLocationsGroupKindKey]: SurfaceObjectsTextureLocationsGroupsTemplate,
     [surfaces.texturing.SurfaceTextureLocationsGroupKindKey]: SurfaceObjectsTextureLocationsGroupsTemplate
 }
-
-export type SurfaceObjectsTextureLocationsT = textures.TextureLocation
-export type SurfaceCombinedTextureLocationT = textures.TextureLocation
 
 export type SurfaceUVUnwrappingGroupT = surfaces.UVunwrapping.SurfaceUVUnwrappingGroupsDefault
 export const SurfaceUVUnwrappingGroupTemplate: SurfaceUVUnwrappingGroupT = surfaces.UVunwrapping.SurfaceUVUnwrappingGroupsDefaultTemplate
@@ -267,40 +301,6 @@ export type SampleProcessingContext_MultiObjects =
         InfluenceGroup,
         ObjectsInfluencesGrouped
     > &
-    MultiObjectsProcessingContext<
-        Objects,
-        SurfaceObjectsTextureLocationsGroupsT,
-        ObjectsSurfaceObjectsTextureLocationsGrouped,
-        surfaces.texturing.SurfaceObjectsTextureLocationsGroupKinds
-    > &
-    MultiObjectsProcessingContext<
-        Objects,
-        SurfaceObjectsTextureLocationsGroupsT,
-        ObjectsSurfaceObjectsTextureLocationsGrouped,
-        surfaces.texturing.SurfaceTextureLocationsGroupKinds
-    > &
-    MultiObjectsProcessingContext<
-        Objects,
-        OtherInterpolatingGroupsT,
-        ObjectsOtherInterpolatingGrouped,
-        OtherInterpolatingGroupsKindsT
-    > &
-    MultiObjectsProcessingContext<
-        Objects,
-        Volume_Sample_PreservedGroupsT,
-        MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
-        fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
-    > &
-    {}
-
-
-export type SampleProcessingContext_MultiObjects_Fields =
-    SampleProcessingContext_MultiObjects &
-    MultiObjectsInfluencesProcessingContext<
-        Objects,
-        InfluenceGroup,
-        ObjectsInfluencesGrouped
-    > &
     MultiObjectsWithGroupFieldsProcessingContext<
         Objects,
         SurfaceObjectsTextureLocationsGroupsT,
@@ -322,12 +322,25 @@ export type SampleProcessingContext_MultiObjects_Fields =
         OtherInterpolatingGroupsKindsT,
         OtherInterpolatingValuesT
     > &
+    MultiObjectsProcessingContext<
+        Objects,
+        Volume_Sample_PreservedGroupsT,
+        MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
+        fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
+    > &
     {}
 
 export const SampleProcessingContext_MultiObjects_Template: SampleProcessingContext_MultiObjects = {
     ...MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate,
+    ...fields.MultiObjectsInfluencesGroupsDefaultField(undefined!),
 
     ...SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsTemplate,
+    
+    ...SurfaceTextureLocationsGroupsFields(undefined!),
+
+    // ...SurfaceObjectsTextureLocationsGroupsField(undefined!),
+
+    // ...SurfaceIndividualTextureLocationsGroupsField(),
 
     ...OtherInterpolatingGroupsKindsMappedGroupsTemplate,
 
@@ -590,6 +603,7 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
             ObjectsInfluencesGrouped,
             SurfaceObjectsTextureLocationsGroupsT,
             MultiObjectsGrouped<Objects, SurfaceObjectsTextureLocationsGroupsT>,
+            SurfaceObjectsTextureLocationsT,
             SurfaceObjectsTexturesGroupsT,
             ObjectsSurfaceObjectsTexturesGrouped,
             SampleProcessingContextT

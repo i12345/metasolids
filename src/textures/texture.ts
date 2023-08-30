@@ -1,6 +1,6 @@
 import { Vec2 } from "playcanvas-extended";
 import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedGrouped, MultiObjectsTemplate } from "../paradigm/trees/index.js";
-import { FieldPoint, SampleDomain, SamplingContext } from "../fields/index.js";
+import { FieldPoint, SampleDomain, SamplingContext, fields } from "../fields/index.js";
 
 export type TextureUV = Vec2
 
@@ -12,6 +12,10 @@ export type TextureLocation = {
 }
 
 export type TextureSample = FieldPoint
+
+export const defaultTextureLocationField = new fields.FieldsField<TextureLocation>({
+    uv: fields.Vec2Field.instance
+})
 
 export interface TextureSamplingContext
     <Location extends TextureLocation = TextureLocation> extends

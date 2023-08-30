@@ -1,3 +1,4 @@
+import { MultiObjectsWithGroupFieldsProcessingContext } from "../../fields/processing.js";
 import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample } from "../../textures/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
@@ -104,21 +105,24 @@ export type SurfaceSampleProcessingContextWithIndividualTextureLocations<
 export type SurfaceSampleProcessingContextWithObjectsTextureLocations<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationT extends TextureLocation = TextureLocation,
         ObjectsGrouped extends
             MultiObjectsGrouped<Objects, ObjectsTextureLocationGroups> =
             MultiObjectsGrouped<Objects, ObjectsTextureLocationGroups>
     > =
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
         Objects,
         ObjectsTextureLocationGroups,
         ObjectsGrouped,
-        SurfaceObjectsTextureLocationsGroupKinds
+        SurfaceObjectsTextureLocationsGroupKinds,
+        TextureLocationT
     > &
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
         Objects,
         ObjectsTextureLocationGroups,
         ObjectsGrouped,
-        SurfaceTextureLocationsGroupKinds
+        SurfaceTextureLocationsGroupKinds,
+        TextureLocationT
     >
 
 export type SurfaceWithIndividualTextures<

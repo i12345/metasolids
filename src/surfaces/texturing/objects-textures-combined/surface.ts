@@ -34,11 +34,13 @@ export type SurfaceSampleProcessingContextForSurfaceWithObjectsTexturesCombinedU
         ObjectsValueTextureLocationsGrouped extends
             MultiObjectsGrouped<Objects, ValueTextureLocationGroup> =
             MultiObjectsGrouped<Objects, ValueTextureLocationGroup>,
+        ValueTextureLocationT extends TextureLocation = TextureLocation,
     > =
     MultiObjectsInfluencesProcessingContext<Objects, InfluenceGroup, ObjectsInfluencesGrouped> &
     SurfaceSampleProcessingContextWithObjectsTextureLocations<
             Objects,
             ValueTextureLocationGroup,
+            ValueTextureLocationT,
             ObjectsValueTextureLocationsGrouped
         >
 
@@ -156,6 +158,7 @@ export type SurfaceProcessingContextWithObjectsTexturesCombinedUsingSurfaceUVUnw
         ObjectsValueTextureLocationsGrouped extends
             MultiObjectsGrouped<Objects, ValueTextureLocationGroup> =
             MultiObjectsGrouped<Objects, ValueTextureLocationGroup>,
+        ValueTextureLocationT extends TextureLocation = TextureLocation,
         ValueTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsValueTexturesGrouped extends
             MultiObjectsGrouped<Objects, ValueTextureGroups> =
@@ -166,14 +169,16 @@ export type SurfaceProcessingContextWithObjectsTexturesCombinedUsingSurfaceUVUnw
                     InfluenceGroup,
                     ObjectsInfluencesGrouped,
                     ValueTextureLocationGroup,
-                    ObjectsValueTextureLocationsGrouped
+                    ObjectsValueTextureLocationsGrouped,
+                    ValueTextureLocationT
                 > =
             SurfaceSampleProcessingContextForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
                     Objects,
                     InfluenceGroup,
                     ObjectsInfluencesGrouped,
                     ValueTextureLocationGroup,
-                    ObjectsValueTextureLocationsGrouped
+                    ObjectsValueTextureLocationsGrouped,
+                    ValueTextureLocationT
                 >
     > =
     SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations<
@@ -234,6 +239,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             ObjectsInfluencesGrouped,
             ValueTextureLocationGroup,
             ObjectsValueTextureLocationsGrouped,
+            ValueTextureLocationT,
             ValueTextureGroups,
             ObjectsValueTexturesGrouped
         >
@@ -254,6 +260,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             ObjectsInfluencesGrouped,
             ValueTextureLocationGroup,
             ObjectsValueTextureLocationsGrouped,
+            ValueTextureLocationT,
             ValueTextureGroups,
             ObjectsValueTexturesGrouped
         >) {
@@ -320,6 +327,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
                     ObjectsInfluencesGrouped,
                     ValueTextureLocationGroup,
                     ObjectsValueTextureLocationsGrouped,
+                    ValueTextureLocationT,
                     ValueTextureGroups,
                     ObjectsValueTexturesGrouped
                 >

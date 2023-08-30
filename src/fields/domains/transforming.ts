@@ -1122,7 +1122,7 @@ export abstract class TransformingSampleDomain<
                 InnerLocationVector,
                 InnerSampleVector,
                 InnerVectorContext
-            >(this.inner, innerContext)
+            >(this.inner, innerContext, outerContext[MultiObjectsIDsKey])
         
         const context = { outer: outerContext, inner: innerContext }
         
