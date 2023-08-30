@@ -72,7 +72,7 @@ describe(fullname(VolumeWithSurfacesTriangleRayCollider), () => {
     cases.forEach(({ mesh, ray, t }) => it("", () => {
         const surface: Surface = {
             mesh: mesh as MeshDataWithNormals,
-            samples: [],
+            samples: undefined!,
             isClosed: false,
         }
 
