@@ -1,7 +1,7 @@
-import { Field, MultiObjectsWithGroupFieldsProcessingContext } from "../../../fields/index.js";
+import { Field, MultiObjectsFieldPointElement, MultiObjectsWithGroupFieldsProcessingContext } from "../../../fields/index.js";
 import { ScalarField, MultiObjectsField } from "../../../fields/fields/index.js";
 import { MultiObjectsInfluences, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupKindsTemplate } from "../../../fields/multi-objects.js";
-import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
+import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { Texture, TextureLocation } from "../../../textures/texture.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { SurfaceSample } from "../../surface.js";
@@ -31,12 +31,15 @@ export type SurfaceSampleProcessingContextWithInfluences<
             InfluencesGroup,
             MultiObjectsGrouped<Objects, InfluencesGroup>,
             MultiObjectsInfluencesGroupKinds,
-            MultiObjectsInfluences<Objects>//,
-            // MultiObjectsField<Objects, ObjIDsT, MultiObjectsInfluences<Objects>>
+            number
         > &
     SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
         InfluencesGroup,
-        MultiObjectsInfluencesGroupKinds
+        MultiObjectsInfluencesGroupKinds,
+        MultiObjectsInfluences<Objects>,
+        MultiObjectsFieldPointElement<number>,
+        number,
+        MultiObjectsField<number, Objects>
     >
 
 export type SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
@@ -98,6 +101,9 @@ export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
             InfluencesGroup,
             MultiObjectsInfluencesGroupKinds,
             MultiObjectsInfluences<Objects>,
+            MultiObjectsFieldPointElement<number>,
+            number,
+            MultiObjectsField<number, Objects>,
             MultiObjectsGroupsMapped<
                     InfluencesGroup,
                     MultiObjectsInfluences<Objects>

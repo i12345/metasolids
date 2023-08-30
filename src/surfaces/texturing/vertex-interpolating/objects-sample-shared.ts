@@ -328,8 +328,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                     ObjectsInterpolatingGrouped,
                     InterpolatingGroupKinds,
                     Texture<TextureLocation, InterpolatingValue>,
-                    InterpolatingValue,
-                    Field<InterpolatingValue>
+                    InterpolatingValue
                 >(
                     ///@ts-ignore
                     surface,
@@ -345,7 +344,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 const objectPath = [...interpolatingGroup.path, ...objectRelativePath]
                 const values = extract<FieldPointVector<InterpolatingValue, InterpolatingContainer>>(surface.samples, objectPath)
 
-                const texture = new VertexInterpolatingTexture<TextureLocation, InterpolatingValue, InterpolatingContainer>(values, UVs, surface.mesh.triangles, interpolatingGroup.field)
+                const texture = new VertexInterpolatingTexture<TextureLocation, InterpolatingValue, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field)
                 intract(surface, objectPath, texture)
             }
         }

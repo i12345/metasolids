@@ -1,7 +1,8 @@
-import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsGroupsProcessingContext } from "../paradigm/trees/index.js";
+import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped } from "../paradigm/trees/index.js";
 import { Processor } from "../paradigm/processing/processor.js";
 import { onlyOne } from "../utils/index.js";
 import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
+import { MultiObjectsWithGroupFieldsProcessingContext } from "./processing.js";
 
 export type MultiObjectsFieldPoint<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -73,11 +74,12 @@ export type MultiObjectsInfluencesProcessingContext<
             MultiObjectsGrouped<Objects, InfluenceGroups> = 
             MultiObjectsGrouped<Objects, InfluenceGroups>
     > =
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
             Objects,
             InfluenceGroups,
             ObjectsGrouped,
-            MultiObjectsInfluencesGroupKinds
+            MultiObjectsInfluencesGroupKinds,
+            number
         >
 
 export class MultiObjectsInfluencesNormalizingProcessor<

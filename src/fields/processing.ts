@@ -1,6 +1,8 @@
-import { MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds } from "../paradigm/trees/index.js";
+import { MultiObjectsGrouped, MultiObjectsGroupedObjectsKey, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds } from "../paradigm/trees/index.js";
 import { Field } from "./field.js";
+import { MultiObjectsField } from "./fields/index.js";
 import { FieldPoint } from "./point.js";
+import { MultiObjectsFieldPointElement } from "./type.js";
 
 export const GroupFieldKey = Symbol("field")
 
@@ -13,8 +15,12 @@ export type MultiObjectsGroupsWithFieldsProcessingContext<
         GroupKinds extends
             MultiObjectsGroupsKindsTemplate =
             MultiObjectsGroupsKindsTemplate,
-        T extends FieldPoint = FieldPoint,
-        FieldT extends Field<T> = Field<T>,
+        Point extends FieldPoint = FieldPoint,
+        ElementTypePoint extends FieldPoint = Point,
+        FuseModePoint extends FieldPoint = Point,
+        FieldT extends
+            Field<Point, ElementTypePoint, FuseModePoint> =
+            Field<Point, ElementTypePoint, FuseModePoint>,
     > =
     MultiObjectsGroupsProcessingContext<Groups, GroupKinds> &
     MultiObjectsGroupsMapped<Groups, GroupWithField<FieldT>>
@@ -25,21 +31,31 @@ export type MultiObjectsWithGroupFieldsProcessingContext<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsGrouped extends MultiObjectsGrouped<Objects, Groups> = MultiObjectsGrouped<Objects, Groups>,
         GroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
-        T extends FieldPoint = FieldPoint,
-        FieldT extends Field<T> = Field<T>,
+        Point extends FieldPoint = FieldPoint
     > =
     MultiObjectsProcessingContext<Objects, Groups, ObjectsGrouped, GroupKinds> &
-    MultiObjectsGroupsWithFieldsProcessingContext<Groups, GroupKinds, T, FieldT>
+    MultiObjectsGroupsWithFieldsProcessingContext<
+            Groups,
+            GroupKinds,
+            MultiObjectsMapped<Objects, Point>,
+            MultiObjectsFieldPointElement<Point>,
+            Point,
+            MultiObjectsField<Point, Objects>
+        >
 
 export function* groupKindsWithFields<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         GroupKinds extends
             MultiObjectsGroupsKindsTemplate =
             MultiObjectsGroupsKindsTemplate,
-        T extends FieldPoint = FieldPoint,
-        FieldT extends Field<T> = Field<T>,
+        Point extends FieldPoint = FieldPoint,
+        ElementTypePoint extends FieldPoint = Point,
+        FuseModePoint extends FieldPoint = Point,
+        FieldT extends
+            Field<Point, ElementTypePoint, FuseModePoint> =
+            Field<Point, ElementTypePoint, FuseModePoint>,
     >(
-        context: MultiObjectsGroupsWithFieldsProcessingContext<Groups, GroupKinds, T, FieldT>,
+        context: MultiObjectsGroupsWithFieldsProcessingContext<Groups, GroupKinds, Point, ElementTypePoint, FuseModePoint, FieldT>,
         kindsTemplate?: GroupKinds,
         groupsFilter?: Groups
     ) {
@@ -63,13 +79,14 @@ export function* groupKindObjectsGroupedWithFields<
             MultiObjectsGroupsKindsTemplate,
         T = any,
         Point extends FieldPoint = FieldPoint,
-        FieldT extends Field<Point> = Field<Point>,
     >(
         result: MultiObjectsProcessingResult<Objects, Groups, T>,
-        context: MultiObjectsWithGroupFieldsProcessingContext<Objects, Groups, ObjectsGrouped, GroupKinds, Point, FieldT>,
+        context: MultiObjectsWithGroupFieldsProcessingContext<Objects, Groups, ObjectsGrouped, GroupKinds, Point>,
         kindsTemplate: GroupKinds,
         groupsFilter?: Groups
     ) {
+    type FieldT = MultiObjectsField<Point, Objects>
+    
     for (const groupedObjects of groupKindObjectsGrouped(result, context, kindsTemplate, groupsFilter)) {
         yield {
             ...groupedObjects,

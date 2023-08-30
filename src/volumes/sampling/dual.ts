@@ -1,4 +1,5 @@
 import { OctTreeWithDualGroups, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
+import { WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { VolumeProcessing } from "../processor.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js";
@@ -81,6 +82,7 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
             VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
             VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
         VolumeProcessingContextT extends
+            WithMultiObjectsIDs &
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,
@@ -93,6 +95,7 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
                 > =
+            WithMultiObjectsIDs &
             VolumeProcessingContextWithSampling<
                     IndicesT,
                     OctTreeWithDualGroups,

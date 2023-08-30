@@ -1,4 +1,4 @@
-import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
+import { MultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { FieldPoint } from "../point.js";
@@ -45,7 +45,8 @@ export function makeVectorSamplingContext<
             >
     >(
         domain: SampleDomain<Location, Sample, SingularContext>,
-        context: Context
+        context: Context,
+        multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
     const vectorSampleFunction = new FieldPointVectorFunction <
             SampleDomain<Location, Sample, Context>,
@@ -65,6 +66,7 @@ export function makeVectorSamplingContext<
         )
     
     context[VectorSampleFunction] = <any>vectorSampleFunction.call.bind(vectorSampleFunction)
+    context[MultiObjectsIDsKey] = multiObjectsIDs
 }
 
 export type VectorSamplingContext<

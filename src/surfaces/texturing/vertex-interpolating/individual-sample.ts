@@ -46,13 +46,21 @@ export type SurfaceSampleProcessingContextWithIndividualInterpolatingValuesUsing
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroupsKind extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
-        InterpolatingValue extends FieldPoint = FieldPoint
+        InterpolatingValue extends FieldPoint = FieldPoint,
+        InterpolatingValueElementType extends FieldPoint = InterpolatingValue,
+        InterpolatingValueFuseMode extends FieldPoint = InterpolatingValue,
+        InterpolatingValueField extends
+            Field<InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode> =
+            Field<InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode>,
     > =
     SurfaceSampleProcessingContextWithIndividualTextureLocations<SurfaceTextureLocationGroup> &
     MultiObjectsGroupsWithFieldsProcessingContext<
         InterpolatingGroups,
         InterpolatingGroupsKind,
-        InterpolatingValue
+        InterpolatingValue,
+        InterpolatingValueElementType,
+        InterpolatingValueFuseMode,
+        InterpolatingValueField
     >
 
 export type SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
@@ -118,18 +126,29 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
         InterpolatingValue extends FieldPoint = FieldPoint,
+        InterpolatingValueElementType extends FieldPoint = InterpolatingValue,
+        InterpolatingValueFuseMode extends FieldPoint = InterpolatingValue,
+        InterpolatingValueField extends
+            Field<InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode> =
+            Field<InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode>,
         SampleProcessingContextT extends
             SurfaceSampleProcessingContextWithIndividualInterpolatingValuesUsingSampleTextureLocations<
                 SurfaceTextureLocationGroup,
                 InterpolatingGroups,
                 InterpolatingGroupKinds,
-                InterpolatingValue
+                InterpolatingValue,
+                InterpolatingValueElementType,
+                InterpolatingValueFuseMode,
+                InterpolatingValueField
             > =
             SurfaceSampleProcessingContextWithIndividualInterpolatingValuesUsingSampleTextureLocations<
                 SurfaceTextureLocationGroup,
                 InterpolatingGroups,
                 InterpolatingGroupKinds,
-                InterpolatingValue
+                InterpolatingValue,
+                InterpolatingValueElementType,
+                InterpolatingValueFuseMode,
+                InterpolatingValueField
             >
     > =
     SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations<
@@ -140,7 +159,10 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
     MultiObjectsGroupsWithFieldsProcessingContext<
         InterpolatingGroups,
         InterpolatingGroupKinds,
-        InterpolatingValue
+        InterpolatingValue,
+        InterpolatingValueElementType,
+        InterpolatingValueFuseMode,
+        InterpolatingValueField
     >
 
 export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLocationsProcessor<
@@ -149,6 +171,11 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
         InterpolatingValue extends FieldPoint = FieldPoint,
+        InterpolatingValueElementType extends FieldPoint = InterpolatingValue,
+        InterpolatingValueFuseMode extends FieldPoint = InterpolatingValue,
+        InterpolatingValueField extends
+            Field<InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode> =
+            Field<InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode>,
         InterpolatingValuesGrouped extends
             MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue> =
             MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue>,
@@ -170,13 +197,19 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                 SurfaceTextureLocationGroup,
                 InterpolatingGroups,
                 InterpolatingGroupKinds,
-                InterpolatingValue
+                InterpolatingValue,
+                InterpolatingValueElementType,
+                InterpolatingValueFuseMode,
+                InterpolatingValueField
             > =
             SurfaceSampleProcessingContextWithIndividualInterpolatingValuesUsingSampleTextureLocations<
                 SurfaceTextureLocationGroup,
                 InterpolatingGroups,
                 InterpolatingGroupKinds,
-                InterpolatingValue
+                InterpolatingValue,
+                InterpolatingValueElementType,
+                InterpolatingValueFuseMode,
+                InterpolatingValueField
             >
     > implements
     Processor<
@@ -193,6 +226,9 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
                     InterpolatingValue,
+                    InterpolatingValueElementType,
+                    InterpolatingValueFuseMode,
+                    InterpolatingValueField,
                     SurfaceSampleProcessingContextT
                 >
         > {
@@ -212,6 +248,9 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
             InterpolatingGroups,
             InterpolatingGroupKinds,
             InterpolatingValue,
+            InterpolatingValueElementType,
+            InterpolatingValueFuseMode,
+            InterpolatingValueField,
             SurfaceSampleProcessingContextT
         >) {
         const { group: surfaceTextureLocationGroup } =
@@ -255,6 +294,9 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
                     InterpolatingValue,
+                    InterpolatingValueElementType,
+                    InterpolatingValueFuseMode,
+                    InterpolatingValueField,
                     SurfaceSampleProcessingContextT
                 >
         ): void {
@@ -272,7 +314,9 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
                     InterpolatingValue,
-                    Field<InterpolatingValue>
+                    InterpolatingValueElementType,
+                    InterpolatingValueFuseMode,
+                    InterpolatingValueField
                 >(
                     context.samples,
                     this.interpolatingGroupsKinds,
@@ -282,8 +326,8 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
         type InterpolatingContainer = FieldPointVectorContainerStatic<NumberTypedArray>
         
         for (const { group: interpolatingGroup } of interpolatingGroups) {
-            const values = interpolatingGroup.get<FieldPointVector<InterpolatingValue, InterpolatingContainer>>(surface.samples)
-            const texture = new VertexInterpolatingTexture<TextureLocation, InterpolatingValue, InterpolatingContainer>(values, UVs, surface.mesh.triangles, interpolatingGroup.field)
+            const values = interpolatingGroup.get<FieldPointVector<InterpolatingValueElementType, InterpolatingContainer>>(surface.samples)
+            const texture = new VertexInterpolatingTexture<TextureLocation, InterpolatingValueElementType, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field)
             interpolatingGroup.set(surface, texture)
         }
     }

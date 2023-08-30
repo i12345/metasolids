@@ -1,5 +1,5 @@
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped } from "../paradigm/trees/index.js";
-import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds } from "../fields/index.js"
+import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext } from "../fields/index.js"
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { octtree } from "../paradigm/index.js";
@@ -243,7 +243,8 @@ export type SampleProcessingContextT = {} &
             Objects,
             OtherInterpolatingGroupsT,
             ObjectsOtherInterpolatingGrouped,
-            OtherInterpolatingGroupsKindsT
+            OtherInterpolatingGroupsKindsT,
+            OtherInterpolatingValuesT
         > &
     MultiObjectsProcessingContext<
             Objects,
@@ -251,6 +252,13 @@ export type SampleProcessingContextT = {} &
             MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
             fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
         > &
+    fields.MultiObjectsWithGroupFieldsProcessingContext<
+            Objects,
+            InfluenceGroup,
+            ObjectsInfluencesGrouped,
+            fields.MultiObjectsInfluencesGroupKinds,
+            number
+        >
     {}
 
 export type SampleProcessingContext_MultiObjects =
@@ -282,6 +290,37 @@ export type SampleProcessingContext_MultiObjects =
         Volume_Sample_PreservedGroupsT,
         MultiObjectsGrouped<Objects, Volume_Sample_PreservedGroupsT>,
         fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
+    > &
+    {}
+
+
+export type SampleProcessingContext_MultiObjects_Fields =
+    SampleProcessingContext_MultiObjects &
+    MultiObjectsInfluencesProcessingContext<
+        Objects,
+        InfluenceGroup,
+        ObjectsInfluencesGrouped
+    > &
+    MultiObjectsWithGroupFieldsProcessingContext<
+        Objects,
+        SurfaceObjectsTextureLocationsGroupsT,
+        ObjectsSurfaceObjectsTextureLocationsGrouped,
+        surfaces.texturing.SurfaceObjectsTextureLocationsGroupKinds,
+        SurfaceObjectsTextureLocationsT
+    > &
+    MultiObjectsWithGroupFieldsProcessingContext<
+        Objects,
+        SurfaceObjectsTextureLocationsGroupsT,
+        ObjectsSurfaceObjectsTextureLocationsGrouped,
+        surfaces.texturing.SurfaceTextureLocationsGroupKinds,
+        SurfaceObjectsTextureLocationsT
+    > &
+    MultiObjectsWithGroupFieldsProcessingContext<
+        Objects,
+        OtherInterpolatingGroupsT,
+        ObjectsOtherInterpolatingGrouped,
+        OtherInterpolatingGroupsKindsT,
+        OtherInterpolatingValuesT
     > &
     {}
 
@@ -533,6 +572,9 @@ export type SurfaceInstanceT =
     > &
     {}
 
+let a!: SampleProcessingContextT
+a[fields.MultiObjectsInfluencesGroupsDefaultKey]
+
 export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<SampleProcessingContextT> &
     // surfaces.SurfaceProcessingContextWithSurfaceArea<SampleProcessingContextT> (doesn't exist) &
     surfaces.texturing.SurfaceProcessingContextWithInfluencesTextureUsingSurfaceUVUnwrapping<
@@ -557,6 +599,7 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
             Objects,
             OtherInterpolatingGroupsT,
             ObjectsOtherInterpolatingGrouped,
+            OtherInterpolatingValuesT,
             OtherInterpolatingGroupsKindsT,
             SampleProcessingContextT
         > &

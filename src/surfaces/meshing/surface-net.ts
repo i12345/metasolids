@@ -368,7 +368,7 @@ export class SurfaceNetMeshingProcessor<
             >
 
             const vectorContext = <VectorContextT>volumeSamplingContext
-            makeVectorSamplingContext(item[VolumeKey], vectorContext)
+            // makeVectorSamplingContext(item[VolumeKey], vectorContext)
             const samples = vectorContext[VectorSampleFunction](item[VolumeKey], locations, vectorContext)
 
             const surface: Surface<IndicesT, VolumeSampleT> = {

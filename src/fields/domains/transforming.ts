@@ -747,7 +747,7 @@ export abstract class TransformingSampleDomain<
                 InnerLocationVector,
                 InnerSampleVector,
                 InnerVectorContext
-            >(this.inner, context.inner)
+            >(this.inner, context.inner, outerContext[MultiObjectsIDsKey])
                 
         const transformLocationVectorFunction = new FieldPointVectorFunction<
                 {
@@ -878,7 +878,7 @@ export abstract class TransformingSampleDomain<
                 InnerLocationVector,
                 InnerSampleVector,
                 InnerVectorContext
-            >(this.inner, context.inner)
+            >(this.inner, context.inner, outerContext[MultiObjectsIDsKey])
         
         const innerLocations = contextPrivate[TransformingTransformedLocationsKey].get(this)!
 

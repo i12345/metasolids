@@ -2,10 +2,11 @@ import { Entity, GraphNode } from "playcanvas-extended";
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js";
 import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf } from "../paradigm/trees/index.js";
-import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template } from "./types.js";
+import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template, SampleProcessingContext_MultiObjects_Fields, OtherInterpolatingGroupsKindsKey } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
 import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 import { ComponentSystem, SYSTEM_ID } from "./system.js";
+import { defaultVolumeSampleField } from "../volumes/volume.js";
 
 export class Component<ID = string> extends processing.Component<
         VolumeProcessingT,
@@ -37,6 +38,13 @@ export class Component<ID = string> extends processing.Component<
 
         const map_volume_component = new Map<VolumeT, Component<ID>>()
 
+        const volumeSampleField = fields.fields.FieldsField.merge<SampleT>(
+            <fields.fields.FieldsField<SampleT>>defaultVolumeSampleField,
+            new fields.fields.FieldsField<SampleT>({
+                [surfaces.texturing.SurfaceObjectsTextureLocationsGroupsDefaultKey]: undefined!
+            })
+        )
+
         function compositeVolume(node: GraphNode, require_multiObjects = false): VolumeT | undefined {
             const entity = node as Entity
             const component = entity?.findComponent(SYSTEM_ID) as Component<ID>
@@ -50,11 +58,11 @@ export class Component<ID = string> extends processing.Component<
                     .filter(child => !child.name.startsWith("$$"))
                     .map(child => [
                         child.name,
-                        new volumes.volumes.TransformVolumeWithBoundingBox(
+                        new volumes.volumes.TransformVolume(
                             compositeVolume(child)! as volumes.volumes.VolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeDomainSamplingContextT>,
                             child.getLocalTransform()
                         )
-                    ] as [string, volumes.volumes.TransformVolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeDomainSamplingContextT>])
+                    ] as [string, volumes.volumes.TransformVolume])
                     .filter(([, { inner }]) => inner !== undefined)
             ] as [string, VolumeT][]
 
@@ -73,6 +81,7 @@ export class Component<ID = string> extends processing.Component<
                             groupKindsTemplate: Volume_Sample_PreservedGroupsKindsTemplate
                         }
                     },
+                    volumeSampleField,
                     fields.MultiObjectsInfluencesGroupsDefaultTemplate
                 ) as any as VolumeT
             }
@@ -139,21 +148,25 @@ export class Component<ID = string> extends processing.Component<
             mergeGroupsInplace(context, groups)
         }
 
-        const sample_multiObjectsContext = makeClone(SampleProcessingContext_MultiObjects_Template)
+        const sample_multiObjectsContext_fields = <SampleProcessingContext_MultiObjects_Fields>makeClone(SampleProcessingContext_MultiObjects_Template)
         const surface_multiObjectsContext = makeClone(SurfaceProcessingContext_MultiObjects_Template)
         const volume_multiObjectsContext = makeClone(VolumeProcessingContext_MultiObjects_Template)
         const volume_sampling_multiObjectsContext = makeClone(VolumeSamplingContext_MultiObjects_Template)
         const volume_domain_sampling_multiObjectsContext = makeClone(VolumeDomainSamplingContext_MultiObjects_Template)
 
-        multiObjectsContext_insertGroups(sample_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
+        multiObjectsContext_insertGroups(sample_multiObjectsContext_fields, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
         multiObjectsContext_insertGroups(surface_multiObjectsContext, OtherInterpolatingGroupsKindsTemplate, mergeGroups(...(this.interpolatingGroups ?? [])))
 
-        multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext)
+        multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext_fields)
         multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.texturing.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
         multiObjectsContext_insertObjects(volume_multiObjectsContext)
 
+        sample_multiObjectsContext_fields[fields.MultiObjectsInfluencesGroupsDefaultKey] = {
+            [fields.GroupFieldKey]: new fields.fields.MultiObjectsField(fields.fields.ScalarField.instance, multiObjectsIDs)
+        }
+
         const sample_context: SampleProcessingContextT = {
-            ...sample_multiObjectsContext,
+            ...sample_multiObjectsContext_fields,
         }
 
         const surface_context: SurfaceProcessingContextT = {

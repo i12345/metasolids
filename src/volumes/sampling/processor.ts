@@ -1,13 +1,13 @@
 import { SubdivisionKey, OctTreeSubdividingProcessor, OctTreeSubdividingProcessingForSubdivisionProcessing, OctTreeSubdividingProcessingContextForSubdivisionProcessingContext } from "../../paradigm/octtree/processor.js"
 import { OctTreeSpace } from "../../paradigm/octtree/space.js"
-import { ArrayLikeTemplated, OctTreesTemplated } from "../../paradigm/octtree/templated.js"
+import { OctTreesTemplated } from "../../paradigm/octtree/templated.js"
 import { ProcessorInitialization, Processor } from "../../paradigm/processing/processor.js"
 import { EncapsulatingKey, WithEncapsulating, encapsulated } from "../../paradigm/trees/encapsulating.js"
-import { MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate_Leaf, groupPaths, MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
-import { OctTree, TypedArray, TypedArrayConstructor, isTypedArray } from "../../utils/index.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
+import { TypedArray, isTypedArray } from "../../utils/index.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js"
-import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroups, VolumeSamplingContextKey, SpaceKey, SamplingKey, SamplesKey, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from "./types.js"
+import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingContextKey, SpaceKey, SamplingKey, SamplesKey, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from "./types.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"
 import { VolumeKey } from "../processor.js"
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js"
@@ -15,7 +15,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic, ItemObjIDsKey, ItemO
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js"
 import { SampleDomainLocationFieldKey } from "../../fields/domain.js"
-import { FieldPoint, FieldPointMapped, field_point_map } from "../../fields/point.js"
+import { FieldPointMapped, field_point_map } from "../../fields/point.js"
 import { extract, intract } from "../../paradigm/trees/tree.js"
 import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js"
 import { FieldPointType } from "../../fields/type.js"
@@ -194,12 +194,13 @@ class VolumeDomainSamplingSubdivisionProcessor<
 
         const volume = item[EncapsulatingKey][VolumeKey]
         const samplingContext = <VectorContextT>context[VolumeSamplingContextKey]
-        const multiObjectsIDs = samplingContext[MultiObjectsIDsKey]
 
         const extraLocationParameters = item[EncapsulatingKey][SamplingKey].extraLocationParameters
 
+        const multiObjectsIDs = context[EncapsulatingKey][MultiObjectsIDsKey]
+
         if (!context[SpaceKey]) {
-            makeVectorSamplingContext(volume, samplingContext)
+            makeVectorSamplingContext(volume, samplingContext, multiObjectsIDs)
 
             volume.init(samplingContext)
 

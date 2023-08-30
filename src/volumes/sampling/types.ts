@@ -1,16 +1,14 @@
-import { Vec3 } from "playcanvas-extended"
-import { ExtraFields, FieldPoint, FieldPointMapped, FieldPointPrimitive } from "../../fields/index.js"
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../../fields/vectorized/point.js"
-import { ArrayLikeTemplated, OctTree, OctTreeSpace, OctTreesTemplated } from "../../paradigm/octtree/index.js"
-import { OctTreeSubdividingProcessing, OctTreeSubdividingProcessingContextForSubdivisionProcessingContext, OctTreeSubdivisionProcessing, OctTreeSubdivisionProcessingContext, OctTreeSubdivisionProcessor, SubdivisionKey } from "../../paradigm/octtree/processor.js"
+import { ExtraFields, FieldPointMapped } from "../../fields/index.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../../fields/vectorized/point.js"
+import { OctTreeSpace, OctTreesTemplated } from "../../paradigm/octtree/index.js"
+import { OctTreeSubdividingProcessing, OctTreeSubdividingProcessingContextForSubdivisionProcessingContext, OctTreeSubdivisionProcessing, OctTreeSubdivisionProcessingContext, OctTreeSubdivisionProcessor } from "../../paradigm/octtree/processor.js"
 import { EncapsulatingKey, WithEncapsulating } from "../../paradigm/trees/encapsulating.js"
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/multi-objects-groups.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/multi-objects-groups.js"
+import { WithMultiObjectsIDs } from "../../paradigm/trees/multi-objects.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
-import { RemoveEmptyStructs } from "../../utils/remove-empty-structs.js"
 import { VolumeProcessing, VolumeProcessingContext } from "../processor.js"
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"
-import { MultiObjectsIDsKey } from "../../paradigm/trees/multi-objects.js"
 
 export const SamplingKey = Symbol("volume.sampling")
 export const SpaceKey = Symbol("space")
@@ -62,8 +60,8 @@ export type VolumeSamplingSubdivisionSamplesOctTreesGrouped<VolumeSampleT extend
             VolumeSamplingSubdivisionSamplesLayersGrouped<VolumeSampleT>
         >
 
-let a!: VolumeSamplingSubdivisionSamplesOctTreesGrouped
-a[SamplesKey].alpha
+// let a!: VolumeSamplingSubdivisionSamplesOctTreesGrouped
+// a[SamplesKey].alpha
 
 export type VolumeSamplingSubdivisionProcessing<
             IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -310,8 +308,8 @@ export type VolumeSamplingSubdivisionProcessingContext<
             VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
             VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
         VolumeProcessingContextT extends
-            VolumeProcessingContext<VolumeSampleProcessingContextT> =
-            VolumeProcessingContext<VolumeSampleProcessingContextT>
+            VolumeProcessingContext<VolumeSampleProcessingContextT> & WithMultiObjectsIDs =
+            VolumeProcessingContext<VolumeSampleProcessingContextT> & WithMultiObjectsIDs
     > =
     WithEncapsulating<VolumeProcessingContextT> & {
         [SpaceKey]: OctTreeSpace<IndicesT>
@@ -413,6 +411,7 @@ export interface VolumeProcessingContextWithSampling<
                     // VolumeProcessingContextEncapsulatingT
                 >
     > extends
+    WithMultiObjectsIDs,
     VolumeProcessingContext<VolumeSampleProcessingContextT> {
     [SamplingKey]: /*RemoveEmptyStructs<*/Omit<
         OctTreeSubdividingProcessingContextForSubdivisionProcessingContext<

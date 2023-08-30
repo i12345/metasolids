@@ -360,7 +360,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
 
         const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
 
-        const locations_field = new MultiObjectsField<Objects, ObjIDsT, ValueTextureLocationT>(this.valueTextureLocationField, multiObjectsIDs)
+        const locations_field = new MultiObjectsField<ValueTextureLocationT, Objects, ObjIDsT>(this.valueTextureLocationField, multiObjectsIDs)
 
         const locations_original = valueTextureLocationGroup.get<ObjectLocationsVector>(surface.samples)
         const locations_UVunwrapped = field_point_vector_append_scattered_same<

@@ -38,6 +38,8 @@ export type FieldPointType<Point extends FieldPoint = FieldPoint> =
     } :
     never
 
+export type MultiObjectsFieldPointElement<Point extends FieldPoint = FieldPoint> = { [MultiObjectsGroupedObjectsKey]: Point }
+
 export function field_point_new<Point extends FieldPoint = FieldPoint>(type: FieldPointType<Point>): Point {
     if (type instanceof Function)
         return <Point>(new (<FieldPointType<FieldPointPrimitive>>type)())
