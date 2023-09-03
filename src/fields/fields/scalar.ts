@@ -23,9 +23,9 @@ export class ScalarField implements Field<number> {
     static wrap(x: number, range: [min: number, max: number]) {
         if (x >= range[0] && x < range[1])
             return x
-        
+
         const range_d = range[1] - range[0]
-        
+
         return range[0] + ((((x - range[0]) % range_d) + range_d) % range_d)
     }
 
@@ -40,9 +40,9 @@ export class ScalarField implements Field<number> {
                 y = x
                 x = tmp
             }
-            
+
             // x <= y
-            
+
             const directDistance = y - x
             const indirectDistance = (x - range[0]) + (range[1] - y)
 

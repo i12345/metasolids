@@ -68,7 +68,7 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
 
             let weightSum = 0
             const weights = new Float64Array(n)
-            
+
             const p_line = new Vec2()
             for (let i = 0; i < n; i++) {
                 const q_i = q[i]
@@ -109,7 +109,7 @@ export class ConvexPolygonInterpolationType<Point extends FieldPoint = FieldPoin
                     weights[i] / weightSum
                 )
             }
-            
+
             return result
         }
     }
@@ -149,12 +149,12 @@ function isConvexPolygon(polygon: Vec2[], center: Vec2): boolean {
         rA = new Vec2(),
         rB = new Vec2(),
         rC = new Vec2()
-    
+
     let t0AB_times_2: number,
         t0BC_times_2: number,
         tABC_times_2: number,
         t0AC_times_2: number
-    
+
     for (let i = 0; i < polygon.length; i++) {
         rA.sub2(polygon.at(i + 0)!, center)
         rB.sub2(polygon.at(i + 1)!, center)
@@ -171,20 +171,4 @@ function isConvexPolygon(polygon: Vec2[], center: Vec2): boolean {
     }
 
     return true
-
-    // let p0: Vec2, p1: Vec2, p2: Vec2
-    // const r0 = new Vec2(), r1 = new Vec2()
-    // let a0: number, a1: number, a$: number
-
-    // for (let i = 0; i < polygon.length; i++) {
-    //     p0 = polygon.at(i + 0)!
-    //     p1 = polygon.at(i + 1)!
-    //     p2 = polygon.at(i + 2)!
-    //     r0.sub2(p1, p0)
-    //     r1.sub2(p2, p1)
-    //     a0 = Math.atan2(r0.y, r0.x)
-    //     a1 = Math.atan2(r1.y, r1.x)
-        
-    //     a$ = (a0 < 0 && a1 > 0) ? (TwoPi + a1 - a0) : (a1 - a0)
-    // }
 }

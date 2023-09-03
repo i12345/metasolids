@@ -71,19 +71,19 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLoc
         InterpolatingValuesGrouped extends
         MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue> =
         MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue>,
-        SurfaceSampleT extends
-        SurfaceSampleWithIndividualInterpolatingValuesUsingSampleTextureLocations<
-            SurfaceTextureLocationGroup,
-            InterpolatingGroups,
-            InterpolatingValue,
-            InterpolatingValuesGrouped
-        > =
-        SurfaceSampleWithIndividualInterpolatingValuesUsingSampleTextureLocations<
-            SurfaceTextureLocationGroup,
-            InterpolatingGroups,
-            InterpolatingValue,
-            InterpolatingValuesGrouped
-        >
+        SurfaceSampleElementType extends
+            SurfaceSampleWithIndividualInterpolatingValuesUsingSampleTextureLocations<
+                SurfaceTextureLocationGroup,
+                InterpolatingGroups,
+                InterpolatingValue,
+                InterpolatingValuesGrouped
+            > =
+            SurfaceSampleWithIndividualInterpolatingValuesUsingSampleTextureLocations<
+                SurfaceTextureLocationGroup,
+                InterpolatingGroups,
+                InterpolatingValue,
+                InterpolatingValuesGrouped
+            >
     > =
     // Expression produces a union type that is too complex to represent
     // SurfaceWithIndividualTexturesUsingSampleTextureLocations<
@@ -113,7 +113,7 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLoc
     //         >,
     //     SurfaceSampleT
     // > =
-    Surface<IndicesT, SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleElementType> &
     TexturesTemplated<
             InterpolatingGroups,
             InterpolatingValue,
@@ -179,7 +179,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
         InterpolatingValuesGrouped extends
             MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue> =
             MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue>,
-        SurfaceSampleT extends
+        SurfaceSampleElementType extends
             SurfaceSampleWithIndividualInterpolatingValuesUsingSampleTextureLocations<
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
@@ -214,12 +214,12 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
     > implements
     Processor<
             SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
-                    IndicesT,        
+                    IndicesT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     InterpolatingValue,
                     InterpolatingValuesGrouped,
-                    SurfaceSampleT
+                    SurfaceSampleElementType
                 >,
             SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
                     SurfaceTextureLocationGroup,
@@ -266,7 +266,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )]
-        
+
         const connections = {
             inputs: [
                 ['samples', PROPERTYKEY_ALL, ...surfaceTextureLocationGroup.path],
@@ -287,7 +287,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     InterpolatingGroups,
                     InterpolatingValue,
                     InterpolatingValuesGrouped,
-                    SurfaceSampleT
+                    SurfaceSampleElementType
                 >,
             context: SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
                     SurfaceTextureLocationGroup,
@@ -306,7 +306,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     SurfaceIndividualTextureLocationsGroupKindsTemplate,
                     this.surfaceTextureLocationGroup
                 ))
-        
+
         const UVs = surfaceTextureLocationGroup.get<FieldPointVector<Vec2, NumberTypedArray>>(surface.samples)
 
         const interpolatingGroups =
@@ -324,10 +324,10 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                 )
 
         type InterpolatingContainer = FieldPointVectorContainerStatic<NumberTypedArray>
-        
+
         for (const { group: interpolatingGroup } of interpolatingGroups) {
             const values = interpolatingGroup.get<FieldPointVector<InterpolatingValueElementType, InterpolatingContainer>>(surface.samples)
-            const texture = new VertexInterpolatingTexture<TextureLocation, InterpolatingValueElementType, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field)
+            const texture = new VertexInterpolatingTexture<TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field)
             interpolatingGroup.set(surface, texture)
         }
     }

@@ -49,11 +49,11 @@ const format_channel_bits: { [format: number]: [number, number, number, number] 
 
 export function formatChannelBits(format: number, channels: ColorChannels): number {
     const channel_bits = format_channel_bits[format]
-    
+
     let sum = 0
     for (const channel of channels)
         sum += channel_bits[channel]
-    
+
     return sum
 }
 

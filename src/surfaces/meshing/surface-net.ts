@@ -22,17 +22,39 @@ import { SampleDomainLocationFieldKey } from "../../fields/domain.js";
 export class SurfaceNetMeshingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleT> =
-            Surface<IndicesT, VolumeSampleT>,
+            Surface<IndicesT, VolumeSampleElementType> =
+            Surface<IndicesT, VolumeSampleElementType>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
@@ -40,7 +62,11 @@ export class SurfaceNetMeshingProcessor<
             VolumeProcessingWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -49,7 +75,11 @@ export class SurfaceNetMeshingProcessor<
             VolumeProcessingWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -59,7 +89,11 @@ export class SurfaceNetMeshingProcessor<
             VolumeProcessingContextWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     SurfaceProcessingContextT
@@ -67,7 +101,11 @@ export class SurfaceNetMeshingProcessor<
             VolumeProcessingContextWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     SurfaceProcessingContextT
@@ -75,7 +113,11 @@ export class SurfaceNetMeshingProcessor<
     >
     implements VolumeProcessor<
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -105,7 +147,7 @@ export class SurfaceNetMeshingProcessor<
         const dual_cells_per_layer = dual_cells.vertices.layers.layers.map(vertices_layer => vertices_layer.length / 8)
         const vertex_buffer_lookup = new TypedArrayOctTree<number, Uint32Array>(Uint32Array, dual_cells_per_layer.map(layer_size => new Uint32Array(layer_size).fill(invalid_uint32)))
         const surfacePoints = sampling[SurfaceNetKey].cells.surfacePoints.layers
-        
+
         let max_number_vertices_prelim = 0
         for (let layer = 1; layer < dual_cells_per_layer.length; layer++) {
             const dual_cells_in_layer = dual_cells_per_layer[layer]
@@ -147,10 +189,10 @@ export class SurfaceNetMeshingProcessor<
             ): number {
             const existing = vertex_buffer_lookup.layers[dual_cell_layer][dual_cell_localIndex]
             if (existing !== invalid_uint32) return existing
-            
+
             const vertex = vertex_prelim_next++
             vertex_buffer_lookup.layers[dual_cell_layer][dual_cell_localIndex] = vertex
-            
+
             vertex_buffer_prelim[(3 * vertex) + 0] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0]
             vertex_buffer_prelim[(3 * vertex) + 1] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 1]
             vertex_buffer_prelim[(3 * vertex) + 2] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 2]
@@ -172,7 +214,7 @@ export class SurfaceNetMeshingProcessor<
          * this index is relative to {@link triangulation_start_vertex},
          * and negative values mirror so that -x = {@link polygon_points} - x
          * before adding the {@link triangulation_start_vertex}
-         * 
+         *
          * @returns vertex_prelim_index()
          */
         function vertexIndex(index: number) {
@@ -180,13 +222,13 @@ export class SurfaceNetMeshingProcessor<
                 index += vertices_count
             index += triangulation_start_vertex
             index %= vertices_count
-            
+
             const dual_cell_layer = polygon_vertices_references_layers[vertices_offset + index]
             const dual_cell_localIndex = polygon_vertices_references_localIndices[vertices_offset + index]
-            
+
             return vertex_prelim_index(dual_cell_layer, dual_cell_localIndex)
         }
-    
+
         for (let polygon_layer = 0; polygon_layer < surface_net.polygons.vertices.offsets.layers.length; polygon_layer++) {
             const polygon_triangulation_start = surface_net.polygons.triangulation_start.layers[polygon_layer]
             const polygon_vertices_offset = surface_net.polygons.vertices.offsets.layers[polygon_layer]
@@ -198,7 +240,7 @@ export class SurfaceNetMeshingProcessor<
             for (let polygon_localIndex = 0; polygon_localIndex < number_polygons; polygon_localIndex++) {
                 vertices_offset = polygon_vertices_offset[polygon_localIndex]
                 vertices_count = polygon_vertices_offset[polygon_localIndex + 1] - vertices_offset
-                
+
                 if (polygon_vertices_references_layers[vertices_offset] === invalid_layer)
                     continue
 
@@ -211,7 +253,7 @@ export class SurfaceNetMeshingProcessor<
                         const a = (i >> 1) + 1
                         const b = isInverse ? -(1 + a) : -a
                         const c = isInverse ? -a : (a - 1)
-                        
+
                         index_buffer_prelim[index_buffer_prelim_index_next++] = vertexIndex(a)
                         index_buffer_prelim[index_buffer_prelim_index_next++] = vertexIndex(b)
                         index_buffer_prelim[index_buffer_prelim_index_next++] = vertexIndex(c)
@@ -226,7 +268,7 @@ export class SurfaceNetMeshingProcessor<
                         const a = i >> 1
                         const b = isInverse ? (a + 1) : -(2 + a)
                         const c = isInverse ? -(2 + a) : (b + 1)
-                        
+
                         index_buffer_prelim[index_buffer_prelim_index_next++] = vertexIndex(a)
                         index_buffer_prelim[index_buffer_prelim_index_next++] = vertexIndex(b)
                         index_buffer_prelim[index_buffer_prelim_index_next++] = vertexIndex(c)
@@ -294,7 +336,7 @@ export class SurfaceNetMeshingProcessor<
 
         for (const island_ID of island_IDs) {
             let number_vertices = 0
-            
+
             const vertex_translation_toLocal = new Uint32Array(number_vertices_prelim).fill(invalid_uint32)
 
             for (let i_vertex = 0; i_vertex < number_vertices_prelim; i_vertex++) {
@@ -303,7 +345,7 @@ export class SurfaceNetMeshingProcessor<
                     number_vertices++
                 }
             }
-            
+
             const vertex_buffer = new Float32Array(3 * number_vertices)
             const dualCellReferences: OctTreeReferencesOctTreeLayersGrouped<IndicesT> = {
                 layers: new Uint8Array(number_vertices),
@@ -324,7 +366,7 @@ export class SurfaceNetMeshingProcessor<
 
             const indices_arrayType = indicesArrayType(number_vertices)
             const index_buffer_to_be_cut = new indices_arrayType(3 * number_triangles_prelim)
-            
+
             let index_buffer_to_be_cut_offset = 0
             for (let index_buffer_prelim_offset = 0; index_buffer_prelim_offset < index_buffer_to_be_cut.length;) {
                 const a = index_buffer_prelim[index_buffer_prelim_offset++]
@@ -335,7 +377,7 @@ export class SurfaceNetMeshingProcessor<
                 }
                 else index_buffer_prelim_offset += 2
             }
-            
+
             const mesh_vertices = vertex_buffer
             const mesh_triangles = new indices_arrayType(index_buffer_to_be_cut_offset)
             mesh_triangles.set(index_buffer_to_be_cut.subarray(0, index_buffer_to_be_cut_offset))
@@ -349,7 +391,7 @@ export class SurfaceNetMeshingProcessor<
             type VolumeLocationContainerT = FieldPointVectorContainerStatic
 
             // samples can be calculated for the precise position of each vertex
-            const locations = field_point_vectorized_multi_objects_new<VolumeLocationT, VolumeLocationContainerT>(
+            const locations = field_point_vectorized_multi_objects_new<VolumeLocationElementType, VolumeLocationContainerT>(
                 volumeSamplingContext[SampleDomainLocationFieldKey].elementType,
                 mesh_triangles.length / 3,
                 <IsDynamicVector<VolumeLocationT, VolumeLocationContainerT>>false,
@@ -358,8 +400,12 @@ export class SurfaceNetMeshingProcessor<
 
             type VectorContextT = VectorSamplingContext<
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 FieldPointVectorContainerStatic,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 FieldPointVectorContainerStatic,
                 MultiObjectsTemplate,
                 IndicesTypedArray,
@@ -371,7 +417,7 @@ export class SurfaceNetMeshingProcessor<
             // makeVectorSamplingContext(item[VolumeKey], vectorContext)
             const samples = vectorContext[VectorSampleFunction](item[VolumeKey], locations, vectorContext)
 
-            const surface: Surface<IndicesT, VolumeSampleT> = {
+            const surface: Surface<IndicesT, VolumeSampleElementType> = {
                 mesh: {
                     vertices: mesh_vertices,
                     triangles: mesh_triangles,

@@ -21,7 +21,7 @@ export class MaterialSemanticImplementationStorageClass_Texture<
     >
     implements MaterialSemanticImplementationStorageClass<VolumeLocationT> {
     readonly $class = MaterialSemanticImplementationStorageClass_Texture.$class
-    
+
     startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT>): Cost_Space_Texture {
         return {
             // 8 textures x (4 channels/pixel * 2048*2048 pixels)
@@ -43,7 +43,7 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_Texture<
     readonly rendered_packs_stage0: PackedRenderedBufferForSemanticWithTexture<VolumeLocationT>[] = []
 
     constructor(
-            public readonly $class: MaterialSemanticImplementationStorageClass_Texture<VolumeLocationT>,    
+            public readonly $class: MaterialSemanticImplementationStorageClass_Texture<VolumeLocationT>,
             public readonly renderer: SurfaceRendererShared<VolumeLocationT>
         ) {
         renderer.material.computeBackingCallbacks.push(renderer => {
@@ -52,7 +52,7 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_Texture<
                 .find($class => $class instanceof MaterialSemanticImplementationStorageClassInstanceIndividual_Texture)!
                 .apply([], [])
         })}
-    
+
     individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>) {
         return new MaterialSemanticImplementationStorageClassInstanceIndividual_Texture<VolumeLocationT>(this, renderer)
     }
@@ -81,7 +81,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
             if (removeIndex !== -1)
                 final.splice(removeIndex, 1)
         })
-        
+
         const maxStage = Math.max(0, ...final.map(renderedBuffer => renderedBuffer.implementation.stage))
         const nowRequestsIndividual_material = maxStage > 0
         if (nowRequestsIndividual_material && !this._hasRequestedIndividual_material)
@@ -108,7 +108,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
             if (pack_index !== -1) {
                 const pack = this.rendered_packs.splice(pack_index, 1)[0]
                 fragmented_buffers.push(...pack.sources.filter(buffer => this.rendered.includes(buffer)))
-                
+
                 pack.refCount--
                 if (pack.refCount === 0) {
                     for (const { source } of pack.targets)

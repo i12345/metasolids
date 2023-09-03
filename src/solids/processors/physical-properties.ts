@@ -66,15 +66,49 @@ export class SolidWithPhysicalPropertiesProcessor<
         PhysicalPropertiesValueT extends FieldPoint = FieldPoint,
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                > =
+            VolumeSamplingContext<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                >,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
-        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType> =
+            Surface<IndicesT, VolumeSampleElementType>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<
                 VolumeSampleProcessingContextT
@@ -87,14 +121,14 @@ export class SolidWithPhysicalPropertiesProcessor<
                     PhysicalPropertiesTemplateT,
                     PhysicalPropertiesValueT,
                     IndicesT,
-                    VolumeSampleT,
+                    VolumeSampleElementType,
                     SurfaceT
                 > =
             SolidWithPhysicalProperties<
                     PhysicalPropertiesTemplateT,
                     PhysicalPropertiesValueT,
                     IndicesT,
-                    VolumeSampleT,
+                    VolumeSampleElementType,
                     SurfaceT
                 >,
         SolidProcessingContextT extends
@@ -110,7 +144,11 @@ export class SolidWithPhysicalPropertiesProcessor<
             VolumeProcessingWithSolids<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -124,7 +162,11 @@ export class SolidWithPhysicalPropertiesProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -132,7 +174,11 @@ export class SolidWithPhysicalPropertiesProcessor<
             VolumeProcessingWithSolids<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -146,7 +192,11 @@ export class SolidWithPhysicalPropertiesProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -162,11 +212,15 @@ export class SolidWithPhysicalPropertiesProcessor<
                 SurfaceProcessingContextT,
                 SolidProcessingContextT
             >
-        >
+    >
     implements VolumeSolidProcessor<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -181,7 +235,7 @@ export class SolidWithPhysicalPropertiesProcessor<
             public readonly physicalPropertiesTemplate: PhysicalPropertiesTemplateT,
             public readonly physicalPropertiesTypes: TreeByValueMapped<PhysicalPropertiesTemplate_Leaf_T, PhysicalPropertiesTemplateT, FieldPointType<PhysicalPropertiesValueT>>
         ) { }
-    
+
     init(context: SolidProcessingContextT) {
         const properties = [...leavesByValues(
             this.physicalPropertiesTemplate,
@@ -200,7 +254,11 @@ export class SolidWithPhysicalPropertiesProcessor<
             solid: VolumeSolidProcessing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -228,7 +286,7 @@ export class SolidWithPhysicalPropertiesProcessor<
             (solid_value, solid_key, fullpath, propertyKind) => {
                 const sample_type = extract<FieldPointType>(this.physicalPropertiesTypes, fullpath)
                 const sample_octtrees = extract<FieldPointVectorStatic>(sampling, fullpath)
-                
+
                 const sample_layers_results: { result: PhysicalPropertiesValueT }[] = []
                 const sample_layer_getters: ((index: number) => void)[][] = []
 
@@ -244,7 +302,7 @@ export class SolidWithPhysicalPropertiesProcessor<
                         const isMultiObj = !(multiObjIndex === -1)
                         const nonMultiObjPath = !isMultiObj ? path : [...path.slice(0, multiObjIndex), ...path.slice(multiObjIndex + 1)]
                         const primitive_octtree = extract<TypedArrayOctTree<number, FieldPointVectorContainerStatic>>(sample_octtrees, nonMultiObjPath)
-                        
+
                         const elementType_nonMultiObj = { [result_key]: <FieldPointType<FieldPointPrimitive>>primitive_type }
                         const elementType = !isMultiObj ? elementType_nonMultiObj : { [MultiObjectsGroupedObjectsKey]: elementType_nonMultiObj }
 
@@ -282,13 +340,13 @@ export class SolidWithPhysicalPropertiesProcessor<
                 for (let i = 0; i < layers.length; i++) {
                     const layer = layers[i]
                     const localIndex = localIndices[i]
-                    
+
                     for (const getter of sample_layer_getters[layer])
                         getter(localIndex)
-                    
+
                     const value = sample_layers_results[layer].result
                     const size = voxelSizes[layer]
-                    
+
                     totalSize += size
 
                     fields_point_add_inplace_weighted<any, PhysicalPropertiesValueT>(
@@ -303,7 +361,7 @@ export class SolidWithPhysicalPropertiesProcessor<
                     case PhysicalPropertiesTemplate_Leaf_Intensive:
                         solid_value[solid_key] = field_point_divide(solid_value[solid_key], totalSize)
                         break
-                    
+
                     case PhysicalPropertiesTemplate_Leaf_Extensive:
                         solid_value[solid_key] = field_point_divide(solid_value[solid_key], totalSize / solid[TotalVolumeKey])
                         break
@@ -358,15 +416,49 @@ export const IdealGasConstant = 8.31446261815324
 export class StandardPhysicalPropertiesSolidProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                > =
+            VolumeSamplingContext<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                >,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
-        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType> =
+            Surface<IndicesT, VolumeSampleElementType>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<
                 VolumeSampleProcessingContextT
@@ -379,14 +471,14 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     StandardPhysicalPropertiesTemplate,
                     number,
                     IndicesT,
-                    VolumeSampleT,
+                    VolumeSampleElementType,
                     SurfaceT
                 > =
             SolidWithPhysicalProperties<
                     StandardPhysicalPropertiesTemplate,
                     number,
                     IndicesT,
-                    VolumeSampleT,
+                    VolumeSampleElementType,
                     SurfaceT
                 >,
         SolidProcessingContextT extends
@@ -402,7 +494,11 @@ export class StandardPhysicalPropertiesSolidProcessor<
             VolumeProcessingWithSolids<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -416,7 +512,11 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -424,7 +524,11 @@ export class StandardPhysicalPropertiesSolidProcessor<
             VolumeProcessingWithSolids<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -438,7 +542,11 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -460,7 +568,11 @@ export class StandardPhysicalPropertiesSolidProcessor<
         number,
         IndicesT,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -489,8 +601,27 @@ export class StandardPhysicalPropertiesSolidProcessor<
     }
 
     override process(
-            solid: VolumeSolidProcessing<IndicesT, VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT, VolumeT, SurfaceT, SolidT, VolumeProcessingT>,
-            context: VolumeSolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT, SolidProcessingContextT, VolumeProcessingContextT>
+            solid: VolumeSolidProcessing<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT,
+                    SolidT,
+                    VolumeProcessingT
+                >,
+            context: VolumeSolidProcessingContext<
+                    VolumeSampleProcessingContextT,
+                    SurfaceProcessingContextT,
+                    SolidProcessingContextT,
+                    VolumeProcessingContextT
+                >
         ): void {
         super.process(solid, context)
 

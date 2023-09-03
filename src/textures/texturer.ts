@@ -9,15 +9,23 @@ export interface TextureableProcessingContext<
         TextureableT = any,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
         TextureSamplingContextT extends
-            TextureSamplingContext<TextureLocationT> =
-            TextureSamplingContext<TextureLocationT>
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
     > {
     [TexturersKey]: {
         texturers: Texturer<
             TextureableT,
             TextureLocationT,
             TextureSampleT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
             TextureSamplingContextT
         >[]
 
@@ -29,6 +37,10 @@ export interface TextureableProcessingContext<
                 TextureableT,
                 TextureLocationT,
                 TextureSampleT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                TextureSampleElementType,
+                TextureSampleFuseMode,
                 TextureSamplingContextT
             >
         >
@@ -39,9 +51,13 @@ export class TextureableProcessor<
         TextureableT = any,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
         TextureSamplingContextT extends
-            TextureSamplingContext<TextureLocationT> =
-            TextureSamplingContext<TextureLocationT>
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
     > implements
     Processor<
         TextureableT,
@@ -49,16 +65,24 @@ export class TextureableProcessor<
             TextureableT,
             TextureLocationT,
             TextureSampleT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
             TextureSamplingContextT
         >
     > {
     process(
             textureable: TextureableT,
             context: TextureableProcessingContext<
-                TextureableT,
-                TextureLocationT,
-                TextureSampleT,
-                TextureSamplingContextT
+                    TextureableT,
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
                 >
         ): void {
         context[TexturersKey].graph!.process(textureable, context)
@@ -69,6 +93,10 @@ export class TextureableProcessor<
                     TextureableT,
                     TextureLocationT,
                     TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
                     TextureSamplingContextT
                 >
         ): ProcessorInitialization {
@@ -96,28 +124,52 @@ export abstract class Texturer<
         TextureableT = any,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
         TextureSamplingContextT extends
-            TextureSamplingContext<TextureLocationT> =
-            TextureSamplingContext<TextureLocationT>,
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         Outputs extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Inputs extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        InputsTexelTypeT extends TextureSampleT = TextureSampleT,
-        InputsTexelTypesGrouped extends
-            MultiObjectsGroupsMapped<Inputs, InputsTexelTypeT> =
-            MultiObjectsGroupsMapped<Inputs, InputsTexelTypeT>,
+        InputTexelT extends TextureSample = TextureSample,
+        InputTexelElementType extends TextureSample = InputTexelT,
+        InputTexelFuseMode extends TextureSample = InputTexelT,
+        InputTexelTGrouped extends
+            MultiObjectsGroupsMapped<Inputs, InputTexelT> =
+            MultiObjectsGroupsMapped<Inputs, InputTexelT>,
+        InputTexelElementTypeGrouped extends
+            MultiObjectsGroupsMapped<Inputs, InputTexelElementType> =
+            MultiObjectsGroupsMapped<Inputs, InputTexelElementType>,
+        InputTexelFuseModeGrouped extends
+            MultiObjectsGroupsMapped<Inputs, InputTexelFuseMode> =
+            MultiObjectsGroupsMapped<Inputs, InputTexelFuseMode>,
         InputsTextures extends
             TexturesTemplated<
                     Inputs,
-                    InputsTexelTypeT,
-                    InputsTexelTypesGrouped,
+                    InputTexelT,
+                    InputTexelElementType,
+                    InputTexelFuseMode,
+                    InputTexelTGrouped,
+                    InputTexelElementTypeGrouped,
+                    InputTexelFuseModeGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 > =
             TexturesTemplated<
                     Inputs,
-                    InputsTexelTypeT,
-                    InputsTexelTypesGrouped,
+                    InputTexelT,
+                    InputTexelElementType,
+                    InputTexelFuseMode,
+                    InputTexelTGrouped,
+                    InputTexelElementTypeGrouped,
+                    InputTexelFuseModeGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 >
     >
@@ -128,6 +180,10 @@ export abstract class Texturer<
                 TextureableT,
                 TextureLocationT,
                 TextureSampleT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                TextureSampleElementType,
+                TextureSampleFuseMode,
                 TextureSamplingContextT
             >
     > {
@@ -148,13 +204,25 @@ export abstract class Texturer<
         }
     }
 
-    protected abstract factory(inputs: InputsTextures): MultiObjectsGroupsMapped<Outputs, Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT>>
+    //TODO: replace with texturetemplated<> it will be major refactoring
+    protected abstract factory(inputs: InputsTextures):
+        MultiObjectsGroupsMapped<
+            Outputs,
+            Texture<
+                TextureLocationT, TextureSampleT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                TextureSampleElementType,
+                TextureSampleFuseMode,
+                TextureSamplingContextT
+            >
+        >
 
     process(textureable: TextureableT): void {
         const inputs = {} as InputsTextures
         for (const input of groups(this.templates.inputs))
             input.set(inputs, extract(textureable, input.get<PropertyPath>(this.mappings.inputs)))
-        
+
         const outputs = this.factory(inputs)
         for (const output of groups(this.templates.outputs))
             intract(textureable, output.get<PropertyPath>(this.mappings.outputs), output.get(outputs))

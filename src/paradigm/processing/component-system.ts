@@ -75,7 +75,7 @@ export class ComponentSystem<
     protected _onBeforeRemove(entity: Entity, component: ComponentT) {
         if (component.processing.instance)
             this.combinedInstancers.set_enabled(component.processing.instance, false)
-        
+
         component.fire('remove')
     }
 }

@@ -30,6 +30,10 @@ export class MaterialSemanticImplementation_VertexColors<
         public readonly texture: Texture<
                 Material_Texture_Location<VolumeLocationT>,
                 TexelTypeT,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                TexelTypeT,
+                TexelTypeT,
                 Material_Texture_Context<VolumeLocationT>
             >,
         public readonly stage: number,
@@ -56,10 +60,10 @@ export class MaterialSemanticImplementation_VertexColors<
 
         return interpolating_fit_definite + ((1 - interpolating_fit_definite) * this.triangleMonotonicity)
     }
-    
+
     equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_VertexColors &&
-            ///@ts-ignore    
+            ///@ts-ignore
             this.texture === that.texture &&
             this.channels === that.channels &&
             this.stage === that.stage &&
@@ -70,9 +74,9 @@ export class MaterialSemanticImplementation_VertexColors<
 
     implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
         const buffer = new Float32Array(this.channels * renderer.shared.meshData.vertices.length)
-        
+
         const textureContext = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
-        
+
         const UVs = renderer.shared.surfaceUVUnwrapping.UVs
         const n_vertices = renderer.shared.meshData.vertices.length / 3
 

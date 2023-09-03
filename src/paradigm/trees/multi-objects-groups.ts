@@ -90,7 +90,7 @@ export function groupsFromPaths<Groups extends MultiObjectsGroupsTemplate = Mult
 
 //     mergeGroupsInplace(result, g1)
 //     mergeGroupsInplace(result, g2)
-    
+
 //     return result
 // }
 
@@ -105,13 +105,13 @@ export function mergeGroupsInplace<
     function insertLeafNode(path: PropertyPath) {
         /**
          * The leaf node can be inserted as a leaf value or a leaf key.
-         * 
+         *
          * If the path points to an object that already exists, then a leaf key
          * is inserted there.
-         * 
+         *
          * If the path goes through a leaf value, then that leaf value is made
          * into a leaf key and the final path is inserted as a leaf value.
-         * 
+         *
          * Otherwise, a regular leaf value is intracted.
          */
 
@@ -140,7 +140,7 @@ export function mergeGroupsInplace<
                 return
             else if (typeof sub_result !== 'object')
                 throw new Error("group value unmergeable")
-            
+
             sub_result[MultiObjectsGroupsTemplate_Leaf] = MultiObjectsGroupsTemplate_Leaf
         }
 
@@ -281,23 +281,25 @@ const MultiObjectsGroupedObjectsKey = Symbol('grouped-objects')
 
 export { MultiObjectsGroupedObjectsKey }
 
+export type MultiObjectsGroup<T> = { [MultiObjectsGroupedObjectsKey]: T }
+
 export type MultiObjectsGrouped<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > =
     MultiObjectsGroupsMapped<
             Groups,
-            { [MultiObjectsGroupedObjectsKey]: Objects }
+            MultiObjectsGroup<Objects>
         >
 
-export const abc = <
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        ObjectsGrouped extends
-            MultiObjectsGrouped<Objects, InfluenceGroup> =
-            MultiObjectsGrouped<Objects, InfluenceGroup>
-    >(a: InfluenceGroup) => a
-    
+// export const abc = <
+//         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+//         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+//         ObjectsGrouped extends
+//             MultiObjectsGrouped<Objects, InfluenceGroup> =
+//             MultiObjectsGrouped<Objects, InfluenceGroup>
+//     >(a: InfluenceGroup) => a
+
 export type MultiObjectsMappedGrouped<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -308,6 +310,13 @@ export type MultiObjectsMappedGrouped<
             MultiObjectsMappedGrouped<Objects, Groups[Group], T> :
             MultiObjectsMapped<Objects, T>
 }
+
+export type MultiObjectsTypeGrouped<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        T = any
+    > =
+    MultiObjectsGroupsMapped<Groups, MultiObjectsGroup<T>>
 
 export type MultiObjectsMappedAndCombinedGrouped<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -335,6 +344,22 @@ export type MultiObjectsMappedAgainGrouped<
                 MultiObjectsMappedAgainGrouped<Objects, Groups[K], T, TGrouped[K]> :
                 never :
         MultiObjectsMapped<Objects, TGrouped[K]>
+}
+
+export type MultiObjectsMappedAgainGroupTypes<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        T = any,
+        TGrouped extends
+            MultiObjectsGroupsMapped<Groups, T> =
+            MultiObjectsGroupsMapped<Groups, T>
+    > = {
+    [K in keyof Groups]:
+        Groups[K] extends MultiObjectsGroupsTemplate ?
+            TGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], T> ?
+                MultiObjectsMappedAgainGroupTypes<Objects, Groups[K], T, TGrouped[K]> :
+                never :
+        MultiObjectsGroup<TGrouped[K]>
 }
 
 export type MultiObjectsMappedAndCombinedAgainGrouped<
@@ -423,6 +448,22 @@ export type MultiObjectsGroupedObjectsAndRegularValues<
             RegularGroupValues[Group]
     }
 
+export type MultiObjectsGroupedObjectsAndRegularValuesType<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        RegularGroupValues extends
+            MultiObjectsGroupsMapped<Groups, any> =
+            MultiObjectsGroupsMapped<Groups, any>
+    > = {
+        [Group in keyof RegularGroupValues]:
+            Groups[Group] extends MultiObjectsGroupsTemplateLeaf ?
+                MultiObjectsGroup<RegularGroupValues[Group]> :
+            Groups[Group] extends MultiObjectsGroupsTemplate ?
+                (RegularGroupValues[Group] extends MultiObjectsGroupsMapped<infer G2, any> ?
+                MultiObjectsGroupedObjectsAndRegularValuesType<Objects, G2, RegularGroupValues[Group]> : never) :
+            RegularGroupValues[Group]
+    }
+
 export const MultiObjectsProcessingContextGroupKinds = Symbol('group-kinds')
 export type MultiObjectsGroupsProcessingContext<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -478,7 +519,7 @@ export function* groupKinds<
                     groupFilter[MultiObjectsGroupsTemplate_LeafKey] !== MultiObjectsGroupsTemplate_LeafValue))
                     continue
             }
-            
+
             yield {
                 kind,
                 group

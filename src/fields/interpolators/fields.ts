@@ -10,12 +10,16 @@ export class FieldsInterpolationType<Point extends FieldsPoint = FieldsPoint>
     ) {
     }
 
-    [makeInterpolator]<Location extends FieldPoint>(
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
             keypoints: FieldInterpolationKeypoint<Location, Point>[],
-            locationField: Field<Location>
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): FieldInterpolator<Location, Point> | undefined {
         let anyUndefined = false
-        
+
         const interpolators =
             fields_point_map(
                 this.interpolators,
@@ -37,10 +41,10 @@ export class FieldsInterpolationType<Point extends FieldsPoint = FieldsPoint>
                     return interpolator
                 }
             )
-    
+
         if (anyUndefined)
             return undefined
-        
+
         return location =>
             fields_point_map(
                 interpolators,

@@ -12,23 +12,27 @@ import { Vec4Field } from "./vec4.js";
 import { VectorField } from "./vector.js";
 import { Field } from "../field.js";
 
-export function defaultField<Point extends FieldPoint = FieldPoint>(p: Point): Field<Point> {
+export function defaultField<
+        Point extends FieldPoint = FieldPoint,
+        PointElementType extends FieldPoint = Point,
+        PointFuseMode extends FieldPoint = Point,
+    >(p: Point): Field<Point, PointElementType, PointFuseMode> {
     if (typeof p === 'number')
-        return ScalarField.instance as unknown as Field<Point>
+        return ScalarField.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Vec2)
-        return Vec2Field.instance as unknown as Field<Point>
+        return Vec2Field.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Vec3)
-        return Vec3Field.instance as unknown as Field<Point>
+        return Vec3Field.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Vec4)
-        return Vec4Field.instance as unknown as Field<Point>
+        return Vec4Field.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Quat)
-        return QuatField.instance as unknown as Field<Point>
+        return QuatField.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Mat3)
-        return Mat3Field.instance as unknown as Field<Point>
+        return Mat3Field.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Mat4)
-        return Mat4Field.instance as unknown as Field<Point>
+        return Mat4Field.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Color)
-        return ColorField.instance as unknown as Field<Point>
+        return ColorField.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Array ||
         p instanceof Uint8Array ||
         p instanceof Uint8ClampedArray ||
@@ -39,13 +43,13 @@ export function defaultField<Point extends FieldPoint = FieldPoint>(p: Point): F
         p instanceof Int32Array ||
         p instanceof Float32Array ||
         p instanceof Float64Array)
-        // return VectorField.instance as unknown as Field<Point>
+        // return VectorField.instance as unknown as Field<Point, PointElementType, PointFuseMode>
         throw new Error()
     else if (p === undefined)
-        return new FieldsField({}) as unknown as Field<Point>
+        return new FieldsField({}) as unknown as Field<Point, PointElementType, PointFuseMode>
     else return new FieldsField(fields_point_map(
         p as FieldsPointMapped<FieldsPoint, FieldPoint>,
         field_point_isPrimitive,
         value => defaultField(value)
-    )) as unknown as Field<Point>
+    )) as unknown as Field<Point, PointElementType, PointFuseMode>
 }

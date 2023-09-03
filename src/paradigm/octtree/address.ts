@@ -162,5 +162,5 @@ export function octTreeAddressPrecedes(earlier: OctTreeAddress, later: OctTreeAd
         return earlier[layer] < 4
     else if (later.length > layer)
         return later[layer] >= 4
-    else return false //throw new Error("addresses are identical")
+    else return false
 }

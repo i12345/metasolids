@@ -33,11 +33,11 @@
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
     "@types/ronomon__hash-table": "^2.0.0",
-    "chai": "^4.3.7",
+    "chai": "^4.3.8",
     "mocha": "^10.2.0",
     "reflect-metadata": "^0.1.13",
     "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@ronomon/hash-table": "^2.0.8",
@@ -46,7 +46,7 @@
     "playcanvas-extended-serializer": "^1.0.0",
     "simple-typed-serialization": "^1.1.8",
     "type-namespace": "^1.1.0",
-    "vectorized-functions": "^1.2.0",
+    "vectorized-functions": "^1.2.1",
     "xatlasjs-esm": "^0.1.3"
   }
 }

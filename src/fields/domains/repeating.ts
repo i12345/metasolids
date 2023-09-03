@@ -11,22 +11,28 @@ export class RepeatingSampleDomain<
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Context extends SamplingContext<Location> = SamplingContext<Location>,
+        Context extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
         LocationVector extends
-            FieldPointVector<Location, LocationContainer> =
-            FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -34,8 +40,12 @@ export class RepeatingSampleDomain<
         VectorContext extends
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -46,8 +56,12 @@ export class RepeatingSampleDomain<
                 > =
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -62,16 +76,24 @@ export class RepeatingSampleDomain<
         ObjIDsT,
         ObjIDsContainer,
         Location,
+        LocationElementType,
+        LocationFuseMode,
         LocationContainer,
         Sample,
+        SampleElementType,
+        SampleFuseMode,
         SampleContainer,
         Context,
         LocationVector,
         SampleVector,
         VectorContext,
         Location,
+        LocationElementType,
+        LocationFuseMode,
         LocationContainer,
         Sample,
+        SampleElementType,
+        SampleFuseMode,
         SampleContainer,
         Context,
         LocationVector,
@@ -84,7 +106,7 @@ export class RepeatingSampleDomain<
     protected readonly transformsSample = false
 
     constructor(
-        inner: SampleDomain<Location, Sample, Context>,
+        inner: SampleDomain<Location, Sample, LocationElementType, LocationFuseMode, SampleElementType, SampleFuseMode, Context>,
         public size: Location,
         public mirror: FieldPointMapped<FieldPointNumbers<Location>, boolean>
     ) {
@@ -95,7 +117,7 @@ export class RepeatingSampleDomain<
         this.size_double = field_point_multiply(this.size, 2)
         super.init(context)
     }
-    
+
     protected override transformLocation(location: Location): Location {
         const modulo = { values: field_point_modulo(location, this.size) }
 
@@ -104,7 +126,7 @@ export class RepeatingSampleDomain<
             leaf => typeof leaf === 'boolean',
             (mirror, path) => {
                 const value: number = extract(modulo.values, path)
-                
+
                 if (mirror) {
                     const size: number = extract(this.size, path)
                     const size_double: number = extract(this.size_double, path)

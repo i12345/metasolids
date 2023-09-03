@@ -1,11 +1,11 @@
 import { Ray } from "playcanvas-extended";
-import { makeIntractor, groupKindObjectsGrouped, groupKinds, iterObjects, MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAgainGrouped, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
+import { makeIntractor, groupKindObjectsGrouped, groupKinds, iterObjects, MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAgainGrouped, MultiObjectsTemplate, MultiObjectsMappedAgainGroupTypes } from "../../../paradigm/trees/index.js";
 import { ExtraFields, FieldPoint, FieldsPointMapped } from "../../../fields/point.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplatedWithObjects } from "../../../textures/texture.js";
-import { SurfaceObjectsTexturesGroupKindsTemplate, SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping, SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping } from "../types.js";
+import { SurfaceObjectsTexturesGroupKinds, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping, SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 import { change } from "../../../fields/object-algebra.js";
-import { Field, SampleDomainLocationFieldKey } from "../../../fields/index.js";
-import { MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsSampleDomain } from '../../../fields/domains/index.js'
+import { Field, SampleDomainLocationFieldKey, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
+import { MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate, MultiObjectsSampleDomain } from '../../../fields/domains/index.js'
 import { defaultField, FieldsField, Vec2Field } from '../../../fields/fields/index.js'
 import { Surface, SurfaceInstance, SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContext } from "../../processing.js";
@@ -14,6 +14,7 @@ import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../
 import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../uv-unwrapping/ray-collider.js";
 import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
 
 export interface VolumeWithSurfacesObjectsTexturesRayCollision<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -41,13 +42,31 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
             MultiObjectsGrouped<Objects, TextureGroups> =
             MultiObjectsGrouped<Objects, TextureGroups>,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
         TextureSamplingContextT extends
-            TextureSamplingContext<TextureLocationT> =
-            TextureSamplingContext<TextureLocationT>,
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT> =
-            Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT
+                >,
         TextureSamplesGrouped extends
             MultiObjectsGroupsMapped<TextureGroups, TextureSampleT> =
             MultiObjectsGroupsMapped<TextureGroups, TextureSampleT>,
@@ -57,8 +76,14 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplesGrouped,
+                    TextureSamplesGrouped,
                     TextureSamplesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 > =
             TexturesTemplatedWithObjects<
@@ -66,43 +91,81 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplesGrouped,
+                    TextureSamplesGrouped,
                     TextureSamplesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
-        SurfaceT extends
-            Surface<IndicesT, VolumeSampleT> &
-            SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
-                    IndicesT,
-                    UVUnwrappingGroup,
-                    Objects,
-                    TextureGroups,
-                    TextureLocationT,
-                    TextureSampleT,
-                    TextureT //,
-                    // TexturesGrouped,
-                    // SampleT
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 > =
-            Surface<IndicesT, VolumeSampleT> &
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
                     Objects,
                     TextureGroups,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT,
                     TextureT //,
                     // TexturesGrouped,
-                    // SampleT
+                    // SampleElementType
+                > =
+            Surface<IndicesT, VolumeSampleElementType> &
+            SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
+                    IndicesT,
+                    UVUnwrappingGroup,
+                    Objects,
+                    TextureGroups,
+                    TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT,
+                    TextureT //,
+                    // TexturesGrouped,
+                    // SampleElementType
                 >,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
@@ -126,7 +189,11 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -135,7 +202,11 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -145,7 +216,11 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
             VolumeProcessingWithSurfacesInstance<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -156,7 +231,11 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
             VolumeProcessingWithSurfacesInstance<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -178,7 +257,11 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
             IndicesT,
             UVUnwrappingGroup,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -198,13 +281,31 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
             MultiObjectsGrouped<Objects, TextureGroups> =
             MultiObjectsGrouped<Objects, TextureGroups>,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
         TextureSamplingContextT extends
-            TextureSamplingContext<TextureLocationT> =
-            TextureSamplingContext<TextureLocationT>,
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT> =
-            Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT
+                >,
         TextureSamplesGrouped extends
             MultiObjectsGroupsMapped<TextureGroups, TextureSampleT> =
             MultiObjectsGroupsMapped<TextureGroups, TextureSampleT>,
@@ -214,8 +315,14 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplesGrouped,
+                    TextureSamplesGrouped,
                     TextureSamplesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 > =
             TexturesTemplatedWithObjects<
@@ -223,43 +330,81 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplesGrouped,
+                    TextureSamplesGrouped,
                     TextureSamplesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
-        SurfaceT extends
-            Surface<IndicesT, VolumeSampleT> &
-            SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
-                    IndicesT,
-                    UVUnwrappingGroup,
-                    Objects,
-                    TextureGroups,
-                    TextureLocationT,
-                    TextureSampleT,
-                    TextureT //,
-                    // TexturesGrouped,
-                    // SampleT
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 > =
-            Surface<IndicesT, VolumeSampleT> &
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
                     Objects,
                     TextureGroups,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT,
                     TextureT //,
                     // TexturesGrouped,
-                    // SampleT
+                    // SampleElementType
+                > =
+            Surface<IndicesT, VolumeSampleElementType> &
+            SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
+                    IndicesT,
+                    UVUnwrappingGroup,
+                    Objects,
+                    TextureGroups,
+                    TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT,
+                    TextureT //,
+                    // TexturesGrouped,
+                    // SampleElementType
                 >,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
@@ -269,21 +414,29 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     UVUnwrappingGroup,
                     VolumeSampleProcessingContextT,
                     Objects,
-                    TextureGroups //,
+                    TextureGroups,
+                    ObjectsTexturesGrouped,
+                    TextureSampleT //,
                     // TexturesGrouped,
                 > =
             SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     UVUnwrappingGroup,
                     VolumeSampleProcessingContextT,
                     Objects,
-                    TextureGroups //,
+                    TextureGroups,
+                    ObjectsTexturesGrouped,
+                    TextureSampleT //,
                     // TexturesGrouped,
                 >,
         VolumeProcessingT extends
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -292,7 +445,11 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -302,7 +459,11 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
             VolumeProcessingWithSurfacesInstance<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -313,7 +474,11 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
             VolumeProcessingWithSurfacesInstance<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -332,19 +497,25 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                 >,
     > extends
     VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
-            IndicesT,    
+            IndicesT,
             UVUnwrappingGroup,
             Objects,
             TextureGroups,
             ObjectsTexturesGrouped,
             TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
             TextureSampleT,
             TextureSamplingContextT,
             TextureT,
             TextureSamplesGrouped,
             TexturesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -367,6 +538,15 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                 TextureSampleT,
                 TextureSamplesGrouped
             >,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            MultiObjectsMappedAgainGroupTypes<
+                Objects,
+                TextureGroups,
+                TextureSampleT,
+                TextureSamplesGrouped
+            >,
+            TextureSamplesGrouped,
             TextureSamplingContextT
         >
         samplingContext: TextureSamplingContextT
@@ -383,13 +563,31 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             MultiObjectsGrouped<Objects, TextureGroups> =
             MultiObjectsGrouped<Objects, TextureGroups>,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
         TextureSamplingContextT extends
-            TextureSamplingContext<TextureLocationT> =
-            TextureSamplingContext<TextureLocationT>,
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT> =
-            Texture<TextureLocationT, TextureSampleT, TextureSamplingContextT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT
+                >,
         TextureSamplesGrouped extends
             MultiObjectsGroupsMapped<TextureGroups, TextureSampleT> =
             MultiObjectsGroupsMapped<TextureGroups, TextureSampleT>,
@@ -399,8 +597,14 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplesGrouped,
+                    TextureSamplesGrouped,
                     TextureSamplesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 > =
             TexturesTemplatedWithObjects<
@@ -408,43 +612,81 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplesGrouped,
+                    TextureSamplesGrouped,
                     TextureSamplesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSamplingContextT
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            Volume<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
-        SurfaceT extends
-            Surface<IndicesT, VolumeSampleT> &
-            SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
-                    IndicesT,
-                    UVUnwrappingGroup,
-                    Objects,
-                    TextureGroups,
-                    TextureLocationT,
-                    TextureSampleT,
-                    TextureT //,
-                    // TexturesGrouped,
-                    // SampleT
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
                 > =
-            Surface<IndicesT, VolumeSampleT> &
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
                     Objects,
                     TextureGroups,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT,
                     TextureT //,
                     // TexturesGrouped,
-                    // SampleT
+                    // SampleElementType
+                > =
+            Surface<IndicesT, VolumeSampleElementType> &
+            SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
+                    IndicesT,
+                    UVUnwrappingGroup,
+                    Objects,
+                    TextureGroups,
+                    TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSampleT,
+                    TextureSamplingContextT,
+                    TextureT //,
+                    // TexturesGrouped,
+                    // SampleElementType
                 >,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
@@ -454,21 +696,29 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     UVUnwrappingGroup,
                     VolumeSampleProcessingContextT,
                     Objects,
-                    TextureGroups //,
+                    TextureGroups,
+                    ObjectsTexturesGrouped,
+                    TextureSampleT //,
                     // TexturesGrouped,
                 > =
             SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     UVUnwrappingGroup,
                     VolumeSampleProcessingContextT,
                     Objects,
-                    TextureGroups //,
+                    TextureGroups,
+                    ObjectsTexturesGrouped,
+                    TextureSampleT //,
                     // TexturesGrouped,
                 >,
         VolumeProcessingT extends
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -477,7 +727,11 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -487,7 +741,11 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeProcessingWithSurfacesInstance<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -498,7 +756,11 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeProcessingWithSurfacesInstance<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -525,7 +787,11 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             TextureSamplesGrouped
         >,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -535,7 +801,11 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
         VolumeProcessingWithSurfaces<
                 IndicesT,
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -544,7 +814,11 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
         VolumeProcessingWithSurfacesInstance<
                 IndicesT,
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -557,19 +831,25 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                 SurfaceProcessingContextT
             >,
         VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
-                IndicesT,        
+                IndicesT,
                 UVUnwrappingGroup,
                 Objects,
                 TextureGroups,
                 ObjectsTexturesGrouped,
                 TextureLocationT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
                 TextureSampleT,
                 TextureSamplingContextT,
                 TextureT,
                 TextureSamplesGrouped,
                 TexturesGrouped,
-                VolumeLocationT,    
+                VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -579,7 +859,11 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                 VolumeProcessingWithSurfaces<
                         IndicesT,
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT,
@@ -588,12 +872,16 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                 VolumeProcessingWithSurfacesInstance<
                         IndicesT,
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT,
                         SurfaceT,
-                        SurfaceInstanceT//,
+                        SurfaceInstanceT //,
                         // VolumeProcessingT
                     >,
                 VolumeProcessingWithSurfacesContext<
@@ -603,10 +891,14 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             >
     > {
     private readonly UVcollider: VolumeWithSurfacesUVRayCollider<
-            IndicesT,        
+            IndicesT,
             UVUnwrappingGroup,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -629,13 +921,19 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             TextureGroups,
             ObjectsTexturesGrouped,
             TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
             TextureSampleT,
             TextureSamplingContextT,
             TextureT,
             TextureSamplesGrouped,
             TexturesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -647,7 +945,7 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeProcessingContextT
         >): void {
         this.UVcollider.init(context)
-        
+
         type ContextPrivateT = VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
             IndicesT,
             UVUnwrappingGroup,
@@ -655,13 +953,19 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             TextureGroups,
             ObjectsTexturesGrouped,
             TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
             TextureSampleT,
             TextureSamplingContextT,
             TextureT,
             TextureSamplesGrouped,
             TexturesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -672,10 +976,10 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeProcessingInstanceT,
             VolumeProcessingContextT
         >
-        
+
         const context_private = context as ContextPrivateT
 
-        const textureGroups = groupKindObjectsGrouped(
+        const textureGroups = groupKindObjectsGroupedWithFields<Objects, TextureGroups, ObjectsTexturesGrouped, SurfaceObjectsTexturesGroupKinds, TextureT, TextureSampleT>(
             undefined!,
             context.context[VolumeSurfacesKey],
             SurfaceObjectsTexturesGroupKindsTemplate,
@@ -684,8 +988,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
 
         const sharedContext = {
             [SampleDomainLocationFieldKey]: FieldsField.merge(
-                defaultField(context.extraLocationParameters) as unknown as FieldsField<TextureLocationT>,
-                new FieldsField<TextureLocationT>({
+                defaultField(<FieldPoint>context.extraLocationParameters) as unknown as FieldsField<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
+                new FieldsField<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>({
                     uv: Vec2Field.instance
                 } as FieldsPointMapped<TextureLocationT, Field>)
             )
@@ -699,12 +1003,15 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                 // because the context is where private variables are stored.
                 // There could be a [Private] field in the context for this
                 // and this group could be automatically covered by the sole
-                // group kind that could be added 
+                // group kind that could be added
 
-                const texture = MultiObjectsSampleDomain.build(
-                    objectsTextures as any,
-                    objects.template
-                ) as Texture<
+                type ObjIDsT = IndicesTypedArray
+                type ObjIDsContainer = FieldPointVectorContainerStatic<ObjIDsT>
+
+                type TextureLocationContainer = FieldPointVectorContainerStatic
+                type TextureSampleContainer = FieldPointVectorContainerStatic
+
+                type CombinedTexture = Texture<
                     TextureLocationT,
                     MultiObjectsMappedAgainGrouped<
                         Objects,
@@ -712,8 +1019,40 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                         TextureSampleT,
                         TextureSamplesGrouped
                     >,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    MultiObjectsMappedAgainGroupTypes<
+                        Objects,
+                        TextureGroups,
+                        TextureSampleT,
+                        TextureSamplesGrouped
+                    >,
+                    TextureSamplesGrouped,
                     TextureSamplingContextT
                 >
+
+                const texture = MultiObjectsSampleDomain.build <
+                        Objects,
+                        ObjIDsT,
+                        ObjIDsContainer,
+                        {},
+                        MultiObjectsDomainInternalPreservedGroupsKinds,
+                        {},
+                        MultiObjectsDomainInternalPreservedGroupsKinds,
+                        TextureLocationT,
+                        TextureLocationElementType,
+                        TextureLocationFuseMode,
+                        TextureLocationContainer,
+                        TextureSampleT,
+                        TextureSampleContainer,
+                        TextureSamplingContextT //,
+                        // TextureT,
+                        // TextureSamplingContextT
+                    >(
+                    objectsTextures as any,
+                    objects.template,
+                    group.field.inner
+                ) as unknown as CombinedTexture
 
                 const specializedContext = group.get<TextureSamplingContextT>(context.context) ?? {}
 
@@ -722,7 +1061,7 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     ...specializedContext,
                     [SampleDomainLocationFieldKey]: FieldsField.merge(
                         sharedContext[SampleDomainLocationFieldKey],
-                        specializedContext[SampleDomainLocationFieldKey] as FieldsField<TextureLocationT>
+                        specializedContext[SampleDomainLocationFieldKey] as FieldsField<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>
                     )
                 } : sharedContext) as unknown as TextureSamplingContextT
 
@@ -751,13 +1090,19 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSampleT,
                     TextureSamplingContextT,
                     TextureT,
                     TextureSamplesGrouped,
                     TexturesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -781,13 +1126,19 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             TextureGroups,
             ObjectsTexturesGrouped,
             TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
             TextureSampleT,
             TextureSamplingContextT,
             TextureT,
             TextureSamplesGrouped,
             TexturesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -798,16 +1149,16 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeProcessingInstanceT,
             VolumeProcessingContextT
         >
-        
+
         const context_private = context as ContextPrivateT
-        
+
         const samples = {} as TextureSamplesGrouped
 
         const location = change<TextureLocationT, TextureLocation, {}>({ uv: collision.uv }, [], context.extraLocationParameters)
 
         for (const { texture, samplingContext, intract } of context_private.textures[collision.i_surface])
             intract(samples, texture.sample(location, samplingContext))
-        
+
         return {
             ...collision,
             samples
@@ -823,13 +1174,19 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSampleT,
                     TextureSamplingContextT,
                     TextureT,
                     TextureSamplesGrouped,
                     TexturesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -853,13 +1210,19 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     TextureGroups,
                     ObjectsTexturesGrouped,
                     TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
                     TextureSampleT,
                     TextureSamplingContextT,
                     TextureT,
                     TextureSamplesGrouped,
                     TexturesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,

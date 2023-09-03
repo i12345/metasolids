@@ -17,26 +17,63 @@ export const defaultTextureLocationField = new fields.FieldsField<TextureLocatio
     uv: fields.Vec2Field.instance
 })
 
-export interface TextureSamplingContext
-    <Location extends TextureLocation = TextureLocation> extends
-    SamplingContext<Location> {
+export interface TextureSamplingContext<
+        Location extends TextureLocation = TextureLocation,
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
+    > extends
+    SamplingContext<Location, LocationElementType, LocationFuseMode> {
 }
 
 export interface Texture<
         Location extends TextureLocation = TextureLocation,
         Sample extends TextureSample = TextureSample,
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
+        SampleElementType extends TextureSample = Sample,
+        SampleFuseMode extends TextureSample = Sample,
         Context extends
-            TextureSamplingContext<Location> =
-            TextureSamplingContext<Location>
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>
     > extends
-    SampleDomain<Location, Sample, Context> {
+    SampleDomain<
+        Location, Sample,
+        LocationElementType,
+        LocationFuseMode,
+        SampleElementType,
+        SampleFuseMode,
+        Context
+    > {
 }
 
 export type ObjectsTextures<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         Location extends TextureLocation = TextureLocation,
         Sample extends TextureSample = TextureSample,
-        TextureT extends Texture<Location, Sample> = Texture<Location, Sample>
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
+        SampleElementType extends TextureSample = Sample,
+        SampleFuseMode extends TextureSample = Sample,
+        Context extends
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
+        TextureT extends
+            Texture<
+                    Location, Sample,
+                    LocationElementType,
+                    LocationFuseMode,
+                    SampleElementType,
+                    SampleFuseMode,
+                    Context
+                > =
+            Texture<
+                    Location, Sample,
+                    LocationElementType,
+                    LocationFuseMode,
+                    SampleElementType,
+                    SampleFuseMode,
+                    Context
+                >
     > =
     MultiObjectsMapped<Objects, TextureT>
 
@@ -45,27 +82,79 @@ export type ObjectsTexturesGrouped<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Location extends TextureLocation = TextureLocation,
         Sample extends TextureSample = TextureSample,
-        TextureT extends Texture<Location, Sample> = Texture<Location, Sample>
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
+        SampleElementType extends TextureSample = Sample,
+        SampleFuseMode extends TextureSample = Sample,
+        Context extends
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
+        TextureT extends
+            Texture<
+                    Location, Sample,
+                    LocationElementType,
+                    LocationFuseMode,
+                    SampleElementType,
+                    SampleFuseMode,
+                    Context
+                > =
+            Texture<
+                    Location, Sample,
+                    LocationElementType,
+                    LocationFuseMode,
+                    SampleElementType,
+                    SampleFuseMode,
+                    Context
+                >
     > =
     MultiObjectsMappedGrouped<Objects, Groups, TextureT>
 
 export type TexturesTemplated<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        TexelType extends TextureSample = TextureSample,
-        TexelTypesGrouped extends
-            MultiObjectsGroupsMapped<Groups, TexelType> =
-            MultiObjectsGroupsMapped<Groups, TexelType>,
+        TexelT extends TextureSample = TextureSample,
+        TexelElementType extends TextureSample = TexelT,
+        TexelFuseMode extends TextureSample = TexelT,
+        TexelTGrouped extends
+            MultiObjectsGroupsMapped<Groups, TexelT> =
+            MultiObjectsGroupsMapped<Groups, TexelT>,
+        TexelElementTypeGrouped extends
+            MultiObjectsGroupsMapped<Groups, TexelElementType> =
+            MultiObjectsGroupsMapped<Groups, TexelElementType>,
+        TexelFuseModeGrouped extends
+            MultiObjectsGroupsMapped<Groups, TexelFuseMode> =
+            MultiObjectsGroupsMapped<Groups, TexelFuseMode>,
         Location extends TextureLocation = TextureLocation,
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
         Context extends
-            TextureSamplingContext<Location> =
-            TextureSamplingContext<Location>,
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
     > = {
-    [K in keyof TexelTypesGrouped]:
-        Groups[K] extends MultiObjectsGroupsTemplate ?
-            TexelTypesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelType> ?
-                TexturesTemplated<Groups[K], TexelType, TexelTypesGrouped[K], Location, Context> :
-                never :
-            Texture<Location, TexelTypesGrouped[K], Context>
+    [K in keyof Groups]:
+        K extends keyof TexelTGrouped ? K extends keyof TexelElementTypeGrouped ? K extends keyof TexelFuseModeGrouped ?
+            Groups[K] extends MultiObjectsGroupsTemplate ?
+                TexelTGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelT> ? TexelElementTypeGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelElementType> ? TexelFuseModeGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelFuseMode> ?
+                    TexturesTemplated<
+                            Groups[K],
+                            TexelT,
+                            TexelElementType,
+                            TexelFuseMode,
+                            TexelTGrouped[K],
+                            TexelElementTypeGrouped[K],
+                            TexelFuseModeGrouped[K],
+                            Location,
+                            LocationElementType,
+                            LocationFuseMode,
+                            Context
+                        > :
+                    never : never : never :
+                Texture<
+                    Location, TexelTGrouped[K],
+                    LocationElementType, LocationFuseMode,
+                    TexelElementTypeGrouped[K], TexelFuseModeGrouped[K],
+                    Context
+                > :
+            never : never : never
     }
 
 export type TexturesTemplatedWithObjects<
@@ -74,24 +163,56 @@ export type TexturesTemplatedWithObjects<
         ObjectsGrouped extends
             MultiObjectsGrouped<Objects, Groups> =
             MultiObjectsGrouped<Objects, Groups>,
-        TexelType extends TextureSample = TextureSample,
-        TexelTypesGrouped extends
-            MultiObjectsGroupsMapped<Groups, TexelType> =
-            MultiObjectsGroupsMapped<Groups, TexelType>,
+        TexelT extends TextureSample = TextureSample,
+        TexelElementType extends TextureSample = TexelT,
+        TexelFuseMode extends TextureSample = TexelT,
+        TexelTGrouped extends
+            MultiObjectsGroupsMapped<Groups, TexelT> =
+            MultiObjectsGroupsMapped<Groups, TexelT>,
+        TexelElementTypeGrouped extends
+            MultiObjectsGroupsMapped<Groups, TexelElementType> =
+            MultiObjectsGroupsMapped<Groups, TexelElementType>,
+        TexelFuseModeGrouped extends
+            MultiObjectsGroupsMapped<Groups, TexelFuseMode> =
+            MultiObjectsGroupsMapped<Groups, TexelFuseMode>,
         Location extends TextureLocation = TextureLocation,
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
         Context extends
-            TextureSamplingContext<Location> =
-            TextureSamplingContext<Location>,
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
     > = {
-    [K in keyof TexelTypesGrouped]:
-        Groups[K] extends MultiObjectsGroupsTemplate ?
-            TexelTypesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelType> ?
-                ObjectsGrouped[K] extends MultiObjectsGrouped<Objects, Groups[K]> ?
-                    TexturesTemplatedWithObjects<Objects, Groups[K], ObjectsGrouped[K], TexelType, TexelTypesGrouped[K], Location, Context> :
-                    never :
-                never :
-            MultiObjectsMapped<Objects, Texture<Location, TexelTypesGrouped[K], Context>>
-}
+    [K in keyof Groups]:
+        K extends keyof TexelTGrouped ? K extends keyof TexelElementTypeGrouped ? K extends keyof TexelFuseModeGrouped ?
+            Groups[K] extends MultiObjectsGroupsTemplate ?
+                TexelTGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelT> ? TexelElementTypeGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelElementType> ? TexelFuseModeGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelFuseMode> ? ObjectsGrouped[K] extends MultiObjectsGrouped<Objects, Groups[K]> ?
+                    TexturesTemplatedWithObjects<
+                            Objects,
+                            Groups[K],
+                            ObjectsGrouped[K],
+                            TexelT,
+                            TexelElementType,
+                            TexelFuseMode,
+                            TexelTGrouped[K],
+                            TexelElementTypeGrouped[K],
+                            TexelFuseModeGrouped[K],
+                            Location,
+                            LocationElementType,
+                            LocationFuseMode,
+                            Context
+                        > :
+                    never : never : never : never :
+                MultiObjectsMapped<
+                    Objects,
+                    Texture<
+                        Location, TexelTGrouped[K],
+                        LocationElementType, LocationFuseMode,
+                        TexelElementTypeGrouped[K], TexelFuseModeGrouped[K],
+                        Context
+                    >
+                > :
+            never : never : never
+    }
 
 // type ABC_groups = {
 //     a: MultiObjectsGroupsTemplateLeaf

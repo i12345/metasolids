@@ -17,10 +17,12 @@ export const TotalVolumeKey = "totalVolume"
 
 export interface SolidWithEnclosingVolume<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
-        VolumeSampleT extends VolumeSample = VolumeSample,
-        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>
+        VolumeSampleElementType extends VolumeSample = VolumeSample,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType> =
+            Surface<IndicesT, VolumeSampleElementType>
     >
-    extends Solid<IndicesT, VolumeSampleT, SurfaceT> {
+    extends Solid<IndicesT, VolumeSampleElementType, SurfaceT> {
     [VolumeVoxelsKey]: OctTreeReferencesOctTreeLayersGrouped<IndicesT>
     [TotalVolumeKey]: number
 }
@@ -36,26 +38,64 @@ export const SolidVoxelsGroupTemplate: SolidVoxelsGroup = {
 export class SolidWithEnclosingVolumeProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                > =
+            VolumeSamplingContext<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                >,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
-        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType> =
+            Surface<IndicesT, VolumeSampleElementType>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         SolidT extends
-            SolidWithEnclosingVolume<IndicesT, VolumeSampleT, SurfaceT> =
-            SolidWithEnclosingVolume<IndicesT, VolumeSampleT, SurfaceT>
+            SolidWithEnclosingVolume<IndicesT, VolumeSampleElementType, SurfaceT> =
+            SolidWithEnclosingVolume<IndicesT, VolumeSampleElementType, SurfaceT>
     > implements
     VolumeSolidProcessor<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -69,7 +109,11 @@ export class SolidWithEnclosingVolumeProcessor<
             VolumeProcessingWithSolids<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -83,7 +127,11 @@ export class SolidWithEnclosingVolumeProcessor<
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -110,7 +158,11 @@ export class SolidWithEnclosingVolumeProcessor<
             solid: VolumeSolidProcessing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -119,7 +171,11 @@ export class SolidWithEnclosingVolumeProcessor<
                     VolumeProcessingWithSolids<
                             IndicesT,
                             VolumeLocationT,
+                            VolumeLocationElementType,
+                            VolumeLocationFuseMode,
                             VolumeSampleT,
+                            VolumeSampleElementType,
+                            VolumeSampleFuseMode,
                             VolumeSampleProcessingContextT,
                             VolumeSamplingContextT,
                             VolumeT,
@@ -133,7 +189,11 @@ export class SolidWithEnclosingVolumeProcessor<
                             OctTreeWithDualLayersGrouped, // <IndicesT>,
                             OctTreeWithDualOctTreesGrouped, // <IndicesT>,
                             VolumeLocationT,
+                            VolumeLocationElementType,
+                            VolumeLocationFuseMode,
                             VolumeSampleT,
+                            VolumeSampleElementType,
+                            VolumeSampleFuseMode,
                             VolumeSampleProcessingContextT,
                             VolumeSamplingContextT,
                             VolumeT
@@ -167,7 +227,7 @@ export class SolidWithEnclosingVolumeProcessor<
         function add() {
             if (sample_alpha[layer][localIndex] < surfaceLevel)
                 return
-            
+
             lookup_key_layer[0] = layer
             lookup_key_localIndex[0] = localIndex
             if (voxels_lookup.exist(lookup_key_buffer, 0))
@@ -184,12 +244,12 @@ export class SolidWithEnclosingVolumeProcessor<
         for (let corner = 0; corner < 8; corner++){
             layer = sampling[DualKey].cells.vertices.layers.layers[initial_dual_cell_layer][(8 * initial_dual_cell_localIndex) + corner]
             localIndex = sampling[DualKey].cells.vertices.localIndices.layers[initial_dual_cell_layer][(8 * initial_dual_cell_localIndex) + corner]
-            
+
             add()
         }
 
         const layersVoxelsCount = new Uint32Array(subdivision.depth + 1).fill(0)
-        
+
         for (let i = 0; i < voxels.layers.length; i++) {
             const cell_layer = voxels.layers[i]
             const cell_localIndex = voxels.localIndices[i]

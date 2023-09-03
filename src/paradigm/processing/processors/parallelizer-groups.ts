@@ -125,7 +125,7 @@ export abstract class GroupsParallelizer<
             Context,
             ParallelizedProcessorT
         >
-        
+
         type GroupsParallelizerContextDetailsT = GroupsParallelizerContextDetails<
             ParallelizedGroups,
             ParallelizedItem,
@@ -135,7 +135,7 @@ export abstract class GroupsParallelizer<
             Context,
             ParallelizedProcessorT
         >
-        
+
         const map = (context as GroupsParallelizerContextT)[parallelizerInfoKey] ??= new Map<typeof this, GroupsParallelizerContextDetailsT>()
         if (!map.has(this)) {
             map.set(this, {
@@ -158,9 +158,9 @@ export abstract class GroupsParallelizer<
                 >,
             item: Item | undefined,
             context: Context
-        ) {        
+        ) {
         const details = this.contextDetails(context)
-        
+
         for (const parallelizedGroup of groups(this.parallelizedGroups)) {
             const parallelizedItems = item ? parallelizedGroup.get<ParallelizedItems>(item) : undefined
             const parallelizedContext: ParallelizedContext = {
@@ -214,7 +214,7 @@ export abstract class GroupsParallelizer<
             const parallelizedContext_entries_new = Reflect_entries(parallelizedContextEncapsulated)
             const paralellizedContext_entries_added = parallelizedContext_entries_new.filter(([key,]) => !parallelizedContext_keys_original.includes(key))
             const parallelizedContext_additions = Reflect_fromEntries(paralellizedContext_entries_added)
-            
+
             parallelizedGroup.set(
                 details.parallelizedContext_additions,
                 mergeObjects([
@@ -223,7 +223,7 @@ export abstract class GroupsParallelizer<
                 ])
             )
         }
-        
+
         return { connections }
     }
 

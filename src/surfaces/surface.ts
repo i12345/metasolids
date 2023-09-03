@@ -8,11 +8,11 @@ export type SurfaceSample = VolumeSample
 
 export interface Surface<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample,
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
         SurfaceSampleContainer extends FieldPointVectorContainer = FieldPointVectorContainer,
         SurfaceSampleVector extends
-            FieldPointVector<SurfaceSampleT, SurfaceSampleContainer> =
-            FieldPointVector<SurfaceSampleT, SurfaceSampleContainer>
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>
     > {
     readonly mesh: MeshDataWithNormals<IndicesT>
 

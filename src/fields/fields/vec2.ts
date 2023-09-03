@@ -9,7 +9,7 @@ export class Vec2Field implements Field<Vec2> {
     readonly interpolationType = new Vec2InterpolationType()
 
     readonly elementType = Vec2
-    
+
     constructor(
         public readonly fuseMode: PrimitiveFuseMode<Vec2> = <ArithmeticPrimitiveFuseMode<Vec2>>ArithmeticPrimitiveFuseMode.add,
         public range: [min: Vec2, max: Vec2] = [

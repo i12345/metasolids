@@ -2,7 +2,7 @@ import { MultiObjectsGroupedObjectsKey } from "../../../paradigm/trees/multi-obj
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { TypedArrayList } from "../../../utils/typed-array-list.js";
-import { TypedArray } from "../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../utils/typed-array.js";
 import { FieldPoint, FieldPointPrimitive, FieldsPoint } from "../../point.js";
 import { FieldPointType } from "../../type.js"
 import { FieldPointVectorIterator } from "../iterator.js";
@@ -11,7 +11,7 @@ import { FieldsFieldPointVectorIterator } from "./fields.js";
 import { MultiObjectsFieldPointVectorIterator } from "./multi-objects.js";
 
 
-const vectorIteratorFactories = new Map<Function, [FieldPointVectorIterator<FieldPoint, Float64Array>, FieldPointVectorIterator<FieldPoint, TypedArrayList<Float64Array>>]>()
+const vectorIteratorFactories = new Map<Function, [FieldPointVectorIterator<FieldPoint, Float64Array>, FieldPointVectorIterator<FieldPoint, TypedArrayList<number, Float64Array>>]>()
 
 export function vectorIteratorFactory<Point extends FieldPointPrimitive, IsDynamic extends boolean>(type: FieldPointType<Point>, isDynamic: IsDynamic): ClassDecorator {
     return target => {
@@ -23,29 +23,31 @@ export function vectorIteratorFactory<Point extends FieldPointPrimitive, IsDynam
 
 export function vectorIterator<
         Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
+        PointElementType extends FieldPoint = Point,
+        VectorizedRoot = any
     >(
-        type: FieldPointType<Point>,
-        isDynamicVector?: IsDynamicVector<Point, Container>,
+        type: FieldPointType<PointElementType>,
+        isDynamicVector?: IsDynamicVector<PointElementType, Container>,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
-    ): FieldPointVectorIterator<Point, Container> {
+    ): FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType> {
     if (type instanceof Function) {
         if (typeof isDynamicVector !== 'boolean')
             throw new Error("must specify whether or not to use dynamic container")
 
-        return vectorIteratorFactories.get(type)![isDynamicVector! ? 1 : 0] as FieldPointVectorIterator<Point, Container>
+        return vectorIteratorFactories.get(type)![isDynamicVector! ? 1 : 0] as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
     }
     else if (MultiObjectsGroupedObjectsKey in type) {
         if (isDynamicVector === false)
             throw new Error("must use dynamic container for multi objects")
         if (multiObjectsIDs === undefined)
             throw new Error("must specify multiObjectsIDs for a multi objects type")
-        
-        return new MultiObjectsFieldPointVectorIterator<Objects, ObjIDsT, Point>(<FieldPointType<Point>><any>type[MultiObjectsGroupedObjectsKey], multiObjectsIDs) as unknown as FieldPointVectorIterator<Point, Container>
+
+        return new MultiObjectsFieldPointVectorIterator<Objects, ObjIDsT, FieldPoint>(<FieldPointType><any>type[MultiObjectsGroupedObjectsKey], multiObjectsIDs) as unknown as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
     }
-    else return new FieldsFieldPointVectorIterator<Objects, ObjIDsT, FieldsPoint, Container>(type, isDynamicVector, multiObjectsIDs) as FieldPointVectorIterator<FieldsPoint, Container> as FieldPointVectorIterator<Point, Container>
+    else return new FieldsFieldPointVectorIterator<Objects, ObjIDsT, FieldsPoint, Container>(type, isDynamicVector, multiObjectsIDs) as FieldPointVectorIterator<FieldsPoint, Container> as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
 }
 
 export function vectorizedIteratorGetSetLengthCurried<

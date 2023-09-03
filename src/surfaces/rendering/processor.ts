@@ -21,25 +21,47 @@ export class SurfaceWithRenderingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocation,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocation,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSample,
+        VolumeSampleFuseMOode extends VolumeSample = VolumeSample,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMOode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMOode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         SurfaceT extends
             SurfaceWithRendering<
                     IndicesT,
                     VolumeLocationT,
-                    VolumeSampleT,
+                    VolumeSampleElementType,
                     SurfaceUVUnwrappingGroup
                 > =
             SurfaceWithRendering<
                     IndicesT,
                     VolumeLocationT,
-                    VolumeSampleT,
+                    VolumeSampleElementType,
                     SurfaceUVUnwrappingGroup
                 >,
         SurfaceProcessingContextT extends
@@ -57,7 +79,11 @@ export class SurfaceWithRenderingProcessor<
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMOode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -70,7 +96,11 @@ export class SurfaceWithRenderingProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMOode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -78,7 +108,11 @@ export class SurfaceWithRenderingProcessor<
             VolumeProcessingWithSurfaces<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMOode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -91,7 +125,11 @@ export class SurfaceWithRenderingProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMOode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -109,7 +147,11 @@ export class SurfaceWithRenderingProcessor<
     VolumeSurfaceProcessor<
         IndicesT,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMOode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -118,12 +160,16 @@ export class SurfaceWithRenderingProcessor<
         VolumeProcessingT,
         VolumeProcessingContextT
     > {
-    
+
     process(
             surface: VolumeSurfaceProcessing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMOode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -143,7 +189,7 @@ export class SurfaceWithRenderingProcessor<
             SurfaceUVUnwrappingGroupKindsTemplate,
             context.material.surfaceUVUnwrappingGroup
         )).group.get<SurfaceUVUnwrapping>(surface)
-        
+
         surface.renderer = new SurfaceRendererShared<VolumeLocationT>(
             surface.mesh,
             surface.material.textures,

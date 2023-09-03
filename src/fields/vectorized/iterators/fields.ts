@@ -2,7 +2,7 @@ import { MultiObjectsIDs, MultiObjectsTemplate } from "../../../paradigm/trees/m
 import { extract, hasPath, intract } from "../../../paradigm/trees/tree.js"
 import { IndicesTypedArray } from "../../../utils/indices-array.js"
 import { Reflect_entries } from "../../../utils/reflect-entries.js"
-import { TypedArray } from "../../../utils/typed-array.js"
+import { NumberTypedArray } from "../../../utils/typed-array.js"
 import { FieldsPoint, FieldPoint, field_point_map, FieldPointMapped, FieldPointPrimitive } from "../../point.js"
 import { FieldPointType } from "../../type.js"
 import { FieldPointVectorIterator } from "../iterator.js"
@@ -14,11 +14,11 @@ export class FieldsFieldPointVectorIterator<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         Point extends FieldsPoint = FieldsPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = Float64Array,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = Float64Array,
         VectorizedRoot = any
     > implements FieldPointVectorIterator<Point, Container, VectorizedRoot> {
     readonly canGetByReference = true
-    
+
     private readonly typeIterators: [PropertyKey, FieldPointVectorIterator<FieldPoint, Container>][]
 
     constructor(
@@ -77,7 +77,7 @@ export class FieldsFieldPointVectorIterator<
         for (const [key, sub_typeIterator] of this.typeIterators) {
             if(!(key in src_vectorized)) continue
             if (!(key in dst_vectorized)) throw new Error()
-            
+
             sub_typeIterator.scatter(
                 src_vectorized[key], src_vectorizedRoot,
                 dst_vectorized[key], dst_vectorizedRoot,
@@ -86,7 +86,7 @@ export class FieldsFieldPointVectorIterator<
             )
         }
     }
-    
+
     length(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot): number {
         for (const [key, typeIterator] of this.typeIterators) {
             const subvectorized = vectorized[key]
@@ -129,7 +129,7 @@ export class FieldsFieldPointVectorIterator<
 
     curryGet(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, result: Point): (index: number) => void {
         const functions: ((index: number) => void)[] = []
-        
+
         field_point_map<Point, Function, void>(
             <FieldPointMapped<Point, Function>>this.types,
             type => type instanceof Function,

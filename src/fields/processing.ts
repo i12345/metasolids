@@ -86,7 +86,7 @@ export function* groupKindObjectsGroupedWithFields<
         groupsFilter?: Groups
     ) {
     type FieldT = MultiObjectsField<Point, Objects>
-    
+
     for (const groupedObjects of groupKindObjectsGrouped(result, context, kindsTemplate, groupsFilter)) {
         yield {
             ...groupedObjects,

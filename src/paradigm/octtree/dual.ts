@@ -22,7 +22,7 @@ export type OctTreeWithDualGroups = {
              * TODO: optimize group size for last indices to not even pack invalid (-1) references
              */
             neighbors: OctTreeReferencesOctTreeGroups
-            
+
             lookup: {
                 /**
                  * references to dual cells from vertices, grouped 8 elements at a time
@@ -49,7 +49,7 @@ export const OctTreeWithDualGroupsTemplate: OctTreeWithDualGroups = {
              * references to dual cells from dual cells, grouped 6 elements at a time
              */
             neighbors: OctTreeReferencesOctTreeGroupsTemplate,
-            
+
             lookup: {
                 /**
                  * references to dual cells from vertices, grouped 8 elements at a time
@@ -61,7 +61,7 @@ export const OctTreeWithDualGroupsTemplate: OctTreeWithDualGroups = {
     }
 }
 
-export type OctTreeWithDualValue = /* number | */ OctTreeReferencesOctTreeValue
+export type OctTreeWithDualValue = OctTreeReferencesOctTreeValue
 export type OctTreeWithDualValuesGrouped = {
     [DualKey]: {
         cells: {
@@ -89,11 +89,10 @@ export type OctTreeWithDualValuesGrouped = {
     }
 }
 
-export type OctTreeWithDualLayer<IndicesT extends IndicesTypedArray = IndicesTypedArray> = /* Float64Array | */ OctTreeReferencesOctTreeLayer<IndicesT>
+export type OctTreeWithDualLayer<IndicesT extends IndicesTypedArray = IndicesTypedArray> = OctTreeReferencesOctTreeLayer<IndicesT>
 export type OctTreeWithDualLayersGrouped<IndicesT extends IndicesTypedArray = IndicesTypedArray> = {
     [DualKey]: {
         cells: {
-            // surfacePoints: Float64Array
             /**
              * references to sample oct tree
              * 8 elements per one dual cell
@@ -121,7 +120,6 @@ export type OctTreeWithDualLayersGrouped<IndicesT extends IndicesTypedArray = In
 export type OctTreeWithDualOctTreesGrouped<IndicesT extends IndicesTypedArray = IndicesTypedArray> = {
     [DualKey]: {
         cells: {
-            // surfacePoints: TypedArrayOctTree<number, Float64Array>
             /**
              * references to sample oct tree
              * 8 elements per one dual cell
@@ -198,7 +196,7 @@ export class OctTreeWithDualSubdivisionProcessor<
             }
         }
     }
-    
+
     process(
         item: OctTreeWithDualSubdivisionProcessing,
         context: OctTreeWithDualSubdivisionProcessingContext
@@ -235,7 +233,7 @@ export class OctTreeWithDualSubdivisionProcessor<
             const vertices = context[DualKey].cells.vertices.subdivide(8)
             const neighbors = context[DualKey].cells.neighbors.subdivide(6)
             const lookup_corners = context[DualKey].cells.lookup.corners.subdivide(64)
-            
+
             for (let corner = 0; corner < 8; corner++) {
                 vertices.layers[corner] = 1
                 vertices.localIndices[corner] = corner
@@ -272,12 +270,12 @@ export class OctTreeWithDualSubdivisionProcessor<
 
             // 1 interior cell + 6 adjacent cells + (4 diagonal cells/plane * 3 planes) = 19 cells
             const max_number_new_dual_cells = 19 * number_subdivided_primary_cells
-            
+
             const new_dual_cells_vertices: OctTreeReferencesOctTreeLayersGrouped<IndicesT> = {
                 layers: new Uint8Array(8 * max_number_new_dual_cells),
                 localIndices: new subdivision.typedArray(8 * max_number_new_dual_cells) as IndicesT
             }
-            
+
             const new_dual_cells_neighbors: OctTreeReferencesOctTreeLayersGrouped<IndicesT> = {
                 layers: new Uint8Array(8 * max_number_new_dual_cells),
                 localIndices: new subdivision.typedArray(8 * max_number_new_dual_cells) as IndicesT
@@ -287,7 +285,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                 layers: new_dual_cells_vertices_layers,
                 localIndices: new_dual_cells_vertices_localIndices
             } = new_dual_cells_vertices
-            
+
             const {
                 layers: new_dual_cells_neighbors_layers,
                 localIndices: new_dual_cells_neighbors_localIndices
@@ -314,12 +312,12 @@ export class OctTreeWithDualSubdivisionProcessor<
             // all new dual cells for adjacent neighbors must be on layer `layer`
             // const interior_dual_cells_neighbors_adjacent_layers = new subdivision.typedArray(6)
             const interior_dual_cells_neighbors_adjacent_localIndices = new subdivision.typedArray(6)
-            
+
             // const primary_vertices_subdivided_pyramid_localIndices = new subdivision.typedArray(6 * number_subdivided_primary_cells)
 
             const primary_parent_neighbors_adjacent_localIndices = new subdivision.typedArray(6)
             const primary_parent_neighbors_adjacent_layers = new subdivision.typedArray(6)
-            
+
             const primary_parent_address = new Uint8Array(parent_layer)
             const primary_parent_neighbor_address = new Uint8Array(parent_layer)
 
@@ -332,7 +330,7 @@ export class OctTreeWithDualSubdivisionProcessor<
 
             /**
              * tmp_lookup_diagonal[(12 * (local_index on parent_layer)) + direction_diagonal] = local index of dual cell in new layer
-             * 
+             *
              * diagonal_direction = (4 * plane) + quadrant
              */
             const tmp_lookup_diagonal = new subdivision.typedArray(12 * number_subdivided_primary_cells)
@@ -353,7 +351,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                 for (let corner = 0; corner < 8; corner++) {
                     new_dual_cells_vertices_layers[(8 * new_dual_cell_interior_localIndex) + corner] = layer
                     new_dual_cells_vertices_localIndices[(8 * new_dual_cell_interior_localIndex) + corner] = primary_local_index_offset | corner
-                    
+
                     const primary_child_localIndex = primary_local_index_offset | corner
                     const corner_opposite = 0b111 ^ corner
                     new_dual_cells_lookup_corners_layers[(8 * primary_child_localIndex) | corner_opposite] = layer // new_dual_cell_interior_layer
@@ -377,7 +375,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                     if (primary_parent_neighbor) {
                         const primary_parent_neighbor_local_index = primary_parent_neighbor.layerLocalIndex.local_index
                         const primary_parent_neighbor_layer = primary_parent_neighbor.layerLocalIndex.layer
-                        
+
                         primary_parent_neighbors_adjacent_localIndices[adjacent_direction] = primary_parent_neighbor_local_index
                         primary_parent_neighbors_adjacent_layers[adjacent_direction] = primary_parent_neighbor_layer
 
@@ -391,10 +389,10 @@ export class OctTreeWithDualSubdivisionProcessor<
 
                         if (!primary_parent_neighbor_didSubdivide) {
                             // makes triangular pyramid if the primary_neighbor cell did not subdivide
-                            
+
                             // dual_neighbor_layer = parent_layer
                             dual_neighbor_localIndex = number_new_dual_cells++
-                            
+
                             for (let i_subcell_focus = 0; i_subcell_focus < 4; i_subcell_focus++) {
                                 const primary_subcell_focus = primary_focus_boundary_subcells[i_subcell_focus]
                                 const primary_subcell_neighbor = octTreeSubcellOpposite.adjacent(primary_subcell_focus, axis)
@@ -413,10 +411,10 @@ export class OctTreeWithDualSubdivisionProcessor<
                             if (octTreeAddressPrecedes(primary_parent_address, primary_parent_neighbor_address)) {
                                 // makes a cube if both this primary cell and the neighbor cell subdivded
                                 // and if this cell comes earlier
-                                
+
                                 // dual_neighbor_layer = layer
                                 dual_neighbor_localIndex = number_new_dual_cells++
-                                
+
                                 if (primary_parent_neighbor_layer === parent_layer)
                                     tmp_lookup_adjacent[(6 * primary_parent_neighbor_local_index) + (adjacent_direction ^ 1)] = dual_neighbor_localIndex
 
@@ -437,7 +435,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                                 // the new dual cell that was already made
 
                                 // the new dual cell's neighbor must be updated with this new interior cell
-                                
+
                                 dual_neighbor_localIndex = tmp_lookup_adjacent[(6 * primary_parent_local_index) + adjacent_direction]
 
                                 for (let i_subcell_focus = 0; i_subcell_focus < 4; i_subcell_focus++) {
@@ -450,7 +448,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                                     // new_dual_cells_vertices_layers[(8 * dual_neighbor_localIndex) | dual_cell_vertex_neighbor] = primary_neighbor_children_layer
                                     new_dual_cells_vertices_localIndices[(8 * dual_neighbor_localIndex) | dual_cell_vertex_focus] = primary_local_index_offset | primary_subcell_focus
                                     // new_dual_cells_vertices_localIndices[(8 * dual_neighbor_localIndex) | dual_cell_vertex_neighbor] = primary_neighbor_children_localIndex_offset | primary_subcell_neighbor
-                                }                                
+                                }
                             }
                         }
 
@@ -482,7 +480,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                                 )
 
                                 const primary_child_localIndex = primary_local_index_offset | primary_child_subcell
-                                
+
                                 // the corners pointing to the interior and to the adjacent cells
                                 const dual_corner_interior = primary_child_subcell ^ 0b111 // triagonal opposite of primary_child_subcell
                                 const dual_corner_adjacent = primary_child_subcell ^ cell_mask_12 // diagonal opposite on the plane
@@ -524,7 +522,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                         // or have been formed by the subdivision of another primary parent cell
                         let diagonal_neighbor_dual_cell_layer = layer
                         let diagonal_neighbor_dual_cell_localIndex = invalid_localIndex
-                        
+
                         const direction0: Direction = (quadrant >> 0) & 1
                         const direction1: Direction = (quadrant >> 1) & 1
 
@@ -538,7 +536,7 @@ export class OctTreeWithDualSubdivisionProcessor<
 
                         const dual_neighbor_adjacent_localIndex_0 = interior_dual_cells_neighbors_adjacent_localIndices[face0]
                         const dual_neighbor_adjacent_localIndex_1 = interior_dual_cells_neighbors_adjacent_localIndices[face1]
-                        
+
                         if (dual_neighbor_adjacent_localIndex_0 === invalid_localIndex || invalid_localIndex === (diagonal_neighbor_dual_cell_localIndex = new_dual_cells_neighbors_localIndices[(6 * dual_neighbor_adjacent_localIndex_0) + face1])) {
                             if (dual_neighbor_adjacent_localIndex_1 === invalid_localIndex || invalid_localIndex === (diagonal_neighbor_dual_cell_localIndex = new_dual_cells_neighbors_localIndices[(6 * dual_neighbor_adjacent_localIndex_1) + face0])) {
                                 const primary_parent_diagonal = subdivision.neighbor_diagonal(primary_parent_address, axis0, direction0, axis1, direction1, parent_layer)
@@ -546,7 +544,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                                     // there must then exist adjacent neighbors to primary_parent
 
                                     const primary_parent_diagonal_children_local_index_offset = subdivision.references.local.layers[primary_parent_diagonal.layerLocalIndex.layer][primary_parent_diagonal.layerLocalIndex.local_index]
-                                    
+
                                     if (primary_parent_diagonal_children_local_index_offset === invalid_localIndex ||
                                         octTreeAddressPrecedes(primary_parent_address, primary_parent_diagonal.address)) {
                                         // form new dual cell
@@ -556,60 +554,35 @@ export class OctTreeWithDualSubdivisionProcessor<
                                         // we can be sure that neither of the adjacent primary cells nor the diagonal primary cell
                                         // have yet subdivided their dual cells, if they even subdivided at all
                                         // because that would have been handled by the previous if(...)'s
-                                        
+
                                         diagonal_neighbor_dual_cell_localIndex = number_new_dual_cells++
-                                        
+
                                         // from the primary_parent cell, looking in the direction of axis0 and axis1,
                                         // there are two corners for the diagonal neighbor dual cell for each axis
-                                        
+
                                         const primary_parent_neighbor_adjacent_layer_0 = primary_parent_neighbors_adjacent_layers[face0]
                                         const primary_parent_neighbor_adjacent_layer_1 = primary_parent_neighbors_adjacent_layers[face1]
 
                                         const primary_parent_neighbor_adjacent_local_index_0 = primary_parent_neighbors_adjacent_localIndices[face0]
                                         const primary_parent_neighbor_adjacent_local_index_1 = primary_parent_neighbors_adjacent_localIndices[face1]
 
-                                        // const primary_parent_neighbor_adjacent_didSubdivide_0 = dual_neighbor_adjacent_localIndex_0 !== invalid_localIndex
-                                        // const primary_parent_neighbor_adjacent_didSubdivide_1 = dual_neighbor_adjacent_localIndex_1 !== invalid_localIndex
-
-                                        // const primary_parent_neighbor_adjacent_0 = primary_parent_neighbors_adjacent_localIndices[face0]
-
                                         // the corners for the diagonal dual cell that are for the primary cell(s) in the adjacent direction of axis0
                                         const corner_subcell_0a = cell_mask_next_0 | cell_mask_prev_1
                                         const corner_subcell_0b = corner_subcell_0a | cell_mask_2
 
-                                        // if (primary_parent_neighbor_adjacent_didSubdivide_0) {
-                                        //     // if the adjacent neighbor to primary_parent did subdividen, then its children must be on the new layer `layer`
-                                        //     const primary_parent_neighbor_adjacent_children_local_index_offset = subdivision.references.local.layers[parent_layer][primary_parent_neighbor_adjacent_local_index_0]
-                                        //     new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0a] = primary_parent_neighbor_adjacent_layer_0 + 1
-                                        //     new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0b] = primary_parent_neighbor_adjacent_layer_0 + 1
-                                        //     new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0a] = primary_parent_neighbor_adjacent_children_local_index_offset | (axis_subcell_mask_prev_0 | axis_subcell_mask_next_1)
-                                        //     new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0b] = primary_parent_neighbor_adjacent_children_local_index_offset | (axis_subcell_mask_prev_0 | axis_subcell_mask_next_1 | axis_subcell_mask_2)
-                                        // }
-                                        // else {
-                                            new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0a] = primary_parent_neighbor_adjacent_layer_0
-                                            new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0b] = primary_parent_neighbor_adjacent_layer_0
-                                            new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0a] = primary_parent_neighbor_adjacent_local_index_0
-                                            new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0b] = primary_parent_neighbor_adjacent_local_index_0
-                                        // }
+                                        new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0a] = primary_parent_neighbor_adjacent_layer_0
+                                        new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0b] = primary_parent_neighbor_adjacent_layer_0
+                                        new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0a] = primary_parent_neighbor_adjacent_local_index_0
+                                        new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_0b] = primary_parent_neighbor_adjacent_local_index_0
 
                                         // the corners for the diagonal dual cell that are for the primary cell(s) in the adjacent direction of axis1
                                         const corner_subcell_1a = cell_mask_next_1 | cell_mask_prev_0
                                         const corner_subcell_1b = corner_subcell_1a | cell_mask_2
 
-                                        // if (primary_parent_neighbor_adjacent_didSubdivide_1) {
-                                        //     // if the adjacent neighbor to primary_parent did subdividen, then its children must be on the new layer `layer`
-                                        //     const primary_parent_neighbor_adjacent_children_local_index_offset = subdivision.references.local.layers[parent_layer][primary_parent_neighbor_adjacent_local_index_1]
-                                        //     new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1a] = primary_parent_neighbor_adjacent_layer_1 + 1
-                                        //     new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1b] = primary_parent_neighbor_adjacent_layer_1 + 1
-                                        //     new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1a] = primary_parent_neighbor_adjacent_children_local_index_offset | (axis_subcell_mask_prev_1 | axis_subcell_mask_next_0)
-                                        //     new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1b] = primary_parent_neighbor_adjacent_children_local_index_offset | (axis_subcell_mask_prev_1 | axis_subcell_mask_next_0 | axis_subcell_mask_2)
-                                        // }
-                                        // else {
-                                            new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1a] = primary_parent_neighbor_adjacent_layer_1
-                                            new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1b] = primary_parent_neighbor_adjacent_layer_1
-                                            new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1a] = primary_parent_neighbor_adjacent_local_index_1
-                                            new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1b] = primary_parent_neighbor_adjacent_local_index_1
-                                        // }
+                                        new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1a] = primary_parent_neighbor_adjacent_layer_1
+                                        new_dual_cells_vertices_layers[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1b] = primary_parent_neighbor_adjacent_layer_1
+                                        new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1a] = primary_parent_neighbor_adjacent_local_index_1
+                                        new_dual_cells_vertices_localIndices[(8 * diagonal_neighbor_dual_cell_localIndex) | corner_subcell_1b] = primary_parent_neighbor_adjacent_local_index_1
 
                                         // the corners for the diagonal dual cell for the primary cell(s) in the diagonal direction
                                         const corner_subcell_2a = cell_mask_next_0 | cell_mask_next_1
@@ -623,7 +596,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                                         // the primary_parent's triagonal corner dual cells are neighbors for this diagonal dual cell
                                         const primary_subcell_a = cell_mask_next_0 | cell_mask_next_1
                                         const primary_subcell_b = primary_subcell_a | cell_mask_2
-                                        
+
                                         new_dual_cells_neighbors_layers[(6 * diagonal_neighbor_dual_cell_localIndex) + face_2a] = lookup_corners_parents_layers[(8 * primary_parent_local_index) | primary_subcell_a]
                                         new_dual_cells_neighbors_layers[(6 * diagonal_neighbor_dual_cell_localIndex) + face_2b] = lookup_corners_parents_layers[(8 * primary_parent_local_index) | primary_subcell_b]
                                         new_dual_cells_neighbors_localIndices[(6 * diagonal_neighbor_dual_cell_localIndex) + face_2a] = lookup_corners_parents_localIndices[(8 * primary_parent_local_index) | primary_subcell_a]
@@ -640,17 +613,6 @@ export class OctTreeWithDualSubdivisionProcessor<
 
                                         const diagonal_direction_opposite = 0b11 ^ diagonal_direction
                                         diagonal_neighbor_dual_cell_localIndex = tmp_lookup_diagonal[(12 * primary_parent_diagonal.layerLocalIndex.local_index) + diagonal_direction_opposite]
-
-                                        // // this is a corner of the dual cell diagonal_neighbor_dual_cell_localIndex
-                                        // // it is arbitrary where it is on the third axis
-                                        // const primary_diagonal_child_dual_corner = <OctTreeCell>((direction0 === Direction.Positive ? (1 << axis0) : 0) | (direction1 === Direction.Positive ? (1 << axis1) : 0))
-                                        // const primary_diagonal_child_subcell = octTreeSubcellOpposite.diagonal(primary_diagonal_child_dual_corner, axis0, axis1)
-                                        
-                                        // this diagonal neighbor must have been subdivided also; it must be on `layer`
-                                        // const primary_diagonal_child_layer = layer
-                                        // this is just one local index used for referencing the diagonal neighbor dual cell
-                                        // const primary_diagonal_child_localIndex = primary_parent_diagonal_children_local_index_offset | primary_diagonal_child_subcell
-                                        // diagonal_neighbor_dual_cell_localIndex = new_corners[(8 * primary_diagonal_child_localIndex) | primary_diagonal_child_dual_corner]
                                     }
                                 }
                                 else {
@@ -699,14 +661,14 @@ export class OctTreeWithDualSubdivisionProcessor<
 
                             if (triagonal_dual_neighbor_layer_a !== invalid_layer) {
                                 const triagonal_dual_neighbor_localIndex_a = lookup_corners_parents_localIndices[(8 * primary_parent_local_index) | triagonal_corner_a]
-                                
+
                                 dual_cells_neighbors_layers[triagonal_dual_neighbor_layer_a][(6 * triagonal_dual_neighbor_localIndex_a) + face_2a] = layer // diagonal_neighbor_dual_cell_layer
                                 dual_cells_neighbors_localIndices[triagonal_dual_neighbor_layer_a][(6 * triagonal_dual_neighbor_localIndex_a) + face_2a] = diagonal_neighbor_dual_cell_localIndex
                             }
 
                             if (triagonal_dual_neighbor_layer_b !== invalid_layer) {
                                 const triagonal_dual_neighbor_localIndex_b = lookup_corners_parents_localIndices[(8 * primary_parent_local_index) | triagonal_corner_b]
-                                
+
                                 dual_cells_neighbors_layers[triagonal_dual_neighbor_layer_b][(6 * triagonal_dual_neighbor_localIndex_b) + face_2b] = layer // diagonal_neighbor_dual_cell_layer
                                 dual_cells_neighbors_localIndices[triagonal_dual_neighbor_layer_b][(6 * triagonal_dual_neighbor_localIndex_b) + face_2b] = diagonal_neighbor_dual_cell_localIndex
                             }
@@ -724,7 +686,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                 }
 
                 // update triagonal corner references (these are not tmp) for the new interior vertices
-                
+
                 // Now, the interior dual cell has been made,
                 // the adjacent dual cells have been made/updated,
                 // and the diagonal dual cells also;

@@ -7,7 +7,7 @@ import { SurfaceUVUnwrapping } from "../uv-unwrapping/algorithm.js"
 import { MeshDataWithNormals } from "../mesh-data.js"
 import { groups } from "../../paradigm/trees/index.js"
 import { Material_Groups_Template } from "./material/groups.js"
-import { ExtraFields, Field, FieldsPoint, FieldsPointMapped, SampleDomainLocationFieldKey } from "../../fields/index.js"
+import { ExtraFields, Field, FieldsPoint, FieldsPointMapped, GroupFieldKey, SampleDomainLocationFieldKey } from "../../fields/index.js"
 import { FieldsField, Vec2Field, defaultField } from "../../fields/fields/index.js"
 import { preDeserializer, serializableClass, serializableProperty } from "simple-typed-serialization"
 import 'reflect-metadata'
@@ -26,7 +26,7 @@ export class SurfaceRendererShared<
 
     @serializableProperty({ preDeserialize: true })
     readonly textures: Material_Groups_Textures<VolumeLocationT>
-    
+
     @serializableProperty({ preDeserialize: true })
     readonly surfaceUVUnwrapping: SurfaceUVUnwrapping
 
@@ -56,7 +56,7 @@ export class SurfaceRendererShared<
         this.extraLocationParameters = extraLocationParameters
 
         type TextureLocationT = Material_Texture_Location<VolumeLocationT>
-        type TextureContextT = Material_Texture_Context<VolumeLocationT>
+        type TextureContextT = Omit<Material_Texture_Context<VolumeLocationT>, typeof GroupFieldKey>
 
         const sharedContext = {
             [SampleDomainLocationFieldKey]: FieldsField.merge(
@@ -73,7 +73,7 @@ export class SurfaceRendererShared<
 
         this.mesh = new MeshRendererShared<VolumeLocationT>(this)
         this.material = new MaterialRendererShared<VolumeLocationT>(this)
-        
+
         this.material.init()
     }
 
@@ -104,7 +104,7 @@ export class SurfaceRendererIndividual<
                 this.entity.addComponent('render', { enabled: true })
             else if (!this.entity.render.enabled)
                 this.entity.render.enabled = true
-            
+
             this.entity.render!.meshInstances = [...this.entity.render!.meshInstances, this.implementation]
         }
         else if (this.attached && !attached) {

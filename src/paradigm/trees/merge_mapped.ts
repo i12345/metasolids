@@ -96,7 +96,7 @@ export function common_start_path(paths: PropertyPath[]): PropertyPath {
                 break
             }
         }
-        
+
         if (!isItemCommon)
             break
 

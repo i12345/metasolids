@@ -4,21 +4,55 @@ import { FieldsField } from "../fields/fields.js";
 import { InterpolationKeypoint, InterpolationManager, InterpolationType, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 
-export class SampleDomainInterpolationType implements InterpolationType<SampleDomain<FieldPoint, FieldPoint>> {
-    [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: InterpolationKeypoint<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>>[],
-            locationField: Field<Location>
-        ): Interpolator<Location, SampleDomain<FieldPoint, FieldPoint, SamplingContext<FieldPoint>>> | undefined {
+export class SampleDomainInterpolationType<
+        Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
+    > implements
+    InterpolationType<
+        SampleDomain<
+            FieldPoint,
+            Sample,
+            FieldPoint,
+            FieldPoint,
+            SampleElementType,
+            SampleFuseMode
+        >
+    > {
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
+            keypoints: InterpolationKeypoint<
+                Location,
+                SampleDomain<
+                    Location, Sample,
+                    LocationElementType, LocationFuseMode,
+                    SampleElementType, SampleFuseMode,
+                    SamplingContext<Location, LocationElementType, LocationFuseMode>
+                >
+            >[],
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
+        ): Interpolator<
+            Location,
+            SampleDomain<
+                Location, Sample,
+                LocationElementType, LocationFuseMode,
+                SampleElementType, SampleFuseMode,
+                SamplingContext<Location, LocationElementType, LocationFuseMode>
+            >
+        > | undefined {
         if (keypoints.some(({ value: domain }) => !(domain?.field?.interpolationType && domain.field.interpolationType[makeInterpolator])))
             return undefined
-        
-        const field = FieldsField.merge(...keypoints.map(({ value: domain }) => domain.field as FieldsField))
+
+        const sampleField = FieldsField.merge(...keypoints.map(({ value: domain }) => <FieldsField><Field>domain.field))
 
         return location => new InterpolatingSampleDomain(
             keypoints,
             location,
             locationField,
-            field
+            <Field<Sample, SampleElementType, SampleFuseMode>><Field>sampleField
         )
     }
 
@@ -29,16 +63,29 @@ export class SampleDomainInterpolationType implements InterpolationType<SampleDo
 
 export class InterpolatingSampleDomain<
         T extends FieldPoint = FieldPoint,
+        TElementType extends FieldPoint = FieldPoint,
+        TFuseMode extends FieldPoint = FieldPoint,
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         Sample extends FieldPoint = FieldPoint,
-        Context extends SamplingContext<Location> = SamplingContext<Location>
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
+        Context extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>
     > implements
-    SampleDomain<Location, Sample, Context> {
+    SampleDomain<
+        Location, Sample,
+        LocationElementType, LocationFuseMode,
+        SampleElementType, SampleFuseMode,
+        Context
+    > {
     constructor(
-        public keypoints: InterpolationKeypoint<T, SampleDomain<Location, Sample, Context>>[],
+        public keypoints: InterpolationKeypoint<T, SampleDomain<Location, Sample, LocationElementType, LocationFuseMode, SampleElementType, SampleFuseMode, Context>>[],
         public location_interpolation: T,
-        public location_field: Field<T>,
-        public field: Field<Sample>
+        public location_field: Field<T, TElementType, TFuseMode>,
+        public field: Field<Sample, SampleElementType, SampleFuseMode>
     ) {
     }
 

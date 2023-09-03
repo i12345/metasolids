@@ -1,26 +1,30 @@
-import { CurveSet, Mat3, Mat4, Quat, Vec3 } from "playcanvas-extended";
+import { Mat3, Mat4, Quat, Vec3 } from "playcanvas-extended";
 import { FieldInterpolationKeypoint, FieldInterpolationType, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 import { Field } from "../field.js";
 
 export class Mat3InterpolationType implements FieldInterpolationType<Mat3> {
-    [makeInterpolator]<Location extends FieldPoint>(
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
             keypoints: FieldInterpolationKeypoint<Location, Mat3>[],
-            locationField: Field<Location>
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): FieldInterpolator<Location, Mat3> | undefined {
         if (typeof keypoints[0].location !== 'number')
             return undefined
-        
+
         if (!(keypoints[0].value instanceof Mat3))
             return undefined
-        
+
         const m4 = keypoints.map(({ value: m }) => new Mat4().set([
             m.data[0], m.data[1], m.data[2], 0,
             m.data[3], m.data[4], m.data[5], 0,
             m.data[6], m.data[7], m.data[8], 0,
             0, 0, 0, 1
         ]))
-        
+
         const r = keypoints.map(({ location }, i) => ({ location, value: new Quat().setFromMat4(m4[i]) }))
         const s = keypoints.map(({ location }, i) => ({ location, value: m4[i].getScale() }))
 

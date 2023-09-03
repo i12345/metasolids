@@ -35,7 +35,7 @@ export class SubdivisionAdjacency<IndicesT extends IndicesTypedArray = IndicesTy
 
         this.compute_references()
     }
-    
+
     private compute_references() {
         this.references.subdivide(0)
         this.layout.offset.subdivide(0)
@@ -48,21 +48,21 @@ export class SubdivisionAdjacency<IndicesT extends IndicesTypedArray = IndicesTy
     private layer_count_adjacent(layer: number) {
         const references_parents_layer = this.subdivision.references.parents.layers[layer - 1]
         const address: OctTreeAddress = new Array(layer)
-        
+
         let neighbors = 0
         let max_adjacent = 0
 
         for (let familyIndex = 0; familyIndex < references_parents_layer.length; familyIndex++) {
             const parent_localIndex = references_parents_layer[familyIndex]
             this.subdivision.address(layer - 1, parent_localIndex, address)
-            
+
             for (let subcell = 0; subcell < 8; subcell++) {
                 address[layer - 1] = <OctTreeCell>subcell
-                
+
                 const adjacent = this.count_adjacent_cells(address)
                 if (adjacent > max_adjacent)
                     max_adjacent = adjacent
-                
+
                 neighbors += adjacent
             }
         }
@@ -84,22 +84,22 @@ export class SubdivisionAdjacency<IndicesT extends IndicesTypedArray = IndicesTy
 
         const references_parents_layer = this.subdivision.references.parents.layers[layer - 1]
         const address: OctTreeAddress = new Array(layer)
-        
+
         let offset = 0
 
         for (let familyIndex = 0; familyIndex < references_parents_layer.length; familyIndex++) {
             const parent_localIndex = references_parents_layer[familyIndex]
             this.subdivision.address(layer - 1, parent_localIndex, address)
             const localIndex_offset = 8 * familyIndex
-            
+
             for (let subcell = 0; subcell < 8; subcell++) {
                 address[layer - 1] = <OctTreeCell>subcell
                 const localIndex = localIndex_offset | subcell
-                
+
                 for (let adjacent_direction = 0; adjacent_direction < 6; adjacent_direction++) {
                     const newOffset = this.identify_adjacent_cells(address, result, offset, adjacent_direction)
                     const count = newOffset - offset
-                
+
                     layout.offset[(6 * localIndex) + adjacent_direction] = offset
                     layout.count[(6 * localIndex) + adjacent_direction] = count
 
@@ -111,7 +111,7 @@ export class SubdivisionAdjacency<IndicesT extends IndicesTypedArray = IndicesTy
 
     private count_adjacent_cells(address: OctTreeAddress) {
         const layer = address.length - 1
-        
+
         let count = 0
         for (let axis = 0; axis < 3; axis++) {
             for (let direction = 0; direction < 2; direction++) {
@@ -232,7 +232,7 @@ export class SubdivisionAdjacency<IndicesT extends IndicesTypedArray = IndicesTy
         }
 
         recurse(cell.layer, cell.local_index)
-        
+
         return offset
     }
 }

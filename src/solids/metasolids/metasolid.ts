@@ -128,6 +128,10 @@ export type MetaSolidTexture<
     Texture<
         MetaSolidTextureLocation<Location, ParametersIn>,
         MetaSolidTextureSample<Sample, ParametersOut>,
+        MetaSolidTextureLocation<Location, ParametersIn>,
+        MetaSolidTextureLocation<Location, ParametersIn>,
+        MetaSolidTextureSample<Sample, ParametersOut>,
+        MetaSolidTextureSample<Sample, ParametersOut>,
         TextureContext
     >
 
@@ -142,8 +146,8 @@ export interface MetaSolidVolumeSamplingContext<
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>
     > extends
-    VolumeSamplingContextWithSurfaceHints<Location, OuterSampleProcessingContextT>,
-    VolumeSamplingContextWithSolidHints<Location, OuterSampleProcessingContextT> {
+    VolumeSamplingContextWithSurfaceHints<Location, Location, Location, OuterSampleProcessingContextT>,
+    VolumeSamplingContextWithSolidHints<Location, Location, Location, OuterSampleProcessingContextT> {
     [MetaSolidSamplingContext_Texture]: TextureContext
 }
 
@@ -167,11 +171,18 @@ export interface MetaSolidShapeSamplingContext<
             MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
             MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>
     > extends
-    VolumeSamplingContextWithSurfaceHints<Location, OuterSampleProcessingContextT>,
-    VolumeSamplingContextWithSolidHints<Location, OuterSampleProcessingContextT> {
+    VolumeSamplingContextWithSurfaceHints<Location, Location, Location, OuterSampleProcessingContextT>,
+    VolumeSamplingContextWithSolidHints<Location, Location, Location, OuterSampleProcessingContextT> {
     [MetaSolidSamplingContext_Volume]: VolumeContext
     [MetaSolidSamplingContext_Texture]: {
-        item: Texture<MetaSolidTxLocation<Location, TxLocation>, TxSample, TextureContext>
+        item: Texture<
+            MetaSolidTxLocation<Location, TxLocation>, TxSample,
+            MetaSolidTxLocation<Location, TxLocation>,
+            MetaSolidTxLocation<Location, TxLocation>,
+            TxSample,
+            TxSample,
+            TextureContext
+        >
         context: TextureContext
     }
 }
@@ -192,7 +203,14 @@ export interface MetaSolidShape<
             MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
             MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
     >
-    extends SampleDomain<Location, Sample, Context> {
+    extends SampleDomain<
+        Location, Sample,
+        Location,
+        Location,
+        Sample,
+        Sample,
+        Context
+    > {
     boundingBox: BoundingBox
 }
 
@@ -213,7 +231,6 @@ export class MetaSolidVolume<
         Context extends
             MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
             MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
-        
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
@@ -225,7 +242,11 @@ export class MetaSolidVolume<
         ObjIDsT,
         ObjIDsContainer,
         Location,
+        Location,
+        Location,
         LocationContainer,
+        MetaSolidVolumeSample<TxSample, InnerSample>,
+        MetaSolidVolumeSample<TxSample, InnerSample>,
         MetaSolidVolumeSample<TxSample, InnerSample>,
         SampleContainer,
         VolumeContext,
@@ -238,7 +259,11 @@ export class MetaSolidVolume<
             >,
         FusedVectorSamplingContext<
                 Location,
+                Location,
+                Location,
                 LocationContainer,
+                MetaSolidVolumeSample<TxSample, InnerSample>,
+                MetaSolidVolumeSample<TxSample, InnerSample>,
                 MetaSolidVolumeSample<TxSample, InnerSample>,
                 SampleContainer,
                 Objects,
@@ -254,13 +279,21 @@ export class MetaSolidVolume<
                     >
             >,
         Location,
+        Location,
+        Location,
         LocationContainer,
+        InnerSample,
+        InnerSample,
         InnerSample,
         SampleContainer,
         Context
     > implements
     VolumeWithBoundingBox<
         Location,
+        Location,
+        Location,
+        MetaSolidVolumeSample<TxSample, InnerSample>,
+        MetaSolidVolumeSample<TxSample, InnerSample>,
         MetaSolidVolumeSample<TxSample, InnerSample>,
         OuterSampleProcessingContextT,
         VolumeContext
@@ -302,6 +335,10 @@ export class MetaSolidVolume<
                 >,
             public texture?: Texture<
                     MetaSolidTxLocation<Location>,
+                    TxSample,
+                    MetaSolidTxLocation<Location>,
+                    MetaSolidTxLocation<Location>,
+                    TxSample,
                     TxSample,
                     TextureContext
                 >

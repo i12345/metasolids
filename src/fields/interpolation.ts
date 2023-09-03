@@ -29,19 +29,27 @@ export type Interpolator<
 
 export type VectorInterpolator<
         Location extends FieldPoint,
+        LocationElementType extends FieldPoint,
+        LocationFuseMode extends FieldPoint,
         LocationContainer extends FieldPointVectorContainer,
         Point extends FieldPoint,
+        PointElementType extends FieldPoint,
+        PointFuseMode extends FieldPoint,
         PointContainer extends FieldPointVectorContainer,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        PointVector extends FieldPointVector<Point, PointContainer> = FieldPointVector<Point, PointContainer>
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        PointVector extends FieldPointVector<PointElementType, PointContainer> = FieldPointVector<PointElementType, PointContainer>
     > = (locations: LocationVector) => PointVector
 
 export const makeInterpolator = Symbol('makeInterpolator')
 
 export interface InterpolationType<Point> {
-    [makeInterpolator]<Location extends FieldPoint>(
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
             keypoints: InterpolationKeypoint<Location, Point>[],
-            locationField: Field<Location>
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): Interpolator<Location, Point> | undefined
 }
 
@@ -58,25 +66,35 @@ export interface FieldInterpolationType<
 
 export interface VectorFieldInterpolationType<
         Point extends FieldPoint = FieldPoint,
+        PointElementType extends FieldPoint = Point,
+        PointFuseMode extends FieldPoint = Point,
         PointContainer extends FieldPointVectorContainer = FieldPointVectorContainer,
-        PointVector extends FieldPointVector<Point, PointContainer> = FieldPointVector<Point, PointContainer>,
+        PointVector extends FieldPointVector<PointElementType, PointContainer> = FieldPointVector<PointElementType, PointContainer>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array
     > extends
     InterpolationType<Point> {
     makeInterpolator_vectorized<
             Location extends FieldPoint,
-            LocationContainer extends FieldPointVectorContainer,
-            LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+            LocationContainer extends FieldPointVectorContainer = FieldPointVectorContainerStatic,
+            LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
         >(
             keypoints: InterpolationKeypoint<Location, Point>[],
-            locationField: Field<Location>,
-            resultType: FieldPointType<Point>,
+            locationField: Field<Location, LocationElementType, LocationFuseMode>,
+            resultType: FieldPointType<PointElementType>,
+            isDynamicLocation: IsDynamicVector<LocationElementType, LocationContainer>,
+            isDynamicResult: IsDynamicVector<PointElementType, PointContainer>,
             multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
         ): VectorInterpolator<
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Point,
+            PointElementType,
+            PointFuseMode,
             PointContainer,
             LocationVector,
             PointVector
@@ -85,38 +103,52 @@ export interface VectorFieldInterpolationType<
 
 //TODO: this should perhaps be replaced with individual field interpolators
 export class InterpolationManager implements InterpolationType<any>, VectorFieldInterpolationType {
-    [makeInterpolator]<Location extends FieldPoint>(
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location
+        >(
             keypoints: InterpolationKeypoint<Location, any>[],
-            locationField: Field<Location>
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): Interpolator<Location, any> {
         for (const interpolationType of InterpolationManager.interpolationTypes) {
             const interpolator = interpolationType[makeInterpolator](keypoints, locationField)
             if (interpolator)
                 return interpolator
         }
-        
+
         throw new Error('matching interpolator not found')
     }
 
     makeInterpolator_vectorized<
             Location extends FieldPoint,
+            LocationElementType extends FieldPoint,
+            LocationFuseMode extends FieldPoint,
             LocationContainer extends FieldPointVectorContainer,
             Point extends FieldPoint,
+            PointElementType extends FieldPoint,
+            PointFuseMode extends FieldPoint,
             PointContainer extends FieldPointVectorContainer,
-            LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-            PointVector extends FieldPointVector<Point, PointContainer> = FieldPointVector<Point, PointContainer>,
+            LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+            PointVector extends FieldPointVector<PointElementType, PointContainer> = FieldPointVector<PointElementType, PointContainer>,
             Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
             ObjIDsT extends IndicesTypedArray = Uint32Array,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>
         >(
             keypoints: InterpolationKeypoint<Location, Point>[],
-            locationField: Field<Location>,
-            resultType: FieldPointType<Point>,
+            locationField: Field<Location, LocationElementType, LocationFuseMode>,
+            resultType: FieldPointType<PointElementType>,
+            isDynamicLocation: IsDynamicVector<LocationElementType, LocationContainer>,
+            isDynamicResult: IsDynamicVector<PointElementType, PointContainer>,
             multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
         ): VectorInterpolator<
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Point,
+            PointElementType,
+            PointFuseMode,
             PointContainer,
             LocationVector,
             PointVector
@@ -125,22 +157,26 @@ export class InterpolationManager implements InterpolationType<any>, VectorField
                 {
                     [makeInterpolator](
                         keypoints: InterpolationKeypoint<Location, any>[],
-                        locationField: Field<Location>
+                        locationField: Field<Location, LocationElementType, LocationFuseMode>
                     ): Interpolator<Location, Point>
                 },
                 typeof makeInterpolator,
                 (
                     keypoints: InterpolationKeypoint<Location, any>[],
-                    locationField: Field<Location>
+                    locationField: Field<Location, LocationElementType, LocationFuseMode>
                 ) => Interpolator<Location, Point>,
                 [typeof keypoints, typeof locationField],
                 (
                     keypoints: InterpolationKeypoint<Location, any>[],
-                    locationField: Field<Location>
+                    locationField: Field<Location, LocationElementType, LocationFuseMode>
                 ) => VectorInterpolator<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Point,
+                    PointElementType,
+                    PointFuseMode,
                     PointContainer,
                     LocationVector,
                     PointVector
@@ -149,7 +185,7 @@ export class InterpolationManager implements InterpolationType<any>, VectorField
             constructor() {
                 super(makeInterpolator)
             }
-            
+
             protected vectorizeSingularCall() {
                 return undefined!
             }
@@ -160,22 +196,20 @@ export class InterpolationManager implements InterpolationType<any>, VectorField
             if (interpolator)
                 return interpolator
         }
-        
-        const singular = <Interpolator<Location, Point>>this[makeInterpolator](keypoints, locationField)
-        
-        return locations => {
-            const locations_multiObj = <FieldPointVectorWithMultiObjects<Location, LocationContainer, ObjIDsT, ObjIDsContainer>><unknown>locations
-            const isDynamic_location = isDynamicVector<Location, LocationContainer>(locations)
-            const isDynamic_result = <IsDynamicVector<Point, PointContainer>><unknown>isDynamic_location
 
-            const locationIterator = vectorIterator(locationField.elementType, isDynamic_location, multiObjectIDs)
-            const resultIterator = vectorIterator(resultType, isDynamic_result, multiObjectIDs)
+        const singular = <Interpolator<Location, Point>>this[makeInterpolator](keypoints, locationField)
+
+        return locations => {
+            const locations_multiObj = <FieldPointVectorWithMultiObjects<LocationElementType, LocationContainer, ObjIDsT, ObjIDsContainer>><unknown>locations
+
+            const locationIterator = vectorIterator<Location, LocationContainer, Objects, ObjIDsT, LocationElementType>(locationField.elementType, isDynamicLocation, multiObjectIDs)
+            const resultIterator = vectorIterator<Point, PointContainer, Objects, ObjIDsT, PointElementType>(resultType, isDynamicResult, multiObjectIDs)
             const length = locationIterator.length(locations, locations)
 
             const result = <PointVector><unknown>field_point_vectorized_multi_objects_new(
                 resultType,
                 length,
-                isDynamic_result,
+                isDynamicResult,
                 <TypedArrayConstructor<number, ObjIDsT> | undefined>(locations_multiObj[ItemObjIDsKey] ? typedArrayConstructor(locations_multiObj[ItemObjIDsKey]) : undefined),
                 <any>(locations_multiObj[ItemObjIDsKey] ? sum(locations_multiObj[ItemObjIDsKey]) : undefined)
             )
@@ -189,43 +223,57 @@ export class InterpolationManager implements InterpolationType<any>, VectorField
             return result
         }
     }
-    
+
     private static interpolationTypes: InterpolationType<any>[] = []
 
     static register(type: InterpolationType<any>): void {
         this.interpolationTypes.push(type)
     }
 
-    static [makeInterpolator]<Location extends FieldPoint>(
+    static [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
             keypoints: InterpolationKeypoint<Location, any>[],
-            locationField: Field<Location>
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): Interpolator<Location, any> {
         return this.instance[makeInterpolator](keypoints, locationField)
     }
-    
+
     static makeInterpolatorVectorized<
             Location extends FieldPoint,
+            LocationElementType extends FieldPoint,
+            LocationFuseMode extends FieldPoint,
             LocationContainer extends FieldPointVectorContainer,
             Point extends FieldPoint,
+            PointElementType extends FieldPoint,
+            PointFuseMode extends FieldPoint,
             PointContainer extends FieldPointVectorContainer,
-            LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-            PointVector extends FieldPointVector<Point, PointContainer> = FieldPointVector<Point, PointContainer>,
+            LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+            PointVector extends FieldPointVector<PointElementType, PointContainer> = FieldPointVector<PointElementType, PointContainer>,
             Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
             ObjIDsT extends IndicesTypedArray = Uint32Array
         >(
             keypoints: InterpolationKeypoint<Location, Point>[],
-            locationField: Field<Location>,
-            resultType: FieldPointType<Point>,
+            locationField: Field<Location, LocationElementType, LocationFuseMode>,
+            resultType: FieldPointType<PointElementType>,
+            isDynamicLocation: IsDynamicVector<LocationElementType, LocationContainer>,
+            isDynamicResult: IsDynamicVector<PointElementType, PointContainer>,
             multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
         ): VectorInterpolator<
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Point,
+            PointElementType,
+            PointFuseMode,
             PointContainer,
             LocationVector,
             PointVector
         > {
-        return this.instance.makeInterpolator_vectorized(keypoints, locationField, resultType, multiObjectIDs)
+        return this.instance.makeInterpolator_vectorized(keypoints, locationField, resultType, isDynamicLocation, isDynamicResult, multiObjectIDs)
     }
 
     static readonly instance = new InterpolationManager()

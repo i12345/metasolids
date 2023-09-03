@@ -112,7 +112,7 @@ export abstract class Component<
         shared: this._processing_shared_changed,
         instance: this._processing_instance_changed,
     })
-    
+
     private _root: Component<SharedT, InstanceT, ContextT, ID>
     private _makeRoot = false
 
@@ -162,7 +162,7 @@ export abstract class Component<
         const initialization = graph.init(raw.context)
         if (!initialization.connections.inputs.every(input => pathExists(raw.item, input)))
             throw new Error("not all inputs defined")
-        
+
         graph.process(raw.item, raw.context)
         this.processing.shared = raw
 
@@ -192,7 +192,7 @@ export abstract class Component<
     onEnable(): void {
         if (!this.isRoot)
             throw new Error("Enabling/disabling non-root component has no effect")
-        
+
         type SystemT = ComponentSystem<
             SharedT,
             InstanceT,
@@ -209,7 +209,7 @@ export abstract class Component<
     onDisable(): void {
         if (!this.isRoot)
             throw new Error("Enabling/disabling non-root component has no effect")
-        
+
         type SystemT = ComponentSystem<
             SharedT,
             InstanceT,
@@ -226,7 +226,7 @@ export abstract class Component<
     private async _processing_id_changed(oldValue: ID | undefined, newValue: ID | undefined) {
         if (!this.isRoot && newValue !== undefined)
             throw new Error("Cannot set processing on non-root component")
-        
+
         type SystemT = ComponentSystem<
             SharedT,
             InstanceT,
@@ -248,7 +248,7 @@ export abstract class Component<
     ) {
         if (!this.isRoot && newValue !== undefined)
             throw new Error("Cannot set processing on non-root component")
-        
+
         this.instantiate()
     }
 

@@ -20,14 +20,14 @@ export function field_point_vector_mean<
     const { get, length } = vectorizedIteratorGetSetLengthCurried(type, <any>vector, { obj: item, property: "item" }, multiObjectsIDs)
     if (length === 0)
         return field_point_new(type)
-    
+
     get(0)
     let sum = field_point_clone(item.item)
     for (let i = 1; i < length; i++) {
         get(i)
         sum = field_point_add_inplace(sum, item.item)
     }
-    
+
     return field_point_divide(sum, length)
 }
 
@@ -48,14 +48,14 @@ export function field_point_vector_stdDev<
     const { get, length } = vectorizedIteratorGetSetLengthCurried(type, <any>vector, { obj: item, property: "item" }, multiObjectsIDs)
     if (length === 0)
         return field_point_new(type)
-    
+
     let residuals = field_point_new(type)
     for (let i = 0; i < length; i++) {
         get(i)
         const residual = field_point_subtract(item.item, mean)
         residuals = field_point_add_inplace(residuals, field_point_square(residual))
     }
-    
+
     return field_point_sqrt(field_point_divide(residuals, length - 1))
 }
 

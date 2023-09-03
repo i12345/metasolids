@@ -21,6 +21,6 @@ export class Mat3Field implements Field<Mat3> {
             Mat4Field.fields.scale.distance(trs_x.s, trs_y.s)
         )
     }
-    
+
     static readonly instance = new this(<FuseMode<Mat3>>fuseModes.ArithmeticPrimitiveFuseMode.multiply)
 }

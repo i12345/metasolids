@@ -9,14 +9,14 @@ export class MaterialSemanticImplementation_Shared<
     >
     implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
     get stage() { return this.implementation.stage }
-    
+
     readonly cost: Cost = { space: { elements: 0 }, time: 0 }
-    
+
     constructor(
         public readonly implementation: MaterialSemanticImplementation_Immediate<VolumeLocationT>,
         public readonly renderedBuffers: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
     ) { }
-    
+
     equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
         ///@ts-ignore
         return this.implementation.equals(that) ||

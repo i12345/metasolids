@@ -2,19 +2,25 @@ import { Quat } from "playcanvas-extended";
 import { keypoint_index } from "../../utils/keypoints_index.js";
 import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
+import { Field } from "../field.js";
 
 export class QuatInterpolationType implements FieldInterpolationType<Quat> {
-    [makeInterpolator]<Location extends FieldPoint>(
-            keypoints: FieldInterpolationKeypoint<Location, Quat>[]
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
+            keypoints: FieldInterpolationKeypoint<Location, Quat>[],
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): Interpolator<Location, Quat> | undefined {
         if (!keypoints.every(({ value }) => value instanceof Quat))
             return undefined
-        
+
         if (typeof keypoints[0].location !== 'number')
             return undefined
-        
+
         const t_keypoints = keypoints.map(({ location }) => <number>location)
-        
+
         return location => {
             const t = location as number
             const i = keypoint_index(t, t_keypoints)

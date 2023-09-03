@@ -12,22 +12,28 @@ export class LocationFieldObserverSampleDomain<
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Context extends SamplingContext<Location> = SamplingContext<Location>,
+        Context extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
         LocationVector extends
-            FieldPointVector<Location, LocationContainer> =
-            FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -35,8 +41,12 @@ export class LocationFieldObserverSampleDomain<
         VectorContext extends
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -47,8 +57,12 @@ export class LocationFieldObserverSampleDomain<
                 > =
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -63,23 +77,31 @@ export class LocationFieldObserverSampleDomain<
         ObjIDsT,
         ObjIDsContainer,
         Location,
+        LocationElementType,
+        LocationFuseMode,
         LocationContainer,
         Sample,
+        SampleElementType,
+        SampleFuseMode,
         SampleContainer,
         Context,
         LocationVector,
         SampleVector,
         VectorContext,
         Location,
+        LocationElementType,
+        LocationFuseMode,
         LocationContainer,
         Sample,
+        SampleElementType,
+        SampleFuseMode,
         SampleContainer,
         Context,
         LocationVector,
         SampleVector,
         VectorContext
     > {
-    private _locationField?: Field<Location>
+    private _locationField?: Field<Location, LocationElementType, LocationFuseMode>
 
     get locationField() {
         return this._locationField
@@ -87,13 +109,20 @@ export class LocationFieldObserverSampleDomain<
 
     protected readonly transformsLocation = false
     protected readonly transformsSample = false
-    
-    constructor(inner: SampleDomain<Location, Sample, Context>) {
+
+    constructor(inner: SampleDomain<
+            Location,
+            Sample,
+            LocationElementType,
+            LocationFuseMode,
+            SampleElementType,
+            SampleFuseMode,
+            Context
+        >) {
         super(inner)
     }
 
-    protected override init_location_field(context: Context): Field<Location> {
-        this._locationField = context[SampleDomainLocationFieldKey]
-        return context[SampleDomainLocationFieldKey]
+    protected override init_location_field(context: Context): Field<Location, LocationElementType, LocationFuseMode> {
+        return this._locationField = context[SampleDomainLocationFieldKey]
     }
 }

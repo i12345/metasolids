@@ -1,50 +1,108 @@
-import { iterObjects, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues } from "../../paradigm/trees/index.js";
-import { Field, FieldPoint, FieldPointCombiner, SampleDomainLocationFieldKey, SamplingContext } from "../../fields/index.js";
+import { iterObjects, MultiObjectsGroup, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues } from "../../paradigm/trees/index.js";
+import { Field, FieldPoint, FieldPointCombiner, FieldsPoint, SampleDomainLocationFieldKey, SamplingContext } from "../../fields/index.js";
 import { extract, intract } from "../../paradigm/trees/index.js";
-import { Texture, TextureLocation, TextureSample } from "../texture.js";
+import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldsField } from "../../fields/fields/fields.js";
 
 export type ObjectsCombiningTexturesTemplated<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         SampledTextureLocationT extends TextureLocation = TextureLocation,
+        SampledTextureLocationElementType extends TextureLocation = SampledTextureLocationT,
+        SampledTextureLocationFuseMode extends TextureLocation = SampledTextureLocationT,
         TextureSampleT extends FieldPoint = FieldPoint,
-        TextureSamplesGrouped extends
+        TextureSampleElementType extends FieldPoint = TextureSampleT,
+        TextureSampleFuseMode extends FieldPoint = TextureSampleT,
+        TextureSampleTGrouped extends
             MultiObjectsGroupsMapped<Groups, TextureSampleT> =
             MultiObjectsGroupsMapped<Groups, TextureSampleT>,
+        TextureSampleElementTypeGrouped extends
+            MultiObjectsGroupsMapped<Groups, TextureSampleElementType> =
+            MultiObjectsGroupsMapped<Groups, TextureSampleElementType>,
+        TextureSampleFuseModeGrouped extends
+            MultiObjectsGroupsMapped<Groups, TextureSampleFuseMode> =
+            MultiObjectsGroupsMapped<Groups, TextureSampleFuseMode>,
+        TextureSamplingContextT extends
+            TextureSamplingContext<
+                    TextureLocationT & SampledTextureLocationT,
+                    TextureLocationElementType & SampledTextureLocationElementType,
+                    TextureLocationFuseMode & SampledTextureLocationFuseMode
+                > =
+            TextureSamplingContext<
+                    TextureLocationT & SampledTextureLocationT,
+                    TextureLocationElementType & SampledTextureLocationElementType,
+                    TextureLocationFuseMode & SampledTextureLocationFuseMode
+                >,
         ValueTextureT extends
-            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT & SampledTextureLocationT, TextureSampleT,
+                    TextureLocationElementType & SampledTextureLocationElementType,
+                    TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT & SampledTextureLocationT, TextureSampleT,
+                    TextureLocationElementType & SampledTextureLocationElementType,
+                    TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         ValueTexturesGrouped extends
             MultiObjectsGroupsMapped<Groups, ValueTextureT> =
             MultiObjectsGroupsMapped<Groups, ValueTextureT>
     > = {
         [K in keyof Groups]:
         Groups[K] extends MultiObjectsGroupsTemplate ?
-        (TextureSamplesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TextureSampleT> ?
+        (TextureSampleTGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TextureSampleT> ? TextureSampleElementTypeGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TextureSampleElementType> ? TextureSampleFuseModeGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TextureSampleFuseMode> ?
             ValueTexturesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], ValueTextureT> ?
             ObjectsCombiningTexturesTemplated<
                 Objects,
                 Groups[K],
                 TextureLocationT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
                 SampledTextureLocationT,
+                SampledTextureLocationElementType,
+                SampledTextureLocationFuseMode,
                 TextureSampleT,
-                TextureSamplesGrouped[K],
+                TextureSampleElementType,
+                TextureSampleFuseMode,
+                TextureSampleTGrouped[K],
+                TextureSampleElementTypeGrouped[K],
+                TextureSampleFuseModeGrouped[K],
+                TextureSamplingContextT,
                 ValueTextureT,
                 ValueTexturesGrouped[K]
             > :
-            never : never) :
-        (TextureSamplesGrouped[K] extends TextureSampleT ?
+            never : never : never : never) :
+        (TextureSampleTGrouped[K] extends TextureSampleT ?
             ValueTexturesGrouped[K] extends Texture<
                     TextureLocationT & SampledTextureLocationT,
-                    TextureSamplesGrouped[K]
+                    TextureSampleTGrouped[K],
+                    TextureLocationElementType & SampledTextureLocationElementType,
+                    TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureSampleElementTypeGrouped[K],
+                    TextureSampleFuseModeGrouped[K],
+                    TextureSamplingContextT
                 > ?
             ObjectsCombiningTexture<
                 Objects,
                 TextureLocationT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
                 SampledTextureLocationT,
-                TextureSamplesGrouped[K],
+                SampledTextureLocationElementType,
+                SampledTextureLocationFuseMode,
+                TextureSampleTGrouped[K],
+                TextureSampleElementTypeGrouped[K],
+                TextureSampleFuseModeGrouped[K],
+                TextureSamplingContextT,
                 ValueTexturesGrouped[K]
             > :
             never : never)
@@ -55,50 +113,147 @@ export type ObjectsInfluencesTextureSample<
     > =
     MultiObjectsMapped<Objects, number>
 
+export type ObjectsInfluencesTextureSampleElementType<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+    > =
+    MultiObjectsGroup<number>
+
+export type ObjectsInfluencesTextureSampleFuseMode<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+    > =
+    number
+
 export type ObjectsTextureLocationsTextureSample<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation
     > =
     MultiObjectsMapped<Objects, TextureLocationT>
 
+export type ObjectsTextureLocationsTextureSampleElementType<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        TextureLocationElementType extends TextureLocation = TextureLocation
+    > =
+    MultiObjectsGroup<TextureLocationElementType>
+
+export type ObjectsTextureLocationsTextureSampleFuseMode<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        TextureLocationFuseMode extends TextureLocation = TextureLocation
+    > =
+    TextureLocationFuseMode
+
 export class ObjectsCombiningTexture<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         SampledTextureLocationT extends TextureLocation = TextureLocation,
-        TextureSampleT extends TextureSample = TextureSample,
+        SampledTextureLocationElementType extends TextureLocation = SampledTextureLocationT,
+        SampledTextureLocationFuseMode extends TextureLocation = SampledTextureLocationT,
+        ValueTextureSampleT extends TextureSample = TextureSample,
+        ValueTextureSampleElementType extends TextureSample = ValueTextureSampleT,
+        ValueTextureSampleFuseMode extends TextureSample = ValueTextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         ValueTextureT extends
-            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT & SampledTextureLocationT, TextureSampleT>
+            Texture<
+                    TextureLocationT & SampledTextureLocationT, ValueTextureSampleT,
+                    TextureLocationElementType & SampledTextureLocationElementType,
+                    TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    ValueTextureSampleElementType,
+                    ValueTextureSampleFuseMode,
+                    TextureSamplingContextT &
+                    TextureSamplingContext<
+                            TextureLocationT & SampledTextureLocationT,
+                            TextureLocationElementType & SampledTextureLocationElementType,
+                            TextureLocationFuseMode & SampledTextureLocationFuseMode
+                        >
+                > =
+            Texture<
+                    TextureLocationT & SampledTextureLocationT, ValueTextureSampleT,
+                    TextureLocationElementType & SampledTextureLocationElementType,
+                    TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    ValueTextureSampleElementType,
+                    ValueTextureSampleFuseMode,
+                    TextureSamplingContextT &
+                    TextureSamplingContext<
+                            TextureLocationT & SampledTextureLocationT,
+                            TextureLocationElementType & SampledTextureLocationElementType,
+                            TextureLocationFuseMode & SampledTextureLocationFuseMode
+                        >
+                >,
     > implements
-    Texture<TextureLocationT, TextureSampleT> {
-    field!: Field<TextureSampleT>
+    Texture<
+        TextureLocationT, ValueTextureSampleT,
+        TextureLocationElementType,
+        TextureLocationFuseMode,
+        ValueTextureSampleElementType,
+        ValueTextureSampleFuseMode,
+        TextureSamplingContextT
+    > {
+    field!: Field<ValueTextureSampleT, ValueTextureSampleElementType, ValueTextureSampleFuseMode>
 
-    private location_fields!: MultiObjectsMapped<Objects, Field<TextureLocationT & SampledTextureLocationT>>
+    private location_fields!: MultiObjectsMapped<
+        Objects,
+        Field<
+            TextureLocationT & SampledTextureLocationT,
+            TextureLocationElementType & SampledTextureLocationElementType,
+            TextureLocationFuseMode & SampledTextureLocationFuseMode
+        >
+    >
 
     constructor(
         public template: Objects,
-        public influences: Texture<TextureLocationT, ObjectsInfluencesTextureSample<Objects>>,
-        public locations: Texture<TextureLocationT, ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>>,
+        public influences: Texture<
+                TextureLocationT, ObjectsInfluencesTextureSample<Objects>,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                ObjectsInfluencesTextureSampleElementType<Objects>,
+                ObjectsInfluencesTextureSampleFuseMode<Objects>,
+                TextureSamplingContextT
+            >,
+        public locations: Texture<
+            TextureLocationT, ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            ObjectsTextureLocationsTextureSampleElementType<Objects, SampledTextureLocationElementType>,
+            ObjectsTextureLocationsTextureSampleFuseMode<Objects, SampledTextureLocationFuseMode>,
+            TextureSamplingContextT
+        >,
         public values: MultiObjectsMapped<Objects, ValueTextureT>
     ) { }
 
-    init(context: SamplingContext<TextureLocationT>): void {
+    init(context: TextureSamplingContextT): void {
         this.locations.init(context)
         this.influences.init(context)
 
-        this.location_fields = {} as MultiObjectsMapped<Objects, Field<TextureLocationT & SampledTextureLocationT>>
+        type ValueTextureLocationField = FieldsField<
+            TextureLocationT & SampledTextureLocationT,
+            TextureLocationElementType & SampledTextureLocationElementType,
+            TextureLocationFuseMode & SampledTextureLocationFuseMode
+        >
+
+        this.location_fields = {} as MultiObjectsMapped<Objects, ValueTextureLocationField>
         for (const { get, set } of objectValues(this.template)) {
             const value = get<ValueTextureT>(this.values)
-            
+
             if (value) {
-                set(this.location_fields, FieldsField.merge<TextureLocationT & SampledTextureLocationT>(
-                    get((this.locations.field as FieldsField<ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>>).fields) as FieldsField<SampledTextureLocationT> as FieldsField<TextureLocationT & SampledTextureLocationT>,
-                    context[SampleDomainLocationFieldKey] as FieldsField<TextureLocationT & SampledTextureLocationT>
+                set(this.location_fields, FieldsField.merge<
+                        TextureLocationT & SampledTextureLocationT,
+                        TextureLocationElementType & SampledTextureLocationElementType,
+                        TextureLocationFuseMode & SampledTextureLocationFuseMode
+                    >(
+                    get<ValueTextureLocationField>((this.locations.field as FieldsField<
+                        ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>,
+                        ObjectsTextureLocationsTextureSampleElementType<Objects, SampledTextureLocationElementType>,
+                        ObjectsTextureLocationsTextureSampleFuseMode<Objects, SampledTextureLocationFuseMode>
+                    >).fields),
+                    context[SampleDomainLocationFieldKey] as ValueTextureLocationField
                 ))
-                
+
                 value.init({
                     ...context,
-                    [SampleDomainLocationFieldKey]: get(this.location_fields)
+                    [SampleDomainLocationFieldKey]: get<ValueTextureLocationField>(this.location_fields)
                 })
             }
         }
@@ -107,15 +262,29 @@ export class ObjectsCombiningTexture<
         iterObjects(this.values, this.template, (values, key, path) =>
             objFields.push(extract<ValueTextureT>(this.values, path).field))
         if (objFields[0] instanceof FieldsField)
-            this.field = FieldsField.merge(...(objFields as unknown as FieldsField[])) as unknown as Field<TextureSampleT>
+            this.field = FieldsField.merge<
+                    FieldsPoint & ValueTextureSampleT,
+                    FieldsPoint & ValueTextureSampleElementType,
+                    FieldsPoint & ValueTextureSampleFuseMode
+                >(...(<FieldsField<
+                    FieldsPoint & ValueTextureSampleT,
+                    FieldsPoint & ValueTextureSampleElementType,
+                    FieldsPoint & ValueTextureSampleFuseMode
+                >[]>objFields))
         else this.field = objFields[0]
     }
 
-    sample(location: TextureLocationT, context: SamplingContext<TextureLocationT>): TextureSampleT {
+    sample(location: TextureLocationT, context: TextureSamplingContextT): ValueTextureSampleT {
         const influences = this.influences.sample(location, context)
         const locations = this.locations.sample(location, context)
-        const values = {} as MultiObjectsMapped<Objects, TextureSampleT>
-        
+        const values = {} as MultiObjectsMapped<Objects, ValueTextureSampleT>
+
+        type ValueTextureLocationField = FieldsField<
+            TextureLocationT & SampledTextureLocationT,
+            TextureLocationElementType & SampledTextureLocationElementType,
+            TextureLocationFuseMode & SampledTextureLocationFuseMode
+        >
+
         iterObjects(
             this.values,
             this.template,
@@ -131,17 +300,17 @@ export class ObjectsCombiningTexture<
                         }
                         const value_context = {
                             ...context,
-                            [SampleDomainLocationFieldKey]: extract(this.location_fields, fullpath) as Field<TextureLocationT & SampledTextureLocationT>
+                            [SampleDomainLocationFieldKey]: extract<ValueTextureLocationField>(this.location_fields, fullpath)
                         }
                         const value = value_texture.sample(value_location, value_context)
-                        
+
                         intract(values, fullpath, value)
                     }
                 }
             }
         )
 
-        const combiner = FieldPointCombiner.instance as FieldPointCombiner<TextureSampleT, Objects>
+        const combiner = FieldPointCombiner.instance as FieldPointCombiner<ValueTextureSampleT, Objects>
 
         return combiner.combine(
             this.template,

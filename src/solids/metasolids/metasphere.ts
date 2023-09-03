@@ -12,7 +12,7 @@ export class MetaSphere<
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
         Sample extends MetaSolidSample = MetaSolidSample,
-        OuterSampleProcessingContextT = any,    
+        OuterSampleProcessingContextT = any,
         TextureContext extends
             TextureSamplingContext<MetaSolidTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>> =
             TextureSamplingContext<MetaSolidTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>>,
@@ -35,7 +35,7 @@ export class MetaSphere<
     > {
     readonly boundingBox = new BoundingBox()
     readonly field = MetaSolidVolume.defaultFields.sample as FieldsField<Sample>
-    
+
     sample(location: Location, context: Context): Sample {
         const theta = Math.atan2(location.p.y, location.p.x)
         const phi = Math.atan2(new Vec2(location.p.x, location.p.y).length(), location.p.z)
@@ -55,7 +55,7 @@ export class MetaSphere<
         const texture = context[MetaSolidSamplingContext_Texture]?.item
 
         const resolution = 32
-        
+
         const hints_surface = new Float32Array(3 * (2 * resolution) * resolution)
         let hints_surface_offset = 0
 
@@ -74,7 +74,7 @@ export class MetaSphere<
 
                 const texture_location = { uv, gradient: point } as MetaSolidTxLocation<Location, TxLocation> & Sample
                 const texture_sample = texture?.sample(texture_location, context[MetaSolidSamplingContext_Texture].context)
-                
+
                 const parameters = MetaSolidVolume.combineParameters((texture_sample ?? MetaSolidVolume.defaultParameters) as FieldsPointOptional<MetaSolidParametersIn>)
                 const parameters_valid = MetaSolidVolume.parametersValid(parameters)
 

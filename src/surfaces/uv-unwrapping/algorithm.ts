@@ -4,9 +4,9 @@ import { MeshData } from "../mesh-data.js";
 export interface SurfaceUVUnwrapping {
     /**
      * Indices of vertices that are duplicated, in the order they're duplicated
-     * 
+     *
      * Final vertices are made from surface mesh vertices concat'd with
-     * surface mesh vertices indexed by each one of these indices. 
+     * surface mesh vertices indexed by each one of these indices.
      */
     duplicatedVerts: IndicesTypedArray
 

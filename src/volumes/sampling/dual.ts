@@ -9,14 +9,36 @@ import { VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessin
 export type VolumeSamplingSubdivisionProcessingWithDual<
             IndicesT extends IndicesTypedArray = IndicesTypedArray,
             VolumeLocationT extends VolumeLocation = VolumeLocation,
+            VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+            VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
             VolumeSampleT extends VolumeSample = VolumeSample,
+            VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+            VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
             VolumeSampleProcessingContextT = any,
             VolumeSamplingContextT extends
-                VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-                VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+                VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+                VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
             VolumeT extends
-                VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-                VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+                VolumeWithBoundingBox<
+                        VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
+                        VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
+                        VolumeSampleProcessingContextT,
+                        VolumeSamplingContextT
+                    > =
+                VolumeWithBoundingBox<
+                        VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
+                        VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
+                        VolumeSampleProcessingContextT,
+                        VolumeSamplingContextT
+                    >,
             VolumeProcessingT extends
                 // VolumeWithSamplingProcessing<
                 //         IndicesT,
@@ -46,14 +68,22 @@ export type VolumeSamplingSubdivisionProcessingWithDual<
                 //     >
                 VolumeProcessing<
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT
                     > =
                 VolumeProcessing<
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT
@@ -66,21 +96,29 @@ export type VolumeSamplingSubdivisionProcessingWithDual<
             OctTreeWithDualLayersGrouped, // <IndicesT>,
             OctTreeWithDualOctTreesGrouped, // <IndicesT>,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
             VolumeProcessingT
         >
-        
+
 export type VolumeSamplingSubdivisionProcessingContextWithDual<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeProcessingContextT extends
             WithMultiObjectsIDs &
             VolumeProcessingContextWithSampling<
@@ -90,7 +128,11 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
                     OctTreeWithDualLayersGrouped, //<IndicesT>,
                     OctTreeWithDualOctTreesGrouped, //<IndicesT>,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -103,7 +145,11 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
                     OctTreeWithDualLayersGrouped, //<IndicesT>,
                     OctTreeWithDualOctTreesGrouped, //<IndicesT>,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -116,7 +162,11 @@ export type VolumeSamplingSubdivisionProcessingContextWithDual<
             OctTreeWithDualLayersGrouped, // <IndicesT>,
             OctTreeWithDualOctTreesGrouped, //<IndicesT>,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeProcessingContextT

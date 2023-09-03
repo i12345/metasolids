@@ -36,11 +36,15 @@ export class MaterialSemanticImplementation_Texture<
     get source_group() {
         return this.surface_textureGroup.path
     }
-    
+
     constructor(
         public readonly semantic: keyof StandardMaterial | keyof BasicMaterial,
         public readonly texture: textures.Texture<
                 Material_Texture_Location<VolumeLocationT>,
+                TexelTypeT,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                TexelTypeT,
                 TexelTypeT,
                 Material_Texture_Context<VolumeLocationT>
             >,
@@ -113,7 +117,11 @@ export class MaterialSemanticImplementation_Texture<
         (<FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>>locations).uv = <Float64Array><unknown>UVs
 
         const texture_location_interpolator = new VertexInterpolatingTexture <
-                TextureLocation,    
+                TextureLocation,
+                TextureLocation,
+                TextureLocation,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
                 Material_Texture_Location<VolumeLocationT>
             >(
             //TODO: integrate other location fields
@@ -128,7 +136,7 @@ export class MaterialSemanticImplementation_Texture<
         texture_location_interpolator.init(texture_context)
 
         const sample_texture_values = new Array<FieldPoint>(this.resolution ** 2)
-        
+
         //TODO: use vector function
         for (let y = this.resolution - 1; y >= 0; y--) {
             for (let x = this.resolution - 1; x >= 0; x--) {
@@ -196,7 +204,7 @@ export class MaterialSemanticImplementation_Texture<
             }
         }
         else throw new Error("unsupported type")
-        
+
         //TODO: optimizations for translating, rotating, scaling, and tiling textures
 
         const rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT> = {

@@ -1,5 +1,5 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended"
-import { MultiObjectsGroupedObjectsKey } from "../paradigm/trees/multi-objects-groups.js"
+import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey } from "../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf } from "../paradigm/trees/multi-objects.js"
 import { Reflect_entries } from "../utils/reflect-entries.js"
 import { FieldPoint, FieldPointPrimitive, Vector, FieldsPoint } from "./point.js"
@@ -38,7 +38,7 @@ export type FieldPointType<Point extends FieldPoint = FieldPoint> =
     } :
     never
 
-export type MultiObjectsFieldPointElement<Point extends FieldPoint = FieldPoint> = { [MultiObjectsGroupedObjectsKey]: Point }
+export type MultiObjectsFieldPointElement<Point extends FieldPoint = FieldPoint> = MultiObjectsGroup<Point>
 
 export function field_point_new<Point extends FieldPoint = FieldPoint>(type: FieldPointType<Point>): Point {
     if (type instanceof Function)
@@ -107,7 +107,7 @@ function field_point_fits_type_obj<
     for (const [key, subP] of Reflect_entries(p)) {
         if (!(key in subObjectsTemplate))
             return false
-        
+
         const subSubObjectsTemplate = subObjectsTemplate[key]
         if (subSubObjectsTemplate === MultiObjectsTemplate_Leaf) {
             if (!field_point_fits_type(<Point>subP, objType, objectsTemplate))

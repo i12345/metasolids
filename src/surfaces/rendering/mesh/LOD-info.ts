@@ -90,7 +90,7 @@ export class LevelOfDetailInfoComputerShared<
         const vertices_unwrapped = isFirst ?
             new (indicesArrayType(n_original_vertices + (UVunwrapping?.duplicatedVerts.length ?? 0)))(n_original_vertices + (UVunwrapping?.duplicatedVerts.length ?? 0)) :
             this.renderer.decimation.cached(quality).vertices_final
-        
+
         if (isFirst) {
             for (let i = 0; i < n_original_vertices; i++) {
                 vertices_original[i] = i
@@ -109,9 +109,9 @@ export class LevelOfDetailInfoComputerShared<
         const indices = isFirst ?
             (UVunwrapping?.finalIndices ?? meshData.triangles) :
             this.renderer.decimation.cached(quality).triangles
-        
+
         const edges: LevelOfDetailInfo_Edge_Cached[] = []
-        
+
         const EDGES_COUNT = Math.min(100, indices.length / 3)
 
         const world_0 = new Vec3(), world_1 = new Vec3()
@@ -120,7 +120,7 @@ export class LevelOfDetailInfoComputerShared<
         for (let i = 0; i < EDGES_COUNT; i++) {
             const i0 = Math.min(indices.length - 1, Math.floor(indices.length * Math.random()))
             const i1 = (((i0 % 3) + 1) % 3) + (3 * Math.floor(i0 / 3))
-            
+
             const v0_decimated = indices[i0]
             const v1_decimated = indices[i1]
 
@@ -141,7 +141,7 @@ export class LevelOfDetailInfoComputerShared<
                 meshData.vertices[(3 * v1_original) + 1],
                 meshData.vertices[(3 * v1_original) + 2]
             )
-            
+
             const world_dist = world_0.distance(world_1)
 
             const uv_dist = UVunwrapping ?

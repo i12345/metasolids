@@ -14,7 +14,7 @@ export type Cost_Space = {
 export type Cost_Space_VertexColors =
     Cost_Space & {
     vertexColorChannels: number
-    
+
     /**
      * Number of vertices times vertex color channels
      */

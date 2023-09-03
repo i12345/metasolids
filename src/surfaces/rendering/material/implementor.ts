@@ -36,36 +36,36 @@ interface Material_Group_Implementations {
         detailMap?: {
             /**
              * Whether the detail map can be an addition composition.
-             * 
+             *
              * @default false
              */
             add?: boolean
-            
+
             /**
              * Whether the detail map can be a multiplication composition.
-             * 
+             *
              * If this is not set, the material semantic will probably still
              * multiply except the `*DetailMode` field won't be set.
-             * 
+             *
              * @default true
              */
             multiply?: boolean
         }
-        
+
         products?: {
             /**
              * Whether this material group can be implemented using a texture
              * multiplied by vertex colors.
              */
             texture_and_vertexColors?: boolean
-        
+
             /**
              * Whether this material group can be implemented using a constant
              * coefficient multiplied by (either a texture or vertex colors but
              * not both).
              */
             constant_and_texture_or_vertexColors?: boolean
-    
+
             /**
              * Whether this material group can be implemented using a constant
              * coefficient multiplied by (a texture, vertex colors, or the
@@ -75,7 +75,7 @@ interface Material_Group_Implementations {
 
             /**
              * Whether this material group requires a constant.
-             * 
+             *
              * A unity constant will be used (`1` or `Color.WHITE`).
              */
             constant_required?: boolean
@@ -83,7 +83,7 @@ interface Material_Group_Implementations {
             /**
              * Whether this material group must enable the `*Tint` flag for
              * a constant to multiply by texture and/or vertex colors.
-             * 
+             *
              * @default false
              */
             tint_flag?: boolean
@@ -92,7 +92,7 @@ interface Material_Group_Implementations {
 
     /**
      * The other properties on the material to change if this property is set
-     * 
+     *
      * Side effects of type {@link MaterialSemanticImplementation_Texture_SideEffect}
      * only run if the texture implementation was run.
      */
@@ -104,7 +104,7 @@ interface Material_Group_Implementations {
     /**
      * The priority for this material group to be rendered (lower values =
      * higher priority).
-     * 
+     *
      * @default 0
      */
     priority?: number,
@@ -118,7 +118,7 @@ interface Material_Group_Implementations {
 
     /**
      * ??
-     * 
+     *
      * @default EFFECTIVE_TEXEL_DIFF_DEFAULT = 0.05
      */
     effectiveTexelDiff?: number
@@ -452,6 +452,10 @@ function qualityMetrics_compute<
         texture: Texture<
                 Material_Texture_Location<VolumeLocationT>,
                 TexelTypeT,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                TexelTypeT,
+                TexelTypeT,
                 Material_Texture_Context<VolumeLocationT>
             >,
         textureContext: Material_Texture_Context<VolumeLocationT>,
@@ -461,7 +465,7 @@ function qualityMetrics_compute<
     ): QualityMetrics {
     const location_type = textureContext[SampleDomainLocationFieldKey].elementType
     const sample_type = texture.field.elementType
-    
+
     function perfect_constancy(texture: Texture): FieldPoint | undefined {
         if (texture instanceof ConstantSampleDomain)
             return texture.value
@@ -469,7 +473,7 @@ function qualityMetrics_compute<
             const vertices = texture.vertices
             const vertexIterator = vectorIterator(sample_type, <any>isDynamicVector(vertices), vertices)
             const length = vertexIterator.length(vertices, vertices)
-            
+
             if (length === 0)
                 return field_point_new(sample_type)
             else if (length === 1)
@@ -491,8 +495,9 @@ function qualityMetrics_compute<
 
             return fusePoints(
                 sample_type,
+                texture.childField.elementType,
                 texture.fuseMode ?? texture.field.fuseMode,
-                child_constants.map(value => ({ value })),
+                child_constants.map(value => ({ value: value! })),
                 multiObjectsIDs
             )
         }
@@ -523,14 +528,14 @@ function qualityMetrics_compute<
         Let ${\bf{\hat{t}}}(\vec{x})$ be the texture value at location $\vec{x}$
         and let ${\bf{t}}(\vec{x})$ be the vertex-interpolated value.
         Let $m=e^{-E[|{\bf{\hat{t}}}(\vec{x})-{\bf{t}}(\vec{x})|]}$
-        be a metric of triangular monotonicity (1 = perfect fit). 
+        be a metric of triangular monotonicity (1 = perfect fit).
     */
 
     function vertex_original(vertex: number) {
         return (vertex < mesh.vertices.length) ? vertex :
             UVunwrapping.duplicatedVerts[vertex - mesh.vertices.length]
     }
-    
+
     /** indices in UV-unwrapped, not decimated vertices */
     const indices = UVunwrapping.finalIndices ?? mesh.triangles
 
@@ -589,7 +594,7 @@ function qualityMetrics_compute<
             samples_add(texture_sample)
             vertex_texture_samples.set(vertex_original_, texture_sample)
         }
-        
+
         return {
             sample: vertex_texture_samples.get(vertex_original_)!,
             location: vertex_texture_locations.get(vertex)!
@@ -615,7 +620,7 @@ function qualityMetrics_compute<
     )
 
     const interpolator_values_samples_iterator = vectorIterator<TexelTypeT>(sample_type, <any>isDynamicVector(interpolator_values_samples), multiObjectsIDs)
-    
+
     const interpolator_triangles = []
 
     let meanValue: TexelTypeT | undefined = undefined
@@ -672,10 +677,10 @@ function qualityMetrics_compute<
     }
 
     const interpolator_texture_location = new Triangles2DMeshInterpolator(location_type, interpolator_values_locations, interpolator_triangles, multiObjectsIDs)
-    const interpolator_texture_sample = new Triangles2DMeshInterpolator(sample_type, interpolator_values_samples, interpolator_triangles, multiObjectsIDs)
+    const interpolator_texture_sample = new Triangles2DMeshInterpolator<TexelTypeT>(sample_type, interpolator_values_samples, interpolator_triangles, multiObjectsIDs)
 
     const textureValuePerUV_dist: number[] = []
-    
+
     let triangleInterpolating_error_total = 0
     let triangleInterpolating_error_eval = 0
 
@@ -693,7 +698,7 @@ function qualityMetrics_compute<
                 const textureValuePerUV =
                     texture.field.distance(texture_sample_prev!, texture_sample_real) /
                     texture_location_prev.uv.distance(texture_location_interpolated.uv)
-                
+
                 textureValuePerUV_dist.push(textureValuePerUV)
             }
 
@@ -742,7 +747,7 @@ function qualityMetrics_combine<
 /**
  * Proposes implementations for a material group;
  * only one implementation will be applied.
- * 
+ *
  * @param group the material group to propose implementations for
  * @param surface the surface to implement this material semantic for
  * @param context
@@ -760,13 +765,13 @@ export function* material_group_implementations<
     ): Generator<MaterialSemanticImplementation<VolumeLocationT>> {
     type TextureLocationT = Material_Texture_Location<VolumeLocationT>
     type TextureContextT = Material_Texture_Context<VolumeLocationT>
-    type TextureT = Texture<TextureLocationT, TexelTypeT, TextureContextT>
-    type StageAndTextureT = StageAndTexture<TextureLocationT, TexelTypeT, TextureContextT, TextureT>
-    
+    type TextureT = Texture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT>
+    type StageAndTextureT = StageAndTexture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT, TextureT>
+
     const texture = group.get<TextureT>(textures)
     const textureContext = group.get<TextureContextT>(contexts)
     const implementation = group.get<Material_Group_Implementations>(Material_Groups_Implementations)
-    
+
     const texture_hdr = (implementation.effectiveTexelDiff ?? EFFECTIVE_TEXEL_DIFF_DEFAULT) < (1 / 256)
 
     ///@ts-ignore
@@ -777,7 +782,7 @@ export function* material_group_implementations<
     // const texture_resolutions = [64, 128, 256, 512, 1024, 2048]
     const texture_resolutions = [1024, 2048]
 
-    type CompositeTextureT = Texture<TextureLocationT, TexelTypeT, TextureContextT> & MultiObjectsSampleDomain
+    type CompositeTextureT = Texture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT> & MultiObjectsSampleDomain
 
     function* decomposeStagedComponents(
             texture: TextureT,
@@ -800,9 +805,9 @@ export function* material_group_implementations<
             components = 2,
             isDecomposition: (composite: CompositeTextureT) => boolean,
             composition: (components: TextureT[]) => CompositeTextureT
-        ): StageAndTexture[] {
+        ): StageAndTexture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT>[] {
         const stages_components: { [stage: number]: StageAndTextureT[] } = {}
-        
+
         for (const [stage, component] of decomposeStagedComponents(texture, isDecomposition)) {
             stages_components[stage] ??= []
             stages_components[stage].push([stage, component])
@@ -819,7 +824,7 @@ export function* material_group_implementations<
             ]
         }
 
-        const retval: StageAndTexture[] = []
+        const retval: StageAndTexture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT>[] = []
         if (sorted_stages_components.length >= components) {
             for (let i = 0; i < components - 1; i++)
                 retval[i] = componentsIntoTexture(sorted_stages_components.shift()!)
@@ -835,11 +840,11 @@ export function* material_group_implementations<
      * decompostion into product of 3
      * yield all product implementations
      * yield detail map with multiplication
-     * 
+     *
      * if mixing.detailMap.add:
      * decompose into sum of 2
      * yield detail map with addition
-     * 
+     *
      * yield single implementations
      */
 
@@ -856,7 +861,7 @@ export function* material_group_implementations<
             semantics.constant &&
             semantics.texture &&
             semantics.vertexColors
-        
+
         const factors = bestDecomposition(
             texture,
             canUse3factors ? 3 : 2,
@@ -878,7 +883,7 @@ export function* material_group_implementations<
                     implementation
                 )
             )
-        
+
             const implementation_tint: MaterialSemanticImplementation_Immediate<VolumeLocationT> = (
                 implementation.mixing?.products?.tint_flag ?
                     new MaterialSemanticImplementation_Setting(
@@ -902,7 +907,7 @@ export function* material_group_implementations<
                     const factor_indices_vertexColor = [1, 2, 3]
                     factor_indices_vertexColor.splice(factor_index_constant, 1)
                     for (const factor_index_vertexColors of factor_indices_vertexColor) {
-                        const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<VolumeLocationT>(
+                        const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<VolumeLocationT, TexelTypeT>(
                             semantics.vertexColors,
                             factors[factor_index_vertexColors][1],
                             factors[factor_index_vertexColors][0],
@@ -944,7 +949,7 @@ export function* material_group_implementations<
                 implementation.mixing.products?.constant_and_texture_or_vertexColors ||
                 (implementation.mixing.detailMap &&
                     (implementation.mixing.detailMap.multiply !== false))) {
-            
+
                 const factor_0 = factors[0]
                 const factor_1 = factors.length === 2 ?
                     factors[1] :
@@ -956,21 +961,21 @@ export function* material_group_implementations<
                             <any>factors[2][1]
                         )
                     ] as StageAndTexture
-            
+
                 const qualityMetrics_0 = qualityMetrics[0]
                 const qualityMetrics_1 = factors.length === 2 ?
                     qualityMetrics[1] : qualityMetrics_combine(qualityMetrics[1], qualityMetrics[2])
-            
+
                 if (implementation.mixing.products?.constant_and_texture_or_vertexColors ||
                     implementation.mixing.products?.texture_and_vertexColors) {
-                
+
                     const factors = [factor_0, factor_1]
                     const qualityMetrics = [qualityMetrics_0, qualityMetrics_1]
-                
+
                     if (implementation.mixing.products?.constant_and_texture_or_vertexColors) {
                         for (const factor_index_constant of [0, 1]) {
                             const factor_index_other = 1 - factor_index_constant
-                        
+
                             const implementation_constant = new MaterialSemanticImplementation_Constant<VolumeLocationT>(
                                 semantics.constant,
                                 qualityMetrics[factor_index_constant].meanValue,
@@ -1018,7 +1023,7 @@ export function* material_group_implementations<
                             }
                         }
                     }
-            
+
                     if (implementation.mixing.products?.texture_and_vertexColors) {
                         const sideEffects_tint = implementation.mixing.products.constant_required ? [
                             new MaterialSemanticImplementation_Constant<VolumeLocationT>(
@@ -1155,7 +1160,7 @@ export function* material_group_implementations<
 
             if (sideEffects_texture?.length > 0)
                 throw new Error()
-            
+
             for (const resolution_0 of texture_resolutions) {
                 const implementation_0 = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
                     semantics.texture,

@@ -17,25 +17,29 @@ export class TransformVolume<
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Location extends VolumeLocation = VolumeLocation,
+        LocationElementType extends VolumeLocation = Location,
+        LocationFuseMode extends VolumeLocation = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends VolumeSample = VolumeSample,
+        SampleElementType extends VolumeSample = Sample,
+        SampleFuseMode extends VolumeSample = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         SampleProcessingContextT = any,
         Context extends
-            VolumeSamplingContext<Location, SampleProcessingContextT> =
-            VolumeSamplingContext<Location, SampleProcessingContextT>,
+            VolumeSamplingContext<Location, LocationElementType, LocationFuseMode, SampleProcessingContextT> =
+            VolumeSamplingContext<Location, LocationElementType, LocationFuseMode, SampleProcessingContextT>,
         LocationVector extends
-            FieldPointVector<Location, LocationContainer> =
-            FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -43,8 +47,12 @@ export class TransformVolume<
         VectorContext extends
                 FusedVectorSamplingContext<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -55,8 +63,12 @@ export class TransformVolume<
                     > =
                 FusedVectorSamplingContext<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -68,13 +80,21 @@ export class TransformVolume<
         VolumeT extends
             Volume<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleProcessingContextT,
                     Context
                 > =
             Volume<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleProcessingContextT,
                     Context
                 >,
@@ -83,42 +103,59 @@ export class TransformVolume<
             Objects,
             ObjIDsT,
             ObjIDsContainer,
-            
+
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Sample,
+            SampleElementType,
+            SampleFuseMode,
             SampleContainer,
             Context,
             LocationVector,
             SampleVector,
             VectorContext,
-            
+
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Sample,
+            SampleElementType,
+            SampleFuseMode,
             SampleContainer,
             Context,
             LocationVector,
             SampleVector,
             VectorContext
         >
-    implements VolumeWithBoundingBox<Location, Sample, SampleProcessingContextT, Context> {
+    implements VolumeWithBoundingBox<
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        Sample,
+        SampleElementType,
+        SampleFuseMode,
+        SampleProcessingContextT,
+        Context
+    > {
     private transformInverse = new Mat4()
     readonly boundingBox = new BoundingBox(new Vec3(NaN, NaN, NaN), new Vec3(NaN, NaN, NaN))
 
     protected readonly transformsLocation = true
     protected readonly transformsSample = true
-    
+
     constructor(
         public inner: VolumeT,
         public transform: Mat4
     ) {
         super(inner)
     }
-    
+
     init(context: Context) {
         this.transformInverse.copy(this.transform).invert()
-    
+
         const innerBoundingBox = <VolumeWithBoundingBox><unknown>this.inner
         if (innerBoundingBox.boundingBox)
             this.boundingBox.setFromTransformedAabb(innerBoundingBox.boundingBox, this.transform)
@@ -139,75 +176,99 @@ export class TransformVolume<
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Location extends VolumeLocation = VolumeLocation,
+        LocationElementType extends VolumeLocation = Location,
+        LocationFuseMode extends VolumeLocation = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends VolumeSample = VolumeSample,
+        SampleElementType extends VolumeSample = Sample,
+        SampleFuseMode extends VolumeSample = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         SampleProcessingContextT = any,
         Context extends
-        VolumeSamplingContext<Location, SampleProcessingContextT> =
-        VolumeSamplingContext<Location, SampleProcessingContextT>,
+            VolumeSamplingContext<Location, LocationElementType, LocationFuseMode, SampleProcessingContextT> =
+            VolumeSamplingContext<Location, LocationElementType, LocationFuseMode, SampleProcessingContextT>,
         LocationVector extends
-        FieldPointVector<Location, LocationContainer> =
-        FieldPointVector<Location, LocationContainer>,
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
         SampleVector extends
-        FieldPointVectorWithMultiObjects<
-            Sample,
-            SampleContainer,
-            ObjIDsT,
-            ObjIDsContainer
-        > =
-        FieldPointVectorWithMultiObjects<
-            Sample,
-            SampleContainer,
-            ObjIDsT,
-            ObjIDsContainer
-        >,
+            FieldPointVectorWithMultiObjects<
+                    SampleElementType,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                > =
+            FieldPointVectorWithMultiObjects<
+                    SampleElementType,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                >,
         VectorContext extends
-        FusedVectorSamplingContext<
-            Location,
-            LocationContainer,
-            Sample,
-            SampleContainer,
-            Objects,
-            ObjIDsT,
-            ObjIDsContainer,
-            Context,
-            LocationVector,
-            SampleVector
-        > =
-        FusedVectorSamplingContext<
-            Location,
-            LocationContainer,
-            Sample,
-            SampleContainer,
-            Objects,
-            ObjIDsT,
-            ObjIDsContainer,
-            Context,
-            LocationVector,
-            SampleVector
-        >,
+                FusedVectorSamplingContext<
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LocationContainer,
+                        Sample,
+                        SampleElementType,
+                        SampleFuseMode,
+                        SampleContainer,
+                        Objects,
+                        ObjIDsT,
+                        ObjIDsContainer,
+                        Context,
+                        LocationVector,
+                        SampleVector
+                    > =
+                FusedVectorSamplingContext<
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LocationContainer,
+                        Sample,
+                        SampleElementType,
+                        SampleFuseMode,
+                        SampleContainer,
+                        Objects,
+                        ObjIDsT,
+                        ObjIDsContainer,
+                        Context,
+                        LocationVector,
+                        SampleVector
+                    >,
         VolumeT extends
-        Volume<
-            Location,
-            Sample,
-            SampleProcessingContextT,
-            Context
-        > =
-        Volume<
-            Location,
-            Sample,
-            SampleProcessingContextT,
-            Context
-        >,
+            Volume<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleProcessingContextT,
+                    Context
+                > =
+            Volume<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleProcessingContextT,
+                    Context
+                >,
     >(
         this: TransformVolume<
             Objects,
             ObjIDsT,
             ObjIDsContainer,
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Sample,
+            SampleElementType,
+            SampleFuseMode,
             SampleContainer,
             SampleProcessingContextT,
             Context,
@@ -220,31 +281,31 @@ export class TransformVolume<
         context: { outer: VectorContext, inner: VectorContext }
     ): LocationVector {
         const transform_inverse = this.transformInverse
-        const isDynamic_locations = isDynamicVector<Location, LocationContainer>(outerLocations)
+        const isDynamic_locations = isDynamicVector<LocationElementType, LocationContainer>(outerLocations)
         const location_vectorIterator = vectorIterator(
             context.outer[SampleDomainLocationFieldKey].elementType,
             isDynamic_locations,
             context.outer[MultiObjectsIDsKey]
         )
         const length = location_vectorIterator.length(outerLocations, outerLocations)
-        
+
         const p_local = field_point_vectorized_new<VolumeLocation["p"]>(
             <FieldPointType<VolumeLocation["p"]>>(<FieldsField<VolumeLocation>><unknown>context.inner[SampleDomainLocationFieldKey]).fields.p.elementType,
             length,
             isDynamic_locations
         )
-        
+
         const p_world = outerLocations.p
-        
+
         const innerLocations = <LocationVector>groupsProxyOverwritten(
             { p: MultiObjectsGroupsTemplate_Leaf },
             outerLocations,
             { p: p_local }
         )
-        
+
         let p_i_world = 0
         let p_i_local = 0
-    
+
         const p_item_local = new Vec3()
         const p_item_world = new Vec3()
 
@@ -256,9 +317,9 @@ export class TransformVolume<
                 p_item_world.x = p_world_container.get(p_i_local++)
                 p_item_world.y = p_world_container.get(p_i_local++)
                 p_item_world.z = p_world_container.get(p_i_local++)
-    
+
                 transform_inverse.transformVector(p_item_world, p_item_local)
-    
+
                 p_local_container.set(p_i_world++, p_item_local.x)
                 p_local_container.set(p_i_world++, p_item_local.y)
                 p_local_container.set(p_i_world++, p_item_local.z)
@@ -272,9 +333,9 @@ export class TransformVolume<
                 p_item_world.x = p_world_container[p_i_local++]
                 p_item_world.y = p_world_container[p_i_local++]
                 p_item_world.z = p_world_container[p_i_local++]
-    
+
                 transform_inverse.transformVector(p_item_world, p_item_local)
-    
+
                 p_local_container[p_i_world++] = p_item_local.x
                 p_local_container[p_i_world++] = p_item_local.y
                 p_local_container[p_i_world++] = p_item_local.z
@@ -302,25 +363,29 @@ export class TransformVolume<
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Location extends VolumeLocation = VolumeLocation,
+        LocationElementType extends VolumeLocation = Location,
+        LocationFuseMode extends VolumeLocation = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends VolumeSample = VolumeSample,
+        SampleElementType extends VolumeSample = Sample,
+        SampleFuseMode extends VolumeSample = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         SampleProcessingContextT = any,
         Context extends
-            VolumeSamplingContext<Location, SampleProcessingContextT> =
-            VolumeSamplingContext<Location, SampleProcessingContextT>,
+            VolumeSamplingContext<Location, LocationElementType, LocationFuseMode, SampleProcessingContextT> =
+            VolumeSamplingContext<Location, LocationElementType, LocationFuseMode, SampleProcessingContextT>,
         LocationVector extends
-            FieldPointVector<Location, LocationContainer> =
-            FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -328,8 +393,12 @@ export class TransformVolume<
         VectorContext extends
                 FusedVectorSamplingContext<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -340,8 +409,12 @@ export class TransformVolume<
                     > =
                 FusedVectorSamplingContext<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -353,13 +426,21 @@ export class TransformVolume<
         VolumeT extends
             Volume<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleProcessingContextT,
                     Context
                 > =
             Volume<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleProcessingContextT,
                     Context
                 >,
@@ -369,8 +450,12 @@ export class TransformVolume<
                     ObjIDsT,
                     ObjIDsContainer,
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     SampleProcessingContextT,
                     Context,
@@ -385,33 +470,32 @@ export class TransformVolume<
             context: { outer: VectorContext, inner: VectorContext }
         ) {
         type FusingSampleVector = FusingFieldPointVectorWithMultiObjects<
-            Sample,
+            SampleElementType,
             ObjIDsT,
             SampleContainer,
             ObjIDsContainer
         >
-        
+
         this.transformSamples_fused_inplace(<FusingSampleVector>samples, innerLocations, outerLocations, context)
 
         return samples
     }
-    
+
     protected transformSamples_fused_inplace(
             result: FusingFieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     ObjIDsT,
                     SampleContainer,
                     ObjIDsContainer
                 >,
             innerLocations: LocationVector,
             outerLocations: LocationVector,
-            // objIndicesSampled: { prev: ObjIDsT, current: ObjIDsT },
             context: { outer: VectorContext; inner: VectorContext }
         ): void {
         const transform = this.transform
         const length = vectorIterator(
             context.outer[SampleDomainLocationFieldKey].elementType,
-            isDynamicVector<Location, LocationContainer>(outerLocations),
+            isDynamicVector<LocationElementType, LocationContainer>(outerLocations),
             context.outer[MultiObjectsIDsKey]
         ).length(outerLocations, outerLocations)
 

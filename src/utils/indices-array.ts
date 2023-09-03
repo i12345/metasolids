@@ -1,4 +1,4 @@
-import { TypedArrayConstructor, typedArrayConstructor } from "./typed-array.js"
+import { TypedArray, TypedArrayConstructor, isNumberTypedArray, isTypedArray, typedArrayConstructor } from "./typed-array.js"
 
 export type IndicesTypedArray = Uint8Array | Uint16Array | Uint32Array
 export type IndicesArray = IndicesTypedArray | number[]
@@ -10,4 +10,24 @@ export const indicesArrayType = (rangeSize: number): TypedArrayConstructor<numbe
 
 export function invalidIndex<IndicesT extends IndicesTypedArray>(indices: IndicesT | TypedArrayConstructor<number, IndicesT>): number {
     return new (typedArrayConstructor<number>(indices))([-1])[0]
+}
+
+export function sumIndexedDeltas<T extends number | bigint, OffsetsT extends TypedArray<T>>(offsets: OffsetsT, indices: IndicesTypedArray): T {
+    let index: number
+    if (isNumberTypedArray(offsets)) {
+        let sum: number = 0
+        for (let i = 0; i < indices.length; i++) {
+            index = indices[i]
+            sum += (<number>offsets[index] - ((index > 0) ? <number>offsets[index - 1] : 0))
+        }
+        return <T>sum
+    }
+    else {
+        let sum: bigint = 0n
+        for (let i = 0; i < indices.length; i++) {
+            index = indices[i]
+            sum += (<bigint>offsets[index] - ((index > 0) ? <bigint>offsets[index - 1] : 0n))
+        }
+        return <T>sum
+    }
 }

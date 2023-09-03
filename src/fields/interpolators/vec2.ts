@@ -7,17 +7,17 @@ export class Vec2InterpolationType implements FieldInterpolationType<Vec2> {
     constructor(
         public curveConfig: CurveConfig = defaultCurveConfig()
     ) { }
-    
+
 
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, Vec2>[]
         ): Interpolator<Location, Vec2> | undefined {
         if (!(keypoints[0].value instanceof Vec2))
             return undefined
-        
+
         if (typeof keypoints[0].location !== 'number')
             return undefined
-        
+
         const curves = new CurveSet([
             keypoints.flatMap(({ location: t, value: p }) => [t, p.x]),
             keypoints.flatMap(({ location: t, value: p }) => [t, p.y])

@@ -24,10 +24,10 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups = {
     [SurfaceNetKey]: {
         cells: {
             surfacePoints: MultiObjectsGroupsTemplateLeaf
-            
+
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
-             * 
+             *
              * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeGroups
@@ -56,11 +56,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroups = {
 
             /**
              * offset in a polygon's vertices where triangulation should start
-             * 
+             *
              * A negative index means the zig zag starts from the triangulation_start vertex;
              * a positive (or zero) index means the vertices to the left and right of the
              * triangulation_start vertex form the first zig-zag segment.
-             * 
+             *
              * A negative index counts from the end; e.g., -1 means the last vertex, -2 is
              * second-to-last, etc.
              */
@@ -73,10 +73,10 @@ export const SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroupsTemplate:
     [SurfaceNetKey]: {
         cells: {
             surfacePoints: MultiObjectsGroupsTemplate_Leaf,
-            
+
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
-             * 
+             *
              * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeGroupsTemplate,
@@ -105,11 +105,11 @@ export const SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroupsTemplate:
 
             /**
              * offset in a polygon's vertices where triangulation should start
-             * 
+             *
              * A negative index means the zig zag starts from the triangulation_start vertex;
              * a positive (or zero) index means the vertices to the left and right of the
              * triangulation_start vertex form the first zig-zag segment.
-             * 
+             *
              * A negative index counts from the end; e.g., -1 means the last vertex, -2 is
              * second-to-last, etc.
              */
@@ -124,10 +124,10 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped = 
     [SurfaceNetKey]: {
         cells: {
             surfacePoints: number
-            
+
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
-             * 
+             *
              * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeValuesGrouped
@@ -156,11 +156,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeValuesGrouped = 
 
             /**
              * offset in a polygon's vertices where triangulation should start
-             * 
+             *
              * A negative index means the zig zag starts from the triangulation_start vertex;
              * a positive (or zero) index means the vertices to the left and right of the
              * triangulation_start vertex form the first zig-zag segment.
-             * 
+             *
              * A negative index counts from the end; e.g., -1 means the last vertex, -2 is
              * second-to-last, etc.
              */
@@ -175,10 +175,10 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped<In
     [SurfaceNetKey]: {
         cells: {
             surfacePoints: Float64Array
-            
+
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
-             * 
+             *
              * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferencesOctTreeLayersGrouped<IndicesT>
@@ -207,11 +207,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped<In
 
             /**
              * offset in a polygon's vertices where triangulation should start
-             * 
+             *
              * A negative index means the zig zag starts from the triangulation_start vertex;
              * a positive (or zero) index means the vertices to the left and right of the
              * triangulation_start vertex form the first zig-zag segment.
-             * 
+             *
              * A negative index counts from the end; e.g., -1 means the last vertex, -2 is
              * second-to-last, etc.
              */
@@ -224,10 +224,10 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped<Indices
     [SurfaceNetKey]: {
         cells: {
             surfacePoints: TypedArrayOctTree<number, Float64Array>
-            
+
             /**
              * polygons_by_edge[dual_cell layer][(12 * dual_cell local index) + diagonal direction] = reference to polygon
-             * 
+             *
              * {@link DiagonalDirection} = (4 * plane) | quadrant
              */
             polygons_by_edge: OctTreeReferences<IndicesT>
@@ -256,11 +256,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped<Indices
 
             /**
              * offset in a polygon's vertices where triangulation should start
-             * 
+             *
              * A negative index means the zig zag starts from the triangulation_start vertex;
              * a positive (or zero) index means the vertices to the left and right of the
              * triangulation_start vertex form the first zig-zag segment.
-             * 
+             *
              * A negative index counts from the end; e.g., -1 means the last vertex, -2 is
              * second-to-last, etc.
              */
@@ -272,14 +272,36 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped<Indices
 export type SurfaceNetVolumeSamplingSubdivisionProcessing<
             IndicesT extends IndicesTypedArray = IndicesTypedArray,
             VolumeLocationT extends VolumeLocation = VolumeLocation,
+            VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+            VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
             VolumeSampleT extends VolumeSample = VolumeSample,
+            VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+            VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
             VolumeSampleProcessingContextT = any,
             VolumeSamplingContextT extends
-                VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-                VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+                VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+                VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
             VolumeT extends
-                VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-                VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+                VolumeWithBoundingBox<
+                        VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
+                        VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
+                        VolumeSampleProcessingContextT,
+                        VolumeSamplingContextT
+                    > =
+                VolumeWithBoundingBox<
+                        VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
+                        VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
+                        VolumeSampleProcessingContextT,
+                        VolumeSamplingContextT
+                    >,
             VolumeProcessingT extends
                 // VolumeWithSamplingProcessing<
                 //         IndicesT,
@@ -309,14 +331,22 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessing<
                 //     >
                 VolumeProcessing<
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT
                     > =
                 VolumeProcessing<
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT
@@ -325,7 +355,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessing<
     VolumeSamplingSubdivisionProcessingWithDual<
         IndicesT,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -338,7 +372,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessing<
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -348,11 +386,15 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessing<
 export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeProcessingContextT extends
             VolumeProcessingContextWithSampling<
                     IndicesT,
@@ -361,7 +403,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -369,7 +415,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
             VolumeProcessingContextWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT
                 > =
@@ -380,7 +430,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -388,7 +442,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
             VolumeProcessingContextWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT
                 >
@@ -396,7 +454,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
     VolumeSamplingSubdivisionProcessingContextWithDual<
         IndicesT,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeProcessingContextT
@@ -408,7 +470,11 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
         SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeProcessingContextT
@@ -420,14 +486,36 @@ export type SurfaceNetVolumeSamplingSubdivisionProcessingContext<
 export class SurfaceNetVolumeSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         VolumeProcessingT extends
             VolumeProcessingWithSampling<
                     IndicesT,
@@ -436,7 +524,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped, /// <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -448,7 +540,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped, /// <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -461,7 +557,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -469,7 +569,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT
                 > =
@@ -480,7 +584,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -488,7 +596,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT
                 >,
@@ -500,7 +612,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             OctTreeWithDualLayersGrouped, // <IndicesT>,
             OctTreeWithDualOctTreesGrouped, // <IndicesT>
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -512,7 +628,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped, // <IndicesT>,
                     OctTreeWithDualOctTreesGrouped, // <IndicesT>
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT//,
                     // VolumeProcessingContextT
@@ -520,7 +640,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             VolumeProcessingContextWithMeshing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT
                 >,
@@ -528,17 +652,25 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 SurfaceNetVolumeSamplingSubdivisionProcessing<
                         IndicesT,
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT,
                         VolumeProcessingT
-                    >, //, 
+                    >, //,
             WithEncapsulating<VolumeProcessingContextT> &
                 SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                         IndicesT,
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeProcessingContextT
@@ -552,12 +684,16 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             //         VolumeProcessingContextT
             //     >
         > {
-    
-    
+
+
     init(context: SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                 IndicesT,
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeProcessingContextT
@@ -575,7 +711,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             SurfaceNetVolumeSamplingSubdivisionProcessing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -584,7 +724,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
         context: SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                 IndicesT,
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeProcessingContextT
@@ -592,7 +736,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
         const subdivision = context[SubdivisionKey]
         const layer = subdivision.depth
         const parent_layer = layer - 1
-        
+
         if (parent_layer === -1) {
             context[SurfaceNetKey] = {
                 cells: {
@@ -626,9 +770,6 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
             item[SubdivisionKey].recommendation.layers[layer][0]++
         }
-        // else if (parent_layer === 0) {
-            
-        // }
         else {
             const number_subdivided_primary_cells = subdivision.layer_sizes[layer] / 8
             const dual_cells = context[DualKey].cells
@@ -690,7 +831,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             const dual_cell_subdivide_recommendation_surfaceIntersects = new OctTreeCellsMaskOctTree()
             for (const layer_size of subdivision.layer_sizes)
                 dual_cell_subdivide_recommendation_surfaceIntersects.subdivide(layer_size)
-            
+
             //TODO: compute whether each dual cell used to be intersected
             // perhaps this isn't even desired if the it is desired that the surface have an even positioning of vertices
 
@@ -707,7 +848,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             //             let initial_dual_cell_member: boolean | undefined = undefined
 
             //             const isNewPolygon = (polygon_layer === layer)
-                        
+
             //             const polygon_dual_cells_offset = (isNewPolygon ? new_polygon_vertices_offsets : polygons_vertices_offsets[polygon_layer])[polygon_localIndex]
             //             const polygon_dual_cells_offset_next = (isNewPolygon ? new_polygon_vertices_offsets : polygons_vertices_offsets[polygon_layer])[polygon_localIndex + 1]
             //             for (let dual_cell_i = polygon_dual_cells_offset; dual_cell_i < polygon_dual_cells_offset_next; dual_cell_i++) {
@@ -749,17 +890,13 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     const polygon_layer = cells_polygons_by_edge_layers[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
                     if (polygon_layer !== invalid_layer) {
                         const polygon_localIndex = cells_polygons_by_edge_localIndices[dual_cell_layer][(12 * dual_cell_localIndex) + edge]
-        
+
                         polygon_edges_layers[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_layer
                         polygon_edges_layers[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_layer
                         polygon_edges_localIndices[polygon_layer][(2 * polygon_localIndex) + 0] = invalid_localIndex
                         polygon_edges_localIndices[polygon_layer][(2 * polygon_localIndex) + 1] = invalid_localIndex
                         polygon_triangulation_start[polygon_layer][polygon_localIndex] = invalid_int32
 
-                        // const polygon_triangle_offset = context[SurfaceNetKey].polygons.triangles.offsets.layers[polygon_layer][polygon_localIndex]
-                        // const polygon_triangle_offset_next = context[SurfaceNetKey].polygons.triangles.offsets.layers[polygon_layer][polygon_localIndex + 1]
-                        // context[SurfaceNetKey].polygons.triangles.indices.layers[polygon_layer].fill(invalid_uint32, polygon_triangle_offset, polygon_triangle_offset_next)
-        
                         const polygon_dual_cells_offset = polygons_vertices_offsets[polygon_layer][polygon_localIndex]
                         const polygon_dual_cells_offset_next = polygons_vertices_offsets[polygon_layer][polygon_localIndex + 1]
                         for (let dual_cell_i = polygon_dual_cells_offset; dual_cell_i < polygon_dual_cells_offset_next; dual_cell_i++) {
@@ -791,7 +928,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     const dual_cell_layer = dual_cells_lookup_corners_layers[parent_layer][(8 * primary_parent_localIndex) | corner]
                     if (dual_cell_layer !== invalid_layer) {
                         const dual_cell_localIndex = dual_cells_lookup_corners_localIndices[parent_layer][(8 * primary_parent_localIndex) | corner]
-                        
+
                         invalidate_polygons(dual_cell_layer, dual_cell_localIndex)
                     }
                 }
@@ -802,7 +939,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             // then 256 cases can be precalculated to know if there are multiple interior islands -
             // if there are at least two vertices at or above surface level that don't touch each other
             const dual_cell_state_hasMultipleInteriorIslands = new Uint8Array(256)
-            
+
             const corner_adjacency = new Uint8Array([
                 0b00010110,
                 0b00101001,
@@ -820,7 +957,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 for (let state = 0; state < 256; state++) {
                     for (let vertex = 0; vertex < 8; vertex++)
                         islands[vertex] = state & (1 << vertex)
-                    
+
                     for (let power = 0; power < 4; power++) {
                         for (let vertex = 0; vertex < 8; vertex++) {
                             if ((state & (1 << vertex)) !== 0) {
@@ -867,12 +1004,12 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             function update_surface_point(dual_cell_layer: number, dual_cell_localIndex: number) {
                 if (dual_cell_layer === invalid_layer)
                     return
-                
+
                 if (!isNaN(surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0]))
                     return
-                
+
                 const dual_cell_corners_offset = (8 * dual_cell_localIndex)
-                
+
                 let vertex_layer: number, vertex_localIndex: number
                 for (let corner = 0; corner < 8; corner++) {
                     vertex_layer = dual_cells_vertices_layers[dual_cell_layer][dual_cell_corners_offset | corner]
@@ -891,7 +1028,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                 for (let vertex_corner_a = 0; vertex_corner_a < 8; vertex_corner_a++) {
                     const adjacency = corner_adjacency[vertex_corner_a]
-                    
+
                     const vertex_alpha_a = dual_cell_corners_alpha[vertex_corner_a]
                     const p_x_a = dual_cell_corners_positions[(3 * vertex_corner_a) + 0]
                     const p_y_a = dual_cell_corners_positions[(3 * vertex_corner_a) + 1]
@@ -936,7 +1073,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 for (let corner = 0; corner < 8; corner++)
                     if(dual_cell_corners_alpha[corner] >= surface_level)
                         cubeState |= (1 << corner)
-                
+
                 if (dual_cell_state_hasMultipleInteriorIslands[cubeState] !== 0) {
                     for (let corner = 0; corner < 8; corner++) {
                         const primary_vertex_layer = dual_cells_vertices_layers[dual_cell_layer][(8 * dual_cell_localIndex) | corner]
@@ -951,7 +1088,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             function invalidate_surface_point(dual_cell_layer: number, dual_cell_localIndex: number) {
                 if (dual_cell_layer === invalid_layer)
                     return
-                
+
                 if (isNaN(surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 0]))
                     return
 
@@ -1012,7 +1149,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 // (2 * axis_2) | 0,
                 // (2 * axis_1) | 1,
                 // (2 * axis_2) | 1,
-                
+
                 // X plane
                 (2 * 1) | 0,
                 (2 * 2) | 0,
@@ -1051,7 +1188,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                 if (cells_polygons_by_edge_layers[dual_cell_layer_initial][(12 * dual_cell_localIndex_initial) + edge_initial] !== invalid_layer)
                     return false
-                
+
                 const axis_1 = (edge_axis + 1) % 3
                 const axis_2 = (edge_axis + 2) % 3
                 const cell_0 = 1 << edge_axis
@@ -1079,7 +1216,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                 if (edge_vertex_above_a === edge_vertex_above_b)
                     return false
-                
+
                 if (edge_vertex_above_a) {
                     lookup_key_layers[0] = edge_vertex_layer_a
                     lookup_key_layers[1] = edge_vertex_layer_b
@@ -1137,73 +1274,73 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
                         if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
                             break
-    
+
                         const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
                         const edge_current = (four_times_edge_axis) | edge_quadrant_current
-                        
+
                         cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_layer
                         cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_localIndex
-    
+
                         new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = invalid_layer
                         new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = invalid_localIndex
-    
+
                         const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
-                        
+
                         const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                         if (dual_cell_layer_adjacent === invalid_layer) {
                             // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
                             // then continue in the previous direction that would have been before this dual cell
                             // otherwise a polygon cannot be formed around this edge
-    
+
                             const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
                             const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
                             const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
                             const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
                             const vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
                             const vertex_test_b = vertex_test_a | cell_0
-    
+
                             const test_matches = (
                                 (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
                                 (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
                                 (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
                                 (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
                             )
-    
+
                             if (!test_matches)
                                 break
-                            
+
                             const edge_test = (four_times_edge_axis) | edge_quadrant_test
                             cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_layer
                             cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_localIndex
-                            
+
                             const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
                             const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
-    
+
                             const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                             const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-    
+
                             if (dual_cell_layer_adjacent === invalid_layer)
                                 break
-    
-                            // it should be valid because a "tent" can only be formed between two triagonal corners 
-    
+
+                            // it should be valid because a "tent" can only be formed between two triagonal corners
+
                             dual_cell_layer_current = dual_cell_layer_adjacent
                             dual_cell_localIndex_current = dual_cell_localIndex_adjacent
                         }
                         else {
                             const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                            
+
                             dual_cell_layer_current = dual_cell_layer_adjacent
                             dual_cell_localIndex_current = dual_cell_localIndex_adjacent
-    
+
                             if (triangulation_start_vertex === -1)
                                 triangulation_start_vertex = polygon_points
-    
+
                             circular_quadrant += circular_quadrant_offset_direction_next
                             circular_quadrant &= 0b11
                         }
                     }
-                    
+
                     return false
                 }
 
@@ -1225,7 +1362,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                     const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
                     const edge_current = (four_times_edge_axis) | edge_quadrant_current
-                    
+
                     cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
                     cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
 
@@ -1233,7 +1370,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
 
                     const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
-                    
+
                     const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
                     if (dual_cell_layer_adjacent === invalid_layer) {
                         // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
@@ -1256,11 +1393,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                         if (!test_matches)
                             return invalidate()
-                        
+
                         const edge_test = (four_times_edge_axis) | edge_quadrant_test
                         cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
                         cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
-                        
+
                         const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
                         const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
 
@@ -1270,14 +1407,14 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         if (dual_cell_layer_adjacent === invalid_layer)
                             return invalidate()
 
-                        // it should be valid because a "tent" can only be formed between two triagonal corners 
+                        // it should be valid because a "tent" can only be formed between two triagonal corners
 
                         dual_cell_layer_current = dual_cell_layer_adjacent
                         dual_cell_localIndex_current = dual_cell_localIndex_adjacent
                     }
                     else {
                         const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                        
+
                         dual_cell_layer_current = dual_cell_layer_adjacent
                         dual_cell_localIndex_current = dual_cell_localIndex_adjacent
 
@@ -1293,14 +1430,14 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     (dual_cell_layer_current === dual_cell_layer_initial) &&
                     (dual_cell_localIndex_current === dual_cell_localIndex_initial)
                 ))
-                
+
                 if (dual_cell_layer_current === invalid_layer)
                     return invalidate()
-                
+
                 const polygon_index = new_polygon_localIndex++
-                
+
                 new_polygon_vertices_offsets[new_polygon_localIndex] = polygon_vertices_offset + polygon_points
-                
+
                 new_polygon_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
                 new_polygon_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
                 new_polygon_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
@@ -1320,7 +1457,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         index += polygon_points
                     index += triangulation_start_vertex
                     index %= polygon_points
-                    
+
                     const dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + index]
                     const dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + index]
                     const array = surfacePoints[dual_cell_layer]
@@ -1328,7 +1465,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     y = array[(3 * dual_cell_localIndex) + 1]
                     z = array[(3 * dual_cell_localIndex) + 2]
                 }
-                
+
                 /**
                  * Computes the zig-zag length to discern how triangulation should be done
                  * @param direction 0 = positive or zero triangulation_start
@@ -1346,14 +1483,14 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         az: number
 
                     let distance = 0
-                    
+
                     switch (direction) {
                         case 0:
                             for (let i = 0; i < zig_zag_lines; i += 2) {
                                 const isInverse = (i & 1) === 1
                                 const a = (i >> 1) + 1
                                 const b = isInverse ? -(1 + a) : -a
-                                
+
                                 loadVertex(a)
                                 ax = x, ay = y, az = z
 
@@ -1365,13 +1502,13 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                                 )
                             }
                             break
-                        
+
                         case 1:
                             for (let i = 0; i < zig_zag_lines; i += 2) {
                                 const isInverse = (i & 1) === 1
                                 const a = i >> 1
                                 const b = isInverse ? (a + 1) : -(2 + a)
-                                
+
                                 loadVertex(a)
                                 ax = x, ay = y, az = z
 
@@ -1411,7 +1548,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                 for (let point = 0; point < polygon_points; point++) {
                     const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]
                     const polygon_vertex_dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + point]
-                    
+
                     dual_cell_subdivide_recommendation_surfaceIntersects.set(polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex, true)
                 }
 
@@ -1471,11 +1608,11 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     triangulation_start: arrayCopy(new_polygon_triangulation_start, context[SurfaceNetKey].polygons.triangulation_start.subdivide(number_polygons_added)),
                 }
             }
-            
+
             const subdivide_recommendation_surfaceIntersects_primary = new Uint8Array(8 * number_subdivided_primary_cells)
             const dual_cells_lookup_corners_layers_newLayer = dual_cells_lookup_corners_layers[layer]
             const dual_cells_lookup_corners_localIndices_newLayer = dual_cells_lookup_corners_localIndices[layer]
-            
+
             for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
                 const primary_children_localIndex_offset = 8 * primary_localIndex_group
                 for (let primary_child_subcell = 0; primary_child_subcell < 8; primary_child_subcell++) {
@@ -1495,7 +1632,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             const subdivision_recommendation = item[SubdivisionKey].recommendation.layers[layer]
             for (let primary_child_localIndex_group = 0; primary_child_localIndex_group < number_subdivided_primary_cells; primary_child_localIndex_group++) {
                 const primary_child_localIndex_offset = (8 * primary_child_localIndex_group)
-                
+
                 for (let primary_subcell = 0; primary_subcell < 8; primary_subcell++) {
                     const primary_child_localIndex = primary_child_localIndex_offset | primary_subcell
 

@@ -9,18 +9,32 @@ import { IndicesTypedArray } from '../../utils/indices-array.js'
 import { vectorIterator } from '../vectorized/iterators/factory.js'
 
 export class ConstantSampleDomain<
-        Location extends FieldPoint = FieldPoint,
-        Sample extends FieldPoint = FieldPoint,
-        Context extends SamplingContext<Location> = SamplingContext<Location>,
+        Location extends FieldPoint,
+        Sample extends FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
+        Context extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>
     > implements
-    SampleDomain<Location, Sample, Context> {
+    SampleDomain<
+        Location,
+        Sample,
+        LocationElementType,
+        LocationFuseMode,
+        SampleElementType,
+        SampleFuseMode,
+        Context
+    > {
     constructor(
         public value: Sample,
-        public field: Field<Sample>
+        public field: Field<Sample, SampleElementType, SampleFuseMode>
     ) { }
-    
+
     init(context: Context): void {}
-    
+
     @vectorized(ConstantSampleDomain.sample_vectorized)
     sample(location: Location, context: Context): Sample {
         return this.value
@@ -28,22 +42,44 @@ export class ConstantSampleDomain<
 
     private static sample_vectorized<
             Location extends FieldPoint = FieldPoint,
-            LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
             Sample extends FieldPoint = FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+            LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+            SampleElementType extends FieldPoint = Sample,
+            SampleFuseMode extends FieldPoint = Sample,
             SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
             ObjIDsT extends IndicesTypedArray = Uint32Array,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-            SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-            LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-            SampleVector extends FieldPointVector<Sample, SampleContainer> = FieldPointVector<Sample, SampleContainer>,
+            SingularContext extends
+                SamplingContext<Location, LocationElementType, LocationFuseMode> =
+                SamplingContext<Location, LocationElementType, LocationFuseMode>,
+            LocationVector extends
+                FieldPointVector<LocationElementType, LocationContainer> =
+                FieldPointVector<LocationElementType, LocationContainer>,
+            SampleVector extends
+                FieldPointVector<SampleElementType, SampleContainer> =
+                FieldPointVector<SampleElementType, SampleContainer>,
         >(
-            this: ConstantSampleDomain<Location, Sample, SingularContext>,
+            this: ConstantSampleDomain<
+                Location,
+                Sample,
+                LocationElementType,
+                LocationFuseMode,
+                SampleElementType,
+                SampleFuseMode,
+                SingularContext
+            >,
             locations: LocationVector,
             context: VectorSamplingContext<
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 Sample,
+                SampleElementType,
+                SampleFuseMode,
                 SampleContainer,
                 Objects,
                 ObjIDsT,
@@ -53,15 +89,16 @@ export class ConstantSampleDomain<
                 SampleVector
             >
         ): SampleVector {
-        const isDynamic = isDynamicVector<Location, LocationContainer>(locations)
+        const isDynamic = isDynamicVector<LocationElementType, LocationContainer>(locations)
         const locationsIterator = vectorIterator(context[SampleDomainLocationFieldKey].elementType, isDynamic, context[MultiObjectsIDsKey])
-        
+        console.warn("this is not intended to work for constant value w/ obj-mapped values")
+
         return <SampleVector>field_point_vectorized_new(
             this.field.elementType,
             locationsIterator.length(locations, locations),
-            <IsDynamicVector<Sample, SampleContainer>><unknown>isDynamic,
+            <IsDynamicVector<SampleElementType, SampleContainer>><unknown>isDynamic,
             undefined,
-            this.value
+            <SampleElementType><unknown>this.value
         )
     }
 }

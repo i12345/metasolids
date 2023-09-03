@@ -41,11 +41,11 @@ export function pathSubsumes(path: PropertyPath, subpath: PropertyPath): boolean
         for (let i = subpath.length; i < path.length; i++)
             if (path[i] !== PROPERTYKEY_ALL)
                 return false
-    
+
     for (let i = path.length - 1; i >= 0; i--) {
         if (path[i] === PROPERTYKEY_ALL)
             continue
-        
+
         if (path[i] !== subpath[i])
             return false
     }

@@ -1,6 +1,6 @@
 import { MultiObjectsTemplate, MultiObjectsIDs } from "../../../paradigm/trees/multi-objects.js"
 import { IndicesTypedArray } from "../../../utils/indices-array.js"
-import { TypedArray, typedArrayClone } from "../../../utils/typed-array.js"
+import { NumberTypedArray, typedArrayClone } from "../../../utils/typed-array.js"
 import { FieldPointPrimitive, FieldPoint } from "../../point.js"
 import { FieldPointType, field_point_type_size } from "../../type.js"
 import { PrimitiveFuseMode, FusingFieldPointVectorWithMultiObjects, ItemNextObjectIndexKey, FieldPointWithMultiObjectPath } from "../fusing.js"
@@ -8,11 +8,12 @@ import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, Item
 
 export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implements PrimitiveFuseMode<Point> {
     fuseSingle<
-            Objects extends MultiObjectsTemplate = MultiObjectsTemplate
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array
         >(
             type: FieldPointType<Point>,
             points: FieldPointWithMultiObjectPath<Point>[],
-            multiObjectIDs?: MultiObjectsIDs<Objects>,
+            multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
             isMultiObjMappedResult?: boolean
         ): {
             reducedValue: Point
@@ -23,14 +24,14 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
         } {
         if (!isMultiObjMappedResult)
             throw new Error()
-        
+
         return {
             objectValues: points
         }
     }
 
     fuseVector<
-            Container extends FieldPointVectorContainer<TypedArray>,
+            Container extends FieldPointVectorContainer<NumberTypedArray>,
             ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>
         >(
@@ -52,14 +53,14 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
             throw new Error("must fused from multi objects")
 
         const elementSize: number = field_point_type_size(elementType)
-        
+
         const n_items = results.vectorizedRoot[ItemObjValuesOffsetsKey].length
         const resultElementOffsets = results.vectorizedRoot[ItemObjValuesOffsetsKey]
         const resultElementIndexNext = typedArrayClone(results.vectorizedRoot[ItemNextObjectIndexKey])
 
         if (isDynamicVector(points[0].vectorized)) {
             const resultVectorized = <FieldPointVectorDynamic<Point>>results.vectorized
-    
+
             for (const { vectorized, vectorizedRoot } of points) {
                 const pointVector = <FieldPointVectorDynamic<Point>>vectorized
                 const objOffsets = vectorizedRoot[ItemObjValuesOffsetsKey]
@@ -84,7 +85,7 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
         }
         else {
             const resultVectorized = <FieldPointVectorStatic<Point>><any>results.vectorized
-    
+
             for (const { vectorized, vectorizedRoot } of points) {
                 const pointVector = <FieldPointVectorStatic<Point>>vectorized
                 const objOffsets = vectorizedRoot[ItemObjValuesOffsetsKey]

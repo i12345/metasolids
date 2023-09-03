@@ -1,6 +1,6 @@
 import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsIDs } from "../../../paradigm/trees/multi-objects.js"
 import { intract, hasPath, extract } from "../../../paradigm/trees/tree.js"
-import { FieldPointMapped, FieldPoint, FieldPointPrimitive } from "../../point.js"
+import { FieldPointMapped, FieldPoint, FieldPointPrimitive, FieldPointMappedObjectsGroupedRemoved } from "../../point.js"
 import { FieldPointType } from "../../type.js"
 import { vectorIterator } from "./factory.js"
 import { FieldPointVectorIterator } from "../iterator.js"
@@ -53,7 +53,7 @@ export class MultiObjectsFieldPointVectorIterator<
 
         for (let offset = offset_start; offset < offset_end; offset++) {
             const objValue = this.typeIterator.get_returnValue(vectorized, vectorizedRoot, offset)
-            const objID = vectorizedRoot[ItemObjIDsKey].get(offset)
+            const objID = <number>vectorizedRoot[ItemObjIDsKey].get(offset)
             const objPath = this.multiObjectsIDs.paths[objID]
             intract(result, objPath, objValue)
         }
@@ -88,7 +88,7 @@ export class MultiObjectsFieldPointVectorIterator<
     makeContainer(length: number): Container {
         if (!(this.typeIterator instanceof PrimitiveFieldPointVectorIterator))
             throw new Error("can only make container for primitive field types")
-        
+
         return (<PrimitiveFieldPointVectorIterator<FieldPointPrimitive, Container, VectorizedRoot>><FieldPointVectorIterator<FieldPointPrimitive>>this.typeIterator).makeContainer(length)
     }
 

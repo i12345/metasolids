@@ -1,6 +1,7 @@
-import { MultiObjectsWithGroupFieldsProcessingContext } from "../../fields/processing.js";
-import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped } from "../../paradigm/trees/index.js";
-import { Texture, TextureLocation, TextureSample } from "../../textures/index.js";
+import { Field } from "../../fields/index.js";
+import { MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext } from "../../fields/processing.js";
+import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped, MultiObjectsTypeGrouped } from "../../paradigm/trees/index.js";
+import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SurfaceProcessingContext } from "../processing.js";
 import { Surface, SurfaceSample } from "../surface.js";
@@ -82,6 +83,20 @@ export type SurfaceSampleWithIndividualTextureLocations<
     SurfaceSample &
     MultiObjectsGroupsMapped<IndividualTextureLocationGroups, TextureLocationT>
 
+export type SurfaceSampleElementTypeWithIndividualTextureLocations<
+        IndividualTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationElementType extends TextureLocation = TextureLocation
+    > =
+    SurfaceSample &
+    MultiObjectsGroupsMapped<IndividualTextureLocationGroups, TextureLocationElementType>
+
+export type SurfaceSampleFuseModeWithIndividualTextureLocations<
+        IndividualTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationFuseMode extends TextureLocation = TextureLocation
+    > =
+    SurfaceSample &
+    MultiObjectsGroupsMapped<IndividualTextureLocationGroups, TextureLocationFuseMode>
+
 export type SurfaceSampleWithObjectsTextureLocations<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -90,13 +105,29 @@ export type SurfaceSampleWithObjectsTextureLocations<
     SurfaceSample &
     MultiObjectsMappedGrouped<Objects, ObjectsTextureLocationGroups, TextureLocationT>
 
+export type SurfaceSampleElementTypeWithObjectsTextureLocations<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjectsTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationElementType extends TextureLocation = TextureLocation
+    > =
+    SurfaceSample &
+    MultiObjectsTypeGrouped<Objects, ObjectsTextureLocationGroups, TextureLocationElementType>
+
+export type SurfaceSampleFuseModeWithObjectsTextureLocations<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjectsTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureLocationElementType extends TextureLocation = TextureLocation
+    > =
+    SurfaceSample &
+    MultiObjectsGroupsMapped<ObjectsTextureLocationGroups, TextureLocationElementType>
+
 export type SurfaceSampleProcessingContextWithIndividualTextureLocations<
         IndividualTextureLocationGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > =
     MultiObjectsGroupsProcessingContext<
         IndividualTextureLocationGroups,
         SurfaceIndividualTextureLocationsGroupKinds
-    > & 
+    > &
     MultiObjectsGroupsProcessingContext<
         IndividualTextureLocationGroups,
         SurfaceTextureLocationsGroupKinds
@@ -129,16 +160,39 @@ export type SurfaceWithIndividualTextures<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         TexturesGrouped extends
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample
     > =
-    Surface<IndicesT, SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleElementType> &
     TexturesGrouped
 
 export type SurfaceWithObjectsTextures<
@@ -146,16 +200,39 @@ export type SurfaceWithObjectsTextures<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         TexturesGrouped extends
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample
     > =
-    Surface<IndicesT, SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleElementType> &
     MultiObjectsMappedAgainGrouped<Objects, ObjectsTextureGroups, TextureT, TexturesGrouped>
 
 export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
@@ -163,25 +240,53 @@ export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
         IndividualTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         TexturesGrouped extends
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
-        SurfaceSampleT extends
-            SurfaceSampleWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT> =
-            SurfaceSampleWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT>
+        SurfaceSampleElementType extends
+            SurfaceSampleElementTypeWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT> =
+            SurfaceSampleElementTypeWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT>
     > =
     SurfaceWithIndividualTextures<
             IndicesT,
             IndividualTextureGroups,
             TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
             TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSamplingContextT,
             TextureT,
             TexturesGrouped,
-            SurfaceSampleT
+            SurfaceSampleElementType
         >
 
 export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
@@ -190,26 +295,54 @@ export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         TexturesGrouped extends
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
-        SurfaceSampleT extends
-            SurfaceSampleWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT> =
-            SurfaceSampleWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT>
+        SurfaceSampleElementType extends
+            SurfaceSampleElementTypeWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT> =
+            SurfaceSampleElementTypeWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT>
     > =
     SurfaceWithObjectsTextures<
             IndicesT,
             Objects,
             ObjectsTextureGroups,
             TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
             TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSamplingContextT,
             TextureT,
             TexturesGrouped,
-            SurfaceSampleT
+            SurfaceSampleElementType
         >
 
 export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
@@ -218,40 +351,82 @@ export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         TexturesGrouped extends
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
-        SurfaceSampleT extends
-            SurfaceSampleWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT> =
-            SurfaceSampleWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT>
+        SurfaceSampleElementType extends
+            SurfaceSampleElementTypeWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT> =
+            SurfaceSampleElementTypeWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT>
     > =
     SurfaceWithObjectsTextures<
             IndicesT,
             Objects,
             ObjectsTextureGroups,
             TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
             TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSamplingContextT,
             TextureT,
             TexturesGrouped,
-            SurfaceSampleT
+            SurfaceSampleElementType
         >
 
 export type SurfaceProcessingContextWithIndividualTextures<
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SampleProcessingContextT = any
+        SampleProcessingContextT = any,
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSampleField extends
+            Field<TextureSampleT, TextureSampleElementType, TextureSampleFuseMode> =
+            Field<TextureSampleT, TextureSampleElementType, TextureSampleFuseMode>,
     > =
     SurfaceProcessingContext<SampleProcessingContextT> &
-    MultiObjectsGroupsProcessingContext<
+    MultiObjectsGroupsWithFieldsProcessingContext<
             IndividualTextureGroups,
-            SurfaceIndividualTexturesGroupKinds
+            SurfaceIndividualTexturesGroupKinds,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleField
         > &
-    MultiObjectsGroupsProcessingContext<
+    MultiObjectsGroupsWithFieldsProcessingContext<
             IndividualTextureGroups,
-            SurfaceTexturesGroupKinds
+            SurfaceTexturesGroupKinds,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleField
         >
 
 export type SurfaceProcessingContextWithObjectsTextures<
@@ -260,20 +435,23 @@ export type SurfaceProcessingContextWithObjectsTextures<
         ObjectsTexturesGrouped extends
             MultiObjectsGrouped<Objects, ObjectsTextureGroups> =
             MultiObjectsGrouped<Objects, ObjectsTextureGroups>,
-        SampleProcessingContextT = any
+        SampleProcessingContextT = any,
+        TextureSampleT extends TextureSample = TextureSample,
     > =
     SurfaceProcessingContext<SampleProcessingContextT> &
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
             Objects,
             ObjectsTextureGroups,
             ObjectsTexturesGrouped,
-            SurfaceObjectsTexturesGroupKinds
+            SurfaceObjectsTexturesGroupKinds,
+            TextureSampleT
         > &
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
             Objects,
             ObjectsTextureGroups,
             ObjectsTexturesGrouped,
-            SurfaceTexturesGroupKinds
+            SurfaceTexturesGroupKinds,
+            TextureSampleT
         >
 
 export type SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations<
@@ -281,13 +459,23 @@ export type SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLoca
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SampleProcessingContextT extends
             SurfaceSampleProcessingContextWithIndividualTextureLocations<IndividualTextureLocationGroup> =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations<IndividualTextureLocationGroup>
+            SurfaceSampleProcessingContextWithIndividualTextureLocations<IndividualTextureLocationGroup>,
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSampleField extends
+            Field<TextureSampleT, TextureSampleElementType, TextureSampleFuseMode> =
+            Field<TextureSampleT, TextureSampleElementType, TextureSampleFuseMode>,
     > =
     SurfaceProcessingContextWithIndividualTextures<
             IndividualTextureGroups,
-            SampleProcessingContextT
+            SampleProcessingContextT,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleField
         >
-        
+
 export type SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations<
         IndividualTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -297,13 +485,15 @@ export type SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureL
             MultiObjectsGrouped<Objects, ObjectsTextureGroups>,
         SampleProcessingContextT extends
             SurfaceSampleProcessingContextWithIndividualTextureLocations<IndividualTextureLocationGroup> =
-            SurfaceSampleProcessingContextWithIndividualTextureLocations<IndividualTextureLocationGroup>
+            SurfaceSampleProcessingContextWithIndividualTextureLocations<IndividualTextureLocationGroup>,
+        TextureSampleT extends TextureSample = TextureSample,
     > =
     SurfaceProcessingContextWithObjectsTextures<
         Objects,
         ObjectsTextureGroups,
         ObjectsTexturesGrouped,
-        SampleProcessingContextT
+        SampleProcessingContextT,
+        TextureSampleT
     >
 
 export type SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations<
@@ -313,15 +503,26 @@ export type SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTexture
         ObjectsTexturesGrouped extends
             MultiObjectsGrouped<Objects, ObjectsTextureGroups> =
             MultiObjectsGrouped<Objects, ObjectsTextureGroups>,
+        ObjectsTextureLocationT extends TextureLocation = TextureLocation,
         SampleProcessingContextT extends
-            SurfaceSampleProcessingContextWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup> =
-            SurfaceSampleProcessingContextWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup>
+            SurfaceSampleProcessingContextWithObjectsTextureLocations<
+                    Objects,
+                    ObjectsTextureLocationGroup,
+                    ObjectsTextureLocationT
+                > =
+            SurfaceSampleProcessingContextWithObjectsTextureLocations<
+                    Objects,
+                    ObjectsTextureLocationGroup,
+                    ObjectsTextureLocationT
+                >,
+        TextureSampleT extends TextureSample = TextureSample,
     > =
     SurfaceProcessingContextWithObjectsTextures<
         Objects,
         ObjectsTextureGroups,
         ObjectsTexturesGrouped,
-        SampleProcessingContextT
+        SampleProcessingContextT,
+        TextureSampleT
     >
 
 
@@ -330,19 +531,42 @@ export type SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         TexturesGrouped extends
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
-        Sample extends SurfaceSample = SurfaceSample
+        SampleElementType extends SurfaceSample = SurfaceSample
     > =
     SurfaceWithUVUnwrapping<
             IndicesT,
             SurfaceUVUnwrappingGroup,
-            Sample
+            SampleElementType
         > &
     TexturesGrouped
 
@@ -352,19 +576,42 @@ export type SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjectsTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TextureT extends
-            Texture<TextureLocationT, TextureSampleT> =
-            Texture<TextureLocationT, TextureSampleT>,
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                > =
+            Texture<
+                    TextureLocationT,
+                    TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
+                >,
         TexturesGrouped extends
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
-        Sample extends SurfaceSample = SurfaceSample
+        SampleElementType extends SurfaceSample = SurfaceSample
     > =
     SurfaceWithUVUnwrapping<
             IndicesT,
             SurfaceUVUnwrappingGroup,
-            Sample
+            SampleElementType
         > &
     MultiObjectsMappedAgainGrouped<Objects, ObjectsTextureGroups, TextureT, TexturesGrouped>
 
@@ -372,18 +619,24 @@ export type SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrappi
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SampleProcessingContextT = any,
         IndividualTextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSampleField extends
+            Field<TextureSampleT, TextureSampleElementType, TextureSampleFuseMode> =
+            Field<TextureSampleT, TextureSampleElementType, TextureSampleFuseMode>,
     > =
     SurfaceProcessingContextWithUVUnwrapping<
         SurfaceUVUnwrappingGroup,
         SampleProcessingContextT
     > &
-    MultiObjectsGroupsProcessingContext<
+    SurfaceProcessingContextWithIndividualTextures<
         IndividualTextureGroups,
-        SurfaceIndividualTexturesGroupKinds
-    > &
-    MultiObjectsGroupsProcessingContext<
-        IndividualTextureGroups,
-        SurfaceTexturesGroupKinds
+        SampleProcessingContextT,
+        TextureSampleT,
+        TextureSampleElementType,
+        TextureSampleFuseMode,
+        TextureSampleField
     >
 
 export type SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
@@ -394,20 +647,16 @@ export type SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
         ObjectsTexturesGrouped extends
             MultiObjectsGrouped<Objects, ObjectsTextureGroups> =
             MultiObjectsGrouped<Objects, ObjectsTextureGroups>,
+        TextureSampleT extends TextureSample = TextureSample,
     > =
     SurfaceProcessingContextWithUVUnwrapping<
             SurfaceUVUnwrappingGroup,
             SampleProcessingContextT
         > &
-    MultiObjectsProcessingContext<
+    SurfaceProcessingContextWithObjectsTextures<
             Objects,
             ObjectsTextureGroups,
             ObjectsTexturesGrouped,
-            SurfaceObjectsTexturesGroupKinds
-        > &
-    MultiObjectsProcessingContext<
-            Objects,
-            ObjectsTextureGroups,
-            ObjectsTexturesGrouped,
-            SurfaceTexturesGroupKinds
+            SampleProcessingContextT,
+            TextureSampleT
         >

@@ -57,7 +57,7 @@ export class GraphProcessor<
         const map = context_private[GraphProcessorContextKey] ??= new Map()
         console.assert(!map.has(this))
         map.set(this, { processors_connections })
-        
+
         //TODO: this algorithm doesn't detect cyclic dependencies
 
         for (const processor_connections of processors_connections.values()) {
@@ -66,7 +66,7 @@ export class GraphProcessor<
 
                 for (let i = 0; i < connections.inputs.length; i++) {
                     const input_existing = connections.inputs[i]
-                    
+
                     if (pathSubsumes(input_existing, input_new)) {
                         input_new_already_handled = true
                         break
@@ -91,7 +91,7 @@ export class GraphProcessor<
                 if (!input_new_already_handled)
                     connections.inputs.push(input_new)
             }
-            
+
             for (const output_new of processor_connections.outputs) {
                 let output_new_already_handled = false
 
@@ -136,7 +136,7 @@ export class GraphProcessor<
 
         const toProcess = [...this.processors]
         let lastLength = 0
-        
+
         const { processors_connections } = context_private[GraphProcessorContextKey]!.get(this)!
 
         do {

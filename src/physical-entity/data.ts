@@ -8,7 +8,7 @@ export class ComponentData<ID = string> extends processing.ComponentData<ID> {
     texturers?: textures.Texturer[]
     interpolatingGroups?: MultiObjectsGroupsTemplate[]
     extraLocationParameters?: fields.FieldsPoint
-    
+
     //TODO: these settings should be stored in a better way
     volumeSamplingSettings?: octtree.OctTreeSubdivisionSettings
     surfaceLevel?: number

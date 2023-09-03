@@ -9,17 +9,17 @@ export class ColorRGBAClampedCurveInterpolationType implements FieldInterpolatio
     constructor(
         public curveConfig: CurveConfig = defaultCurveConfig()
     ) { }
-    
+
 
     [makeInterpolator]<Location extends FieldPoint>(
             keypoints: FieldInterpolationKeypoint<Location, Color>[]
         ): Interpolator<Location, Color> | undefined {
         if (!(keypoints[0].value instanceof Color))
             return undefined
-        
+
         if (typeof keypoints[0].location !== 'number')
             return undefined
-        
+
         const curves = new CurveSet([
             keypoints.flatMap(({ location: t, value: color }) => [t, color.r]),
             keypoints.flatMap(({ location: t, value: color }) => [t, color.g]),

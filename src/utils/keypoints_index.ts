@@ -8,10 +8,10 @@
 export function keypoint_index<T = any>(t: number, keypoints: number[]): number {
     let low = 0,
         high = keypoints.length - 1
-    
+
     while (low !== high) {
         const mid = Math.floor((low + high) / 2)
-        
+
         // Too high
         if (keypoints[mid] > t)
             high = mid - 1;

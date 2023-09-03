@@ -12,7 +12,7 @@ export class TypedArrayOctTree<
         public readonly typedArray: TypedArrayConstructor<T, TypedArrayT>,
         layers: TypedArrayT[] = [],
         public readonly fillValue?: T
-    ) { 
+    ) {
         super(layers as any)
     }
 

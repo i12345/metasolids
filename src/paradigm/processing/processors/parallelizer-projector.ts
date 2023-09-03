@@ -41,7 +41,7 @@ export class ProjectorParallelizer<
     constructor(parallelizedGroups: ParallelizedGroups) {
         super(parallelizedGroups)
     }
-    
+
     protected connectionItemPath(
             context: Context,
             parallelizedGroup: LeafInterface<any>,
@@ -49,7 +49,7 @@ export class ProjectorParallelizer<
         ): PropertyPath {
         return []
     }
-    
+
     protected parallelizeProcess(
             item: Item,
             context: Context,
@@ -59,7 +59,7 @@ export class ProjectorParallelizer<
             parallelizedProcessor: ParallelizedProcessorT
         ): void {
         const parallelizedItemEncapsulated = encapsulated(parallelizedItems, item)
-        
+
         parallelizedProcessor.process(parallelizedItemEncapsulated, parallelizedContextEncapsulated)
     }
 }

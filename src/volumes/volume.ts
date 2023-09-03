@@ -17,7 +17,7 @@ export const defaultVolumeLocationField = new FieldsField<VolumeLocation>({
 export type VolumeSample = {
     /**
      * The presence of the volume at the sampled point, in [0, 1]
-     * 
+     *
      * The threshhold of the mesher will determine whether this is
      * inside or outside a mesh
      */
@@ -25,7 +25,7 @@ export type VolumeSample = {
 
     /**
      * The derivative of presence with respect to position
-     * 
+     *
      * The gradient points to greater presence
      */
     gradient: Vec3
@@ -40,18 +40,41 @@ export const VolumeSampleKey = Symbol("volume.sample")
 
 export interface VolumeSamplingContext<
         Location extends VolumeLocation = VolumeLocation,
-        SampleProcessingContextT = any
+        LocationElementType extends VolumeLocation = Location,
+        LocationFuseMode extends VolumeLocation = Location,
+        SampleProcessingContextT = any,
     > extends
-    SamplingContext<Location> {
+    SamplingContext<Location, LocationElementType, LocationFuseMode> {
     [VolumeSampleKey]: SampleProcessingContextT
 }
 
 export interface Volume<
         Location extends VolumeLocation = VolumeLocation,
+        LocationElementType extends VolumeLocation = Location,
+        LocationFuseMode extends VolumeLocation = Location,
         Sample extends VolumeSample = VolumeSample,
+        SampleElementType extends VolumeSample = Sample,
+        SampleFuseMode extends VolumeSample = Sample,
         SampleProcessingContextT = any,
         Context extends
-            VolumeSamplingContext<Location, SampleProcessingContextT> =
-            VolumeSamplingContext<Location, SampleProcessingContextT>
-    > extends SampleDomain<Location, Sample, Context> {
+            VolumeSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    SampleProcessingContextT
+                > =
+            VolumeSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    SampleProcessingContextT
+                >
+    > extends SampleDomain<
+        Location, Sample,
+        LocationElementType,
+        LocationFuseMode,
+        SampleElementType,
+        SampleFuseMode,
+        Context
+    > {
 }

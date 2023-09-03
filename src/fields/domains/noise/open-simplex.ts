@@ -6,14 +6,14 @@ export const openSimplex = {
     [2]: {
         plain: new (class OpenSimplexSampleDomain_2D_plain extends SeededSampleDomain<Vec2, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec2, context: SeededSamplingContext<Vec2>): number {
                 return OpenSimplex2S.noise2(BigInt(context[SeedKey]), location.x, location.y)
             }
         })(),
         improveX: new (class OpenSimplexSampleDomain_2D_improveX extends SeededSampleDomain<Vec2, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec2, context: SeededSamplingContext<Vec2>): number {
                 return OpenSimplex2S.noise2_ImproveX(BigInt(context[SeedKey]), location.x, location.y)
             }
@@ -22,21 +22,21 @@ export const openSimplex = {
     [3]: {
         fallback: new (class OpenSimplexSampleDomain_3D_fallback extends SeededSampleDomain<Vec3, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec3, context: SeededSamplingContext<Vec3>): number {
                 return OpenSimplex2S.noise3_Fallback(BigInt(context[SeedKey]), location.x, location.y, location.z)
             }
         })(),
         improveXY: new (class OpenSimplexSampleDomain_3D_improveXY extends SeededSampleDomain<Vec3, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec3, context: SeededSamplingContext<Vec3>): number {
                 return OpenSimplex2S.noise3_ImproveXY(BigInt(context[SeedKey]), location.x, location.y, location.z)
             }
         })(),
         improveXZ: new (class OpenSimplexSampleDomain_3D_improveXZ extends SeededSampleDomain<Vec3, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec3, context: SeededSamplingContext<Vec3>): number {
                 return OpenSimplex2S.noise3_ImproveXZ(BigInt(context[SeedKey]), location.x, location.y, location.z)
             }
@@ -45,35 +45,35 @@ export const openSimplex = {
     [4]: {
         fallback: new (class OpenSimplexSampleDomain_4D_fallback extends SeededSampleDomain<Vec4, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec4, context: SeededSamplingContext<Vec4>): number {
                 return OpenSimplex2S.noise4_Fallback(BigInt(context[SeedKey]), location.x, location.y, location.z, location.w)
             }
         })(),
         improveXYZ: new (class OpenSimplexSampleDomain_4D_improveXYZ extends SeededSampleDomain<Vec4, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec4, context: SeededSamplingContext<Vec4>): number {
                 return OpenSimplex2S.noise4_ImproveXYZ(BigInt(context[SeedKey]), location.x, location.y, location.z, location.w)
             }
         })(),
         improveXYZ_improveXY: new (class OpenSimplexSampleDomain_4D_improveXYZ_improveXY extends SeededSampleDomain<Vec4, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec4, context: SeededSamplingContext<Vec4>): number {
                 return OpenSimplex2S.noise4_ImproveXYZ_ImproveXY(BigInt(context[SeedKey]), location.x, location.y, location.z, location.w)
             }
         })(),
         improveXYZ_improveXZ: new (class OpenSimplexSampleDomain_4D_improveXYZ_improveXZ extends SeededSampleDomain<Vec4, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec4, context: SeededSamplingContext<Vec4>): number {
                 return OpenSimplex2S.noise4_ImproveXYZ_ImproveXZ(BigInt(context[SeedKey]), location.x, location.y, location.z, location.w)
             }
         })(),
         improveXY_improveZW: new (class OpenSimplexSampleDomain_4D_improveXY_improveZW extends SeededSampleDomain<Vec4, number> {
             readonly field = ScalarField.instance
-        
+
             sample(location: Vec4, context: SeededSamplingContext<Vec4>): number {
                 return OpenSimplex2S.noise4_ImproveXY_ImproveZW(BigInt(context[SeedKey]), location.x, location.y, location.z, location.w)
             }
@@ -135,7 +135,7 @@ class LatticeVertex4D {
     public readonly ysvp: bigint
     public readonly zsvp: bigint
     public readonly wsvp: bigint;
-    
+
     constructor(xsv: number, ysv: number, zsv: number, wsv: number) {
         this.xsvp = BigInt(xsv) * PRIME_X; this.ysvp = BigInt(ysv) * PRIME_Y;
         this.zsvp = BigInt(zsv) * PRIME_Z; this.wsvp = BigInt(wsv) * PRIME_W;
@@ -582,18 +582,18 @@ export class OpenSimplex2S {
 
         return this.noise4_UnskewedBase(seed, xs, ys, zs, ws);
     }
-    
+
     /**
      * 4D SuperSimplex noise, with XY and ZW forming orthogonal triangular-based planes.
      * Recommended for 3D terrain, where X and Y (or Z and W) are horizontal.
      * Recommended for noise(x, y, sin(time), cos(time)) trick.
      */
     public static noise4_ImproveXY_ImproveZW(seed: bigint, x: number, y: number, z: number, w: number): number {
-        
+
         const s2: number = (x + y) * -0.28522513987434876941 + (z + w) * 0.83897065470611435718;
         const t2: number = (z + w) * 0.21939749883706435719 + (x + y) * -0.48214856493302476942;
         const xs: number = x + s2, ys = y + s2, zs = z + t2, ws = w + t2;
-        
+
         return this.noise4_UnskewedBase(seed, xs, ys, zs, ws);
     }
 
@@ -694,7 +694,7 @@ export class OpenSimplex2S {
     private static readonly GRADIENTS_4D = new Float32Array(N_GRADS_4D * 4);
     private static readonly LOOKUP_4D_A = new Uint32Array(256);
     private static readonly LOOKUP_4D_B: LatticeVertex4D[] = [];
-    
+
     static {
         // this.GRADIENTS_2D = new Float32Array(N_GRADS_2D * 2);
         const grad2 = [

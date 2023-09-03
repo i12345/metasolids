@@ -39,9 +39,9 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
             OctTreeSpaceLayersGrouped
         > {
     readonly halfExtent: number
-    
+
     readonly positions = new TypedArrayOctTree<OctTreeSpaceValue, OctTreeSpaceLayer>(Float64Array)
-    
+
     private _voxelVolumes: Float64Array
 
     get voxelVolumes() {
@@ -71,7 +71,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
             const parent_layer = new_layer - 1
             const references_parents_newLayer = this.subdivisions.references.parents.layers[parent_layer]
             const references_local_newLayer = this.subdivisions.references.local.layers[parent_layer]
-            
+
             // the distance from one child to its adjacent neighbors
             const position_delta = 2 ** -new_layer
 
@@ -86,7 +86,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
                 }
             }
         }
-        
+
         return {
             positions
         }
@@ -114,7 +114,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
          */
 
         p = p.clone()
-        
+
         p.divScalar(this.halfExtent)
         // p \in (-1, +1)
 
@@ -164,7 +164,7 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
                 }
 
                 subdivision_layer = address_layer
-                
+
                 if (limitToRealSubdivisions && isLastLayerReached)
                     break
             }
@@ -186,16 +186,16 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
 
     positionOfVoxel(layer: number, local_index: number, result: Vec3 = new Vec3()): Vec3 {
         result.x = result.y = result.z = 0
-        
+
         const references_parents = this.subdivisions.references.parents.layers
 
         while(layer > 0) {
             const i_subcell = octTreeSubcell(local_index)
-            
+
             result.x /= 2
             result.y /= 2
             result.z /= 2
-            
+
             if ((i_subcell & 0x1) === 0) result.x += 1
             else result.x -= 1
 
@@ -210,11 +210,11 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
         }
         if (local_index !== 0)
             throw new Error()
-        
+
         result.x *= (this.halfExtent / 2)
         result.y *= (this.halfExtent / 2)
         result.z *= (this.halfExtent / 2)
-        
+
         return result
     }
 
@@ -225,11 +225,12 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
                 },
                 "indexOfPosition",
                 (p: Vec3) => LayerLocalIndex,
-                [typeof Vec3],
+                [Vec3],
+                LayerLocalIndex,
                 [FieldPointVectorContainerStatic<NumberTypedArray>],
                 FieldPointVectorContainerStatic<IndicesTypedArray>
             >("indexOfPosition", [Vec3], { layer: Number, local_index: Number }),
-        
+
         positionOfVoxel: {
             layers_same: new FieldPointVectorFunction<
                 {
@@ -237,18 +238,20 @@ export class OctTreeSpace<IndicesT extends IndicesTypedArray = IndicesTypedArray
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
-                [undefined, typeof Number],
+                [undefined, number],
+                Vec3,
                 [undefined, FieldPointVectorContainerStatic<IndicesTypedArray>],
                 FieldPointVectorContainerStatic<Float64Array>
             >("positionOfVoxel", [undefined, Number], Vec3),
-            
+
             layers_individual: new FieldPointVectorFunction<
                 {
                     positionOfVoxel(layer: number, local_index: number): Vec3
                 },
                 "positionOfVoxel",
                 (layer: number, local_index: number) => Vec3,
-                [typeof Number, typeof Number],
+                [number, number],
+                Vec3,
                 [FieldPointVectorContainerStatic<IndicesTypedArray>, FieldPointVectorContainerStatic<IndicesTypedArray>],
                 FieldPointVectorContainerStatic<Float64Array>
             >("positionOfVoxel", [Number, Number], Vec3)

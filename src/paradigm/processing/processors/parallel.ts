@@ -5,10 +5,10 @@ export interface ParallelizedProcessor<
         Item,
         Context,
         ParallelizedItem extends
-            WithEncapsulating<Item> = 
+            WithEncapsulating<Item> =
             WithEncapsulating<Item>,
         ParallelizedContext extends
-            WithEncapsulating<Context> = 
+            WithEncapsulating<Context> =
             WithEncapsulating<Context>,
     > extends
         Processor<
@@ -20,10 +20,10 @@ export interface Parallelizer<
         Item,
         Context,
         ParallelizedItem extends
-            WithEncapsulating<Item> = 
+            WithEncapsulating<Item> =
             WithEncapsulating<Item>,
         ParallelizedContext extends
-            WithEncapsulating<Context> = 
+            WithEncapsulating<Context> =
             WithEncapsulating<Context>,
         ParallelizedItemProcessor extends
             ParallelizedProcessor<Item, Context, ParallelizedItem, ParallelizedContext> =
@@ -33,7 +33,7 @@ export interface Parallelizer<
             context: Context,
             parallelizedItemProcessor: ParallelizedItemProcessor
         ): ProcessorInitialization
-    
+
     process(
             item: Item,
             context: Context,
@@ -45,10 +45,10 @@ export class ParallelizingProcessor<
         Item,
         Context,
         ParallelizedItem extends
-            WithEncapsulating<Item> = 
+            WithEncapsulating<Item> =
             WithEncapsulating<Item>,
         ParallelizedContext extends
-            WithEncapsulating<Context> = 
+            WithEncapsulating<Context> =
             WithEncapsulating<Context>,
         ParallelizedItemProcessor extends
             Processor<
@@ -68,7 +68,7 @@ export class ParallelizingProcessor<
             public parallelizer: ParallelizerT,
             public itemProcessor: ParallelizedItemProcessor
         ) { }
-    
+
     init(context: Context) {
         return this.parallelizer.init(context, this.itemProcessor)
     }

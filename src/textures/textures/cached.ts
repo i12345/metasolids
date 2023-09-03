@@ -3,19 +3,37 @@ import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from 
 export class CachedTexture<
         Location extends TextureLocation = TextureLocation,
         Sample extends TextureSample = TextureSample,
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
+        SampleElementType extends TextureSample = Sample,
+        SampleFuseMode extends TextureSample = Sample,
         Context extends
-            TextureSamplingContext<Location> =
-            TextureSamplingContext<Location>
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>
     > implements
-    Texture<Location, Sample, Context> {
+    Texture<
+        Location, Sample,
+        LocationElementType,
+        LocationFuseMode,
+        SampleElementType,
+        SampleFuseMode,
+        Context
+    > {
     private cache: Sample[] = new Array(0)
-    
+
     get field() {
         return this.inner.field
     }
 
     constructor(
-        public readonly inner: Texture<Location, Sample, Context>,
+        public readonly inner: Texture<
+                Location, Sample,
+                LocationElementType,
+                LocationFuseMode,
+                SampleElementType,
+                SampleFuseMode,
+                Context
+            >,
         public readonly resolution: number
     ) { }
 
@@ -32,8 +50,8 @@ export class CachedTexture<
         ]
         const cache_index = coords[0] + (coords[1] * this.resolution)
         const cached = this.cache[cache_index]
-        
-        if (cached) return cached
+
+        if (cached !== undefined) return cached
         else return this.cache[cache_index] = this.inner.sample(location, context)
     }
 }

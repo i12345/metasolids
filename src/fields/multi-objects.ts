@@ -1,4 +1,4 @@
-import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsIDs } from "../paradigm/trees/index.js";
+import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsIDs, MultiObjectsCombined, MultiObjectsGroup } from "../paradigm/trees/index.js";
 import { Processor } from "../paradigm/processing/processor.js";
 import { IndicesTypedArray, onlyOne } from "../utils/index.js";
 import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
@@ -15,6 +15,16 @@ export type MultiObjectsFieldPoint<
 export type MultiObjectsInfluences
     <Objects extends MultiObjectsTemplate = MultiObjectsTemplate> =
     MultiObjectsMappedAndCombined<Objects, number>
+
+export type MultiObjectsInfluencesElementType
+    <Objects extends MultiObjectsTemplate = MultiObjectsTemplate> =
+    MultiObjectsGroup<number> &
+    MultiObjectsCombined<number>
+    // MultiObjectsMappedAndCombined<Objects, number>
+
+export type MultiObjectsInfluencesFuseMode
+    <Objects extends MultiObjectsTemplate = MultiObjectsTemplate> =
+    number
 
 export type MultiObjectsInfluencesGrouped<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -83,7 +93,7 @@ export type MultiObjectsInfluencesProcessingContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluenceGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsGrouped extends
-            MultiObjectsGrouped<Objects, InfluenceGroups> = 
+            MultiObjectsGrouped<Objects, InfluenceGroups> =
             MultiObjectsGrouped<Objects, InfluenceGroups>
     > =
     MultiObjectsWithGroupFieldsProcessingContext<
@@ -109,7 +119,7 @@ export class MultiObjectsInfluencesNormalizingProcessor<
         readonly inputs: PropertyPath[]
         readonly outputs: PropertyPath[]
     }
-    
+
     constructor(
         public readonly influenceGroups?: InfluenceGroups
     ) {
@@ -140,14 +150,14 @@ export class MultiObjectsInfluencesNormalizingProcessor<
                 const objects_template = group.get<Objects>(context[MultiObjectsProcessingContextObjectsGrouped])
 
                 let sum = 0
-            
+
                 iterObjects(
                     influences,
                     objects_template,
                     (influences, key) =>
                         sum += influences[key]
                 )
-            
+
                 if (sum > 0) {
                     iterObjects(
                         influences,
@@ -283,7 +293,7 @@ export class MultiObjectsCombiningProcessor<
     get connections() {
         return this._connections
     }
-    
+
     constructor(
         public combiner: Combiner<Value, Objects>,
         /**
@@ -305,7 +315,7 @@ export class MultiObjectsCombiningProcessor<
     init(context: Context) {
         const influenceGroup = onlyOne(groupKinds(context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroup)).group
         const valueGroups = [...groupKinds(context, this.valueGroupKinds, this.valueGroups)]
-        
+
         //TODO: currently, any processor depending on the combined value would
         // be satisfied by this processor's input requirements, thus it may not
         // receive the real combined value.

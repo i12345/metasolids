@@ -16,7 +16,7 @@ export class MaterialSemanticImplementation_Constant<
         time: 0,
         space: Cost_Space
     }
-    
+
     constructor(
         public readonly semantic: keyof StandardMaterial | keyof BasicMaterial,
         public readonly meanValue: TexelTypeT,
@@ -44,7 +44,7 @@ export class MaterialSemanticImplementation_Constant<
             this.stage === that.stage &&
             this.semantic === that.semantic
     }
-    
+
     implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
         const buffer = new Float32Array(this.channels)
 
@@ -72,7 +72,7 @@ export class MaterialSemanticImplementation_Constant<
             buffer[3] = this.meanValue.a
         }
         else throw new Error("unsupported type")
-        
+
         return [{
             storageClass: MaterialSemanticImplementationStorageClass_Constant.$class,
             implementation: this,

@@ -14,13 +14,17 @@ export class MultiObjectsInterpolationType<
         public readonly inner: FieldInterpolationType<Point>,
         public readonly multiObjectIDs: MultiObjectsIDs<Objects, ObjIDsT>
     ) { }
-    
-    [makeInterpolator]<Location extends FieldPoint>(
+
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
             keypoints: InterpolationKeypoint<Location, MultiObjectsMapped<Objects, Point>>[],
-            locationField: Field<Location>
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): FieldInterpolator<Location, MultiObjectsMapped<Objects, Point>> | undefined {
         const objInterpolators: { objPath: PropertyPath, objInterpolator: FieldInterpolator<Location, Point> }[] = []
-        
+
         for (const objPath of objectValuePaths(this.multiObjectIDs.template)) {
             const get = makeExtractor(objPath)
             const has = makeHas(objPath)
@@ -29,7 +33,7 @@ export class MultiObjectsInterpolationType<
             const objKeypoints = keypoints.map(({ location, value }) => ({ location, value: get(value, false) }))
             const objInterpolator = this.inner[makeInterpolator](objKeypoints, locationField)
             if (objInterpolator === undefined) continue
-            
+
             objInterpolators.push({ objPath, objInterpolator })
         }
 

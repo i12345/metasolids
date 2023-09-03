@@ -41,9 +41,9 @@ export class OctTreeReferences<IndicesT extends IndicesTypedArray = IndicesTyped
         > {
     readonly layers = new TypedArrayOctTree<number, Uint8Array>(Uint8Array, [], 255)
     readonly localIndices = new TypedArrayOctTree<number, IndicesT>(this.typedArray, [], new this.typedArray([-1])[0])
-    
+
     constructor(public readonly typedArray: TypedArrayConstructor<number, IndicesT>) { }
-    
+
     subdivide(newVoxels: number) {
         return {
             layers: this.layers.subdivide(newVoxels),

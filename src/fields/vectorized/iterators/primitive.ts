@@ -6,11 +6,11 @@ import { FieldPointType, field_point_type_size } from "../../type.js"
 import { FuseMode, FusingFieldPointVectorWithMultiObjects, PrimitiveFuseMode } from "../fusing.js";
 import { FieldPointVectorIterator } from "../iterator.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType, FieldPointVectorWithMultiObjRoot, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../point.js";
-import { NumberTypedArray, TypedArray, isTypedArray, typedArrayClone, typedArrayConstructor, typedArrayInvalid } from "../../../utils/typed-array.js";
+import { NumberTypedArray, isNumberTypedArray, typedArrayClone, TypedArrayConstructor, typedArrayInvalid, typedArrayConstructor } from "../../../utils/typed-array.js";
 
 export abstract class PrimitiveFieldPointVectorIterator<
         Point extends FieldPointPrimitive = FieldPointPrimitive,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         VectorizedRoot = any
     > implements
     FieldPointVectorIterator<Point, Container, VectorizedRoot, Point> {
@@ -31,7 +31,7 @@ export abstract class PrimitiveFieldPointVectorIterator<
     abstract get_returnParam(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot, result: Point, index: number): void
 
     abstract set(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot, value: Point, index: number): void
-    
+
     abstract makeContainer(
         length: number,
         value?: Point
@@ -68,7 +68,7 @@ export abstract class PrimitiveFieldPointVectorIterator<
 
 export abstract class PrimitiveFieldPointVectorIteratorStatic<
         Point extends FieldPointPrimitive = FieldPointPrimitive,
-        Container extends FieldPointVectorContainerStatic<TypedArray> = FieldPointVectorContainerStatic,
+        Container extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         VectorizedRoot = any
     >
     extends PrimitiveFieldPointVectorIterator<Point, Container, VectorizedRoot> {
@@ -79,7 +79,7 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
             let insertIndex = 0
 
             if (typeof value === 'number')
-                (<NumberTypedArray>container).fill(value)
+                container.fill(value)
             else if (value instanceof Vec2) {
                 for (let i = 0; i < length; i++) {
                     container[insertIndex++] = value.x
@@ -138,7 +138,7 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
     }
 
     copyDynamic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
-        const container = new TypedArrayList(typedArrayConstructor(<TypedArray><unknown>vectorized))
+        const container = new TypedArrayList(typedArrayConstructor<number, NumberTypedArray>(vectorized))
         container.appendBlock(this.copyStatic(vectorized, vectorizedRoot))
         return <FieldPointMapped<Point, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>container
     }
@@ -175,11 +175,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
             const src_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjIDsKey]
             const dst_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjIDsKey]
 
-            if (isTypedArray(src_objIDs_container)) {
+            if (isNumberTypedArray(src_objIDs_container)) {
                 const src_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>src_objIDs_container
                 const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
-                
-                if (isTypedArray(dst_objIDs_container)) {
+
+                if (isNumberTypedArray(dst_objIDs_container)) {
                     const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
                     const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
 
@@ -191,11 +191,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs[src_objOffset]
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs[dst_objOffset])
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -219,11 +219,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs[src_objOffset]
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs.get(dst_objOffset))
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -239,8 +239,8 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
             else {
                 const src_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>src_objIDs_container
                 const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
-                
-                if (isTypedArray(dst_objIDs_container)) {
+
+                if (isNumberTypedArray(dst_objIDs_container)) {
                     const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
                     const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
 
@@ -252,11 +252,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs.get(src_objOffset)
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs[dst_objOffset])
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -280,11 +280,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs.get(src_objOffset)
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs.get(dst_objOffset))
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -300,7 +300,7 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
         }
         else {
             dst_offset = 0
-            
+
             for (dst_item = 0; dst_item < indices.length; dst_item++) {
                 src_item = indices[dst_item]
                 if (src_item === indices_invalid) {
@@ -308,7 +308,6 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
                     continue
                 }
 
-                // dst_offset = elementSize * dst_item
                 src_offset = elementSize * src_item
 
                 for (element = elementSize; element > 0; element--)
@@ -320,7 +319,7 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
 export abstract class PrimitiveFieldPointVectorIteratorDynamic<
         Point extends FieldPointPrimitive = FieldPointPrimitive,
-        Container extends FieldPointVectorContainerDynamic<TypedArray> = FieldPointVectorContainerDynamic,
+        Container extends FieldPointVectorContainerDynamic<NumberTypedArray> = FieldPointVectorContainerDynamic,
         VectorizedRoot = any
     >
     extends PrimitiveFieldPointVectorIterator<Point, Container, VectorizedRoot> {
@@ -427,11 +426,11 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
             const src_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjIDsKey]
             const dst_objIDs_container = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjIDsKey]
 
-            if (isTypedArray(src_objIDs_container)) {
+            if (isNumberTypedArray(src_objIDs_container)) {
                 const src_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>src_objIDs_container
                 const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
-                
-                if (isTypedArray(dst_objIDs_container)) {
+
+                if (isNumberTypedArray(dst_objIDs_container)) {
                     const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
                     const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
 
@@ -443,11 +442,11 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs[src_objOffset]
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs[dst_objOffset])
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -471,11 +470,11 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs[src_objOffset]
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs.get(dst_objOffset))
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -491,8 +490,8 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
             else {
                 const src_objIDs = <FieldPointVectorContainerDynamic<ObjIDsT>>src_objIDs_container
                 const src_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>src_vectorizedRoot)[ItemObjValuesOffsetsKey]
-                
-                if (isTypedArray(dst_objIDs_container)) {
+
+                if (isNumberTypedArray(dst_objIDs_container)) {
                     const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
                     const dst_objOffsets = (<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, FieldPointVectorContainer<ObjIDsT>>>dst_vectorizedRoot)[ItemObjValuesOffsetsKey]
 
@@ -504,11 +503,11 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs.get(src_objOffset)
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs[dst_objOffset])
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -532,11 +531,11 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
 
                         for (src_objOffset = src_objOffset_prev; src_objOffset < src_objOffset_next; src_objOffset++) {
                             objID = src_objIDs.get(src_objOffset)
-                            
+
                             for (dst_objOffset = dst_objOffset_prev; dst_objOffset < dst_objOffset_next; dst_objOffset++)
                                 if (objID === dst_objIDs.get(dst_objOffset))
                                     break
-                            
+
                             if (dst_objOffset === dst_objOffset_next)
                                 throw new Error("objID in src not in dst")
 
@@ -552,7 +551,7 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
         }
         else {
             dst_offset = 0
-            
+
             for (dst_item = 0; dst_item < indices.length; dst_item++) {
                 src_item = indices[dst_item]
                 if (src_item === indices_invalid) {
@@ -560,7 +559,6 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
                     continue
                 }
 
-                // dst_offset = elementSize * dst_item
                 src_offset = elementSize * src_item
 
                 for (element = elementSize; element > 0; element--)

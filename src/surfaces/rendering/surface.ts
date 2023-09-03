@@ -34,26 +34,26 @@ export interface SurfaceWithRendering_TexturesTemplated<
 export type SurfaceWithRendering<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample,
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > =
-    Surface<IndicesT, SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleElementType> &
     UVunwrapping.SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup> &
     SurfaceWithRendering_TexturesTemplated<VolumeLocationT> & {
     renderer: SurfaceRendererShared<VolumeLocationT>
 }
 
 export type SurfaceInstanceWithRendering<
-        IndicesT extends IndicesTypedArray = IndicesTypedArray,    
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample,
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     > =
     SurfaceInstance<
         SurfaceWithRendering<
             IndicesT,
             VolumeLocationT,
-            SurfaceSampleT,
+            SurfaceSampleElementType,
             SurfaceUVUnwrappingGroup
         >
     > & {
@@ -72,14 +72,14 @@ export interface SurfaceProcessingContextWithRendering<
     > {
     material: {
         surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup
-        textures?: Material_Groups_TextureContexts<VolumeLocationT>
+        textures: Material_Groups_TextureContexts<VolumeLocationT>
     }
 }
 
 export class SurfaceWithRenderingInstancer<
-        IndicesT extends IndicesTypedArray = IndicesTypedArray,    
+        IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample,
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     >
     implements
@@ -87,13 +87,13 @@ export class SurfaceWithRenderingInstancer<
         SurfaceWithRendering<
                 IndicesT,
                 VolumeLocationT,
-                SurfaceSampleT,
+                SurfaceSampleElementType,
                 SurfaceUVUnwrappingGroup
             >,
         SurfaceInstanceWithRendering<
                 IndicesT,
                 VolumeLocationT,
-                SurfaceSampleT,
+                SurfaceSampleElementType,
                 SurfaceUVUnwrappingGroup
             >
     > {
@@ -101,14 +101,14 @@ export class SurfaceWithRenderingInstancer<
         shared: SurfaceWithRendering<
                 IndicesT,
                 VolumeLocationT,
-                SurfaceSampleT,
+                SurfaceSampleElementType,
                 SurfaceUVUnwrappingGroup
             >,
         entity: Entity
     ): SurfaceInstanceWithRendering<
                 IndicesT,
                 VolumeLocationT,
-                SurfaceSampleT,
+                SurfaceSampleElementType,
                 SurfaceUVUnwrappingGroup
             > {
         return {
@@ -122,7 +122,7 @@ export class SurfaceWithRenderingInstancer<
         instance: SurfaceInstanceWithRendering<
                 IndicesT,
                 VolumeLocationT,
-                SurfaceSampleT,
+                SurfaceSampleElementType,
                 SurfaceUVUnwrappingGroup
             >,
         enabled: boolean

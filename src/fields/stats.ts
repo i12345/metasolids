@@ -22,7 +22,7 @@ export function field_point_variance<Point extends FieldPoint = FieldPoint>(poin
 
         for (let i = 0; i < points.length; i++)
             diffSquares += ((points[i] as number) - mean) ** 2
-        
+
         return (diffSquares / (points.length - 1))
     }
     else if (points[0] instanceof Vec2)
@@ -51,13 +51,13 @@ export function field_point_variance<Point extends FieldPoint = FieldPoint>(poin
             let sum = 0
             for (let j = 0; j < points.length; j++)
                 sum += (points as Array<number>[])[j][i]
-            
+
             const mean = sum / points.length
             let squaredDiff_sum = 0
 
             for (let j = 0; j < points.length; j++)
                 squaredDiff_sum += ((points as Array<number>[])[j][i] - mean) ** 2
-            
+
             variance_sum += squaredDiff_sum / (points.length - 1)
         }
         return variance_sum / points[0].length
@@ -73,6 +73,6 @@ export function fields_point_variance<Point extends FieldsPoint = FieldsPoint>(p
         const variance = field_point_variance(extracted)
         squares += variance
     }
-    
+
     return squares
 }

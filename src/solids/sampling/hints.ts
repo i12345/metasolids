@@ -2,30 +2,37 @@ import { Vec3 } from "playcanvas-extended";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SpaceKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroupsTemplate } from "../../volumes/sampling/index.js";
-import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
+import { VolumeLocation, VolumeSample, VolumeSamplingContext, defaultVolumeSampleField } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { OctTreeSpace } from "../../paradigm/octtree/space.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { VolumeProcessingWithSurfacesContext } from "../../surfaces/volume-surfaces.js";
 import { groupPaths } from "../../paradigm/trees/multi-objects-groups.js";
+import { FieldsField } from "../../fields/fields/fields.js";
+import { FieldsPointMapped } from "../../fields/point.js";
+import { Field } from "../../fields/field.js";
 
 export interface VolumeSamplingContextWithSolidHints<
         LocationT extends VolumeLocation = VolumeLocation,
+        LocationElementType extends VolumeLocation = LocationT,
+        LocationFuseMode extends VolumeLocation = LocationT,
         SampleProcessingContextT = any
     >
     extends VolumeSamplingContext<
         LocationT,
+        LocationElementType,
+        LocationFuseMode,
         SampleProcessingContextT
     > {
     [VolumeSolidsKey]: {
         /**
          * packed xyz arrays of hint points, for each object that gives solid hints
-         * 
+         *
          * The solid hint volume sampling subdivision processor will recommend
          * subdivision so that all solid hint points are inside of cells with
          * alpha of 1.
-         * 
+         *
          * TODO: how will subtraction be handled? should this be for influence groups
          * instead of [just] alpha?
          */
@@ -36,14 +43,46 @@ export interface VolumeSamplingContextWithSolidHints<
 export class SolidHintVolumeSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContextWithSolidHints<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContextWithSolidHints<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContextWithSolidHints<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                > =
+            VolumeSamplingContextWithSolidHints<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                >,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         VolumeProcessingT extends
             VolumeProcessingWithSampling<
                     IndicesT,
@@ -52,7 +91,11 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -64,7 +107,11 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -81,7 +128,11 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -97,7 +148,11 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -110,23 +165,46 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             {},
             {},
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
             VolumeProcessingT,
             VolumeProcessingContextT
     > {
-    init(context: VolumeSamplingSubdivisionProcessingContext<IndicesT, {}, {}, {}, {}, VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT, VolumeProcessingContextT>): ProcessorInitialization {
+    init(context: VolumeSamplingSubdivisionProcessingContext<
+                IndicesT,
+                {},
+                {},
+                {},
+                {},
+                VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
+                VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
+                VolumeSampleProcessingContextT,
+                VolumeSamplingContextT,
+                VolumeProcessingContextT
+            >): ProcessorInitialization {
         context[VolumeSamplingContextKey][VolumeSolidsKey] = {
-            // surfaceLevel: context[EncapsulatingKey][VolumeSurfacesKey].surfaceLevel,
             hints: []
         }
-        
+
         return {
             connections: {
-                //TODO: specialize for just presence
-                inputs: [...groupPaths(VolumeSamplingSubdivisionSamplesGroupsTemplate<VolumeSampleT>())],
+                inputs: [...groupPaths(
+                    VolumeSamplingSubdivisionSamplesGroupsTemplate(
+                        new FieldsField<VolumeSampleT, VolumeSampleElementType, VolumeSampleFuseMode>({
+                            alpha: defaultVolumeSampleField.fields.alpha
+                        } as FieldsPointMapped<VolumeSampleT, Field>)
+                    )
+                )],
                 outputs: []
             }
         }
@@ -140,7 +218,11 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -153,7 +235,11 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeProcessingContextT
@@ -172,7 +258,7 @@ export class SolidHintVolumeSamplingSubdivisionProcessor<
             for (let i = 0; i < layers.length; i++) {
                 if (layers[i] === layer) {
                     const localIndex = local_indices[i]
-                    
+
                     const is_interior = item.samples.alpha[localIndex] === 1
 
                     if (!is_interior)

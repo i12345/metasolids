@@ -24,9 +24,9 @@ export const SurfaceUVUnwrappingGroupsDefaultTemplate: SurfaceUVUnwrappingGroups
 export type SurfaceWithUVUnwrapping<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample
     > =
-    Surface<IndicesT, SurfaceSampleT> &
+    Surface<IndicesT, SurfaceSampleElementType> &
     MultiObjectsGroupsMapped<SurfaceUVUnwrappingGroup, SurfaceUVUnwrapping>
 
 export type SurfaceProcessingContextWithUVUnwrapping<

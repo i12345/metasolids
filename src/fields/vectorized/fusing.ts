@@ -1,8 +1,8 @@
-import { MultiObjectsGroupedObjectsKey, PropertyPath, extract, hasPath, intract } from "../../paradigm/trees/index.js"
-import { MultiObjectsCombinedValue, MultiObjectsIDs, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf } from "../../paradigm/trees/multi-objects.js"
+import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey, PropertyPath, extract, hasPath, intract } from "../../paradigm/trees/index.js"
+import { MultiObjectsCombinedValue, MultiObjectsIDs, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsTemplateOrLeaf, MultiObjectsTemplate_Leaf } from "../../paradigm/trees/multi-objects.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { Reflect_entries } from "../../utils/reflect-entries.js"
-import { TypedArray } from "../../utils/typed-array.js"
+import { NumberTypedArray } from "../../utils/typed-array.js"
 import { FieldPoint, FieldPointMapped, FieldPointPrimitive, FieldsPoint } from "../point.js"
 import { FieldPointType } from "../type.js"
 import { vectorIterator } from "./iterators/factory.js"
@@ -13,7 +13,7 @@ export const ItemNextObjectIndexKey = Symbol("nextObjectIndex")
 export type FusingFieldPointVectorWithMultiObjects<
         Point extends FieldPoint = FieldPoint,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
-        Container extends FieldPointVectorContainerStatic<TypedArray> = FieldPointVectorContainerStatic,
+        Container extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>
     > = FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer> & {
     /**
@@ -62,11 +62,12 @@ export type FieldPointWithMultiObjectPath<Point extends FieldPoint = FieldPoint>
 
 export interface PrimitiveFuseMode<Point extends FieldPointPrimitive = FieldPointPrimitive> {
     fuseSingle<
-            Objects extends MultiObjectsTemplate = MultiObjectsTemplate
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array
         >(
             type: FieldPointType<Point>,
             points: FieldPointWithMultiObjectPath<Point>[],
-            multiObjectIDs?: MultiObjectsIDs<Objects>,
+            multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
             isMultiObjMappedResult?: boolean
         ): {
             reducedValue: Point
@@ -75,9 +76,9 @@ export interface PrimitiveFuseMode<Point extends FieldPointPrimitive = FieldPoin
             reducedValue?: Point
             objectValues: FieldPointWithMultiObjectPath<Point>[]
         }
-    
+
     fuseVector<
-            Container extends FieldPointVectorContainer<TypedArray>,
+            Container extends FieldPointVectorContainer<NumberTypedArray>,
             ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>
         >(
@@ -99,14 +100,19 @@ export interface PrimitiveFuseMode<Point extends FieldPointPrimitive = FieldPoin
 
 export function fusePoints<
             Point extends FieldPoint,
-            Objects extends MultiObjectsTemplate = MultiObjectsTemplate
+            Result extends FieldPoint = Point,
+            PointElementType extends FieldPoint = Point,
+            ResultElementType extends FieldPoint = Point,
+            ResultFuseMode extends FieldPoint = Point,
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array
         >(
-        type: FieldPointType<Point>,
-        fuseMode: FuseMode<Point>,
-        // points: Point[],
+        resultType: FieldPointType<ResultElementType>,
+        pointsType: FieldPointType<PointElementType>,
+        fuseMode: FuseMode<ResultFuseMode>,
         points: FieldPointWithMultiObjectPath<Point>[],
-        multiObjectIDs?: MultiObjectsIDs<Objects>
-    ): FieldPoint {
+        multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
+    ): Result {
     /**
         const point1 = {
             alpha: 0.5,
@@ -195,98 +201,104 @@ export function fusePoints<
         }
      */
 
-    function recursive<Point extends FieldPoint = FieldPoint>(
-            type: FieldPointType<Point>,
-            fuseMode: FuseMode<Point>,
+    function recursive<
+                Point extends FieldPoint,
+                Result extends FieldPoint = Point,
+                PointElementType extends FieldPoint = Point,
+                ResultElementType extends FieldPoint = Result,
+                ResultFuseMode extends FieldPoint = Result,
+            >(
+            resultType: FieldPointType<ResultElementType>,
+            pointsType: FieldPointType<PointElementType>,
+            fuseMode: FuseMode<ResultFuseMode>,
             points: FieldPointWithMultiObjectPath<Point>[],
             isMultiObjMappedResult?: boolean
         ): {
-            reducedValue: Point
-            objectValues?: FieldPointWithMultiObjectPath<Point>[]
+            reducedValue: Result
+            objectValues?: FieldPointWithMultiObjectPath<Result>[]
         } | {
-            reducedValue?: Point
-            objectValues: FieldPointWithMultiObjectPath<Point>[]
+            reducedValue?: Result
+            objectValues: FieldPointWithMultiObjectPath<Result>[]
         } {
-        if (type instanceof Function)
-            return (<PrimitiveFuseMode<FieldPointPrimitive & Point>>fuseMode).fuseSingle(type, <FieldPointWithMultiObjectPath<FieldPointPrimitive & Point>[]>points, multiObjectIDs, isMultiObjMappedResult)
-        else if (MultiObjectsGroupedObjectsKey in type) {
-            if (!multiObjectIDs || points.some(point => point.multiObjPath))
+        if (MultiObjectsGroupedObjectsKey in pointsType) {
+            if (points.some(({ multiObjPath }) => multiObjPath))
                 throw new Error()
 
-            function objRecurse(
-                path: PropertyPath,
-                path_slice_start: number,
-                descendantPoints: FieldPointWithMultiObjectPath<Point>[],
-                point_value: FieldPoint,
-                objsTemplate: MultiObjectsTemplate | typeof MultiObjectsTemplate_Leaf,
-                depth: number
-            ) {
-                if (objsTemplate === MultiObjectsTemplate_Leaf) {
-                    descendantPoints.push({
-                        value: extract<Point>(point_value, path.slice(path_slice_start, path_slice_start + depth)),
-                        multiObjPath: path.slice(0, path_slice_start + depth)
+            if (!multiObjectIDs)
+                throw new Error()
+
+            const obj_points: FieldPointWithMultiObjectPath<Result>[] = []
+            const obj_path: PropertyPath = []
+
+            function traverse_multiObjPoints(value: FieldPoint, objTemplate: MultiObjectsTemplateOrLeaf, depth: number) {
+                if (objTemplate === MultiObjectsTemplate_Leaf)
+                    obj_points.push({
+                        value: <Result>value,
+                        multiObjPath: obj_path.slice(0, depth)
                     })
-                }
                 else {
-                    for (const key of Reflect.ownKeys(<FieldsPoint>point_value)) {
-                        console.assert(key in objsTemplate)
-                        path[path_slice_start + depth] = key
-                        objRecurse(
-                            path,
-                            path_slice_start,
-                            descendantPoints,
-                            (<FieldsPoint>point_value)[key],
-                            objsTemplate[key],
+                    for (const key of Reflect.ownKeys(objTemplate)) {
+                        obj_path[depth] = key
+                        traverse_multiObjPoints(
+                            (<FieldsPoint>value)[key],
+                            (<MultiObjectsTemplate>objTemplate)[key],
                             depth + 1
                         )
                     }
                 }
             }
-            
-            // each object should only appear in one descendant at most
-            const descendantPoints = points.flatMap(({ value, multiObjPath: point_multiObjPath }) => {
-                const path = point_multiObjPath ? [...point_multiObjPath] : []
-                const path_slice_start = point_multiObjPath ? point_multiObjPath.length : 0
-                const descendantPoints = <FieldPointWithMultiObjectPath<Point>[]>[]
 
-                objRecurse.bind(undefined, path, path_slice_start, descendantPoints)(value, multiObjectIDs.template, 0)
+            for (const point of points)
+                traverse_multiObjPoints(point.value, multiObjectIDs.template, 0)
 
-                return descendantPoints
-            })
-            
-            const fused = recursive<FieldPoint>(<FieldPointType>type[MultiObjectsGroupedObjectsKey], (<any>fuseMode)[MultiObjectsGroupedObjectsKey], descendantPoints, true)
-            
-            if (fused.objectValues === undefined)
-                return { reducedValue: <Point>fused.reducedValue }
-            
-            const combined = <any>{}
-            for (const obj of fused.objectValues!) {
-                if (hasPath(combined, obj.multiObjPath!))
-                    throw new Error("can only use object once in given field points")
-                intract(combined, obj.multiObjPath!, obj.value)
-            }
+            return recursive(
+                resultType,
+                (<MultiObjectsGroup<FieldPointType>>pointsType)[MultiObjectsGroupedObjectsKey],
+                fuseMode,
+                obj_points,
+                isMultiObjMappedResult
+            )
+        }
+        else if (MultiObjectsGroupedObjectsKey in resultType) {
+            if (isMultiObjMappedResult)
+                throw new Error()
 
-            //TODO: this could be a mistake
-            if (fused.reducedValue !== undefined)
-                combined[MultiObjectsCombinedValue] = fused.reducedValue
+            if (!multiObjectIDs || !(points.every(point => point.multiObjPath)))
+                throw new Error()
 
-            return { reducedValue: <Point>combined }
+            return recursive(
+                (<MultiObjectsGroup<FieldPointType>>resultType)[MultiObjectsGroupedObjectsKey],
+                pointsType,
+                fuseMode,
+                points,
+                true
+            )
+        }
+        else if (pointsType instanceof Function) {
+            const fuseMode_primitive = <PrimitiveFuseMode<FieldPointPrimitive & Result & Point>>fuseMode
+            return fuseMode_primitive.fuseSingle(
+                <FieldPointType<FieldPointPrimitive & Result & Point>><unknown>pointsType,
+                <FieldPointWithMultiObjectPath<FieldPointPrimitive & Result & Point>[]>points,
+                multiObjectIDs,
+                isMultiObjMappedResult
+            )
         }
         else {
             const merged = <ReturnType<typeof recursive<FieldsPoint>>>{}
-            
+
             const objectsCombinedValues = <FieldPointMapped<FieldsPoint, FieldPointWithMultiObjectPath>>{}
 
-            for (const key of Reflect.ownKeys(type)) {
-                const sub_type = <FieldPointType>type[key]
-                const sub_fuseMode = <FuseMode<FieldPoint>>(<any>fuseMode)[key]
+            for (const key of Reflect.ownKeys(pointsType)) {
+                const sub_resultType = (<FieldPointType<FieldsPoint>>resultType)[key]
+                const sub_pointsType = <FieldPointType>pointsType[key]
+                const sub_fuseMode = (<FuseMode<FieldsPoint>>fuseMode)[key]
                 const sub_points = points.map<FieldPointWithMultiObjectPath>(point => ({
                     value: (<FieldsPoint>point.value)[key],
                     multiObjPath: point.multiObjPath
                 }))
 
-                const sub_merged = recursive(sub_type, sub_fuseMode, sub_points, isMultiObjMappedResult)
-                
+                const sub_merged = recursive<FieldPoint>(sub_resultType, sub_pointsType, sub_fuseMode, sub_points, isMultiObjMappedResult)
+
                 if (sub_merged.objectValues) {
                     for (const { value, multiObjPath } of sub_merged.objectValues) {
                         const combination =
@@ -321,11 +333,11 @@ export function fusePoints<
                     else {
                         for (const key of Reflect.ownKeys(objs)) {
                             if (!(key in objs)) continue
-                            
+
                             objPath[depth] = key
                             const subobjs = objs[key]
                             const subcombined = combined[key]
-                            
+
                             objRecurse(subobjs, subcombined, depth + 1)
                         }
                     }
@@ -333,51 +345,55 @@ export function fusePoints<
 
                 objRecurse(multiObjectIDs!.template, objectsCombinedValues, 0)
             }
-            
-            return <ReturnType<typeof recursive<Point>>>merged
+
+            return <ReturnType<typeof recursive<Point, Result>>>merged
         }
     }
 
-    return recursive(type, fuseMode, points /* points.map(value => ({ value })) */).reducedValue!
+    return recursive<Point, Result, PointElementType, ResultElementType, ResultFuseMode>(resultType, pointsType, fuseMode, points).reducedValue!
 }
 
 export function fuseVectors<
         Point extends FieldPoint,
-        Container extends FieldPointVectorContainerStatic<TypedArray> = FieldPointVectorContainerStatic,
-        Vector extends FieldPointVector<Point, Container> = FieldPointVector<Point, Container>,
+        PointElementType extends FieldPoint = Point,
+        ResultElementType extends FieldPoint = Point,
+        ResultFuseMode extends FieldPoint = Point,
+        Container extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+        PointVector extends FieldPointVector<PointElementType, Container> = FieldPointVector<PointElementType, Container>,
+        ResultVector extends FieldPointVector<PointElementType, Container> = FieldPointVector<PointElementType, Container>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
     >(
-        resultType: FieldPointType<Point>,
-        pointsType: FieldPointType<Point>,
-        fuseMode: FuseMode<Point>,
-        vectors: Vector[],
+        resultType: FieldPointType<ResultElementType>,
+        pointsType: FieldPointType<PointElementType>,
+        fuseMode: FuseMode<ResultFuseMode>,
+        vectors: PointVector[],
         multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
-        resultsOrResultDefaultLength?: FusingFieldPointVectorWithMultiObjects<Point, ObjIDsT, Container, ObjIDsContainer> | number,
+        resultsOrResultDefaultLength?: FusingFieldPointVectorWithMultiObjects<ResultElementType, ObjIDsT, Container, ObjIDsContainer> | number,
         updateNextIndices: boolean = false
-    ): Vector {
+    ): ResultVector {
     if (vectors.length === 0)
         if (resultsOrResultDefaultLength === undefined)
             throw new Error()
-        
+
     const resultDynamic = false
-    
-    const pointIterator = vectorIterator<Point, Container, Objects, ObjIDsT>(pointsType /* resultType */, <any>resultDynamic, multiObjectIDs)
+
+    const pointIterator = vectorIterator<PointElementType, Container, Objects, ObjIDsT>(pointsType, <any>resultDynamic, multiObjectIDs)
     const length = (typeof resultsOrResultDefaultLength === 'number' ? resultsOrResultDefaultLength : undefined) ?? pointIterator.length(vectors[0], vectors[0])
 
-    const vectorizedWithRoots = vectors.map<FieldPointVectorWithMultiObjRoot<Point, Container, ObjIDsT, ObjIDsContainer>>(vector => ({
+    const vectorizedWithRoots = vectors.map<FieldPointVectorWithMultiObjRoot<PointElementType, Container, ObjIDsT, ObjIDsContainer>>(vector => ({
         vectorized: vector,
         vectorizedRoot: <FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>>vector
     }))
 
-    let results = <FusingFieldPointVectorWithMultiObjects<Point, ObjIDsT, Container, ObjIDsContainer>>resultsOrResultDefaultLength
+    let results = <FusingFieldPointVectorWithMultiObjects<ResultElementType, ObjIDsT, Container, ObjIDsContainer>>resultsOrResultDefaultLength
 
     if (typeof results === "number" || results === undefined) {
         if (length === undefined)
             throw new Error("must defined length")
 
-        results = <FusingFieldPointVectorWithMultiObjects<Point, ObjIDsT, Container, ObjIDsContainer>><unknown>field_point_vectorized_multi_objects_new(
+        results = <FusingFieldPointVectorWithMultiObjects<ResultElementType, ObjIDsT, Container, ObjIDsContainer>>field_point_vectorized_multi_objects_new<ResultElementType, Container, ObjIDsT, ObjIDsContainer>(
             resultType,
             length,
             <any>resultDynamic,
@@ -389,20 +405,18 @@ export function fuseVectors<
             results[ItemNextObjectIndexKey] = <ObjIDsT>new multiObjectIDs.IDsType(length).fill(0)
     }
 
-    const resultWithRoot: FieldPointVectorWithMultiObjRoot<Point, Container, ObjIDsT, ObjIDsContainer, FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>> = {
+    const resultWithRoot: FieldPointVectorWithMultiObjRoot<ResultElementType, Container, ObjIDsT, ObjIDsContainer, FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>> = {
         vectorized: results,
         vectorizedRoot: <any>results
     }
 
-    // iterator.fuse(<any>resultWithRoot, vectorizedWithRoots, fuseMode)
-
     function recursive(
             results: typeof resultWithRoot,
-            points: typeof vectorizedWithRoots,
+            points: FieldPointVectorWithMultiObjRoot<FieldPoint, Container, ObjIDsT, ObjIDsContainer>[],
             resultType: FieldPointType,
             pointType: FieldPointType,
             fuseMode: FuseMode,
-            isMultiObjMapped/* ? */: {
+            isMultiObjMapped: {
                 points: boolean
                 result: boolean
             }
@@ -413,11 +427,10 @@ export function fuseVectors<
 
             recursive(
                 results,
-                vectorizedWithRoots,
+                points,
                 resultType,
                 pointType[MultiObjectsGroupedObjectsKey],
                 fuseMode,
-                // <FuseMode>(<any>fuseMode)[MultiObjectsGroupedObjectsKey],
                 {
                     points: true,
                     result: isMultiObjMapped.result
@@ -430,7 +443,7 @@ export function fuseVectors<
 
             recursive(
                 results,
-                vectorizedWithRoots,
+                points,
                 resultType[MultiObjectsGroupedObjectsKey],
                 pointType,
                 fuseMode,
@@ -459,8 +472,8 @@ export function fuseVectors<
                 const submode = (<FuseMode<FieldsPoint>>fuseMode)[key]
                 if (submode) {
                     const subresults = <FieldPointVector<FieldPoint, Container>>(<FieldPointVector<FieldsPoint, Container>>results.vectorized)[key]
-                    const subpoints = points.map/* <FieldPointVectorWithMultiObjRoot<FieldPoint, Container>> */(({ vectorized, vectorizedRoot }) => ({
-                        vectorized: <FieldPointVector<Point, Container>>(<FieldPointVector<FieldsPoint, Container>>vectorized)[key],
+                    const subpoints = points.map(({ vectorized, vectorizedRoot }) => ({
+                        vectorized: <FieldPointVector<FieldPoint, Container>>(<FieldPointVector<FieldsPoint, Container>>vectorized)[key],
                         vectorizedRoot
                     }))
                     recursive(
@@ -494,7 +507,7 @@ export function fuseVectors<
     if (updateNextIndices) {
         if (!results[ItemNextObjectIndexKey])
             throw new Error()
-        
+
         for (const vector of vectors) {
             const vector_objOffsets = (<FieldPointVectorWithMultiObjects>vector)[ItemObjValuesOffsetsKey]
             const results_objIndicesNext = results[ItemNextObjectIndexKey]
@@ -510,5 +523,5 @@ export function fuseVectors<
         }
     }
 
-    return <Vector><any>results
+    return <ResultVector><any>results
 }

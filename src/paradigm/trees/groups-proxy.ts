@@ -28,22 +28,22 @@ class GroupOverwritingProxyHandler<
             MultiObjectsGroupsOverwritten<Groups, Original, Overwriting>
         >
     >()
-    
+
     constructor(
         public readonly groups: Groups,
         public readonly overwriting: Overwriting,
         public readonly enumerable = true
     ) { }
-    
+
     apply(target: Original, thisArg: any, argArray: any[]) {
         const f = target as any as Function
         f.apply(thisArg, argArray)
     }
-    
+
     construct(target: Original, argArray: any[], newTarget: Function): object {
         throw new Error("not implemented")
     }
-    
+
     defineProperty(target: Original, property: string | symbol, attributes: PropertyDescriptor): boolean {
         const subgroup = this.groups[property]
         if (subgroup) {
@@ -88,7 +88,7 @@ class GroupOverwritingProxyHandler<
         }
         return this.proxyCache.get(target)!.get(p)!
     }
-    
+
     get(target: Original, p: string | symbol, receiver: any) {
         const subgroup = this.groups[p]
         if (subgroup) {
@@ -97,7 +97,7 @@ class GroupOverwritingProxyHandler<
             else
                 return this.subproxy(target, p)
         }
-        
+
         return Reflect.get(target, p, receiver)
     }
 
@@ -126,7 +126,7 @@ class GroupOverwritingProxyHandler<
                 ).filter(([, , property_new]) => property_new !== undefined) as [key: string | symbol, property_value_old: any, property_new: [key: string | symbol, value: any]][]
 
                 const properties_changed = properties_shared.filter(([, property_value_old, [, property_value_new]]) => property_value_old !== property_value_new)
-                
+
                 return (
                     properties_defined.every(([key]) => Reflect.defineProperty(proxy, key, Reflect.getOwnPropertyDescriptor(value_new, key)!)) &&
                     properties_deleted.every(([key]) => Reflect.deleteProperty(proxy, key)) &&
@@ -134,7 +134,7 @@ class GroupOverwritingProxyHandler<
                 )
             }
         }
-        
+
         return Reflect.set(target, p, newValue, receiver)
     }
 
@@ -169,7 +169,7 @@ class GroupOverwritingProxyHandler<
                 }
             }
         }
-        
+
         return Reflect.getOwnPropertyDescriptor(target, p)
     }
 

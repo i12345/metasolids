@@ -6,11 +6,15 @@ import { FieldPointType } from "../type.js"
 import { deletePath, extract, pathsToValue } from "../../paradigm/trees/index.js";
 import { FuseMode } from "../vectorized/fusing.js";
 
-export class FieldsField<Point extends FieldsPoint = FieldsPoint>
-    implements Field<Point> {
-    readonly elementType: FieldPointType<Point>
-    readonly fuseMode: FuseMode<Point>
-    
+export class FieldsField<
+        Point extends FieldsPoint = FieldsPoint,
+        PointElementType extends FieldsPoint = Point,
+        PointFuseMode extends FieldsPoint = Point,
+    >
+    implements Field<Point, PointElementType, PointFuseMode> {
+    readonly elementType: FieldPointType<PointElementType>
+    readonly fuseMode: FuseMode<PointFuseMode>
+
     get interpolationType(): FieldInterpolationType<Point> {
         return new FieldsInterpolationType<Point>(
             fields_point_map<Point, Field, FieldInterpolationType>(
@@ -24,13 +28,13 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
     }
 
     constructor(public fields: FieldsPointMapped<Point, Field>) {
-        this.elementType = <FieldPointType<Point>>fields_point_map(
+        this.elementType = <FieldPointType<PointElementType>>fields_point_map(
             fields,
             field => (field.interpolationType && field.interpolationType[makeInterpolator]) !== undefined,
             field => field.elementType
         )
 
-        this.fuseMode = <FuseMode<Point>>fields_point_map(
+        this.fuseMode = <FuseMode<PointFuseMode>>fields_point_map(
             fields,
             field => (field.interpolationType && field.interpolationType[makeInterpolator]) !== undefined,
             field => field.fuseMode
@@ -59,7 +63,11 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
      *
      * @param fields the fields to merge. Earlier fields have higher priority
      */
-    static merge<Point extends FieldsPoint = FieldsPoint>(...fields: FieldsField<Point>[]): FieldsField<Point> {
+    static merge<
+            Point extends FieldsPoint = FieldsPoint,
+            PointElementType extends FieldsPoint = Point,
+            PointFuseMode extends FieldsPoint = Point,
+        >(...fields: FieldsField<Point, PointElementType, PointFuseMode>[]): FieldsField<Point, PointElementType, PointFuseMode> {
         let result = {}
 
         function mergeIn(subfields: Field | FieldsPointMapped<FieldsPoint, Field>, subresult: any): FieldPointMapped<FieldPoint, Field> | undefined {
@@ -86,13 +94,21 @@ export class FieldsField<Point extends FieldsPoint = FieldsPoint>
         for (const field of fields)
             if (field)
                 mergeIn(field.fields, result)
-        
+
         return new FieldsField(result as FieldsPointMapped<Point, Field>)
     }
 
-    omit<Subtract extends FieldsPoint = FieldsPoint>(
+    omit<
+            Subtract extends FieldsPoint = FieldsPoint,
+            SubtractElementType extends FieldsPoint = Subtract,
+            SubtractFuseMode extends FieldsPoint = Subtract,
+        >(
             subtract: FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>
-        ): FieldsField<FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>> {
+        ): FieldsField<
+            FieldsPointOmitted<Point, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>,
+            FieldsPointOmitted<PointElementType, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>,
+            FieldsPointOmitted<PointFuseMode, FieldsPointMapped<Subtract, typeof FieldsPoint_Omit_Leaf>>
+        > {
         const omitted = fields_point_map(
             this.fields,
             leaf =>

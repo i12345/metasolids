@@ -39,21 +39,21 @@ export class SurfaceWithSurfaceAreaProcessor<
                 ['surfaceArea']
             ]
         }
-        
+
         return { connections}
     }
-    
+
     process(surface: SurfaceWithSurfaceArea<IndicesT, SurfaceSampleT>): void {
         let surfaceArea = 0
 
         const { vertices, triangles } = surface.mesh
 
-        for (let i = 0; i < /* surface.mesh. */triangles.length; i += 3) {
+        for (let i = 0; i < triangles.length; i += 3) {
             const v0i = triangles[i + 0]
             const v0x = vertices[(3 * v0i) + 0]
             const v0y = vertices[(3 * v0i) + 1]
             const v0z = vertices[(3 * v0i) + 2]
-            
+
             const v1i = triangles[i + 1]
             const v1x = vertices[(3 * v1i) + 0]
             const v1y = vertices[(3 * v1i) + 1]
@@ -77,7 +77,7 @@ export class SurfaceWithSurfaceAreaProcessor<
                 (((v01z * v02x) - (v01x * v02z)) ** 2) +
                 (((v01x * v02y) - (v01y * v02x)) ** 2)
             )
-            
+
             surfaceArea += area
         }
 

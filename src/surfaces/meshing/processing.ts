@@ -11,22 +11,48 @@ import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext } fro
 export type VolumeProcessingWithMeshing<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleT> =
-            Surface<IndicesT, VolumeSampleT>,
+            Surface<IndicesT, VolumeSampleElementType> =
+            Surface<IndicesT, VolumeSampleElementType>,
     > =
         VolumeProcessingWithSurfaces<
                 IndicesT,
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -39,7 +65,11 @@ export type VolumeProcessingWithMeshing<
                 OctTreeWithDualLayersGrouped, // <IndicesT>,
                 OctTreeWithDualOctTreesGrouped, // <IndicesT>,
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT
@@ -51,20 +81,28 @@ export type VolumeProcessingWithMeshing<
                 SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
                 SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
                 VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
                 VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT
             >
-            
+
 export type VolumeProcessingContextWithMeshing<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>
@@ -80,7 +118,11 @@ export type VolumeProcessingContextWithMeshing<
             OctTreeWithDualLayersGrouped, // <IndicesT>,
             OctTreeWithDualOctTreesGrouped, // <IndicesT>,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT//,
         > &
@@ -91,7 +133,11 @@ export type VolumeProcessingContextWithMeshing<
             SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped, // <IndicesT>,
             SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped, // <IndicesT>,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT//,
         >

@@ -12,7 +12,7 @@ export function mergeObjects<T extends object = object>(objs: T[]): T {
 
         if (!arrays.every(array => array.length === length))
             throw new Error("cannot merge arrays of different lengths")
-        
+
         // normal merge logic finishes merge
     }
 

@@ -56,7 +56,7 @@ export const SurfaceTextureLocationsGroupsFields = (multiObjectsIDs: MultiObject
         SurfaceObjectsTextureLocationsGroupsField(multiObjectsIDs),
     ])
 
-export type SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsT = 
+export type SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
         surfaces.texturing.SurfaceTextureLocationsGroupKinds &
         surfaces.texturing.SurfaceObjectsTextureLocationsGroupKinds,
@@ -106,14 +106,14 @@ export const OtherInterpolatingGroupsTemplate: OtherInterpolatingGroupsT = {
 
 /**
  * Customizeable
- * 
+ *
  * The values are applied per object
  */
 export type OtherInterpolatingValuesT = FieldPoint
 
 /**
  * Customizeable
- * 
+ *
  * The values are applied per object
  */
 export type OtherInterpolatingValuesGrouped = {
@@ -335,7 +335,7 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
     ...fields.MultiObjectsInfluencesGroupsDefaultField(undefined!),
 
     ...SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsTemplate,
-    
+
     ...SurfaceTextureLocationsGroupsFields(undefined!),
 
     // ...SurfaceObjectsTextureLocationsGroupsField(undefined!),
@@ -370,11 +370,11 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
 
     [MultiObjectsProcessingContextGroupKinds]: {
         ...MultiObjectsInfluencesGroupKindsTemplate,
-        
+
         ...surfaces.texturing.SurfaceObjectsTextureLocationsGroupKindsTemplate,
         ...surfaces.texturing.SurfaceIndividualTextureLocationsGroupKindsTemplate,
         ...surfaces.texturing.SurfaceTextureLocationsGroupKindsTemplate,
-        
+
         ...OtherInterpolatingGroupsKindsTemplate,
 
         ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
@@ -457,7 +457,7 @@ export type SurfaceObjectsTexturesGrouped = textures.TexturesTemplatedWithObject
 
 export type SurfaceCombinedTexturesGroupsT = MultiObjectsGroupsCombined<SurfaceObjectsTexturesGroupsT>
 export const SurfaceCombinedTexturesGroupsTemplate: SurfaceCombinedTexturesGroupsT = MultiObjectsGroupsCombinedTemplate(SurfaceObjectsTexturesGroupsTemplate)
-    
+
 export type SurfaceCombinedTexelTypesT = SurfaceObjectsTexelTypesT
 export type SurfaceCombinedTexturesTexelTypesGrouped = MultiObjectsGroupsCombinedMapped<
         SurfaceObjectsTexturesGroupsT,
@@ -498,7 +498,7 @@ export type SurfaceIndividualTexturesGrouped =
     SurfaceCombinedTexturesGrouped &
     surfaces.rendering.SurfaceWithRendering_TexturesTemplated<VolumeLocationT>
 
-export type SurfaceObjectsTexturesGroupsKindsMappedGroupsT = 
+export type SurfaceObjectsTexturesGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
         surfaces.texturing.SurfaceTexturesGroupKinds &
         surfaces.texturing.SurfaceObjectsTexturesGroupKinds,
@@ -585,8 +585,8 @@ export type SurfaceInstanceT =
     > &
     {}
 
-let a!: SampleProcessingContextT
-a[fields.MultiObjectsInfluencesGroupsDefaultKey]
+// let a!: SampleProcessingContextT
+// a[fields.MultiObjectsInfluencesGroupsDefaultKey]
 
 export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<SampleProcessingContextT> &
     // surfaces.SurfaceProcessingContextWithSurfaceArea<SampleProcessingContextT> (doesn't exist) &
@@ -709,13 +709,13 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
     [MultiObjectsProcessingContextGroupKinds]: {
         // influences is a feature of the samplemplate,
         // ...MultiObjectsInfluencesGroupKindsTemplate
-        
+
         ...surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindsTemplate,
 
         ...surfaces.texturing.SurfaceObjectsTexturesGroupKindsTemplate,
         ...surfaces.texturing.SurfaceIndividualTexturesGroupKindsTemplate,
         ...surfaces.texturing.SurfaceTexturesGroupKindsTemplate,
-        
+
         ...OtherInterpolatingGroupsKindsTemplate,
     }
 }
@@ -725,7 +725,7 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
 // let s3!: MultiObjectsGroupsKindsTemplateMapped<surfaces.SurfaceIndividualTexturesGroupKinds, SurfaceIndividualTexturesGroupsT>
 // let s3_a = s3[surfaces.SurfaceIndividualTexturesGroupKindKey].material.textures.diffuse // works
 // let s2_a = s2[surfaces.SurfaceIndividualTexturesGroupKindKey].material.textures.diffuse // works
-// let s2_b = s2[surfaces.SurfaceIndividualTexturesGroupKindKey].material.textures.doesntExist // error 
+// let s2_b = s2[surfaces.SurfaceIndividualTexturesGroupKindKey].material.textures.doesntExist // error
 // s3 = s2 // works
 // s3 = s1 // works
 // s1 = s2 // works
@@ -909,7 +909,7 @@ export type VolumeProcessingContext_MultiObjects =
 export const VolumeProcessingContext_MultiObjects_Template: VolumeProcessingContext_MultiObjects = {
     [MultiObjectsProcessingContextObjectsGrouped]: {
     },
-    
+
     [MultiObjectsProcessingContextGroupKinds]: {
     }
 }

@@ -1,6 +1,6 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
 import { mat4_from_mat3, trs } from "../utils/matrix.js";
-import { MultiObjectsGrouped, MultiObjectsGroupedObjectsKey, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, PropertyPath, iterObjects } from "../paradigm/trees/index.js";
+import { MultiObjectsGroup, MultiObjectsGrouped, MultiObjectsGroupedObjectsKey, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, PropertyPath, iterObjects } from "../paradigm/trees/index.js";
 import { Reflect_entries, Reflect_fromEntries, RemoveEmptyStructs } from "../utils/index.js";
 
 export type Vector = Array<number>
@@ -39,6 +39,18 @@ export type FieldPointMapped<Point extends FieldPoint, T> =
 export type FieldsPointMapped<Point extends FieldsPoint, T> = {
     [K in keyof Point]: FieldPointMapped<Point[K], T>
 }
+
+export type FieldPointMappedObjectsGroupedRemoved<Point extends FieldPoint, T> =
+    Point extends FieldPointPrimitive ? T :
+        Point extends FieldsPoint ?
+            FieldsPointMapped<Point, T> :
+            never
+
+export type FieldsPointMappedObjectsGroupedRemoved<Point extends FieldsPoint, T> =
+    Point extends MultiObjectsGroup<infer G extends FieldPoint> ?
+        FieldPointMappedObjectsGroupedRemoved<G, T> : {
+            [K in keyof Point]: FieldPointMappedObjectsGroupedRemoved<Point[K], T>
+        }
 
 export const FieldsPoint_Omit_Leaf = Symbol('omit')
 export type FieldsPointOmitted<
@@ -86,13 +98,13 @@ export type FieldsPointOptional<Point extends FieldsPoint> = FieldsPoint & {
 // interface MyInterface {
 //     u: number
 //     v: number
-//     location: Vec3 
+//     location: Vec3
 // }
 
 // type MyType = {
 //     u: number
 //     v: number
-//     location: Vec3 
+//     location: Vec3
 // }
 
 // let x: FieldsPoint
@@ -115,21 +127,22 @@ type ExtraFields_Recursive<
         Type extends FieldsPoint,
         Base extends FieldsPoint
     > = {
-        [K in keyof Type]:
-        Type[K] extends FieldsPoint?
-            Base[K] extends FieldsPoint?
+    [K in keyof Type]:
+        Type[K] extends FieldsPoint ?
+            Base[K] extends FieldsPoint ?
                 ExtraFields_Recursive<Type[K], Base[K]> :
                 never :
-            Base[K] extends FieldPoint?
-                never : 
+            Base[K] extends FieldPoint ?
+                never :
                 Type[K]
-    }
+}
 
 export type ExtraFields<
         Type extends FieldsPoint,
         Base extends FieldsPoint
     > =
-    RemoveEmptyStructs<ExtraFields_Recursive<Type, Base>>
+    ExtraFields_Recursive<Type, Base>
+    // RemoveEmptyStructs<ExtraFields_Recursive<Type, Base>>
 
 // let extraFields_example1!: ExtraFields<
 //     {
@@ -170,10 +183,10 @@ export function field_point_is<Point = any>(p: Point): Point extends FieldPoint 
         for (const key of Reflect.ownKeys(p))
             if (!field_point_is((p as any)[key]))
                 return false as (Point extends FieldPoint ? true : false)
-        
+
         return true as (Point extends FieldPoint ? true : false);
     }
-    
+
     return false as (Point extends FieldPoint ? true : false)
 }
 
@@ -522,7 +535,7 @@ export function field_point_add<Point extends FieldPoint>(a: Point, b: Point): P
         return new Mat3().setFromMat4(field_point_add(mat4_from_mat3(a), mat4_from_mat3(b as Mat3))) as Point
     else if (a instanceof Color) {
         const b_color = b as Color
-        
+
         const c = a.clone()
         c.r += b_color.r
         c.g += b_color.g
@@ -570,12 +583,12 @@ export function field_point_add_inplace<Point extends FieldPoint>(a: Point, b: P
         const a_mat4 = mat4_from_mat3(a)
         const b_mat4 = mat4_from_mat3(b as Mat3)
         field_point_add_inplace(a_mat4, b_mat4)
-        
+
         return a.setFromMat4(a_mat4) as Point
     }
     else if (a instanceof Color) {
         const b_color = b as Color
-        
+
         a.r += b_color.r
         a.g += b_color.g
         a.b += b_color.b
@@ -601,13 +614,13 @@ export function field_point_add_inplace<Point extends FieldPoint>(a: Point, b: P
     }
     else {
         let result = { a }
-        
+
         fields_point_add_inplace(
             result,
             'a',
             b
         )
-        
+
         return result.a
     }
 }
@@ -618,7 +631,7 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
     else if (a instanceof Mat4) {
         const trs_a = trs(a)
         const trs_b = trs(b as Mat4)
-        
+
         field_point_add_inplace_weighted(trs_a, trs_b, weight)
 
         a.setTRS(trs_a.t, trs_a.r, trs_a.s)
@@ -637,12 +650,12 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
         const a_mat4 = mat4_from_mat3(a)
         const b_mat4 = mat4_from_mat3(b as Mat3)
         field_point_add_inplace_weighted(a_mat4, b_mat4, weight)
-        
+
         return a.setFromMat4(a_mat4) as Point
     }
     else if (a instanceof Color) {
         const b_color = b as Color
-        
+
         a.r += b_color.r * weight
         a.g += b_color.g * weight
         a.b += b_color.b * weight
@@ -668,14 +681,14 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
     }
     else {
         let result = { a }
-        
+
         fields_point_add_inplace_weighted(
             result,
             'a',
             b,
             weight
         )
-        
+
         return result.a
     }
 }
@@ -694,7 +707,7 @@ export function field_point_sum<Point extends FieldPoint = FieldPoint>(points: P
 
         for (let i = 0; i < points.length; i++)
             sum += points[i] as number
-        
+
         return sum as Point
     }
     else if (points[0] instanceof Vec2) {
@@ -761,17 +774,17 @@ export function field_point_primitives_sum<Point extends FieldPoint = FieldPoint
         return a.x + a.y + a.z
     else if (a instanceof Mat4)
         return field_point_primitives_sum(a.data)
-    else if (typeof a === 'number') 
+    else if (typeof a === 'number')
         return a
-    else if (a instanceof Vec2) 
+    else if (a instanceof Vec2)
         return a.x + a.y
-    else if (a instanceof Vec4) 
+    else if (a instanceof Vec4)
         return a.x + a.y + a.z + a.w
-    else if (a instanceof Quat) 
+    else if (a instanceof Quat)
         return a.x + a.y + a.z + a.w
     else if (a instanceof Mat3)
         return field_point_primitives_sum(a.data)
-    else if (a instanceof Color) 
+    else if (a instanceof Color)
         return a.r + a.g + a.b + a.a
     else if (
         a instanceof Uint8Array ||
@@ -811,7 +824,7 @@ export function field_point_subtract<Point extends FieldPoint>(a: Point, b: Poin
         return new Mat3().setFromMat4(field_point_subtract(mat4_from_mat3(a), mat4_from_mat3(b as Mat3))) as Point
     else if (a instanceof Color) {
         const b_color = b as Color
-        
+
         const c = a.clone()
         c.r -= b_color.r
         c.g -= b_color.g
@@ -907,7 +920,7 @@ export function field_point_multiply_hadamard<Point extends FieldPoint>(a: Point
         return new Mat3().setFromMat4(field_point_multiply_hadamard(mat4_from_mat3(a), mat4_from_mat3(b as Mat3))) as Point
     else if (a instanceof Color) {
         const b_color = b as Color
-        
+
         // this is like a color filter
 
         const c = a.clone()
@@ -996,16 +1009,8 @@ export function field_point_modulo<Point extends FieldPoint>(a: Point, b: Point)
 
         return c as Point
     }
-    else if (a instanceof Mat4) {
+    else if (a instanceof Mat4)
         throw new Error("modulo of matrix makes no sense")
-        // const b_mat = b as Mat4
-
-        // const c = a.clone()
-        // for (let i = 15; i >= 0; i--)
-        //     c.data[i] %= b_mat.data[i]
-        
-        // return c as Point
-    }
     else if (typeof a === 'number')
         return a % (b as number) as Point
     else if (a instanceof Vec2) {
@@ -1030,19 +1035,11 @@ export function field_point_modulo<Point extends FieldPoint>(a: Point, b: Point)
     }
     else if (a instanceof Quat)
         throw new Error("modulo of quaternion makes no sense")
-    else if (a instanceof Mat3) {
+    else if (a instanceof Mat3)
         throw new Error("modulo of matrix makes no sense")
-        // const b_mat = b as Mat3
-
-        // const c = a.clone()
-        // for (let i = 8; i >= 0; i--)
-        //     c.data[i] %= b_mat.data[i]
-        
-        // return c as Point
-    }
     else if (a instanceof Color) {
         const b_color = b as Color
-        
+
         const c = a.clone()
         c.r %= b_color.r
         c.g %= b_color.g
@@ -1078,40 +1075,24 @@ export function field_point_fraction<Point extends FieldPoint>(a: Point, b: Poin
         return field_point_identity(b) as unknown as FieldPointNumbers<Point>
     else if (b === undefined)
         return field_point_invalid(a) as unknown as FieldPointNumbers<Point>
-    
+
     if (a instanceof Vec3)
         return new Vec3().div2(a, b as Vec3) as FieldPointNumbers<Vec3> as FieldPointNumbers<Point>
-    else if (a instanceof Mat4) {
+    else if (a instanceof Mat4)
         throw new Error("fraction of matrix makes no sense")
-        // const b_mat = b as Mat4
-
-        // const c = a.clone()
-        // for (let i = 15; i >= 0; i--)
-        //     c.data[i] %= b_mat.data[i]
-        
-        // return c as Point
-    }
     else if (typeof a === 'number')
         return a / (b as number) as FieldPointNumbers<Point>
-    else if (a instanceof Vec2) 
+    else if (a instanceof Vec2)
         return new Vec2().div2(a, b as Vec2) as FieldPointNumbers<Vec2> as FieldPointNumbers<Point>
-    else if (a instanceof Vec4) 
+    else if (a instanceof Vec4)
         return new Vec4().div2(a, b as Vec4) as FieldPointNumbers<Vec4> as FieldPointNumbers<Point>
     else if (a instanceof Quat)
         throw new Error("fraction of quaternion makes no sense")
-    else if (a instanceof Mat3) {
+    else if (a instanceof Mat3)
         throw new Error("fraction of matrix makes no sense")
-        // const b_mat = b as Mat3
-
-        // const c = a.clone()
-        // for (let i = 8; i >= 0; i--)
-        //     c.data[i] %= b_mat.data[i]
-        
-        // return c as Point
-    }
     else if (a instanceof Color) {
         const b_color = b as Color
-        
+
         const c = a.clone()
         c.r /= b_color.r
         c.g /= b_color.g
@@ -1182,7 +1163,7 @@ export function field_point_pow<Point extends FieldPoint>(base: Point, exponent:
         else throw new Error("cannot have fractional exponent")
     }
     else if (base instanceof Mat4) {
-        if (exponent === -1) 
+        if (exponent === -1)
             return <Point>base.clone().invert()
         else if (exponent === 0)
             return <Point>new Mat4()
@@ -1261,7 +1242,7 @@ export function field_point_compare_gte<Point extends FieldPoint>(a: Point, b: P
         return b === undefined || field_point_equal(b, field_point_identity(b))
     else if (b === undefined)
         return true
-    
+
     if (a instanceof Vec3) {
         const b_vec = b as Vec3
         return (
@@ -1331,7 +1312,7 @@ export function fields_point_identity<Point extends FieldsPoint>(a: Point): Poin
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_identity(a[key])
-    
+
     return c as Point
 }
 
@@ -1340,16 +1321,16 @@ export function fields_point_invalid<Point extends FieldsPoint>(a: Point): Point
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_invalid(a[key])
-    
+
     return c as Point
 }
 
 export function fields_point_clone<Point extends FieldsPoint>(a: Point): Point {
     let c: any = {}
 
-    for (const key of Reflect.ownKeys(a)) 
+    for (const key of Reflect.ownKeys(a))
         c[key] = field_point_clone(a[key])
-    
+
     return c as Point
 }
 
@@ -1358,7 +1339,7 @@ export function fields_point_random<Point extends FieldsPoint>(a: Point): Point 
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_random(a[key])
-    
+
     return c as Point
 }
 
@@ -1374,7 +1355,7 @@ export function fields_point_add<Point extends FieldsPoint>(a: Point, b: Point):
     for (const key of Reflect.ownKeys(b))
         if (c[key] === undefined)
             c[key] = field_point_clone(b[key])
-    
+
     return c as Point
 }
 
@@ -1390,7 +1371,7 @@ export function fields_point_subtract<Point extends FieldsPoint>(a: Point, b: Po
     for (const key of Reflect.ownKeys(b))
         if (c[key] === undefined)
             c[key] = field_point_multiply(b[key], -1)
-    
+
     return c as Point
 }
 
@@ -1415,7 +1396,7 @@ export function fields_point_add_inplace<
                 field_key,
                 addend_fields[field_key]
             )
-        
+
         return accumulator_fields as Point
     }
 }
@@ -1448,7 +1429,7 @@ export function fields_point_add_inplace_weighted<
                 addend_fields[field_key],
                 weight
             )
-        
+
         return accumulator_fields as Point
     }
 }
@@ -1460,7 +1441,7 @@ export function fields_point_sum<Point extends FieldsPoint = FieldsPoint>(points
         const extracted = points.filter(point => key in point).map(point => point[key])
         sum[key as keyof Point] = field_point_sum(extracted) as Point[typeof key]
     }
-    
+
     return sum
 }
 
@@ -1469,7 +1450,7 @@ export function fields_point_primitives_sum<Point extends FieldsPoint = FieldsPo
 
     for (const key of Reflect.ownKeys(point))
         sum += field_point_primitives_sum(point[key])
-    
+
     return sum
 }
 
@@ -1478,7 +1459,7 @@ export function fields_point_multiply<Point extends FieldsPoint>(a: Point, b: nu
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_multiply(a[key], b)
-    
+
     return c as Point
 }
 
@@ -1487,7 +1468,7 @@ export function fields_point_multiply_hadamard<Point extends FieldsPoint>(a: Poi
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_multiply_hadamard(a[key], b)
-    
+
     return c as Point
 }
 
@@ -1496,7 +1477,7 @@ export function fields_point_divide<Point extends FieldsPoint>(a: Point, b: numb
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_divide(a[key], b)
-    
+
     return c as Point
 }
 
@@ -1505,7 +1486,7 @@ export function fields_point_modulo<Point extends FieldsPoint>(a: Point, b: Poin
 
     for (const key of Reflect.ownKeys(a))
         c[key] = field_point_modulo(a[key], b[key])
-    
+
     return c as Point
 }
 
@@ -1514,14 +1495,14 @@ export function fields_point_fraction<Point extends FieldsPoint>(a: Point, b: Po
 
     for (const key of new Set([...Reflect.ownKeys(a), ...Reflect.ownKeys(b)]))
         c[key] = field_point_fraction(a[key], b[key])
-    
+
     return c as FieldPointNumbers<Point>
 }
 
 export function fields_point_equal<Point extends FieldsPoint>(a: Point, b: Point): boolean {
     const keys_a = Reflect.ownKeys(a)
     const keys_b = Reflect.ownKeys(b)
-    
+
     if (keys_a.length !== keys_b.length ||
         keys_a.some(key => !keys_b.includes(key)))
         return false
@@ -1529,7 +1510,7 @@ export function fields_point_equal<Point extends FieldsPoint>(a: Point, b: Point
     for (const key of new Set([...keys_a, ...keys_b]))
         if (!field_point_equal(a[key], b[key]))
             return false
-    
+
     return true
 }
 
@@ -1540,7 +1521,7 @@ export function fields_point_compare_gte<Point extends FieldsPoint>(a: Point, b:
     for (const key of new Set([...keys_a, ...keys_b]))
         if (!field_point_compare_gte(a[key], b[key]))
             return false
-    
+
     return true
 }
 
@@ -1549,5 +1530,5 @@ export function fields_point_compare_gte<Point extends FieldsPoint>(a: Point, b:
 //  * @param points the points to merge; later values take precedence over earlier values
 //  */
 // export function fields_point_merge<Point extends FieldsPoint>(...points: FieldsPointOptional<Point>[]): Point {
-    
+
 // }

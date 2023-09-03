@@ -10,6 +10,8 @@ import { NumberTypedArray, TypedArray } from "../../utils/typed-array.js";
 export type VertexInterpolatingTexturesTemplated<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TexelType extends FieldPoint = FieldPoint,
         TexelTypesGrouped extends
             MultiObjectsGroupsMapped<Groups, TexelType> =
@@ -18,35 +20,55 @@ export type VertexInterpolatingTexturesTemplated<
     [K in keyof TexelTypesGrouped]:
         Groups[K] extends MultiObjectsGroupsTemplate ?
             (TexelTypesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TexelType> ?
-                VertexInterpolatingTexturesTemplated<Groups[K], TextureLocationT, TexelType, TexelTypesGrouped[K]> :
+                VertexInterpolatingTexturesTemplated<
+                        Groups[K],
+                        TextureLocationT,
+                        TextureLocationElementType,
+                        TextureLocationFuseMode,
+                        TexelType,
+                        TexelTypesGrouped[K]
+                    > :
                 never) :
-            VertexInterpolatingTexture<TextureLocationT, TexelTypesGrouped[K]>
+            VertexInterpolatingTexture<
+                TextureLocationT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                TexelTypesGrouped[K]
+            >
     }
 
 export class VertexInterpolatingTexture<
         TextureLocationT extends TextureLocation = TextureLocation,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         VertexSample extends FieldPoint = FieldPoint,
+        VertexSampleElementType extends FieldPoint = VertexSample,
+        VertexSampleFuseMode extends FieldPoint = VertexSample,
         VertexSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         VertexSampleVector extends
-            FieldPointVector<VertexSample, VertexSampleContainer> =
-            FieldPointVector<VertexSample, VertexSampleContainer>,
+            FieldPointVector<VertexSampleElementType, VertexSampleContainer> =
+            FieldPointVector<VertexSampleElementType, VertexSampleContainer>,
         Context extends
-            TextureSamplingContext<TextureLocationT> & Partial<WithMultiObjectsIDs> =
-            TextureSamplingContext<TextureLocationT> & Partial<WithMultiObjectsIDs>
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> & Partial<WithMultiObjectsIDs> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> & Partial<WithMultiObjectsIDs>
     > implements
     Texture<
         TextureLocationT,
         VertexSample,
+        TextureLocationElementType,
+        TextureLocationFuseMode,
+        VertexSampleElementType,
+        VertexSampleFuseMode,
         Context
     > {
     private collider?: Triangles2DMeshCollider
-    private interpolator?: Triangles2DMeshInterpolator<VertexSample, VertexSampleContainer, VertexSampleVector>
+    private interpolator?: Triangles2DMeshInterpolator<VertexSample, VertexSampleElementType, VertexSampleContainer, VertexSampleVector>
 
     constructor(
         public vertices: VertexSampleVector,
         public uv: FieldPointVectorStatic<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>,
         public triangles: IndicesArray,
-        public readonly field: Field<VertexSample>
+        public readonly field: Field<VertexSample, VertexSampleElementType, VertexSampleFuseMode>
     ) {
     }
 
@@ -55,7 +77,7 @@ export class VertexInterpolatingTexture<
 
         if (collision === undefined)
             return undefined!
-        
+
         const { tri, w1, w2 } = collision
         return this.interpolator!.interpolate(tri, w1, w2)
     }
@@ -63,6 +85,6 @@ export class VertexInterpolatingTexture<
     init(context: Context): void {
         const mesh = Triangles2DMesh.build(this.uv, this.triangles)
         this.collider = new Triangles2DMeshCollider(mesh)
-        this.interpolator = new Triangles2DMeshInterpolator<VertexSample, VertexSampleContainer, VertexSampleVector>(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
+        this.interpolator = new Triangles2DMeshInterpolator<VertexSample, VertexSampleElementType, VertexSampleContainer, VertexSampleVector>(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
     }
 }

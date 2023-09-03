@@ -24,12 +24,12 @@ export class Component<ID = string> extends processing.Component<
     texturers?: textures.Texturer[]
     interpolatingGroups?: MultiObjectsGroupsTemplate[]
     extraLocationParameters?: fields.FieldsPoint
-    
+
     //TODO: these settings should be stored in a better way
     volumeSamplingSettings?: octtree.OctTreeSubdivisionSettings
     surfaceLevel?: number
 
-    constructor(system: ComponentSystem<ID>, entity: Entity) { 
+    constructor(system: ComponentSystem<ID>, entity: Entity) {
         super(system, entity)
     }
 
@@ -55,7 +55,7 @@ export class Component<ID = string> extends processing.Component<
             prerender(require_multiObjects = false): MultiObjPrerender | undefined {
                 const entity = this.node as Entity
                 const component = entity?.c[SYSTEM_ID] as Component<ID>
-                
+
                 const children = [
                     ...(component?.volume ? [['$$main', this.sym]] : []),
                     ...this.children
@@ -81,7 +81,7 @@ export class Component<ID = string> extends processing.Component<
                     IDsType: ObjIDsType,
                     paths: [],
                 }
-                
+
                 const pathsMap = new Map<symbol, PropertyPath>()
 
                 let id_next = 0
@@ -118,7 +118,7 @@ export class Component<ID = string> extends processing.Component<
                 ): VolumeT | undefined {
                 const entity = this.node as Entity
                 const component = entity?.c[SYSTEM_ID] as Component<ID>
-            
+
                 if (component?.volume)
                     map_volume_component.set(component.volume, component)
 
@@ -174,7 +174,7 @@ export class Component<ID = string> extends processing.Component<
         const volumeNode = VolumeNode.construct(this.entity, true)
         if (!volumeNode)
             throw new Error()
-        
+
         const prerendering = volumeNode.prerender(true)!
         const { multiObjectsIDs, pathsMap } = VolumeNode.multiObjectIDs(prerendering)
         volumeNode.assignPaths(pathsMap)
@@ -246,9 +246,6 @@ export class Component<ID = string> extends processing.Component<
         multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.texturing.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
         multiObjectsContext_insertObjects(volume_multiObjectsContext)
 
-        let context1!: SampleProcessingContextT
-        context1[surfaces.texturing.SurfaceObjectsTextureLocationsGroupsDefaultKey][fields.GroupFieldKey].elementType
-
         const sample_context = <SampleProcessingContextT>{
             ...sample_multiObjectsContext,
             ...fields.MultiObjectsInfluencesGroupsDefaultField<Objects, ObjIDsT>(multiObjectsIDs),
@@ -265,7 +262,7 @@ export class Component<ID = string> extends processing.Component<
                 ]
             },
             material: {},
-            
+
             ...surface_multiObjectsContext
         }
 

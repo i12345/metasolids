@@ -1,28 +1,39 @@
 import { MultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
+import { Field } from "../field.js";
 import { FieldPoint } from "../point.js";
 import { FieldPointType } from "../type.js"
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction } from "../vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, VectorizedTypes } from "../vectorized/index.js";
 
 export const VectorSampleFunction = Symbol("vector-sample()")
 
 export function makeVectorSamplingContext<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends FieldPointVector<Sample, SampleContainer> = FieldPointVector<Sample, SampleContainer>,
+        SingularContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends FieldPointVector<SampleElementType, SampleContainer> = FieldPointVector<SampleElementType, SampleContainer>,
         Context extends
             VectorSamplingContext<
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 Sample,
+                SampleElementType,
+                SampleFuseMode,
                 SampleContainer,
                 Objects,
                 ObjIDsT,
@@ -33,8 +44,12 @@ export function makeVectorSamplingContext<
             > =
             VectorSamplingContext<
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 Sample,
+                SampleElementType,
+                SampleFuseMode,
                 SampleContainer,
                 Objects,
                 ObjIDsT,
@@ -44,15 +59,46 @@ export function makeVectorSamplingContext<
                 SampleVector
             >
     >(
-        domain: SampleDomain<Location, Sample, SingularContext>,
+        field: Field<Sample, SampleElementType, SampleFuseMode>,
         context: Context,
         multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-    const vectorSampleFunction = new FieldPointVectorFunction <
-            SampleDomain<Location, Sample, Context>,
+    const vectorSampleFunction = new FieldPointVectorFunction<
+            VectorSampleDomain<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                >,
             "sample",
-            SampleDomain<Location, Sample, Context>["sample"],
-            [FieldPointType<Location>, undefined],
+            VectorSampleDomain<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                >["sample"],
+            [LocationElementType, undefined],
+            SampleElementType,
             [LocationContainer, undefined],
             SampleContainer,
             Objects,
@@ -60,36 +106,54 @@ export function makeVectorSamplingContext<
             ObjIDsContainer
         >(
             "sample",
-            [context[SampleDomainLocationFieldKey].elementType, undefined],
-            <Sample extends FieldPoint ? FieldPointType<Sample> : undefined>domain.field.elementType,
+            [<LocationElementType extends FieldPoint ? FieldPointType<LocationElementType> : LocationElementType>context[SampleDomainLocationFieldKey].elementType, undefined],
+            <SampleElementType extends FieldPoint ? (FieldPointType<SampleElementType> | undefined) : undefined>field.elementType,
             [1, MultiObjectsIDsKey]
         )
-    
+
     context[VectorSampleFunction] = <any>vectorSampleFunction.call.bind(vectorSampleFunction)
     context[MultiObjectsIDsKey] = multiObjectsIDs
 }
 
 export type VectorSamplingContext<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends FieldPointVector<Sample, SampleContainer> = FieldPointVector<Sample, SampleContainer>,
+        SingularContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends FieldPointVector<SampleElementType, SampleContainer> = FieldPointVector<SampleElementType, SampleContainer>,
     > =
     SingularContext &
     WithMultiObjectsIDs<Objects, ObjIDsT> & {
     [VectorSampleFunction](
-        domain: SampleDomain<Location, Sample, SingularContext>,
-        locations: FieldPointVector<Location, LocationContainer>,
+        domain: SampleDomain<
+            Location,
+            Sample,
+            LocationElementType,
+            LocationFuseMode,
+            SampleElementType,
+            SampleFuseMode,
+            SingularContext
+        >,
+        locations: LocationVector,
         context: VectorSamplingContext<
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 Sample,
+                SampleElementType,
+                SampleFuseMode,
                 SampleContainer,
                 Objects,
                 ObjIDsT,
@@ -98,37 +162,35 @@ export type VectorSamplingContext<
                 LocationVector,
                 SampleVector
             >
-    ): FieldPointVector<Sample, SampleContainer>
-        
-    // [VectorSampleFunction]: FieldPointVectorFunction<
-    //     SampleDomain<Location, Sample, SingularContext>,
-    //     "sample",
-    //     SampleDomain<Location, Sample, SingularContext>["sample"],
-    //     [FieldPointType<Location>, undefined],
-    //     LocationContainer,
-    //     SampleContainer,
-    //     Objects,
-    //     ObjIDsT,
-    //     ObjIDsContainer
-    // >["call"]
+    ): SampleVector
 }
 
 export interface VectorSampleDomain<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends FieldPointVector<Sample, SampleContainer> = FieldPointVector<Sample, SampleContainer>,
+        SingularContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends FieldPointVector<SampleElementType, SampleContainer> = FieldPointVector<SampleElementType, SampleContainer>,
         VectorContext extends
             VectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -139,8 +201,12 @@ export interface VectorSampleDomain<
                 > =
             VectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -150,5 +216,13 @@ export interface VectorSampleDomain<
                     SampleVector
                 >
     > extends
-    SampleDomain<Location, Sample, SingularContext> {
+    SampleDomain<
+        Location,
+        Sample,
+        LocationElementType,
+        LocationFuseMode,
+        SampleElementType,
+        SampleFuseMode,
+        SingularContext
+    > {
 }

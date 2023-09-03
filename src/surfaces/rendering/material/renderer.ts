@@ -93,7 +93,7 @@ function* flattenImplementationMulti<
         else if (implementation instanceof MaterialSemanticImplementation_None) { }
         else throw new Error("unimplemented implementation type")
     }
-    
+
     for (const implementation of implementations)
         yield new MaterialSemanticImplementation_Multi([...flattenMultiTerms(implementation)])
 }
@@ -126,7 +126,7 @@ export class MaterialRendererShared<
         this.materialType = renderer.textures.color ? BasicMaterial : StandardMaterial
         this.implementation = new this.materialType()
     }
-    
+
     init() {
         material_groups.forEach(group => {
             const texture = group.get<Texture>(this.renderer.textures)
@@ -175,7 +175,7 @@ export class MaterialRendererIndividual<
     readonly storageClassInstances: MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT>[]
 
     private _implementation: StandardMaterial | BasicMaterial
-    
+
     get implementation() {
         return this._implementation
     }
@@ -218,7 +218,7 @@ export class MaterialRendererIndividual<
             this._implementation = new this.shared.materialType()
             this.shared.computeBackingCallbacks.forEach(callback => callback(this))
         }
-        
+
         if (this.renderer.implementation &&
             this.renderer.implementation.material !== this.implementation)
             this.renderer.implementation.material = this.implementation
@@ -231,7 +231,7 @@ export class MaterialRendererIndividual<
     update(invalidateStagesSince = 0): void {
         /**
          * (Implementation sets for each group are already calculated)
-         * 
+         *
          * ```text
          * value =
          *      a * quality -
@@ -240,9 +240,9 @@ export class MaterialRendererIndividual<
          *          (d * implementation.cost.space / available_space)
          *      ])
          * ```
-         * 
+         *
          * ## Determine what can change
-         * 
+         *
          * - For each group's current implementation:
          *   - If current implementation set:
          *     - stage < invalidateStagesSince and
@@ -250,9 +250,9 @@ export class MaterialRendererIndividual<
          *   - Then keep current implementation unchanged
          *   - Else:
          *     - Add this group to the set of groups that can change, H
-         * 
+         *
          * ## Then consider how to implement the groups that can change:
-         * 
+         *
          * - Calculate available space (adding space from implementations in H).
          * - Step from max(stages) to invalidateStagesSince:
          *   - For each group (sorted by priority):
@@ -266,7 +266,7 @@ export class MaterialRendererIndividual<
          *       - Remove current implementation and add this implementation.
          *       - Store this as current implementation set.
          *     - Update available space.
-         * 
+         *
          */
         const notes = "see comment above";
 
@@ -313,7 +313,7 @@ export class MaterialRendererIndividual<
             if (!current.implementation ||
                 stage_max >= invalidateStagesSince ||
                 value(current.implementation) < this.shared.value_thresholds.change) {
-                
+
                 potential_implementations.push(group)
 
                 current.implementation?.components.forEach(implementation =>
@@ -404,7 +404,7 @@ export class MaterialRendererIndividual<
 
                             return (shared ?? implementation).implement(this.renderer)
                         })
-                    
+
                     const remove_renderedBuffers =
                         implementation_internal_individual.renderedBuffers?.filter(
                             renderedBuffer =>
@@ -421,13 +421,13 @@ export class MaterialRendererIndividual<
                                     implementation.equals(renderedBuffer.implementation)
                                 )
                         ) ?? []
-                    
+
                     total.add.push(...add_renderedBuffers)
                     total.remove.push(...remove_renderedBuffers)
                     potential_implementations.splice(potential_implementations.indexOf(group), 1)
                     add_implementations.forEach(add => space_available = field_point_subtract(space_available, add.cost.space))
                     remove_implementations.forEach(remove => space_available = field_point_add_inplace(space_available, remove.cost.space))
-                    
+
                     implementation_internal_individual.implementation = new MaterialSemanticImplementation_Multi<VolumeLocationT/* , MaterialSemanticImplementation_Immediate<VolumeLocationT> */>([
                         ...kept_implementations,
                         ...add_implementations
@@ -464,7 +464,7 @@ export class MaterialRendererIndividual<
         ).filter(({ add, remove }) => add.length > 0 || remove.length > 0)
 
         total_storageClassInstances.forEach(({ storageClassInstance, add, remove }) => storageClassInstance.preoptimize(add, remove))
-        
+
         this.renderer.material.updateBacking()
         this.renderer.mesh.updateBacking()
 

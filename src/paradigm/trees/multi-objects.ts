@@ -22,7 +22,7 @@ export type MultiObjectsMapped<
 export type MultiObjectsMappedOrLeaf<
         Objects extends MultiObjectsTemplateOrLeaf,
         T,
-    > = 
+    > =
     Objects extends MultiObjectsTemplate ?
         MultiObjectsMapped<Objects, T> :
         T
@@ -65,7 +65,7 @@ export const objectValuePaths = <
 
 export const objectValues = <
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-    >(objects: Objects) => 
+    >(objects: Objects) =>
     leavesByValue(objects as any, MultiObjectsTemplate_Leaf)
 
 export const iterObjects = <

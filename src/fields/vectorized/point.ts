@@ -1,7 +1,7 @@
 import { MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
-import { IndicesTypedArray, Reflect_entries, TypedArray, TypedArrayConstructor, TypedArrayList, indicesArrayType, invalidIndex, isTypedArray, typedArrayConstructor } from "../../utils/index.js"
-import { FieldPoint, FieldPointMapped, FieldPointPrimitive } from "../point.js"
+import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor } from "../../utils/index.js"
+import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldPointPrimitive } from "../point.js"
 import { FieldPointType } from "../type.js"
 import { FieldPointVectorIterator } from "./iterator.js"
 import { vectorIterator } from "./iterators/factory.js"
@@ -10,64 +10,63 @@ import { PrimitiveFieldPointVectorIterator } from "./iterators/primitive.js"
 export const ItemObjValuesOffsetsKey = Symbol("objValueOffsets")
 export const ItemObjIDsKey = Symbol("objIDs")
 
-export type FieldPointVectorContainerStatic<TArray extends TypedArray = Float64Array> = TArray
-export type FieldPointVectorContainerDynamic<TArray extends TypedArray = Float64Array> = TypedArrayList<TArray>
-export type FieldPointVectorContainer<TArray extends TypedArray = Float64Array> = FieldPointVectorContainerStatic<TArray> | FieldPointVectorContainerDynamic<TArray>
-export type FieldPointVectorContainerType<Container extends FieldPointVectorContainer<TypedArray>> = Container extends FieldPointVectorContainer<infer TArray> ? TArray : never
+export type FieldPointVectorContainerStatic<TArray extends NumberTypedArray = Float64Array> = TArray
+export type FieldPointVectorContainerDynamic<TArray extends NumberTypedArray = Float64Array> = TypedArrayList<number, TArray>
+export type FieldPointVectorContainer<TArray extends NumberTypedArray = Float64Array> = FieldPointVectorContainerStatic<TArray> | FieldPointVectorContainerDynamic<TArray>
+export type FieldPointVectorContainerType<Container extends FieldPointVectorContainer<NumberTypedArray>> = Container extends FieldPointVectorContainer<infer TArray> ? TArray : never
 
-export type IsDynamicVectorContainer<Container extends FieldPointVectorContainer<TypedArray>> = Container extends FieldPointVectorContainerDynamic ? true : false
-export function isDynamicVectorContainer<Container extends FieldPointVectorContainer<TypedArray>>(container: Container): IsDynamicVectorContainer<Container> {
+export type IsDynamicVectorContainer<Container extends FieldPointVectorContainer<NumberTypedArray>> = Container extends FieldPointVectorContainerDynamic ? true : false
+export function isDynamicVectorContainer<Container extends FieldPointVectorContainer<NumberTypedArray>>(container: Container): IsDynamicVectorContainer<Container> {
     return <IsDynamicVectorContainer<Container>>(container instanceof TypedArrayList)
 }
 
 export function fieldPointVectorContainerArrayType<
-        T extends number | bigint = number,
-        ArrayType extends TypedArray<T> = TypedArray<T>,
+        ArrayType extends NumberTypedArray = NumberTypedArray,
         Container extends FieldPointVectorContainer<ArrayType> = FieldPointVectorContainer<ArrayType>
-    >(container: Container): TypedArrayConstructor<T, ArrayType> {
-    if (isTypedArray(container))
-        return typedArrayConstructor(<ArrayType>container)
+    >(container: Container): TypedArrayConstructor<number, ArrayType> {
+    if (isNumberTypedArray(container))
+        return typedArrayConstructor<number, ArrayType>(<ArrayType>container)
     else if (container instanceof TypedArrayList)
-        return <TypedArrayConstructor<T, ArrayType>>container.type
+        return <TypedArrayConstructor<number, ArrayType>><unknown>container.type
     else
         throw new Error("invalid container")
 }
 
 export type FieldPointVector<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainerStatic<TypedArray>
-    > = FieldPointMapped<Point, Container>
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>
+    > = FieldPointMappedObjectsGroupedRemoved<ElementType, Container>
 
 export type FieldPointVectorStatic<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainerStatic<TypedArray> = FieldPointVectorContainerStatic<TypedArray>
-    > = FieldPointVector<Point, Container>
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>
+    > = FieldPointVector<ElementType, Container>
 
 export type FieldPointVectorDynamic<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainerDynamic<TypedArray> = FieldPointVectorContainerDynamic<TypedArray>
-    > = FieldPointVector<Point, Container>
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainerDynamic<NumberTypedArray> = FieldPointVectorContainerDynamic<NumberTypedArray>
+    > = FieldPointVector<ElementType, Container>
 
 export type IsDynamicVector<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainerStatic
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainerStatic
     > =
-    Point extends FieldPointPrimitive ?
+    ElementType extends FieldPointPrimitive ?
         IsDynamicVectorContainer<Container> :
-    Point extends { [MultiObjectsGroupedObjectsKey]: infer InnerType extends FieldPoint } ?
+    ElementType extends { [MultiObjectsGroupedObjectsKey]: infer InnerType extends FieldPoint } ?
         IsDynamicVector<InnerType, Container> :
         undefined
 
 export function isDynamicVector<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainerStatic
-    >(vector: FieldPointVector<Point, Container>): IsDynamicVector<Point, Container> {
-    if (isTypedArray(vector))
-        return <IsDynamicVector<Point, Container>>false
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainerStatic
+    >(vector: FieldPointVector<ElementType, Container>): IsDynamicVector<ElementType, Container> {
+    if (isNumberTypedArray(vector))
+        return <IsDynamicVector<ElementType, Container>>false
     else if (vector instanceof TypedArrayList)
-        return <IsDynamicVector<Point, Container>>true
-    
-    return <IsDynamicVector<Point, Container>>undefined
+        return <IsDynamicVector<ElementType, Container>>true
+
+    return <IsDynamicVector<ElementType, Container>>undefined
 }
 
 export type WithMultiObjects = {
@@ -75,49 +74,65 @@ export type WithMultiObjects = {
 }
 
 export type FieldPointVectorWithMultiObjects<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>
-    > = FieldPointVector<Point, Container> & {
+    > = FieldPointVector<ElementType, Container> & {
     //TODO: this does not support dynamic indices
     [ItemObjValuesOffsetsKey]: Uint32Array
     [ItemObjIDsKey]: FieldPointVector<ObjIDsT, ObjIDsContainer>
 }
 
+export function field_point_vector_multi_objs_static_length<
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
+        Vector extends
+            FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> =
+            FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
+    >(
+        vector: Vector,
+        objIndices: IndicesTypedArray
+    ): Vector extends FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> ? number : undefined {
+    const vector_multiObj = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>vector
+    return <Vector extends FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> ? number : undefined>((ItemObjValuesOffsetsKey in vector_multiObj) ? sumIndexedDeltas(vector_multiObj[ItemObjValuesOffsetsKey], objIndices) : undefined)
+}
+
 export type FieldPointVectorWithMultiObjRoot<
-        VectorizedPoint extends FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray>,
+        ElementType extends FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray>,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         VectorizedRoot extends
-            FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<TypedArray>, ObjIDsT, ObjIDsContainer> =
-            FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<TypedArray>, ObjIDsT, ObjIDsContainer>
+            FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<NumberTypedArray>, ObjIDsT, ObjIDsContainer> =
+            FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<NumberTypedArray>, ObjIDsT, ObjIDsContainer>
     > = {
-    vectorized: FieldPointVector<VectorizedPoint, Container>
+    vectorized: FieldPointVector<ElementType, Container>
     vectorizedRoot: VectorizedRoot
 }
 
 export function field_point_vectorized_new<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>
     >(
-        type: FieldPointType<Point>,
+        type: FieldPointType<ElementType>,
         length: number,
-        isDynamic?: IsDynamicVector<Point, Container>,
-        objectValuesStaticLength?: IsDynamicVector<Point, Container> extends false ? IsDynamicVectorContainer<ObjIDsContainer> extends false ? number : never : never,
-        value?: Point
-    ): FieldPointVector<Point, Container> {
+        isDynamic?: IsDynamicVector<ElementType, Container>,
+        objectValuesStaticLength?: IsDynamicVector<ElementType, Container> extends false ? IsDynamicVectorContainer<ObjIDsContainer> extends false ? number : never : never,
+        value?: ElementType
+    ): FieldPointVector<ElementType, Container> {
     if (type instanceof Function) {
-        const iterator = <PrimitiveFieldPointVectorIterator<FieldPointPrimitive, Container>><FieldPointVectorIterator<FieldPoint, Container>>vectorIterator<Point, Container, Objects, ObjIDsT>(type, isDynamic)
-        return <FieldPointMapped<Point, Container>>iterator.makeContainer(length, <FieldPointPrimitive | undefined>value)
+        const iterator = <PrimitiveFieldPointVectorIterator<FieldPointPrimitive, Container>><FieldPointVectorIterator<FieldPoint, Container>>vectorIterator<ElementType, Container, Objects, ObjIDsT>(type, isDynamic)
+        return <FieldPointMapped<ElementType, Container>>iterator.makeContainer(length, <FieldPointPrimitive | undefined>value)
     }
-    else if (MultiObjectsGroupedObjectsKey in type) 
-        return <FieldPointVector<Point, Container>>field_point_vectorized_new<
-                Point,
+    else if (MultiObjectsGroupedObjectsKey in type)
+        return <FieldPointVector<ElementType, Container>>field_point_vectorized_new<
+                ElementType,
                 IsDynamicVectorContainer<Container> extends true ?
                     FieldPointVectorContainerDynamic :
                     IsDynamicVectorContainer<ObjIDsContainer> extends true ?
@@ -146,26 +161,26 @@ export function field_point_vectorized_new<
             )
         }
 
-        return <FieldPointVector<Point, Container>>result
+        return <FieldPointVector<ElementType, Container>>result
     }
 }
 
 export function field_point_vectorized_multi_objects_new<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>
     >(
-        type: FieldPointType<Point>,
+        type: FieldPointType<ElementType>,
         length: number,
-        isDynamic?: IsDynamicVector<Point, Container>,
+        isDynamic?: IsDynamicVector<ElementType, Container>,
         objIDsType?: TypedArrayConstructor<number, ObjIDsT> | undefined,
-        objectValuesStaticLength?: IsDynamicVector<Point, Container> extends false ? IsDynamicVectorContainer<ObjIDsContainer> extends false ? number : never : never
-    ): FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer> {
-    const result = <FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>>field_point_vectorized_new(type, length, isDynamic, objectValuesStaticLength)
+        objectValuesStaticLength?: IsDynamicVector<ElementType, Container> extends false ? IsDynamicVectorContainer<ObjIDsContainer> extends false ? number : never : never
+    ): FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> {
+    const result = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>field_point_vectorized_new(type, length, isDynamic, objectValuesStaticLength)
 
     if (objIDsType) {
-        result[ItemObjIDsKey] = <FieldPointVector<ObjIDsT, ObjIDsContainer>>((isDynamic || (objectValuesStaticLength === undefined)) ? new TypedArrayList<ObjIDsT>(<any>objIDsType!) : new objIDsType(objectValuesStaticLength))
+        result[ItemObjIDsKey] = <FieldPointVector<ObjIDsT, ObjIDsContainer>>((isDynamic || (objectValuesStaticLength === undefined)) ? new TypedArrayList<number, ObjIDsT>(<any>objIDsType!) : new objIDsType(objectValuesStaticLength))
         result[ItemObjValuesOffsetsKey] = new Uint32Array(length).fill(invalidIndex(objIDsType))
     }
 
@@ -173,21 +188,21 @@ export function field_point_vectorized_multi_objects_new<
 }
 
 export function field_point_vector_multiObjs_count<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
     >(
-        src: FieldPointVector<Point, Container> | FieldPointVectorWithMultiObjects<Point, Container>,
+        src: FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container>,
         indices?: IndicesTypedArray
     ): number | undefined {
     if (indices === undefined)
-        return (<FieldPointVectorWithMultiObjects<Point, Container>>src)[ItemObjIDsKey]?.length
+        return (<FieldPointVectorWithMultiObjects<ElementType, Container>>src)[ItemObjIDsKey]?.length
     else {
-        const src_objOffsets = (<FieldPointVectorWithMultiObjects<Point, Container>>src)[ItemObjValuesOffsetsKey]
+        const src_objOffsets = (<FieldPointVectorWithMultiObjects<ElementType, Container>>src)[ItemObjValuesOffsetsKey]
         if (!src_objOffsets)
             throw new Error()
 
         let sum = 0
-        
+
         let src_index: number
         let src_objOffset_prev: number
         let src_objOffset_next: number
@@ -204,47 +219,47 @@ export function field_point_vector_multiObjs_count<
 }
 
 function field_point_vector_append_scattered_prelim<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
-        Vector extends FieldPointVector<Point, Container> | FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>
+        Vector extends FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
     >(
-        type: FieldPointType<Point>,
+        type: FieldPointType<ElementType>,
         src: Vector,
         scatter_src: Vector,
         /** scatter_indices[offset from end of src] = index in scatter_src */
         scatter_indices: IndicesTypedArray,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-    const isDynamic = isDynamicVector<Point, Container>(src)
+    const isDynamic = isDynamicVector<ElementType, Container>(src)
     const iterator = vectorIterator(type, isDynamic, multiObjectsIDs)
     const src_length = iterator.length(src, src)
     const final_length = src_length + scatter_indices.length
 
-    const objectValuesStaticLength_src = field_point_vector_multiObjs_count<Point, Container>(src)
-    const objectValuesStaticLength_scatter = field_point_vector_multiObjs_count<Point, Container>(scatter_src, scatter_indices)
+    const objectValuesStaticLength_src = field_point_vector_multiObjs_count<ElementType, Container>(src)
+    const objectValuesStaticLength_scatter = field_point_vector_multiObjs_count<ElementType, Container>(scatter_src, scatter_indices)
     if ((objectValuesStaticLength_src === undefined) !== (objectValuesStaticLength_scatter === undefined))
         throw new Error()
 
     const objectValuesStaticLength = ((objectValuesStaticLength_src !== undefined) && (objectValuesStaticLength_scatter !== undefined)) ? (objectValuesStaticLength_src + objectValuesStaticLength_scatter) : undefined
-    
+
     const isMultiObj = ItemObjIDsKey in (<FieldPointVectorWithMultiObjects>src)
     const dst = isMultiObj ?
         <Vector>field_point_vectorized_multi_objects_new(type, final_length, isDynamic, multiObjectsIDs!.IDsType, <any>(isDynamic ? undefined : objectValuesStaticLength)) :
         <Vector>field_point_vectorized_new(type, final_length, isDynamic)
-    
+
     if (isMultiObj) {
-        const dst_objIDs_container = (<FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>>dst)[ItemObjIDsKey]
+        const dst_objIDs_container = (<FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>dst)[ItemObjIDsKey]
         const dst_objIDs_dynamic = isDynamicVectorContainer(dst_objIDs_container)
         const dst_objOffsets = (<FieldPointVectorWithMultiObjects>dst)[ItemObjValuesOffsetsKey]
 
-        const src_objIDs_container = (<FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>>src)[ItemObjIDsKey]
+        const src_objIDs_container = (<FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>src)[ItemObjIDsKey]
         const src_objIDs_dynamic = isDynamicVectorContainer(src_objIDs_container)
         const src_objOffsets = (<FieldPointVectorWithMultiObjects>src)[ItemObjValuesOffsetsKey]
 
-        const scatter_objIDs_container = (<FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>>scatter_src)[ItemObjIDsKey]
+        const scatter_objIDs_container = (<FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>scatter_src)[ItemObjIDsKey]
         const scatter_objIDs_dynamic = isDynamicVectorContainer(scatter_objIDs_container)
         const scatter_objOffsets = (<FieldPointVectorWithMultiObjects>scatter_src)[ItemObjValuesOffsetsKey]
 
@@ -263,7 +278,7 @@ function field_point_vector_append_scattered_prelim<
                 const scatter_objOffset_next = scatter_objOffsets[scatter_src_index]
                 dst_objOffsets[dst_index] = scatter_objOffset_next - scatter_objOffset_prev
             }
-            
+
             for (let scatter_offset_index = 0; scatter_offset_index < scatter_indices.length; scatter_offset_index++) {
                 const dst_index = src_objOffsets.length + scatter_offset_index
                 const dst_objOffset_prev = dst_index === 0 ? 0 : dst_objOffsets[dst_index - 1]
@@ -288,14 +303,14 @@ function field_point_vector_append_scattered_prelim<
 }
 
 export function field_point_vector_append_scattered_separate<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
-        Vector extends FieldPointVector<Point, Container> | FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>
+        Vector extends FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
     >(
-        type: FieldPointType<Point>,
+        type: FieldPointType<ElementType>,
         src: Vector,
         scatter_src: Vector,
         /** scatter_indices[offset from end of src] = index in scatter_src */
@@ -308,7 +323,7 @@ export function field_point_vector_append_scattered_separate<
             final_length,
             dst,
         } = field_point_vector_append_scattered_prelim<
-                Point,
+                ElementType,
                 Container,
                 Objects,
                 ObjIDsT,
@@ -321,7 +336,7 @@ export function field_point_vector_append_scattered_separate<
                 scatter_indices,
                 multiObjectsIDs
             )
-    
+
     const copyIndices = new Uint32Array(src_length)
     for (let i = 0; i < copyIndices.length; i++) copyIndices[i] = i
     iterator.scatter(dst, dst, src, src, copyIndices)
@@ -335,14 +350,14 @@ export function field_point_vector_append_scattered_separate<
 }
 
 export function field_point_vector_append_scattered_same<
-        Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
-        Vector extends FieldPointVector<Point, Container> | FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>
+        Vector extends FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
     >(
-        type: FieldPointType<Point>,
+        type: FieldPointType<ElementType>,
         src: Vector,
         /** scatter_indices[offset from end of src] = index in src */
         scatter_indices: IndicesTypedArray,
@@ -354,7 +369,7 @@ export function field_point_vector_append_scattered_same<
             final_length,
             dst,
         } = field_point_vector_append_scattered_prelim<
-                Point,
+                ElementType,
                 Container,
                 Objects,
                 ObjIDsT,
@@ -367,7 +382,7 @@ export function field_point_vector_append_scattered_same<
                 scatter_indices,
                 multiObjectsIDs
             )
-    
+
     const final_scatter_indices = new (typedArrayConstructor(scatter_indices))(final_length)
     for (let i = 0; i < src_length; i++) final_scatter_indices[i] = i
     final_scatter_indices.subarray(src_length, final_scatter_indices.length).set(scatter_indices)

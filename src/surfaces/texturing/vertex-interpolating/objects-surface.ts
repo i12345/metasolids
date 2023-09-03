@@ -1,4 +1,4 @@
-import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, MultiObjectsIDsKey, WithMultiObjectsIDs, extract, MultiObjectsGroupedObjectsKey } from "../../../paradigm/trees/index.js";
+import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, MultiObjectsIDsKey, WithMultiObjectsIDs, extract, MultiObjectsGroupedObjectsKey, MultiObjectsMapped } from "../../../paradigm/trees/index.js";
 import { Field, FieldPoint, FieldPointType, MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
 import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
@@ -214,7 +214,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
     > implements
     Processor<
             SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
-                    IndicesT,    
+                    IndicesT,
                     SurfaceUVUnwrappingGroup,
                     Objects,
                     InterpolatingGroups,
@@ -239,7 +239,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
         public readonly surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup
     ) {
     }
-    
+
     init(context: SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                     SurfaceUVUnwrappingGroup,
                     Objects,
@@ -262,7 +262,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )]
-        
+
         const connections = {
             inputs: [
                 surfaceUVUnwrappingGroup.path,
@@ -303,7 +303,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                     SurfaceUVUnwrappingGroupKindsTemplate,
                     this.surfaceUVUnwrappingGroup
                 ))
-        
+
         const UVunwrapping = surfaceUVunwrappingGroup.get<SurfaceUVUnwrapping>(surface)
 
         const interpolatingGroups =
@@ -321,20 +321,20 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                     this.interpolatingGroupsKinds,
                     this.interpolatingGroups
                 )
-        
+
         type ObjIDsT = Uint32Array
         type InterpolatingValueType = { [MultiObjectsGroupedObjectsKey]: InterpolatingValue }
         type InterpolatingContainer = FieldPointVectorContainerStatic<NumberTypedArray>
         type InterpolatingVector = FieldPointVector<InterpolatingValueType, InterpolatingContainer>
 
         const multiObjectsIDs = (<WithMultiObjectsIDs><unknown>context)[MultiObjectsIDsKey]
-        
+
         for (const { group: interpolatingGroup, objects: { template } } of interpolatingGroups) {
             for (const objectRelativePath of objectValuePaths(template)) {
                 const objectPath = [...interpolatingGroup.path, ...objectRelativePath]
-                
+
                 const values_original = extract<InterpolatingVector>(surface.samples, objectPath)
-                
+
                 const values_UVunwrapped = field_point_vector_append_scattered_same<
                         InterpolatingValueType,
                         InterpolatingContainer,
@@ -348,8 +348,8 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                         UVunwrapping.duplicatedVerts,
                         multiObjectsIDs
                     )
-                
-                const texture = new VertexInterpolatingTexture<TextureLocation, InterpolatingValueType, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field)
+
+                const texture = new VertexInterpolatingTexture<TextureLocation, TextureLocation, TextureLocation, MultiObjectsMapped<Objects, InterpolatingValue>, InterpolatingValueType, InterpolatingValue, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field)
                 intract(surface, objectPath, texture)
             }
         }

@@ -58,15 +58,15 @@
 //  * A surface with value textures for objects that are also combined for each
 //  * value texture group, weighted using the influences group for all value
 //  * textures.
-//  * 
+//  *
 //  * The value texture location group does not have to be the value texture
 //  * groups; there is just one value texture location group but there can be many
 //  * value texture groups. The value texture group must be an objects texture
 //  * locations group.
-//  * 
+//  *
 //  * The final combined textures will each be in the space of the surface texture
 //  * location group.
-//  * 
+//  *
 //  * The combining textures, for each value texture group, are placed in the
 //  * `[MultiObjectsCombinedValue]` key of the root of each value texture group.
 //  */
@@ -262,7 +262,7 @@
 //         >
 //     > {
 //     private _dependencies!: PropertyPath[]
-    
+
 //     get dependencies() {
 //         return this._dependencies
 //     }
@@ -273,7 +273,7 @@
 //         public surfaceTextureLocationGroup?: SurfaceTextureLocationGroup,
 //         public valueTextureLocationGroup?: ValueTextureLocationGroup,
 //     ) { }
-    
+
 //     init(context: SurfaceProcessingContextWithObjectsTexturesCombinedUsingSharedSampleTextureLocation<
 //             SurfaceTextureLocationGroup,
 //             Objects,
@@ -296,13 +296,13 @@
 //             MultiObjectsInfluencesGroupKindsTemplate,
 //             this.influenceGroup
 //         )).group
-        
+
 //         const surfaceTextureLocationGroup = onlyOne(groupKinds(
 //             context.samples,
 //             SurfaceIndividualTextureLocationsGroupKindsTemplate,
 //             this.surfaceTextureLocationGroup
 //         )).group
-        
+
 //         const valueTextureLocationGroups = onlyOne(groupKinds(
 //             context.samples,
 //             SurfaceObjectsTextureLocationsGroupKindsTemplate,
@@ -314,7 +314,7 @@
 //             surfaceTextureLocationGroup.path,
 //             valueTextureLocationGroups.path,
 //         ]
-        
+
 //         this._dependencies = [
 //             ...sampleDependencies.map(path => ['samples', PROPERTYKEY_ALL, ...path]),
 //             ...valueTextureGroups.map(({ group: { path } }) => path)
@@ -352,7 +352,7 @@
 //             SurfaceIndividualTextureLocationsGroupKindsTemplate,
 //             this.surfaceTextureLocationGroup
 //         )).group
-        
+
 //         const surfaceTextureLocations = surface.samples.map(sample =>
 //             surfaceTextureLocationGroup.get<SurfaceTextureLocationT>(sample))
 //         const UVs = surfaceTextureLocations.map(location => location.uv)
@@ -378,7 +378,7 @@
 //             SurfaceObjectsTextureLocationsGroupKindsTemplate,
 //             this.valueTextureLocationGroup
 //         )).group
-        
+
 //         for (const { group, objects: { value, template } } of valueTextureGroups) {
 //             const locations = surface.samples.map((sample: SurfaceSampleWithObjectsTextureLocations<Objects, ValueTextureLocationGroup, ValueTextureLocationT>) =>
 //                 valueTextureLocationGroup.get<ObjectsTextureLocationsTextureSample<Objects, ValueTextureLocationT>>(sample))

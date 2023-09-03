@@ -530,9 +530,9 @@ export class OctTreeSubdividingProcessor<
                         >
                 >
             ) => ProcessingPair<SubdivisionProcessingT, SubdivisionProcessingContextT> =
-            subdivision => subdivision as ProcessingPair<SubdivisionProcessingT, SubdivisionProcessingContextT> 
+            subdivision => subdivision as ProcessingPair<SubdivisionProcessingT, SubdivisionProcessingContextT>
     ) { }
-    
+
     init(context: SubdividingProcessingContextT): ProcessorInitialization {
         type ContextPrivateT = OctTreeSubdividingProcessingContextPrivate<
             IndicesT,
@@ -543,7 +543,7 @@ export class OctTreeSubdividingProcessor<
             SubdividingProcessingT,
             SubdividingProcessingContextT
         >
-            
+
         const context_private = context as unknown as ContextPrivateT
 
         const graph = new GraphProcessor(this.processors)
@@ -553,7 +553,7 @@ export class OctTreeSubdividingProcessor<
         }
 
         const initialization = graph.init(context)
-        
+
         return {
             ...initialization,
             connections: {
@@ -579,16 +579,15 @@ export class OctTreeSubdividingProcessor<
 
         const context_private = context as unknown as ContextPrivateT
         const graph = context_private[OctTreeSubdividingProcessorPrivateKey].graph
-        
+
         const settings = context[SubdivisionKey]
 
         const octtree_groups = [...groupKinds(context, OctTreeSubdividingGroupsKindTemplate)].map(({ group }) => group)
-        
+
         const subdivision_advice_recommendation = new TypedArrayOctTree<SubdivisionAdviceT, SubdivisionAdviceLayer>(SubdivisionAdviceLayerConstructor)
 
         const subdivision_advice: SubdivisionAdviceOctTrees = {
             recommendation: subdivision_advice_recommendation,
-            // regret: new TypedArrayOctTree(Uint8Array),
         }
 
         const subdivision_references = new SubdivisionReferences<IndicesT>(settings.indicesType as any)
@@ -602,7 +601,7 @@ export class OctTreeSubdividingProcessor<
                 OctTreesGrouped,
                 SubdividingProcessingT
             >
-        
+
         type PreSubdivisionProcessingContextT = OctTreeSubdivisionProcessingContextForSubdividingProcessing<
                 IndicesT,
                 Groups,
@@ -615,7 +614,7 @@ export class OctTreeSubdividingProcessor<
         type ProxyGroups = {
             [SubdivisionKey]: MultiObjectsGroupsTemplateLeaf
         } & Groups
-        
+
         const proxyGroupsTemplate = groupsFromPaths<ProxyGroups>([
             [SubdivisionKey],
             ...octtree_groups.map(({ path }) => path)
@@ -626,7 +625,7 @@ export class OctTreeSubdividingProcessor<
             context as any,
             item
         ) as any as PreSubdivisionProcessingContextT
-        
+
         const subdivision_processing_overwriting = {
             [SubdivisionKey]: subdivision_advice
         } as OctTreeSubdivisionProcessing<Groups, TGrouped, LayersGrouped>
@@ -645,7 +644,7 @@ export class OctTreeSubdividingProcessor<
 
         for (let depth = 0; depth < settings.max_depth; depth++) {
             subdivision_advice_recommendation.subdivide(subdivision_references.layer_sizes.at(-1)!)
-            
+
             for (const octtree_group of octtree_groups)
                 octtree_group.delete(subdivision_processing)
 

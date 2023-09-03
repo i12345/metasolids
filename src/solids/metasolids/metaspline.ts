@@ -92,7 +92,7 @@ class MetaSpline<
         ) {
         if (index === 0)
             return undefined
-        
+
         const segment = this.segments[index]
         const canResultOutOfBounds = index === 1 || index === this.segments.length - 1
         p = segment.transform_relative_root.transformPoint(p)
@@ -128,15 +128,15 @@ class MetaSpline<
             do {
                 mid = (low + high) / 2
                 cmp = transform_interpolate(mid);
-                
+
                 // Too low.
                 if (cmp.distance < 0.0)
                     low = mid;
-          
+
                 // Too high.
                 else if (cmp.distance > 0.0)
                     high = mid;
-          
+
                 // Key found.
                 else
                     return { ...cmp, t: mid, outOfBounds: false }
@@ -224,14 +224,14 @@ export class MetaSplineSegment<
         >
     > {
     field!: Field<Sample>
-    
+
     //TODO: let there be multiple figures with different times for a single SplineSegment
     constructor(
         public figure: MetaSplineSegmentFigure<Location, Sample>,
         public t_offset: number = 1
     ) {
     }
-    
+
     private readonly spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>[] = []
     private spline?: MetaSpline<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>
     private spline_segment_index!: number
@@ -247,9 +247,9 @@ export class MetaSplineSegment<
     init(context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>): void {
         this.spline_potential.splice(0, this.spline_potential.length)
         this.init_figure(context)
-        
+
         // find parent to connect with
-        const parent = this.init_spline_find_parent_segment(context[MetaSolidSamplingContext_Volume] as any) 
+        const parent = this.init_spline_find_parent_segment(context[MetaSolidSamplingContext_Volume] as any)
         if (!parent) {
             this.spline_segment_index = 0
             this.t = 0
@@ -266,7 +266,7 @@ export class MetaSplineSegment<
             this.transform_relative_root_inv.copy(this.transform_relative_root).invert()
             this.init_spline_potential(new MetaSpline([...(parent.segment.spline?.segments ?? [parent.segment]), this]), context)
         }
-        
+
         this.field = FieldsField.merge<Sample>(
             (this.figure.field as FieldsField<MetaSplineSegmentFigureSample<Sample>>) as FieldsField<Sample>,
             MetaSolidVolume.defaultFields.sample as FieldsField<Sample>
@@ -288,7 +288,6 @@ export class MetaSplineSegment<
 
     private init_spline_find_parent_segment(
             context: EncapsulatingDomainSamplingContext<Location, Sample>,
-            // searching_for_parent: boolean = false,
             transform_to_parent: Mat4 = new Mat4().setIdentity()
         ): {
             segment: MetaSplineSegment<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
@@ -297,49 +296,37 @@ export class MetaSplineSegment<
         //TODO: consider this method
         if (!context[EncapsulatingDomainSamplingContextParentDomain])
             return undefined
-        
-        if (context[EncapsulatingDomainSamplingContextParentDomain] instanceof MultiObjectsVolume) {
-            const parent = context[EncapsulatingDomainSamplingContextParentDomain] as any as MultiObjectsVolume
-            // if (!searching_for_parent) {
-            //     return this.init_spline_find_parent_segment(
-            //         context[EncapsulatingDomainSamplingContextParentContext] as any,
-            //         true,
-            //         transform_to_parent
-            //     )
-            // }
-            // else {
-                const main_metasolid = (parent.children["$$main"] as any as MetaSolidVolume)?.shape
-                
-                if (main_metasolid && main_metasolid instanceof MetaSplineSegment && main_metasolid !== this) {
-                    const segment = main_metasolid as MetaSplineSegment<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>
 
-                    return {
-                        segment,
-                        transform_to_parent
-                    }
+        if (context[EncapsulatingDomainSamplingContextParentDomain] instanceof MultiObjectsVolume) {
+            const parent = context[EncapsulatingDomainSamplingContextParentDomain] as any as MultiObjectsVolume            
+            const main_metasolid = (parent.children["$$main"] as any as MetaSolidVolume)?.shape
+
+            if (main_metasolid && main_metasolid instanceof MetaSplineSegment && main_metasolid !== this) {
+                const segment = main_metasolid as MetaSplineSegment<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>
+
+                return {
+                    segment,
+                    transform_to_parent
                 }
-                else {
-                    return this.init_spline_find_parent_segment(
-                        context[EncapsulatingDomainSamplingContextParentContext] as any,
-                        // true,
-                        transform_to_parent
-                    )
-                }
-            // }
+            }
+            else {
+                return this.init_spline_find_parent_segment(
+                    context[EncapsulatingDomainSamplingContextParentContext] as any,
+                    transform_to_parent
+                )
+            }
         }
         else if (context[EncapsulatingDomainSamplingContextParentDomain] instanceof TransformVolume) {
             const volume = context[EncapsulatingDomainSamplingContextParentDomain] as any as TransformVolume
 
             return this.init_spline_find_parent_segment(
                 context[EncapsulatingDomainSamplingContextParentContext] as any,
-                // searching_for_parent,
                 new Mat4().mul2(volume.transform, transform_to_parent)
             )
         }
-        
+
         return this.init_spline_find_parent_segment(
             context[EncapsulatingDomainSamplingContextParentContext] as any,
-            // searching_for_parent,
             transform_to_parent
         )
     }
@@ -356,7 +343,7 @@ export class MetaSplineSegment<
             let longest = paths[0]
             let longest_i = 0
             let prev_longest_i = -1
-            
+
             for (let i = 1; i < paths.length; i++) {
                 if (paths[i].length <= longest.length)
                     return prev_longest_i
@@ -375,7 +362,7 @@ export class MetaSplineSegment<
 
             if (this.spline_segment_index > 0)
                 this.spline.segments[this.spline_segment_index - 1].init_spline_potential(this.spline, context)
-            
+
             this.init_bounding_box(context)
         }
     }
@@ -390,8 +377,6 @@ export class MetaSplineSegment<
         const segment_last = this.spline_segment_index === this.spline!.segments.length - 1
 
         const texture = context[MetaSolidSamplingContext_Texture].item
-
-        // const meshingSettings = (context[MetaSolidSamplingContext_Volume] as unknown as meshing.VolumeSurfaceMeshingProcessingContext)[meshing.VolumeSurfaceMeshingKey].settings ?? meshing.defaultMeshingSettings
 
         const t0 = this.spline!.segments[this.spline_segment_index - 1].t
 
@@ -419,7 +404,6 @@ export class MetaSplineSegment<
                 const theta = theta_i * TwoPi / resolution.theta
                 const uv = this.uv(t, theta, phi)
 
-                // const v = new Vec3().add2(
                 v.add2(
                     m.getX().mulScalar(cos_phi * Math.cos(theta)),
                     m.getY().mulScalar(cos_phi * Math.sin(theta))
@@ -429,7 +413,7 @@ export class MetaSplineSegment<
                 const texture_sample = texture?.sample(texture_location, context[MetaSolidSamplingContext_Texture].context)
 
                 const figure_sample = this.spline!.figureSample(t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
-                
+
                 const parameters = MetaSolidVolume.combineParameters(
                     (texture_sample ?? MetaSolidVolume.defaultParameters) as FieldsPointOptional<MetaSolidParametersIn>,
                     (figure_sample ?? MetaSolidVolume.defaultParameters) as FieldsPointOptional<MetaSolidParametersIn>
@@ -466,7 +450,7 @@ export class MetaSplineSegment<
         /* if (segment_first) */ {
             const t = t0
             const m = new Mat4().mul2(this.transform_relative_root_inv, this.spline!.planeAt(t))
-            
+
             for (let phi_i = 1; phi_i <= resolution.phi; phi_i++)
                 sample_theta(t, m, phi_i * -PiOver2 / resolution.phi, phi_i === resolution.phi)
         }
@@ -474,7 +458,7 @@ export class MetaSplineSegment<
         /* if (segment_last) */ {
             const t = this.t
             const m = new Mat4().mul2(this.transform_relative_root_inv, this.spline!.planeAt(t))
-            
+
             for (let phi_i = 1; phi_i <= resolution.phi; phi_i++)
                 sample_theta(t, m, phi_i * PiOver2 / resolution.phi, phi_i === resolution.phi)
         }
@@ -508,16 +492,16 @@ export class MetaSplineSegment<
         // is that how transparency should be processed?
         if (this.spline_segment_index === 0)
             return undefined!
-        
+
         const location_extra = extraFields<MetaSolidLocation, Location>(location, { p: true })
 
         const plane_sample = this.spline!.intersectingPlane(location.p, this.spline_segment_index)
         if (!plane_sample) return undefined!
-        
+
         const { t, r, theta, phi, v } = plane_sample
         const figure_sample = this.spline!.figureSample(t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
         const uv = this.uv(t, theta, phi)
-        
+
         const shape_sample = {
             ...figure_sample,
             distance: r,

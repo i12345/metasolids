@@ -7,7 +7,7 @@ export class Ratio3Field implements Field<Vec3> {
     readonly interpolationType = new Ratio3InterpolationType()
 
     readonly elementType = Vec3
-    
+
     constructor(public readonly fuseMode: PrimitiveFuseMode<Vec3> = <PrimitiveFuseMode<Vec3>>fuseModes.ArithmeticPrimitiveFuseMode.multiply) { }
 
     distance(x: Vec3, y: Vec3): number {

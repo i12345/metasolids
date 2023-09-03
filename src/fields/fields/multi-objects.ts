@@ -18,16 +18,16 @@ export class MultiObjectsField<
         Point
     > {
     readonly interpolationType = new MultiObjectsInterpolationType<Objects, ObjIDsT, Point>(this.inner.interpolationType, this.multiObjectsIDs)
-    
+
     readonly elementType = <FieldPointType<MultiObjectsFieldPointElement<Point>>>{ [MultiObjectsGroupedObjectsKey]: this.inner.elementType }
-    
+
     readonly fuseMode = this.inner.fuseMode
 
     constructor(
         public readonly inner: Field<Point>,
         public readonly multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
     ) { }
-    
+
     distance(
             x: MultiObjectsMapped<Objects, Point>,
             y: MultiObjectsMapped<Objects, Point>

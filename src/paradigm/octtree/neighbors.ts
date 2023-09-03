@@ -63,9 +63,9 @@
 //         diagonal: new OctTreeReferences(this.subdivision.typedArray),
 //         triagonal: new OctTreeReferences(this.subdivision.typedArray)
 //     }
-    
+
 //     constructor(public readonly subdivision: SubdivisionReferences<IndicesT>) {
-        
+
 //     }
 
 //     adjacent(adjacent_direction: AdjacentDirection): LayerLocalIndex {
@@ -76,11 +76,11 @@
 //             axis0: Axis, axis1: Axis,
 //             direction0: Direction, direction1: Direction
 //         ): LayerLocalIndex {
-        
+
 //     }
-    
+
 //     subdivide(newVoxels: number): OctTreeNeighborsOctTreeLayersGrouped<IndicesT> {
-        
+
 //     }
 // }
 export { }

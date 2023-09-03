@@ -1,9 +1,8 @@
-import { arrayCopy } from "../paradigm/trees/array-copy.js";
 import { TypedArray, TypedArrayConstructor } from "./typed-array.js";
 
 export class TypedArrayList<
-        TypedArrayT extends TypedArray = TypedArray,
-        T extends number | bigint = number
+        T extends number | bigint = number,
+        TypedArrayT extends TypedArray<T> = TypedArray<T>,
     > {
     private readonly blocks: TypedArrayT[] = []
     private _length: number = 0
@@ -34,7 +33,7 @@ export class TypedArrayList<
                 const excess = capacity - this._capacity
                 const currentBlock = this.blocks[this.blocks.length - 1]
                 const remove = Math.min(excess, currentBlock.length)
-                
+
                 if (remove === currentBlock.length)
                     this.blocks.splice(this.blocks.length - 1, 1)
                 else
@@ -107,7 +106,7 @@ export class TypedArrayList<
     }
 
     clone() {
-        const result = new TypedArrayList<TypedArrayT, T>(this.type, 0, this.defaultBlockSize)
+        const result = new TypedArrayList<T, TypedArrayT>(this.type, 0, this.defaultBlockSize)
         const array = this.arrayView(false)
         result.blocks.push(array)
         result._capacity = result._length = array.length
@@ -117,7 +116,7 @@ export class TypedArrayList<
     arrayView(canReferenceForSingleBlock: boolean = true): TypedArrayT {
         if (canReferenceForSingleBlock && this.blocks.length === 1)
             return this.blocks[0]
-        
+
         const result = <TypedArrayT>new this.type(this.length)
         let offset = 0
         for (const block of this.blocks) {

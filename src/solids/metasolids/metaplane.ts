@@ -17,7 +17,7 @@ export class MetaPlane<
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
         Sample extends MetaPlaneSample = MetaPlaneSample,
-        OuterSampleProcessingContextT = any,    
+        OuterSampleProcessingContextT = any,
         TextureContext extends
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
@@ -55,13 +55,13 @@ export class MetaPlane<
                 size: new Vec2(2, 2)
             }
         ) { }
-    
+
     init(context: Context): void {
         const texture = context[MetaSolidSamplingContext_Texture]?.item
 
         const xy_offset = this.maxDomain.offset
         const xy_size = this.maxDomain.size
-        
+
         const resolution = 32
 
         const hints_surface = new Float32Array(2 * 3 * (resolution ** 2))
@@ -76,7 +76,7 @@ export class MetaPlane<
             for (let y = 0; y < resolution; y++) {
                 uv.set(x, y).divScalar(resolution)
                 p.copy(uv).mul(xy_size).add(xy_offset)
-                
+
                 const texture_sample = texture?.sample({ uv } as MetaSolidTxLocation<Location, TxLocation>, context[MetaSolidSamplingContext_Texture].context)
                 const parameters = MetaSolidVolume.combineParameters((texture_sample ?? MetaSolidVolume.defaultParameters) as FieldsPointOptional<MetaSolidParametersIn>)
                 const parameters_valid = MetaSolidVolume.parametersValid(parameters)
@@ -103,7 +103,7 @@ export class MetaPlane<
                 }
             }
         }
-        
+
         if (hints_surface_offset > 0) {
             this.boundingBox.compute(hints_surface, hints_surface_offset)
 
@@ -121,7 +121,7 @@ export class MetaPlane<
         const side = Math.sign(location.p.z) as Sign
         const gradient = new Vec3(0, 0, side)
         const distance = Math.abs(location.p.z)
-        
+
         const uv = new Vec2(
             ((location.p.x - this.boundingBox.center.x) / this.boundingBox.halfExtents.x) + 0.5,
             ((location.p.y - this.boundingBox.center.y) / this.boundingBox.halfExtents.y) + 0.5

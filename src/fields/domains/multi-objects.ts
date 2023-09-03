@@ -1,16 +1,16 @@
-import { GeneratorType, IndicesTypedArray, Reflect_entries, Reflect_fromEntries } from "../../utils/index.js"
+import { GeneratorType, IndicesTypedArray, Reflect_entries, Reflect_fromEntries, addDeltas } from "../../utils/index.js"
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { makeInterpolator } from "../interpolation.js"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDsKey, extract, PropertyPath, intract, WithMultiObjectsIDs } from "../../paradigm/trees/index.js"
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDsKey, extract, PropertyPath, intract, WithMultiObjectsIDs, MultiObjectsGroupedObjectsAndRegularValuesType, MultiObjectsGroupsOverwritten } from "../../paradigm/trees/index.js"
 import { FieldPoint, FieldPointMapped, FieldsPoint, field_point_map, fields_point_map } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
 import { vectorized } from "vectorized-functions"
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../vectorized/point.js"
 import { FieldPointWithMultiObjectPath, FuseMode, FusingFieldPointVectorWithMultiObjects, fusePoints, fuseVectors, fuse_mode_contains, fuse_mode_equal } from "../vectorized/index.js"
 import { FusedVectorSamplingContext, FusingVectorSampleDomain, fusingVectorSampling } from "./fusing.js"
-import { VectorSampleDomain, VectorSampleFunction } from "./vector.js"
+import { VectorSampleDomain, VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "./vector.js"
 import { ArithmeticPrimitiveFuseMode, ArithmeticPrimitiveFuseModeOp } from "../vectorized/fuse-modes/arithmetic.js"
 import { MultiObjectsField } from "../fields/multi-objects.js"
 import { FieldPointType, field_point_type_contains } from "../type.js"
@@ -27,15 +27,31 @@ export const MultiObjectsDomainInternalPreservedGroupsKindsTemplate: MultiObject
 
 export const MultiObjectsSamplingContextParent = Symbol("parent")
 
+export type MultiObjectsLeafSample<
+        SampleGroups extends MultiObjectsGroupsTemplate
+    > = MultiObjectsGroupsMapped<SampleGroups, FieldPoint>
+
 export type MultiObjectsSample<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        LeafSample extends
-            MultiObjectsGroupsMapped<Groups, FieldPoint> =
-            MultiObjectsGroupsMapped<Groups, FieldPoint>
-    > = 
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>
+    > =
     FieldsPoint &
-    MultiObjectsGroupedObjectsAndRegularValues<Objects, Groups, LeafSample>
+    MultiObjectsGroupedObjectsAndRegularValues<Objects, SampleGroups, LeafSample>
+
+export type MultiObjectsSampleElementType<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>
+    > =
+    MultiObjectsGroupedObjectsAndRegularValuesType<Objects, SampleGroups, LeafSample>
+
+export type MultiObjectsSampleFuseMode<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>
+    > =
+    LeafSample
 
 // let objects: { a: typeof MultiObjectsTemplate_Leaf, b: typeof MultiObjectsTemplate_Leaf }
 // let groups: { texture: typeof MultiObjectsGroupsTemplate_Leaf }
@@ -53,52 +69,170 @@ export const FusedSamplingNonfusedSamples = Symbol("fused-sampling-nonfused-samp
 
 export type MultiObjectsSamplingContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        GroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
+        ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ContextGroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LeafContext extends
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any> =
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any>
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>
     > =
-    SamplingContext<Location> &
+    SamplingContext<Location, LocationElementType, LocationFuseMode> &
     // MultiObjectsGroupsOmitted<Groups, LeafContext> &
-    MultiObjectsGroupedObjectsAndRegularValues<Objects, Groups, MultiObjectsGroupsFiltered<Groups, LeafContext>> &
-    MultiObjectsGroupsProcessingContext<Groups, GroupKinds>
+    MultiObjectsGroupsOverwritten<ContextGroups, LeafContext, {}> &
+    MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, MultiObjectsGroupsFiltered<ContextGroups, LeafContext>> &
+    MultiObjectsGroupsProcessingContext<ContextGroups, ContextGroupKinds>
 
-export type MultiObjectsFusedVectorSamplingContext<
+export type MultiObjectsVectorSamplingContext<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Sample extends FieldPoint = FieldPoint,
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+        SingularContext extends SamplingContext<Location, LocationElementType, LocationFuseMode> = SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        LeafSampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    LeafSample,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    LeafSample,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 >,
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        GroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
+        SampleVector extends
+            FieldPointVectorWithMultiObjects<
+                    MultiObjectsSampleElementType<
+                            Objects,
+                            SampleGroups,
+                            LeafSample
+                        >,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                > =
+            FieldPointVectorWithMultiObjects<
+                    MultiObjectsSampleElementType<
+                            Objects,
+                            SampleGroups,
+                            LeafSample
+                        >,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                >,
+        ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ContextGroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
         LeafContext extends
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any> =
-            SamplingContext<Location> & MultiObjectsGroupsMapped<Groups, any>,
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
     > =
-    MultiObjectsSamplingContext<Objects, Groups, GroupKinds, Location, LeafContext> &
+    MultiObjectsSamplingContext<
+            Objects,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LeafContext
+        > &
+    VectorSamplingContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
+            SampleContainer,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            SingularContext,
+            LocationVector,
+            SampleVector
+        >
+
+export type MultiObjectsFusedVectorSamplingContext<
+        Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
+        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>,
+        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        SingularContext extends SamplingContext<Location, LocationElementType, LocationFuseMode> = SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        LeafSampleVector extends
+            FieldPointVectorWithMultiObjects<
+                    LeafSample,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                > =
+            FieldPointVectorWithMultiObjects<
+                    LeafSample,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                >,
+        SampleVector extends
+            FieldPointVectorWithMultiObjects<
+                    MultiObjectsSampleElementType<
+                            Objects,
+                            SampleGroups,
+                            LeafSample
+                        >,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                > =
+            FieldPointVectorWithMultiObjects<
+                    MultiObjectsSampleElementType<
+                            Objects,
+                            SampleGroups,
+                            LeafSample
+                        >,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                >,
+        ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ContextGroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
+        LeafContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
+    > =
+    MultiObjectsSamplingContext<
+            Objects,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LeafContext
+        > &
     FusedVectorSamplingContext<
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
-            Sample,
+            MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
             SampleContainer,
             Objects,
             ObjIDsT,
@@ -124,7 +258,7 @@ export type MultiObjectsFusedVectorSamplingContext<
 // multiObjectsContext.texture.a // string
 
 export type MultiObjectsLeafContext<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -136,27 +270,35 @@ export type MultiObjectsLeafContext<
             MultiObjectsDomainInternalPreservedGroupsKinds =
             MultiObjectsDomainInternalPreservedGroupsKinds,
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        LeafSample extends
-            MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
-            MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         LeafContext extends
-            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
-            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
         LeafDomain extends
             SampleDomain<
                 Location,
                 LeafSample,
-                LeafContext // MultiObjectsLeafContext<Objects, Groups, GroupKinds, Location, LeafSample, LeafContext>
+                LocationElementType,
+                LocationFuseMode,
+                LeafSample,
+                LeafSample,
+                LeafContext
             > =
             SampleDomain<
                 Location,
                 LeafSample,
-                LeafContext // MultiObjectsLeafContext<Objects, Groups, GroupKinds, Location, LeafSample, LeafContext>
+                LocationElementType,
+                LocationFuseMode,
+                LeafSample,
+                LeafSample,
+                LeafContext
             >,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        LeafSampleVector extends
             FieldPointVectorWithMultiObjects<
                     LeafSample,
                     SampleContainer,
@@ -172,9 +314,24 @@ export type MultiObjectsLeafContext<
     > =
     LeafContext &
     EncapsulatingDomainSamplingContext<
-        Location, Location,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
         MultiObjectsSample<Objects, SampleGroups, LeafSample>,
-        MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
+        MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+        MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
+        MultiObjectsSamplingContext<
+            Objects,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LeafContext
+        >
     > &
     {
         [MultiObjectsSamplingContextParent]: {
@@ -187,31 +344,116 @@ export type MultiObjectsLeafContext<
                 ContextGroups,
                 ContextGroupKinds,
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 LeafSample,
                 SampleContainer,
                 LeafContext,
                 LeafDomain
             >,
-            // context: MultiObjectsGroupsOmitted<
-            //     ContextGroups,
-            //     MultiObjectsSamplingContext<
-            //         Objects,
-            //         ContextGroups,
-            //         ContextGroupKinds,
-            //         Location,
-            //         LeafContext
-            //     >
-            // >
             context: MultiObjectsSamplingContext<
                     Objects,
                     ContextGroups,
                     ContextGroupKinds,
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LeafContext
                 >
         }
     }
+
+export type MultiObjectsLeafVectorSamplingContext<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        SampleGroupKinds extends
+            MultiObjectsDomainInternalPreservedGroupsKinds =
+            MultiObjectsDomainInternalPreservedGroupsKinds,
+        ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        ContextGroupKinds extends
+            MultiObjectsDomainInternalPreservedGroupsKinds =
+            MultiObjectsDomainInternalPreservedGroupsKinds,
+        Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
+        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>,
+        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LeafContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
+        LeafDomain extends
+            SampleDomain<
+                Location,
+                LeafSample,
+                LocationElementType,
+                LocationFuseMode,
+                LeafSample,
+                LeafSample,
+                LeafContext
+            > =
+            SampleDomain<
+                Location,
+                LeafSample,
+                LocationElementType,
+                LocationFuseMode,
+                LeafSample,
+                LeafSample,
+                LeafContext
+            >,
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        LeafSampleVector extends
+            FieldPointVectorWithMultiObjects<
+                    LeafSample,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                > =
+            FieldPointVectorWithMultiObjects<
+                    LeafSample,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                >,
+    > =
+    MultiObjectsLeafContext<
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            SampleGroups,
+            SampleGroupKinds,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            LeafSample,
+            SampleContainer,
+            LeafContext,
+            LeafDomain,
+            LocationVector,
+            LeafSampleVector
+        > &
+    VectorSamplingContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            LeafSample,
+            LeafSample,
+            LeafSample,
+            SampleContainer,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LeafContext,
+            LocationVector,
+            LeafSampleVector
+        >
 
 // let trueLeafContext: MultiObjectsLeafContext<
 //     typeof objects,
@@ -238,17 +480,21 @@ export class MultiObjectsSampleDomain<
             MultiObjectsDomainInternalPreservedGroupsKinds =
             MultiObjectsDomainInternalPreservedGroupsKinds,
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        LeafSample extends
-            MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
-            MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
+        LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         LeafContext extends
-            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
-            SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
         LeafDomain extends
             SampleDomain<
                     Location,
+                    LeafSample,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LeafSample,
                     LeafSample,
                     MultiObjectsLeafContext<
                             Objects,
@@ -259,6 +505,8 @@ export class MultiObjectsSampleDomain<
                             ContextGroups,
                             ContextGroupKinds,
                             Location,
+                            LocationElementType,
+                            LocationFuseMode,
                             LocationContainer,
                             LeafSample,
                             SampleContainer,
@@ -268,6 +516,10 @@ export class MultiObjectsSampleDomain<
             SampleDomain<
                     Location,
                     LeafSample,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LeafSample,
+                    LeafSample,
                     MultiObjectsLeafContext<
                             Objects,
                             ObjIDsT,
@@ -277,26 +529,56 @@ export class MultiObjectsSampleDomain<
                             ContextGroups,
                             ContextGroupKinds,
                             Location,
+                            LocationElementType,
+                            LocationFuseMode,
                             LocationContainer,
                             LeafSample,
                             SampleContainer,
                             LeafContext
                         >
                 >,
-        Sample extends
-            MultiObjectsSample<Objects, SampleGroups, LeafSample> =
-            MultiObjectsSample<Objects, SampleGroups, LeafSample>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+        SingularContext extends
+            MultiObjectsSamplingContext<
+                    Objects,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LeafContext
+                > =
+            MultiObjectsSamplingContext<
+                    Objects,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LeafContext
+                >,
+        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        LeafSampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    LeafSample,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    LeafSample,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                >,
+        SampleVector extends
+            FieldPointVectorWithMultiObjects<
+                    MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                    SampleContainer,
+                    ObjIDsT,
+                    ObjIDsContainer
+                > =
+            FieldPointVectorWithMultiObjects<
+                    MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -304,35 +586,51 @@ export class MultiObjectsSampleDomain<
     > implements
     FusingVectorSampleDomain<
         Location,
+        LocationElementType,
+        LocationFuseMode,
         LocationContainer,
-        Sample,
+        MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+        MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+        MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
         SampleContainer,
         Objects,
         ObjIDsT,
         ObjIDsContainer,
+        SingularContext,
+        LocationVector,
+        SampleVector,
         MultiObjectsFusedVectorSamplingContext<
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
-            Sample,
+            SampleGroups,
+            LeafSample,
             SampleContainer,
             Objects,
             ObjIDsT,
             ObjIDsContainer,
             SingularContext,
             LocationVector,
+            LeafSampleVector,
             SampleVector,
             ContextGroups,
             ContextGroupKinds,
             LeafContext
         >
     > {
-    field!: Field<Sample>
+    field!: Field<
+            MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>
+        >
+
     private groupsMemoized!: {
         context: GeneratorType<ReturnType<typeof groupKinds>>[]
         sample: GeneratorType<ReturnType<typeof groupKinds>>[]
     }
 
-    private childrenFieldTypes!: Record<keyof Objects, "child" | "result">
+    private childrenFieldTypes!: Record<keyof Objects, "leaf" | "stem">
 
     constructor(
         public children: { [Object in keyof Objects]: LeafDomain },
@@ -355,8 +653,8 @@ export class MultiObjectsSampleDomain<
                 groupKindsTemplate: MultiObjectsDomainInternalPreservedGroupsKindsTemplate as SampleGroupKinds
             }
         },
-        public readonly fuseMode: FuseMode<Sample> | undefined,
-        public readonly childField: Field<LeafSample>
+        public readonly childField: Field<LeafSample>,
+        public readonly fuseMode?: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>,
     ) { }
 
     isCompositeArithmetic(...ops: ArithmeticPrimitiveFuseModeOp[]): boolean {
@@ -391,15 +689,21 @@ export class MultiObjectsSampleDomain<
                 MultiObjectsDomainInternalPreservedGroupsKinds =
                 MultiObjectsDomainInternalPreservedGroupsKinds,
             Location extends FieldPoint = FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
             LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
             Sample extends FieldPoint = FieldPoint,
             SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
             LeafContext extends
-                SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
-                SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
+                SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+                SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
             LeafDomain extends
                 SampleDomain<
                         Location,
+                        Sample,
+                        LocationElementType,
+                        LocationFuseMode,
+                        Sample,
                         Sample,
                         MultiObjectsLeafContext<
                                 Objects,
@@ -410,6 +714,8 @@ export class MultiObjectsSampleDomain<
                                 ContextGroups,
                                 ContextGroupKinds,
                                 Location,
+                                LocationElementType,
+                                LocationFuseMode,
                                 LocationContainer,
                                 Sample,
                                 SampleContainer,
@@ -419,6 +725,10 @@ export class MultiObjectsSampleDomain<
                 SampleDomain<
                         Location,
                         Sample,
+                        LocationElementType,
+                        LocationFuseMode,
+                        Sample,
+                        Sample,
                         MultiObjectsLeafContext<
                                 Objects,
                                 ObjIDsT,
@@ -428,15 +738,37 @@ export class MultiObjectsSampleDomain<
                                 ContextGroups,
                                 ContextGroupKinds,
                                 Location,
+                                LocationElementType,
+                                LocationFuseMode,
                                 LocationContainer,
                                 Sample,
                                 SampleContainer,
                                 LeafContext
                             >
                     >,
-            SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-            LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-            SampleVector extends 
+            SingularContext extends
+                MultiObjectsSamplingContext<
+                        Objects,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafContext
+                    > =
+                MultiObjectsSamplingContext<
+                        Objects,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafContext
+                    >,
+            LocationVector extends
+                FieldPointVector<LocationElementType, LocationContainer> =
+                FieldPointVector<LocationElementType, LocationContainer>,
+            SampleVector extends
                 FieldPointVectorWithMultiObjects<
                         Sample,
                         SampleContainer,
@@ -462,12 +794,13 @@ export class MultiObjectsSampleDomain<
             ContextGroups,
             ContextGroupKinds,
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Sample,
             SampleContainer,
             LeafContext,
             LeafDomain,
-            Sample & MultiObjectsSample<Objects, {}, Sample>,
             SingularContext,
             LocationVector,
             SampleVector
@@ -482,6 +815,7 @@ export class MultiObjectsSampleDomain<
         return new MultiObjectsSampleDomain(
             Reflect_fromEntries<any>(children.entries()),
             {
+                ///@ts-ignore
                 context: {
                     groupKindsTemplate: MultiObjectsDomainInternalPreservedGroupsKindsTemplate
                 },
@@ -490,8 +824,8 @@ export class MultiObjectsSampleDomain<
                     groupsTemplate: {}
                 }
             },
-            <any>fuseMode,
-            field
+            field,
+            fuseMode
         )
     }
 
@@ -500,11 +834,27 @@ export class MultiObjectsSampleDomain<
      * @param context the domain context
      * @returns the sample context
      */
-    protected sampleContext(context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds> {
+    protected sampleContext(context: MultiObjectsSamplingContext<
+            Objects,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LeafContext
+        >): MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds> {
         return context as unknown as MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds>
     }
 
-    init(context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): void {
+    init(context: MultiObjectsSamplingContext<
+            Objects,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LeafContext
+        >): void {
         this.groupsMemoized = {
             context: [...groupKinds(context, this.multiObj.context.groupKindsTemplate, this.multiObj.context.groupsTemplate)],
             sample: this.multiObj.sample ? [...groupKinds(this.sampleContext(context), this.multiObj.sample.groupKindsTemplate, this.multiObj.sample.groupsTemplate)] : [],
@@ -512,7 +862,7 @@ export class MultiObjectsSampleDomain<
 
         const sampleMultiObjTemplate = <{ root: MultiObjectsGroupsMapped<SampleGroups, true> }>{ }
         this.groupsMemoized.sample.forEach(path => intract(sampleMultiObjTemplate, ['root', ...path.group.path], true))
-        
+
         const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
 
         function multiObjField_recursive(field: Field, sampleMultiObjMapped: MultiObjectsGroupsMapped<SampleGroups, true>): Field {
@@ -540,7 +890,13 @@ export class MultiObjectsSampleDomain<
             else return field
         }
 
-        this.field = <Field<Sample>><unknown>multiObjField_recursive(this.childField, sampleMultiObjTemplate.root)
+        type SampleField = Field<
+            MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+            MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>
+        >
+
+        this.field = <SampleField><unknown>multiObjField_recursive(this.childField, sampleMultiObjTemplate.root)
 
         for (const key of Reflect.ownKeys(this.children)) {
             const child = this.children[key]
@@ -562,21 +918,23 @@ export class MultiObjectsSampleDomain<
                 ContextGroups,
                 ContextGroupKinds,
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 LeafSample,
                 SampleContainer,
                 LeafContext,
                 LeafDomain,
-                LocationVector //,
-                // LeafSampleVector
+                LocationVector,
+                LeafSampleVector
             >
 
             const context_original_groups =
                 {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-            
+
             const multiObjectsIDs_original_template = multiObjectsIDs.template
             const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
-            
+
             for (const { group } of this.groupsMemoized.context) {
                 const context_original_group = group.get(child_context)
                 group.set(context_original_groups, context_original_group)
@@ -600,9 +958,9 @@ export class MultiObjectsSampleDomain<
             multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
 
             if (field_point_type_contains(this.childField.elementType, child.field.elementType))
-                this.childrenFieldTypes[<keyof Objects>key] = "child"
+                this.childrenFieldTypes[<keyof Objects>key] = "leaf"
             else if (field_point_type_contains(this.field.elementType, child.field.elementType))
-                this.childrenFieldTypes[<keyof Objects>key] = "result"
+                this.childrenFieldTypes[<keyof Objects>key] = "stem"
             else
                 throw new Error()
         }
@@ -611,8 +969,16 @@ export class MultiObjectsSampleDomain<
     @vectorized(MultiObjectsSampleDomain.sample_vectorized)
     sample(
             location: Location,
-            context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>
-        ): Sample {
+            context: MultiObjectsSamplingContext<
+                    Objects,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LeafContext
+                >
+        ): MultiObjectsSample<Objects, SampleGroups, LeafSample> {
         const child_context = {
             ...context,
             [MultiObjectsSamplingContextParent]: {
@@ -630,26 +996,28 @@ export class MultiObjectsSampleDomain<
                 ContextGroups,
                 ContextGroupKinds,
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 LeafSample,
                 SampleContainer,
                 LeafContext,
                 LeafDomain,
-                LocationVector //,
-                // LeafSampleVector
+                LocationVector,
+                LeafSampleVector
             >
 
         const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
-        
+
         const context_original_groups =
             {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-            
+
         for (const { group } of this.groupsMemoized.context)
             group.set(context_original_groups, group.get(context))
 
         const multiObjectsIDs_original_template = multiObjectsIDs.template
         const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
-        
+
         const child_samples = Reflect.ownKeys(this.children).map(key => {
             for (const { group } of this.groupsMemoized.context) {
                 const context_original_group = group.get(context_original_groups)
@@ -670,31 +1038,41 @@ export class MultiObjectsSampleDomain<
         for (const { group } of this.groupsMemoized.context)
             group.set(context, group.get(context_original_groups))
 
-        const fused = <Sample>fusePoints(
+        type Sample = MultiObjectsSample<Objects, SampleGroups, LeafSample>
+        type SampleElementType = MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>
+        type SampleFuseMode = MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>
+
+        const fused = fusePoints<LeafSample, Sample, LeafSample, SampleElementType, SampleFuseMode, Objects, ObjIDsT>(
             this.field.elementType,
-            <any>this.fuseMode,
-            <FieldPointWithMultiObjectPath<Sample>[]><unknown>child_samples
+            this.childField.elementType,
+            this.fuseMode ?? this.field.fuseMode,
+            <FieldPointWithMultiObjectPath<LeafSample>[]><unknown>child_samples,
+            multiObjectsIDs
         )
-        
+
         multiObjectsIDs.template = multiObjectsIDs_original_template
         multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
-        
+
         return fused
     }
 
     can_fuse(
-            sampleType: FieldPointType<Sample>,
-            fuseMode: FuseMode<Sample>,
+            sampleType: FieldPointType<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>>,
+            fuseMode: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>,
             context: MultiObjectsFusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
-                    Sample,
+                    SampleGroups,
+                    LeafSample,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
                     ObjIDsContainer,
                     SingularContext,
                     LocationVector,
+                    LeafSampleVector,
                     SampleVector,
                     ContextGroups,
                     ContextGroupKinds,
@@ -710,28 +1088,33 @@ export class MultiObjectsSampleDomain<
 
     sample_fused_objectCounts(
             objCounts: ObjIDsT,
-            locations: FieldPointVector<Location, LocationContainer>,
+            locations: LocationVector,
             context: MultiObjectsFusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
-                    Sample,
+                    SampleGroups,
+                    LeafSample,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
                     ObjIDsContainer,
                     SingularContext,
                     LocationVector,
+                    LeafSampleVector,
                     SampleVector,
                     ContextGroups,
                     ContextGroupKinds,
                     LeafContext
                 >,
-            sampleType: FieldPointType<Sample>,
-            fuseMode: FuseMode<Sample>,
+            sampleType: FieldPointType<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>>,
+            fuseMode: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>,
         ): void {
-        const location_iterator = vectorIterator<Location, FieldPointVectorContainerStatic>(context[SampleDomainLocationFieldKey].elementType, undefined, context[MultiObjectsIDsKey])
-        const sample_count = location_iterator.length(<FieldPointMapped<Location, FieldPointVectorContainerStatic>>locations, locations)
-        
+        const location_iterator = vectorIterator<LocationElementType, LocationContainer>(context[SampleDomainLocationFieldKey].elementType, undefined, context[MultiObjectsIDsKey])
+        const sample_count = location_iterator.length(locations, locations)
+        const multiObjectsIDs = context[MultiObjectsIDsKey]
+
         const child_context = {
             ...context,
             [MultiObjectsSamplingContextParent]: {
@@ -740,7 +1123,7 @@ export class MultiObjectsSampleDomain<
             },
             [EncapsulatingDomainSamplingContextParentContext]: context,
             [EncapsulatingDomainSamplingContextParentDomain]: this
-        } as any as MultiObjectsLeafContext<
+        } as typeof context & MultiObjectsLeafContext<
                 Objects,
                 ObjIDsT,
                 ObjIDsContainer,
@@ -749,41 +1132,162 @@ export class MultiObjectsSampleDomain<
                 ContextGroups,
                 ContextGroupKinds,
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 LeafSample,
                 SampleContainer,
                 LeafContext,
                 LeafDomain,
-                LocationVector //,
-                // LeafSampleVector
+                LocationVector,
+                LeafSampleVector
             >
+
+        const child_leaf_context = {
+            ...child_context,
+            [VectorSampleFunction]: undefined
+        } as MultiObjectsLeafVectorSamplingContext<
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            SampleGroups,
+            SampleGroupKinds,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            LeafSample,
+            SampleContainer,
+            LeafContext,
+            LeafDomain,
+            LocationVector,
+            LeafSampleVector
+        >
+
+        makeVectorSamplingContext(this.childField, child_leaf_context, multiObjectsIDs)
 
         type ChildFusingSampleDomain = FusingVectorSampleDomain<
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
-                Sample | LeafSample,
+                MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
                 SampleContainer,
                 Objects,
                 ObjIDsT,
                 ObjIDsContainer,
                 LeafContext,
-                LocationVector //,
-                // ?
+                LocationVector,
+                SampleVector,
+                LeafContext & MultiObjectsFusedVectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    SampleGroups,
+                    LeafSample,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    SingularContext,
+                    LocationVector,
+                    LeafSampleVector,
+                    SampleVector,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    LeafContext
+                >
             >
-        
-        const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
+
+        type ChildLeafVectorDomain = VectorSampleDomain<
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                LeafSample,
+                LeafSample,
+                LeafSample,
+                SampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                LeafContext,
+                LocationVector,
+                LeafSampleVector,
+                MultiObjectsLeafVectorSamplingContext<
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    SampleGroups,
+                    SampleGroupKinds,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    LeafSample,
+                    SampleContainer,
+                    LeafContext,
+                    LeafDomain,
+                    LocationVector,
+                    LeafSampleVector
+                >
+            >
+
+        type ChildStemVectorDomain = VectorSampleDomain<
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
+                SampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                LeafContext,
+                LocationVector,
+                SampleVector,
+                LeafContext & MultiObjectsVectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    SampleGroups,
+                    LeafSample,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    SingularContext,
+                    LocationVector,
+                    LeafSampleVector,
+                    SampleVector,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    LeafContext
+                >
+            >
 
         const context_original_groups =
             {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-        
+
         for (const { group } of this.groupsMemoized.context)
             group.set(context_original_groups, group.get(context))
 
         const multiObjectsIDs_original_template = multiObjectsIDs.template
         const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
 
+        ///@ts-ignore
         const nonfusing = Reflect_entries<Record<keyof Objects, ChildFusingSampleDomain>>(<any>this.children).filter(([, child]) => !(child.can_fuse && child.can_fuse(sampleType, fuseMode, <any>context)))
-        
+
         const nonfused_samples = nonfusing.map(([key, sampleDomain]) => {
             for (const { group } of this.groupsMemoized.context) {
                 const context_original_group = group.get(context_original_groups)
@@ -793,11 +1297,12 @@ export class MultiObjectsSampleDomain<
 
             multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
             multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
-            
-            const samples = context[VectorSampleFunction](<SampleDomain<Location, Sample, SingularContext>><unknown>sampleDomain, locations, context)
-            
-            if (this.childrenFieldTypes[key] === "child") {
-                const multiObjVector = <FieldPointVectorWithMultiObjects<LeafSample, SampleContainer, ObjIDsT, ObjIDsContainer>><unknown>samples
+
+            let samples: SampleVector
+
+            if (this.childrenFieldTypes[key] === "leaf") {
+                const leaf_samples = child_leaf_context[VectorSampleFunction](<ChildLeafVectorDomain><unknown>sampleDomain, locations, child_leaf_context)
+                const multiObjVector = <FieldPointVectorWithMultiObjects<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>, SampleContainer, ObjIDsT, ObjIDsContainer>><unknown>leaf_samples
 
                 if (multiObjVector[ItemObjIDsKey] || multiObjVector[ItemObjValuesOffsetsKey])
                     throw new Error("did not expect children to have multi objects")
@@ -809,7 +1314,10 @@ export class MultiObjectsSampleDomain<
                 const offsets = multiObjVector[ItemObjValuesOffsetsKey]
                 for (let i = 0; i < sample_count; i++)
                     offsets[i] = i + 1
+
+                samples = <SampleVector>multiObjVector
             }
+            else samples = child_context[VectorSampleFunction](<ChildStemVectorDomain><unknown>sampleDomain, locations, child_context)
 
             return <[keyof Objects, SampleVector]>[key, samples]
         })
@@ -818,30 +1326,23 @@ export class MultiObjectsSampleDomain<
         context[FusedSamplingNonfusedSamples].set(<any>this, nonfused_samples)
 
         for (const [key, child] of Reflect_entries<Record<keyof Objects, ChildFusingSampleDomain>>(<any>this.children)) {
-            if (child.sample_fused_objectCounts) {
-                for (const { group } of this.groupsMemoized.context) {
-                    const context_original_group = group.get(context_original_groups)
-                    const context_child_group = context_original_group[key]
-                    group.set(child_context, context_child_group)
-                }
+            if (nonfused_samples.find(([key1]) => key === key1))
+                continue
 
-                multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
-                multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
-
-                child.sample_fused_objectCounts(objCounts, locations, <any>context, sampleType, fuseMode)
+            for (const { group } of this.groupsMemoized.context) {
+                const context_original_group = group.get(context_original_groups)
+                const context_child_group = context_original_group[key]
+                group.set(child_context, context_child_group)
             }
+
+            multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
+            multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
+
+            child.sample_fused_objectCounts(objCounts, locations, <any>context, sampleType, fuseMode)
         }
 
-        for (const [, samples] of nonfused_samples) {
-            let objOffset_prev = 0
-            let objOffset_next: number
-            const objOffsets = samples[ItemObjValuesOffsetsKey]
-            for (let i = 0; i < objCounts.length; i++) {
-                objOffset_next = objOffsets[i]
-                objCounts[i] += (objOffset_next - objOffset_prev)
-                objOffset_prev = objOffset_next
-            }
-        }
+        for (const [, samples] of nonfused_samples)
+            addDeltas(objCounts, samples[ItemObjValuesOffsetsKey])
 
         for (const { group } of this.groupsMemoized.context)
             group.set(child_context, group.get(context_original_groups))
@@ -851,29 +1352,35 @@ export class MultiObjectsSampleDomain<
     }
 
     sample_fused_results(
-        samples: FusingFieldPointVectorWithMultiObjects<Sample, ObjIDsT, SampleContainer, ObjIDsContainer>,
-        locations: FieldPointVector<Location, LocationContainer>,
+        samples: FusingFieldPointVectorWithMultiObjects<
+                MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                ObjIDsT,
+                SampleContainer,
+                ObjIDsContainer
+            >,
+        locations: LocationVector,
         context: MultiObjectsFusedVectorSamplingContext<
-            Location,
-            LocationContainer,
-            Sample,
-            SampleContainer,
-            Objects,
-            ObjIDsT,
-            ObjIDsContainer,
-            SingularContext,
-            LocationVector,
-            SampleVector,
-            ContextGroups,
-            ContextGroupKinds,
-            LeafContext
-        >,
-        sampleType: FieldPointType<Sample>,
-        fuseMode: FuseMode<Sample>,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                SampleGroups,
+                LeafSample,
+                SampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                SingularContext,
+                LocationVector,
+                LeafSampleVector,
+                SampleVector,
+                ContextGroups,
+                ContextGroupKinds,
+                LeafContext
+            >,
+        sampleType: FieldPointType<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>>,
+        fuseMode: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>,
     ): void {
-        // const location_iterator = vectorIterator<Location, FieldPointVectorContainerStatic>(context[SampleDomainLocationFieldKey].elementType, undefined, context[MultiObjectsIDsKey])
-        // const sample_count = location_iterator.length(<FieldPointMapped<Location, FieldPointVectorContainerStatic>>locations, locations)
-        
         const child_context = {
             ...context,
             [MultiObjectsSamplingContextParent]: {
@@ -882,57 +1389,95 @@ export class MultiObjectsSampleDomain<
             },
             [EncapsulatingDomainSamplingContextParentContext]: context,
             [EncapsulatingDomainSamplingContextParentDomain]: this
-        } as any as MultiObjectsLeafContext<
-            Objects,
-            ObjIDsT,
-            ObjIDsContainer,
-            SampleGroups,
-            SampleGroupKinds,
-            ContextGroups,
-            ContextGroupKinds,
-            Location,
-            LocationContainer,
-            LeafSample,
-            SampleContainer,
-            LeafContext,
-            LeafDomain,
-            LocationVector //,
-            // LeafSampleVector
-        >
+        } as typeof context & MultiObjectsLeafContext<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                SampleGroups,
+                SampleGroupKinds,
+                ContextGroups,
+                ContextGroupKinds,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                LeafSample,
+                SampleContainer,
+                LeafContext,
+                LeafDomain,
+                LocationVector,
+                LeafSampleVector
+            >
 
         type ChildFusingSampleDomain = FusingVectorSampleDomain<
-            Location,
-            LocationContainer,
-            Sample | LeafSample,
-            SampleContainer,
-            Objects,
-            ObjIDsT,
-            ObjIDsContainer,
-            LeafContext,
-            LocationVector //,
-            // ?
-        >
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
+                SampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                LeafContext,
+                LocationVector,
+                SampleVector,
+                LeafContext & MultiObjectsFusedVectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    SampleGroups,
+                    LeafSample,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    SingularContext,
+                    LocationVector,
+                    LeafSampleVector,
+                    SampleVector,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    LeafContext
+                >
+            >
 
         const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
 
         const context_original_groups =
             {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-        
+
         const multiObjectsIDs_original_template = multiObjectsIDs.template
         const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
-        
+
         for (const { group } of this.groupsMemoized.context)
             group.set(context_original_groups, group.get(context))
-        
+
         const nonfused_sample_vectors = context[FusedSamplingNonfusedSamples].get(<any>this)!
 
-        fuseVectors(
-            this.field.elementType,
+        type SampleFusingVector = FusingFieldPointVectorWithMultiObjects<MultiObjectsGroupedObjectsAndRegularValuesType<Objects, SampleGroups, LeafSample>, ObjIDsT, SampleContainer, ObjIDsContainer>
+
+        fuseVectors<
+                MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
+                SampleContainer,
+                SampleVector,
+                SampleVector,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer
+            >(
+            sampleType,
             this.field.elementType,
             fuseMode,
             nonfused_sample_vectors.map<SampleVector>(([, samples]) => samples),
-            context[MultiObjectsIDsKey],
-            samples,
+            multiObjectsIDs,
+            <SampleFusingVector>samples,
             true
         )
 
@@ -947,7 +1492,7 @@ export class MultiObjectsSampleDomain<
                 multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
                 multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
 
-                child.sample_fused_results(<any>samples, locations, <any>context, sampleType, fuseMode)
+                child.sample_fused_results(<SampleFusingVector>samples, locations, <any>context, sampleType, fuseMode)
             }
         }
 
@@ -960,7 +1505,7 @@ export class MultiObjectsSampleDomain<
 
     private static sample_vectorized<
             Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-            ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
             SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
             SampleGroupKinds extends
@@ -971,17 +1516,21 @@ export class MultiObjectsSampleDomain<
                 MultiObjectsDomainInternalPreservedGroupsKinds =
                 MultiObjectsDomainInternalPreservedGroupsKinds,
             Location extends FieldPoint = FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
             LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-            LeafSample extends
-                MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
-                MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
+            LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>,
             SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
             LeafContext extends
-                SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
-                SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
+                SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+                SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
             LeafDomain extends
                 SampleDomain<
                         Location,
+                        LeafSample,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafSample,
                         LeafSample,
                         MultiObjectsLeafContext<
                                 Objects,
@@ -992,6 +1541,8 @@ export class MultiObjectsSampleDomain<
                                 ContextGroups,
                                 ContextGroupKinds,
                                 Location,
+                                LocationElementType,
+                                LocationFuseMode,
                                 LocationContainer,
                                 LeafSample,
                                 SampleContainer,
@@ -1001,6 +1552,10 @@ export class MultiObjectsSampleDomain<
                 SampleDomain<
                         Location,
                         LeafSample,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafSample,
+                        LeafSample,
                         MultiObjectsLeafContext<
                                 Objects,
                                 ObjIDsT,
@@ -1010,26 +1565,56 @@ export class MultiObjectsSampleDomain<
                                 ContextGroups,
                                 ContextGroupKinds,
                                 Location,
+                                LocationElementType,
+                                LocationFuseMode,
                                 LocationContainer,
                                 LeafSample,
                                 SampleContainer,
                                 LeafContext
                             >
                     >,
-            Sample extends
-                MultiObjectsSample<Objects, SampleGroups, LeafSample> =
-                MultiObjectsSample<Objects, SampleGroups, LeafSample>,
-            SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-            LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-            SampleVector extends 
+            SingularContext extends
+                MultiObjectsSamplingContext<
+                        Objects,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafContext
+                    > =
+                MultiObjectsSamplingContext<
+                        Objects,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafContext
+                    >,
+            LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+            LeafSampleVector extends
                 FieldPointVectorWithMultiObjects<
-                        Sample,
+                        LeafSample,
                         SampleContainer,
                         ObjIDsT,
                         ObjIDsContainer
                     > =
                 FieldPointVectorWithMultiObjects<
-                        Sample,
+                        LeafSample,
+                        SampleContainer,
+                        ObjIDsT,
+                        ObjIDsContainer
+                    >,
+            SampleVector extends
+                FieldPointVectorWithMultiObjects<
+                        MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                        SampleContainer,
+                        ObjIDsT,
+                        ObjIDsContainer
+                    > =
+                FieldPointVectorWithMultiObjects<
+                        MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
                         SampleContainer,
                         ObjIDsT,
                         ObjIDsContainer
@@ -1044,36 +1629,46 @@ export class MultiObjectsSampleDomain<
                 ContextGroups,
                 ContextGroupKinds,
                 Location,
+                LocationElementType,
+                LocationFuseMode,
                 LocationContainer,
                 LeafSample,
                 SampleContainer,
                 LeafContext,
                 LeafDomain,
-                Sample,
                 SingularContext,
                 LocationVector,
+                LeafSampleVector,
                 SampleVector
             >,
             locations: LocationVector,
             context: MultiObjectsFusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
-                    Sample,
+                    SampleGroups,
+                    LeafSample,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
                     ObjIDsContainer,
                     SingularContext,
                     LocationVector,
+                    LeafSampleVector,
                     SampleVector,
                     ContextGroups,
                     ContextGroupKinds,
                     LeafContext
                 >
         ): SampleVector {
-        return <SampleVector><unknown>fusingVectorSampling.sample <
+        return <SampleVector><unknown>fusingVectorSampling.sample<
                 Location,
-                Sample,
+                LocationElementType,
+                LocationFuseMode,
+                MultiObjectsSample<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
                 Objects,
                 ObjIDsT,
                 LocationContainer,
@@ -1081,90 +1676,149 @@ export class MultiObjectsSampleDomain<
                 ObjIDsContainer,
                 SingularContext,
                 LocationVector,
-                SampleVector//,
-                // Context,
+                SampleVector,
+                MultiObjectsFusedVectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    SampleGroups,
+                    LeafSample,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    SingularContext,
+                    LocationVector,
+                    LeafSampleVector,
+                    SampleVector,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    LeafContext
+                >
             >(<any>this, locations, context, this.fuseMode)
     }
 
     static build<
-                Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-                ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
-                ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-                SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-                SampleGroupKinds extends
-                    MultiObjectsDomainInternalPreservedGroupsKinds =
-                    MultiObjectsDomainInternalPreservedGroupsKinds,
-                ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-                ContextGroupKinds extends
-                    MultiObjectsDomainInternalPreservedGroupsKinds =
-                    MultiObjectsDomainInternalPreservedGroupsKinds,
-                Location extends FieldPoint = FieldPoint,
-                LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-                LeafSample extends
-                    MultiObjectsGroupsMapped<SampleGroups, FieldPoint> =
-                    MultiObjectsGroupsMapped<SampleGroups, FieldPoint>,
-                SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-                LeafContext extends
-                    SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any> =
-                    SamplingContext<Location> & MultiObjectsGroupsMapped<ContextGroups, any>,
-                LeafDomain extends
-                    SampleDomain<
-                            Location,
-                            LeafSample,
-                            MultiObjectsLeafContext<
-                                    Objects,
-                                    ObjIDsT,
-                                    ObjIDsContainer,
-                                    SampleGroups,
-                                    SampleGroupKinds,
-                                    ContextGroups,
-                                    ContextGroupKinds,
-                                    Location,
-                                    LocationContainer,
-                                    LeafSample,
-                                    SampleContainer,
-                                    LeafContext
-                                >
-                        > =
-                    SampleDomain<
-                            Location,
-                            LeafSample,
-                            MultiObjectsLeafContext<
-                                    Objects,
-                                    ObjIDsT,
-                                    ObjIDsContainer,
-                                    SampleGroups,
-                                    SampleGroupKinds,
-                                    ContextGroups,
-                                    ContextGroupKinds,
-                                    Location,
-                                    LocationContainer,
-                                    LeafSample,
-                                    SampleContainer,
-                                    LeafContext
-                                >
-                        >,
-                Sample extends
-                    MultiObjectsSample<Objects, SampleGroups, LeafSample> =
-                    MultiObjectsSample<Objects, SampleGroups, LeafSample>,
-                SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-                LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-                SampleVector extends 
-                    FieldPointVectorWithMultiObjects<
-                            Sample,
-                            SampleContainer,
-                            ObjIDsT,
-                            ObjIDsContainer
-                        > =
-                    FieldPointVectorWithMultiObjects<
-                            Sample,
-                            SampleContainer,
-                            ObjIDsT,
-                            ObjIDsContainer
-                        >,
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+            ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+            SampleGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+            SampleGroupKinds extends
+                MultiObjectsDomainInternalPreservedGroupsKinds =
+                MultiObjectsDomainInternalPreservedGroupsKinds,
+            ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+            ContextGroupKinds extends
+                MultiObjectsDomainInternalPreservedGroupsKinds =
+                MultiObjectsDomainInternalPreservedGroupsKinds,
+            Location extends FieldPoint = FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+            LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+            LeafSample extends MultiObjectsLeafSample<SampleGroups> = MultiObjectsLeafSample<SampleGroups>,
+            SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+            LeafContext extends
+                SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any> =
+                SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>,
+            LeafDomain extends
+                SampleDomain<
+                        Location,
+                        LeafSample,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafSample,
+                        LeafSample,
+                        MultiObjectsLeafContext<
+                                Objects,
+                                ObjIDsT,
+                                ObjIDsContainer,
+                                SampleGroups,
+                                SampleGroupKinds,
+                                ContextGroups,
+                                ContextGroupKinds,
+                                Location,
+                                LocationElementType,
+                                LocationFuseMode,
+                                LocationContainer,
+                                LeafSample,
+                                SampleContainer,
+                                LeafContext
+                            >
+                    > =
+                SampleDomain<
+                        Location,
+                        LeafSample,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafSample,
+                        LeafSample,
+                        MultiObjectsLeafContext<
+                                Objects,
+                                ObjIDsT,
+                                ObjIDsContainer,
+                                SampleGroups,
+                                SampleGroupKinds,
+                                ContextGroups,
+                                ContextGroupKinds,
+                                Location,
+                                LocationElementType,
+                                LocationFuseMode,
+                                LocationContainer,
+                                LeafSample,
+                                SampleContainer,
+                                LeafContext
+                            >
+                    >,
+            SingularContext extends
+                MultiObjectsSamplingContext<
+                        Objects,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafContext
+                    > =
+                MultiObjectsSamplingContext<
+                        Objects,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LeafContext
+                    >,
+            LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+            LeafSampleVector extends
+                FieldPointVectorWithMultiObjects<
+                        LeafSample,
+                        SampleContainer,
+                        ObjIDsT,
+                        ObjIDsContainer
+                    > =
+                FieldPointVectorWithMultiObjects<
+                        LeafSample,
+                        SampleContainer,
+                        ObjIDsT,
+                        ObjIDsContainer
+                    >,
+            SampleVector extends
+                FieldPointVectorWithMultiObjects<
+                        MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                        SampleContainer,
+                        ObjIDsT,
+                        ObjIDsContainer
+                    > =
+                FieldPointVectorWithMultiObjects<
+                        MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
+                        SampleContainer,
+                        ObjIDsT,
+                        ObjIDsContainer
+                    >,
             >(
                 sampleDomains: MultiObjectsMapped<Objects, LeafDomain>,
                 template: Objects,
+                childField: Field<LeafSample>,
                 multiObj?: {
                     sample?: {
                         groupKindsTemplate: SampleGroupKinds,
@@ -1174,32 +1828,29 @@ export class MultiObjectsSampleDomain<
                         groupKindsTemplate: ContextGroupKinds,
                         groupsTemplate?: ContextGroups
                     }
-                }
-        ): SampleDomain<
+                },
+                fuseMode?: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>
+        ): MultiObjectsSampleDomain<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                SampleGroups,
+                SampleGroupKinds,
+                ContextGroups,
+                ContextGroupKinds,
                 Location,
-                Sample,
-                MultiObjectsSamplingContext<
-                        Objects,
-                        ContextGroups,
-                        ContextGroupKinds,
-                        Location,
-                        LeafContext
-                    >
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                LeafSample,
+                SampleContainer,
+                LeafContext,
+                LeafDomain,
+                SingularContext,
+                LocationVector,
+                LeafSampleVector,
+                SampleVector
             > {
-        if (template as unknown === MultiObjectsTemplate_Leaf) {
-            return sampleDomains as SampleDomain<
-                Location,
-                Sample,
-                MultiObjectsSamplingContext<
-                    Objects,
-                    ContextGroups,
-                    ContextGroupKinds,
-                    Location,
-                    LeafContext
-                >
-            >
-        }
-
         ///@ts-ignore
         return new MultiObjectsSampleDomain(
             ///@ts-ignore
@@ -1210,11 +1861,15 @@ export class MultiObjectsSampleDomain<
                         [key, MultiObjectsSampleDomain.build(
                                 sampleDomain, //as unknown as MultiObjectsMapped<Objects, LeafDomain>,
                                 (template as any)[key] as Objects,
-                                multiObj
+                                childField,
+                                multiObj,
+                                fuseMode
                         )] as [PropertyKey, LeafDomain]
                     )
                 ),
-            multiObj
+            multiObj,
+            childField,
+            fuseMode
         )
     }
 }

@@ -219,13 +219,13 @@ export function iterTreeByLeavesValue(
     ) {
         for (const key of Reflect.ownKeys(template)) {
             const nextPath = [...path, key]
-            
+
             if (template[key] === leaf)
                 action(values, key, nextPath, template[key])
             else {
                 if (!(key in values))
                     values[key] = {}
-                
+
                 traverse(
                     values[key],
                     template[key],
@@ -234,7 +234,7 @@ export function iterTreeByLeavesValue(
             }
         }
     }
-    
+
     traverse(values, template)
 }
 

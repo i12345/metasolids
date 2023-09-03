@@ -26,10 +26,10 @@ export class VectorInterpolationType implements FieldInterpolationType<Vector> {
             template instanceof Float32Array ||
             template instanceof Float64Array))
             return undefined
-        
+
         if (typeof keypoints[0].location !== 'number')
             return undefined
-        
+
         const data = new Array<Float64Array>(n)
         for (let i = 0; i < n; i++) {
             const data_i = data[i] = new Float64Array(2 * k)
@@ -38,12 +38,12 @@ export class VectorInterpolationType implements FieldInterpolationType<Vector> {
                 data_i[(2 * j) + 1] = keypoints[j].value[i]
             }
         }
-        
+
         const curves = new CurveSet(data)
 
         curves.type = this.curveConfig.type
         curves.curves.forEach(curve => applyCurveConfig(curve, this.curveConfig))
-        
+
         return location => {
             const result = new Float64Array(n)
             curves.value(location as number, result as any as number[])

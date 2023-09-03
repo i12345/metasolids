@@ -14,7 +14,7 @@ describe(fullname(VolumeWithSurfacesTriangleRayCollider), () => {
         ray: Ray
         t: number[]
     }
-    
+
     const surfaces: MeshData[] = [
         {
             vertices: new Float32Array([
@@ -82,7 +82,7 @@ describe(fullname(VolumeWithSurfacesTriangleRayCollider), () => {
         }
 
         const collider = new VolumeWithSurfacesTriangleRayCollider()
-        
+
         const context: VolumeWithSurfacesTriangleRayColliderProcessingContext = {
             context: undefined!,
             instance: {

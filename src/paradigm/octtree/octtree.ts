@@ -10,7 +10,7 @@ export class OctTree<
     get depth() {
         return this.layers.length - 1
     }
-    
+
     constructor(
         public readonly layers: Layer[] = []
     ) { }

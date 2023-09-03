@@ -3,9 +3,9 @@ import { field_point_identity, field_point_invalid, field_point_map, FieldPoint,
 import { LeafInterface, makeExtractor, makeIntractor } from "../paradigm/trees/tree.js";
 
 export type CurveType =
-    typeof CURVE_LINEAR | 
-    typeof CURVE_SMOOTHSTEP | 
-    typeof CURVE_SPLINE | 
+    typeof CURVE_LINEAR |
+    typeof CURVE_SMOOTHSTEP |
+    typeof CURVE_SPLINE |
     typeof CURVE_STEP
 
 export interface CurveConfig {
@@ -41,7 +41,7 @@ export class InterpolableFieldsCurve<Point extends FieldPoint = FieldPoint> {
             (_, path) => {
                 const get = makeExtractor<number>(path)
                 const set = makeIntractor<number>(path)
-                
+
                 const array = new Float64Array(2 * keypoints.length)
                 for (let i = 0; i < keypoints.length; i++){
                     array[(2 * i) + 0] = keypoints[i][0]
@@ -64,7 +64,7 @@ export class InterpolableFieldsCurve<Point extends FieldPoint = FieldPoint> {
     valueAt(t: number): Point {
         const values = new Float64Array(this.curves_intractors.length)
         this.curves.value(t, values as unknown as number[])
-        
+
         if (typeof this.keypoints[0][1] === 'number')
             return values[0] as Point
 

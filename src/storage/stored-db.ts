@@ -8,7 +8,7 @@ export class StoredDB<
         ID = String
     > implements DB<T, ID> {
     readonly cache = new Map<ID, T>()
-    
+
     constructor(
         public readonly storage: StorageService<ID>
     ) { }

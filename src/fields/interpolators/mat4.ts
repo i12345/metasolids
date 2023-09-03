@@ -4,16 +4,20 @@ import { FieldPoint } from "../point.js";
 import { Field } from "../index.js";
 
 export class Mat4InterpolationType implements FieldInterpolationType<Mat4> {
-    [makeInterpolator]<Location extends FieldPoint>(
+    [makeInterpolator]<
+            Location extends FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
+        >(
             keypoints: FieldInterpolationKeypoint<Location, Mat4>[],
-            locationField: Field<Location>
+            locationField: Field<Location, LocationElementType, LocationFuseMode>
         ): FieldInterpolator<Location, Mat4> | undefined {
         if (typeof keypoints[0].location !== 'number')
             return undefined
-        
+
         if (!(keypoints[0].value instanceof Mat4))
             return undefined
-        
+
         const t = keypoints.map(({ location, value: m }) => ({ location, value: m.getTranslation() }))
         const r = keypoints.map(({ location, value: m }) => ({ location, value: new Quat().setFromMat4(m) }))
         const s = keypoints.map(({ location, value: m }) => ({ location, value: m.getScale() }))

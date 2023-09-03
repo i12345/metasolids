@@ -13,23 +13,31 @@ export const FusedVectorSamplingKey = Symbol("fused-vector-sampling")
 
 export type FusedVectorSamplingContext<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+        SingularContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -37,8 +45,12 @@ export type FusedVectorSamplingContext<
     > =
     VectorSamplingContext<
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Sample,
+            SampleElementType,
+            SampleFuseMode,
             SampleContainer,
             Objects,
             ObjIDsT,
@@ -53,23 +65,31 @@ export type FusedVectorSamplingContext<
 
 export interface FusingVectorSampleDomain<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+        SingularContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -77,8 +97,12 @@ export interface FusingVectorSampleDomain<
         VectorContext extends
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -89,8 +113,12 @@ export interface FusingVectorSampleDomain<
                 > =
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -102,8 +130,12 @@ export interface FusingVectorSampleDomain<
     > extends
     VectorSampleDomain<
         Location,
+        LocationElementType,
+        LocationFuseMode,
         LocationContainer,
         Sample,
+        SampleElementType,
+        SampleFuseMode,
         SampleContainer,
         Objects,
         ObjIDsT,
@@ -114,47 +146,55 @@ export interface FusingVectorSampleDomain<
         VectorContext
     > {
     can_fuse(
-        sampleType: FieldPointType<Sample>,
-        fuseMode: FuseMode<Sample>,
+        sampleType: FieldPointType<SampleElementType>,
+        fuseMode: FuseMode<SampleFuseMode>,
         context: VectorContext
     ): boolean
-    
+
     sample_fused_objectCounts(
         objCounts: ObjIDsT,
-        locations: FieldPointVector<Location, LocationContainer>,
+        locations: LocationVector,
         context: VectorContext,
-        sampleType: FieldPointType<Sample>,
-        fuseMode: FuseMode<Sample>,
+        sampleType: FieldPointType<SampleElementType>,
+        fuseMode: FuseMode<SampleFuseMode>,
     ): void
 
     sample_fused_results(
-        samples: FusingFieldPointVectorWithMultiObjects<Sample, ObjIDsT, SampleContainer, ObjIDsContainer>,
-        locations: FieldPointVector<Location, LocationContainer>,
+        samples: FusingFieldPointVectorWithMultiObjects<SampleElementType, ObjIDsT, SampleContainer, ObjIDsContainer>,
+        locations: LocationVector,
         context: VectorContext,
-        sampleType: FieldPointType<Sample>,
-        fuseMode: FuseMode<Sample>,
+        sampleType: FieldPointType<SampleElementType>,
+        fuseMode: FuseMode<SampleFuseMode>,
     ): void
 }
 
 export class FusingVectorSampleDomainFacade<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+        SingularContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -162,8 +202,12 @@ export class FusingVectorSampleDomainFacade<
         Context extends
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -174,8 +218,12 @@ export class FusingVectorSampleDomainFacade<
                 > =
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -187,8 +235,12 @@ export class FusingVectorSampleDomainFacade<
         Inner extends
             FusingVectorSampleDomain<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -200,8 +252,12 @@ export class FusingVectorSampleDomainFacade<
                 > =
             FusingVectorSampleDomain<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -214,8 +270,12 @@ export class FusingVectorSampleDomainFacade<
     > implements
     VectorSampleDomain<
             Location,
+            LocationElementType,
+            LocationFuseMode,
             LocationContainer,
             Sample,
+            SampleElementType,
+            SampleFuseMode,
             SampleContainer,
             Objects,
             ObjIDsT,
@@ -232,7 +292,7 @@ export class FusingVectorSampleDomainFacade<
     init(context: Context): void {
         this.inner.init(context)
     }
-    
+
     @vectorized(FusingVectorSampleDomainFacade.sample_vectorized)
     sample(location: Location, context: Context): Sample {
         return this.inner.sample(location, context)
@@ -240,23 +300,31 @@ export class FusingVectorSampleDomainFacade<
 
     private static sample_vectorized<
             Location extends FieldPoint = FieldPoint,
+            LocationElementType extends FieldPoint = Location,
+            LocationFuseMode extends FieldPoint = Location,
             LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
             Sample extends FieldPoint = FieldPoint,
+            SampleElementType extends FieldPoint = Sample,
+            SampleFuseMode extends FieldPoint = Sample,
             SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
-            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
             ObjIDsT extends IndicesTypedArray = Uint32Array,
             ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-            SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-            LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-            SampleVector extends 
+            SingularContext extends
+                SamplingContext<Location, LocationElementType, LocationFuseMode> =
+                SamplingContext<Location, LocationElementType, LocationFuseMode>,
+            LocationVector extends
+                FieldPointVector<LocationElementType, LocationContainer> =
+                FieldPointVector<LocationElementType, LocationContainer>,
+            SampleVector extends
                 FieldPointVectorWithMultiObjects<
-                        Sample,
+                        SampleElementType,
                         SampleContainer,
                         ObjIDsT,
                         ObjIDsContainer
                     > =
                 FieldPointVectorWithMultiObjects<
-                        Sample,
+                        SampleElementType,
                         SampleContainer,
                         ObjIDsT,
                         ObjIDsContainer
@@ -264,8 +332,12 @@ export class FusingVectorSampleDomainFacade<
             Context extends
                 FusedVectorSamplingContext<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -276,8 +348,12 @@ export class FusingVectorSampleDomainFacade<
                     > =
                 FusedVectorSamplingContext<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -289,8 +365,12 @@ export class FusingVectorSampleDomainFacade<
             Inner extends
                 FusingVectorSampleDomain<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -302,8 +382,12 @@ export class FusingVectorSampleDomainFacade<
                     > =
                 FusingVectorSampleDomain<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -316,8 +400,12 @@ export class FusingVectorSampleDomainFacade<
             >(
                 this: FusingVectorSampleDomainFacade<
                         Location,
+                        LocationElementType,
+                        LocationFuseMode,
                         LocationContainer,
                         Sample,
+                        SampleElementType,
+                        SampleFuseMode,
                         SampleContainer,
                         Objects,
                         ObjIDsT,
@@ -328,7 +416,7 @@ export class FusingVectorSampleDomainFacade<
                         Context,
                         Inner
                     >,
-                location: FieldPointVectorStatic<Location, LocationContainer>,
+                location: LocationVector,
                 context: Context
             ) {
         return fusingVectorSampling.sample(this.inner, location, context)
@@ -338,23 +426,31 @@ export class FusingVectorSampleDomainFacade<
 export const fusingVectorSampling = {
     sample<
         Location extends FieldPoint = FieldPoint,
+        LocationElementType extends FieldPoint = Location,
+        LocationFuseMode extends FieldPoint = Location,
         Sample extends FieldPoint = FieldPoint,
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,    
+        SampleElementType extends FieldPoint = Sample,
+        SampleFuseMode extends FieldPoint = Sample,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
-        SingularContext extends SamplingContext<Location> = SamplingContext<Location>,
-        LocationVector extends FieldPointVector<Location, LocationContainer> = FieldPointVector<Location, LocationContainer>,
-        SampleVector extends 
+        SingularContext extends
+            SamplingContext<Location, LocationElementType, LocationFuseMode> =
+            SamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
                 > =
             FieldPointVectorWithMultiObjects<
-                    Sample,
+                    SampleElementType,
                     SampleContainer,
                     ObjIDsT,
                     ObjIDsContainer
@@ -362,8 +458,12 @@ export const fusingVectorSampling = {
         Context extends
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -374,8 +474,12 @@ export const fusingVectorSampling = {
                 > =
             FusedVectorSamplingContext<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -387,8 +491,12 @@ export const fusingVectorSampling = {
         >(
             domain: FusingVectorSampleDomain<
                     Location,
+                    LocationElementType,
+                    LocationFuseMode,
                     LocationContainer,
                     Sample,
+                    SampleElementType,
+                    SampleFuseMode,
                     SampleContainer,
                     Objects,
                     ObjIDsT,
@@ -398,13 +506,13 @@ export const fusingVectorSampling = {
                     SampleVector,
                     Context
                 >,
-            locations: FieldPointVector<Location, LocationContainer>,
+            locations: LocationVector,
             context: Context,
-            fuseMode?: FuseMode<Sample>
-        ): FusingFieldPointVectorWithMultiObjects<Sample, ObjIDsT, SampleContainer, ObjIDsContainer> {
+            fuseMode?: FuseMode<SampleFuseMode>
+        ): FusingFieldPointVectorWithMultiObjects<SampleElementType, ObjIDsT, SampleContainer, ObjIDsContainer> {
         const multiObjectIDs = context[MultiObjectsIDsKey]
-        const n_sample = vectorIterator(context[SampleDomainLocationFieldKey].elementType, isDynamicVector(locations), multiObjectIDs).length(locations, locations)
-        
+        const n_sample = vectorIterator(context[SampleDomainLocationFieldKey].elementType, isDynamicVector<LocationElementType, LocationContainer>(locations), multiObjectIDs).length(locations, locations)
+
         const sampleType = domain.field.elementType
         fuseMode ??= domain.field.fuseMode
 
@@ -414,14 +522,14 @@ export const fusingVectorSampling = {
         const objCounts = <ObjIDsT>new multiObjectIDs.IDsType(n_sample)
         domain.sample_fused_objectCounts(objCounts, locations, context, sampleType, fuseMode)
 
-        const samples = <FusingFieldPointVectorWithMultiObjects<Sample, ObjIDsT, SampleContainer, ObjIDsContainer>>field_point_vectorized_multi_objects_new<Sample, SampleContainer, ObjIDsT, ObjIDsContainer>(
+        const samples = <FusingFieldPointVectorWithMultiObjects<SampleElementType, ObjIDsT, SampleContainer, ObjIDsContainer>>field_point_vectorized_multi_objects_new<SampleElementType, SampleContainer, ObjIDsT, ObjIDsContainer>(
             sampleType,
             n_sample,
-            <IsDynamicVector<Sample, SampleContainer>>false,
+            <IsDynamicVector<SampleElementType, SampleContainer>>false,
             multiObjectIDs.IDsType,
             <any>sum(objCounts)
         )
-        
+
         samples[ItemNextObjectIndexKey] = <ObjIDsT>new multiObjectIDs.IDsType(n_sample).fill(0)
         const objOffsets = samples[ItemObjValuesOffsetsKey]
         for (let i_sample = 0; i_sample < n_sample; i_sample++)

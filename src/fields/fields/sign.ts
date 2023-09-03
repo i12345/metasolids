@@ -7,7 +7,7 @@ export class SignField implements Field<Sign> {
     interpolationType = new ConstantInterpolationType<Sign>()
 
     readonly elementType = Number
-    
+
     constructor(public readonly fuseMode: FuseMode<Sign>) { }
 
     distance(x: Sign, y: Sign): number {

@@ -47,7 +47,7 @@ export function isTypedArray<TArray>(x: TArray): TArray extends TypedArray ? tru
 export function sum<T extends number | bigint, TArray extends TypedArray<T> = TypedArray<T>>(array: TArray): T {
     if (array.length === 0)
         return <T>(new (<TypedArrayConstructor<T>>array.constructor)(1)[0])
-    
+
     let result = <T>array[0]
     for (let i = 1; i < array.length; i++)
         result += <any>array[i]

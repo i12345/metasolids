@@ -3,7 +3,7 @@ import { DualKey, OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLa
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SpaceKey, VolumeProcessingContextWithSampling, VolumeProcessingWithSampling, VolumeSamplingContextKey, VolumeSamplingSubdivisionProcessor, VolumeSamplingSubdivisionSamplesGroupsTemplate } from "../../volumes/sampling/index.js";
-import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
+import { VolumeLocation, VolumeSample, VolumeSamplingContext, defaultVolumeSampleField } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { VolumeProcessingWithSurfacesContext, VolumeSurfacesKey } from "../volume-surfaces.js";
 import { OctTreeSpace } from "../../paradigm/octtree/space.js";
@@ -13,13 +13,19 @@ import { SurfaceNetKey, SurfaceNetVolumeSamplingSubdivisionProcessing, SurfaceNe
 import { Axis, DiagonalDirection, Direction, OctTreeCell, Quadrant } from "../../paradigm/octtree/address.js";
 import { SurfaceProcessingContext } from "../processing.js";
 import { groupPaths } from "../../paradigm/trees/multi-objects-groups.js";
+import { FieldsField } from "../../fields/fields/fields.js";
+import { Field, FieldsPointMapped } from "../../fields/index.js";
 
 export interface VolumeSamplingContextWithSurfaceHints<
         LocationT extends VolumeLocation = VolumeLocation,
+        LocationElementType extends VolumeLocation = LocationT,
+        LocationFuseMode extends VolumeLocation = LocationT,
         SampleProcessingContextT = any
     >
     extends VolumeSamplingContext<
         LocationT,
+        LocationElementType,
+        LocationFuseMode,
         SampleProcessingContextT
     > {
     [VolumeSurfacesKey]: {
@@ -27,11 +33,11 @@ export interface VolumeSamplingContextWithSurfaceHints<
 
         /**
          * packed xyz arrays of hint points, for each object that gives surface hints
-         * 
+         *
          * The surface hint volume sampling subdivision processor will recommend
          * subdivision for each exterior primary sample that contains a hint point
          * if the sample does not form the edge of any polygon
-         * 
+         *
          * Actually, these may just be used for paper-thin sampling
          */
         hints: Float32Array[]
@@ -41,7 +47,11 @@ export interface VolumeSamplingContextWithSurfaceHints<
 export class SurfaceHintVolumeSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<
@@ -51,11 +61,39 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                 VolumeSampleProcessingContextT
             >,
         VolumeSamplingContextT extends
-            VolumeSamplingContextWithSurfaceHints<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContextWithSurfaceHints<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContextWithSurfaceHints<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                > =
+            VolumeSamplingContextWithSurfaceHints<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleProcessingContextT
+                >,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         VolumeProcessingT extends
             VolumeProcessingWithSampling<
                     IndicesT,
@@ -64,7 +102,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -76,7 +118,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -88,7 +134,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -100,7 +150,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -117,7 +171,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -129,7 +187,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -145,7 +207,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     OctTreeWithDualLayersGrouped,
                     OctTreeWithDualOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -157,7 +223,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
                     SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT //,
                     // VolumeProcessingContextT
@@ -170,7 +240,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             OctTreeWithDualLayersGrouped,
             OctTreeWithDualOctTreesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -180,7 +254,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                 SurfaceNetVolumeSamplingSubdivisionProcessing<
                         IndicesT,
                         VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
                         VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT,
@@ -190,7 +268,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeProcessingContextT
@@ -199,7 +281,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
     init(context: SurfaceNetVolumeSamplingSubdivisionProcessingContext<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeProcessingContextT
@@ -208,11 +294,16 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             surfaceLevel: context[EncapsulatingKey][VolumeSurfacesKey].surfaceLevel,
             hints: []
         }
-        
+
         return {
             connections: {
-                //TODO: specialize for just presence
-                inputs: [...groupPaths(VolumeSamplingSubdivisionSamplesGroupsTemplate<VolumeSampleT>())],
+                inputs: [...groupPaths(
+                    VolumeSamplingSubdivisionSamplesGroupsTemplate(
+                        new FieldsField<VolumeSampleT, VolumeSampleElementType, VolumeSampleFuseMode>({
+                            alpha: defaultVolumeSampleField.fields.alpha
+                        } as FieldsPointMapped<VolumeSampleT, Field>)
+                    )
+                )],
                 outputs: []
             }
         }
@@ -223,7 +314,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                 SurfaceNetVolumeSamplingSubdivisionProcessing<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -233,7 +328,11 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
             context: SurfaceNetVolumeSamplingSubdivisionProcessingContext<
                     IndicesT,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeProcessingContextT
@@ -247,7 +346,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
 
         const dual_cells_lookup_layer = dual_cells.lookup.corners.layers.layers[layer]
         const dual_cells_lookup_localIndices = dual_cells.lookup.corners.localIndices.layers[layer]
-        
+
         const polygons_by_edge_layers = context[SurfaceNetKey].cells.polygons_by_edge.layers.layers
         const polygons_by_edge_localIndices = context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers
 
@@ -255,13 +354,13 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
 
         for (const hint_array of context[VolumeSamplingContextKey][VolumeSurfacesKey].hints) {
             //TODO: support different parameter & return types for vectorized functions
-            
+
             const { layer: layers, local_index: local_indices } = OctTreeSpace.vectorized.indexOfPosition.call(context[SpaceKey], hint_array)
 
             for (let i = 0; i < layers.length; i++) {
                 if (layers[i] === layer) {
                     const localIndex = local_indices[i]
-                    
+
                     const is_interior = item.samples.alpha[localIndex] >= surfaceLevel
 
                     let hasPolygon = false
@@ -303,7 +402,7 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
                             if (hasPolygon) break
                         }
                     }
-                    
+
                     if (!hasPolygon && !is_interior)
                         recommendation_pre[localIndex]++
                 }

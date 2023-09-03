@@ -11,7 +11,6 @@ const elementSize = 16
 class FieldPointVectorizedIteratorStatic<VectorizedRoot = any>
     extends PrimitiveFieldPointVectorIteratorStatic<Type> {
     get canGetByReference() { return true }
-    // protected get elementSize(): number { return elementSize }
     readonly elementType = type
 
     get_returnValue(vectorized: FieldPointVector<Type, FieldPointVectorContainerStatic>, vectorizedRoot: VectorizedRoot, index: number): Type {
@@ -35,7 +34,6 @@ class FieldPointVectorizedIteratorStatic<VectorizedRoot = any>
 class FieldPointVectorizedIteratorDynamic<VectorizedRoot = any>
     extends PrimitiveFieldPointVectorIteratorDynamic<Type> {
     get canGetByReference() { return true }
-    // protected get elementSize(): number { return elementSize }
     readonly elementType = type
 
     get_returnValue(vectorized: FieldPointVector<Type, FieldPointVectorContainerDynamic>, vectorizedRoot: VectorizedRoot, index: number): Type {
@@ -47,7 +45,7 @@ class FieldPointVectorizedIteratorDynamic<VectorizedRoot = any>
     get_returnParam(vectorized: FieldPointVector<Type, FieldPointVectorContainerDynamic>, vectorizedRoot: VectorizedRoot, result: Type, index: number): void {
         const offset = elementSize * index
         for (let i = 0; i < elementSize; i++)
-            result.data[i] = vectorized.get(offset + i)
+            result.data[i] = <number>vectorized.get(offset + i)
     }
 
     set(vectorized: FieldPointVector<Type, FieldPointVectorContainerDynamic>, vectorizedRoot: VectorizedRoot, value: Type, index: number): void {

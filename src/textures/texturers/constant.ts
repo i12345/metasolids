@@ -34,16 +34,24 @@ export class ConstantTexturer<
         TextureableT = any,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureSampleT extends TextureSample = TextureSample,
-        TextureContextT extends
-            TextureSamplingContext<TextureLocationT> =
-            TextureSamplingContext<TextureLocationT>,
+        TextureLocationElementType extends TextureLocation = TextureLocationT,
+        TextureLocationFuseMode extends TextureLocation = TextureLocationT,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSamplingContextT extends
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         TexelTypeT extends TextureSampleT = TextureSampleT
     >
     extends Texturer<
         TextureableT,
         TextureLocationT,
         TextureSampleT,
-        TextureContextT,
+        TextureLocationElementType,
+        TextureLocationFuseMode,
+        TextureSampleElementType,
+        TextureSampleFuseMode,
+        TextureSamplingContextT,
         OutputsT,
         InputsT,
         TextureSampleT,
@@ -52,25 +60,37 @@ export class ConstantTexturer<
     constructor(public readonly value: TexelTypeT) {
         super(template)
     }
-    
+
     protected factory(
             { }: TexturesTemplated<
                     InputsT,
                     TextureSampleT,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
                     InputTexelTypesGrouped<TextureLocationT, TextureSampleT, TexelTypeT>,
                     TextureLocationT,
-                    TextureContextT
+                    TextureSamplingContextT
                 >
         ): MultiObjectsGroupsMapped<
                 OutputsT,
                 Texture<
-                    TextureLocationT,
-                    TextureSampleT,
-                    TextureContextT
+                    TextureLocationT, TextureSampleT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSamplingContextT
                 >
             > {
         return {
-            value: new ConstantSampleDomain(this.value, defaultField(this.value))
+            value: new ConstantSampleDomain <
+                TextureLocationT, TextureSampleT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                TextureSampleElementType,
+                TextureSampleFuseMode,
+                TextureSamplingContextT
+            >(this.value, defaultField<TextureSampleT, TextureSampleElementType, TextureSampleFuseMode>(this.value))
         }
-    }    
+    }
 }

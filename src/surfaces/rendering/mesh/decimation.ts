@@ -40,7 +40,7 @@ export class MeshDecimationShared<
                 indices.vertices_final[i] = i
                 indices.vertices_original[i] = i
             }
-            
+
             if (UVunwrapping) {
                 for (let i = 0; i < UVunwrapping.duplicatedVerts.length; i++) {
                     indices.vertices_final[n_original + i] = n_original + i
@@ -75,7 +75,7 @@ export class MeshDecimationShared<
         //         this.b_.set(0, 0, 0);
         //         this.c_ = 0;
         //     }
-            
+
         //     ctor(plane: Vec4, weight = 1) {
         //         const n = this.b_.set(plane.x, plane.y, plane.z)
         //         this.A_.set([
@@ -87,7 +87,7 @@ export class MeshDecimationShared<
         //         this.c_ = weight * plane.w * plane.w;
         //         return this
         //     }
-            
+
         //     add_inplace(other: Quadric) {
         //         // TODO: did it mean addition or multiplication in the source code?
         //         // it start with all 0's in A_, and many items are add()'d together,
@@ -99,7 +99,7 @@ export class MeshDecimationShared<
         //         this.c_ += other.c_;
         //         return this;
         //     }
-            
+
         //     add(other: Quadric) {
         //         const clone = new Quadric()
         //         clone.A_.set(this.A_.data as any as number[])
@@ -107,13 +107,13 @@ export class MeshDecimationShared<
         //         clone.c_ = this.c_
         //         return clone.add_inplace(other)
         //     }
-            
+
         //     Eval(v: Vec3): number {
         //         const Av: Vec3 = this.A_.transformVector(v);
         //         const q = v.dot(Av) + 2 * this.b_.dot(v) + this.c_;
         //         return q;
         //     }
-            
+
         //     IsInvertible() {
         //         const m = this.A_.data
         //         const det = (
@@ -123,12 +123,12 @@ export class MeshDecimationShared<
         //         )
         //         return Math.abs(det) > 1e-4;
         //     }
-            
+
         //     // Eigen::Vector3d Minimum() const { return -A_.ldlt().solve(b_); }
         //     Minimum() {
         //         return mat4_from_mat3(this.A_).invert().transformPoint(this.b_).mulScalar(-1)
         //     }
-            
+
         //     /** A_ = n . n^T, where n is the plane normal  */
         //     readonly A_ = new Mat3();
         //     /**
@@ -148,7 +148,7 @@ export class MeshDecimationShared<
         //     private readonly internal = new Array<Map<number, V>>()
 
         //     has([a, b]: Edge) {
-        //         if (a > b) { 
+        //         if (a > b) {
         //             const tmp = b
         //             b = a
         //             a = tmp
@@ -157,7 +157,7 @@ export class MeshDecimationShared<
         //     }
 
         //     get([a, b]: Edge): V {
-        //         if (a > b) { 
+        //         if (a > b) {
         //             const tmp = b
         //             b = a
         //             a = tmp
@@ -166,7 +166,7 @@ export class MeshDecimationShared<
         //     }
 
         //     set([a, b]: Edge, v: V) {
-        //         if (a > b) { 
+        //         if (a > b) {
         //             const tmp = b
         //             b = a
         //             a = tmp
@@ -176,7 +176,7 @@ export class MeshDecimationShared<
         //     }
 
         //     count([a, b]: Edge) {
-        //         if (a > b) { 
+        //         if (a > b) {
         //             const tmp = b
         //             b = a
         //             a = tmp
@@ -235,7 +235,7 @@ export class MeshDecimationShared<
         //     for (const tidx of vert_to_triangles[vidx])
         //         Qs[vidx].add(new Quadric().ctor(triangle_planes[tidx], triangle_areas[tidx]))
         // //?? what is the meaning of adding a Quadric here?
-        
+
         // // For boundary edges add perpendicular plane quadric
         // // auto edge_triangle_count = GetEdgeToTrianglesMap();
         // // auto AddPerpPlaneQuadric = [&](int vidx0, int vidx1, int vidx2,
@@ -280,7 +280,7 @@ export class MeshDecimationShared<
         //     const tria_v0 = triangle_(tidx, 0)
         //     const tria_v1 = triangle_(tidx, 1)
         //     const tria_v2 = triangle_(tidx, 2)
-            
+
         //     const area = triangle_areas[tidx];
         //     AddPerpPlaneQuadric(tria_v0, tria_v1, tria_v2, area);
         //     AddPerpPlaneQuadric(tria_v1, tria_v2, tria_v0, area);
@@ -289,7 +289,7 @@ export class MeshDecimationShared<
 
         // // Get valid edges and compute cost
         // // Note: We could also select all vertex pairs as edges with dist < eps
-        
+
         // const vbars = new EdgeMap<Vec3>()
         // const costs = new EdgeMap<number>()
         // // std::unordered_map<Eigen::Vector2i, Eigen::Vector3d,
@@ -382,7 +382,7 @@ export class MeshDecimationShared<
         //         let tria_i_0 = triangle_(tidx, 0)
         //         let tria_i_1 = triangle_(tidx, 1)
         //         let tria_i_2 = triangle_(tidx, 2)
-                
+
         //         // const Eigen::Vector3i& tria = mesh->triangles_[tidx];
         //         const has_vidx0 =
         //                 vidx0 == tria_i_0 || vidx0 == tria_i_1 || vidx0 == tria_i_2;
@@ -545,7 +545,7 @@ export class MeshDecimationIndividual<
     private _indices!: {
         /**
          * Array of original vertex indices (before UV unwrapping)
-         * 
+         *
          * Equal to {@link vertices_final} except duplicated vertex indices are
          * mapped to their original vertex indices.
          */
@@ -579,7 +579,7 @@ export class MeshDecimationIndividual<
         else if (isNaN(quality)) throw new RangeError("Quality must be in range [0, 1]")
         if(this._quality === quality) return
         this._quality = quality
-        
+
         this._indices = this.shared.cached(quality)
     }
 

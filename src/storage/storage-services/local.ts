@@ -28,7 +28,7 @@ export class LocalStorageService<ID = string> implements StorageService<ID> {
         const directory = prefix ?
             await root.getDirectoryHandle(prefix, { create: true }) :
             root
-        
+
         return new LocalStorageService(directory)
     }
 }

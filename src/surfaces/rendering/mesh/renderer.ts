@@ -124,7 +124,7 @@ export class MeshRendererIndividual<
         if (this.renderer.implementation) {
             const oldMesh = this.renderer.implementation.mesh
             this.renderer.implementation.mesh = this.implementation
-        
+
             if (oldMesh?.refCount === 0) {
                 for (const [key, mesh] of this.shared.implementation_cache.entries()) {
                     if (mesh === oldMesh) {
@@ -146,7 +146,7 @@ export class MeshRendererIndividual<
         const { vertices_original, vertices_final, triangles } = this.decimation.indices
         const mesh = this.implementation
         const surface_meshData = this.renderer.shared.meshData
-        
+
         const positions = new Float32Array(3 * n_decimated)
         const UVs = new Float32Array(2 * n_decimated)
         const normals = new Float32Array(3 * n_decimated)
@@ -164,7 +164,7 @@ export class MeshRendererIndividual<
         }
 
         if (UVunwrapping) {
-            for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {            
+            for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {
                 const i_UVunwrapped = vertices_final[i_decimated]
 
                 UVs[(2 * i_decimated) + 0] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 0]

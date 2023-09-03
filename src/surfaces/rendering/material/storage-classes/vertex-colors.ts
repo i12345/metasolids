@@ -23,7 +23,7 @@ export class MaterialSemanticImplementationStorageClass_VertexColors<
     >
     implements MaterialSemanticImplementationStorageClass<VolumeLocationT> {
     readonly $class = MaterialSemanticImplementationStorageClass_VertexColors.$class
-    
+
     startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT>): Cost_Space {
         return {
             // elements: renderer.mesh.decimation.numRenderVerts * 4,
@@ -44,9 +44,9 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColo
     >
     implements MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT> {
     readonly packs_stage0: PackedRenderedBufferForSemanticWithMixedBuffer<VolumeLocationT>[] = []
-    
+
     constructor(
-        public readonly $class: MaterialSemanticImplementationStorageClass_VertexColors<VolumeLocationT>,    
+        public readonly $class: MaterialSemanticImplementationStorageClass_VertexColors<VolumeLocationT>,
         public readonly renderer: SurfaceRendererShared<VolumeLocationT>
     ) {
         const callback = (renderer: SurfaceRendererIndividual<VolumeLocationT>) => {
@@ -73,7 +73,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
     readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] = []
     private _renderedPacked?: PackedRenderedBufferForSemanticWithMixedBuffer<VolumeLocationT>
     private _hasRequestedIndividual_material = false
-    
+
     constructor(
         public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<VolumeLocationT>,
         public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
@@ -89,7 +89,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
             if (removeIndex !== -1)
                 final.splice(removeIndex, 1)
         })
-        
+
         const maxStage = Math.max(0, ...final.map(renderedBuffer => renderedBuffer.implementation.stage))
         const nowRequestsIndividual_material = maxStage > 0
         if (nowRequestsIndividual_material && !this._hasRequestedIndividual_material)
@@ -115,7 +115,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
         }
 
         this.rendered.push(...add)
-        
+
         if (this.rendered.length === 0) {
             mesh.setColors32(new Uint8Array(4 * decimation.numRenderVerts).fill(0))
             return
@@ -139,7 +139,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
         else {
             const useHdr = !this.rendered.every(buffer => buffer.buffer instanceof Uint8Array)
             const packed = onlyOne(pack(this.rendered, useHdr ? [1, 2, 3, 4] : [4]))
-        
+
             const elements = packed.channels * decimation.numRenderVerts
             const buffer = useHdr ?
                 new Float32Array(elements) :

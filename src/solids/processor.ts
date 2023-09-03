@@ -27,7 +27,7 @@ export interface SolidProcessor<
             Solid<IndicesT, VolumeSampleT, SurfaceT> =
             Solid<IndicesT, VolumeSampleT, SurfaceT>,
         SolidProcessingContextT extends
-            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> = 
+            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> =
             SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT>
     > extends
     Processor<SolidT, SolidProcessingContextT> {
@@ -45,7 +45,7 @@ export class SolidSurfaceProcessor<
             Solid<IndicesT, VolumeSampleT, SurfaceT> =
             Solid<IndicesT, VolumeSampleT, SurfaceT>,
         SolidProcessingContextT extends
-            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> = 
+            SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> =
             SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT>
     > implements
     SolidProcessor<
@@ -64,10 +64,10 @@ export class SolidSurfaceProcessor<
             SurfaceT,
             SurfaceProcessingContextT
         >) { }
-    
+
     init(context: SolidProcessingContextT) {
         const initialization = this.processor.init(context.surface)
-        
+
         const connections = {
             inputs: initialization.connections.inputs.map(input => ['surface', ...input]),
             outputs: initialization.connections.outputs.map(output => ['surface', ...output])

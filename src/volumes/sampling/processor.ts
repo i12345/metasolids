@@ -37,14 +37,36 @@ class VolumeDomainSamplingSubdivisionProcessor<
                     OctTreeLayersGrouped
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         VolumeProcessingT extends
             VolumeProcessingWithSampling<
                     IndicesT,
@@ -53,7 +75,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -65,7 +91,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -78,7 +108,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT//,
                     //VolumeSampleProcessingContextT//,
@@ -91,7 +125,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT//,
                     // VolumeSampleProcessingContextT//,
@@ -99,26 +137,34 @@ class VolumeDomainSamplingSubdivisionProcessor<
                 >,
         SubdivisionProcessingT extends
             VolumeSamplingSubdivisionProcessing<
-                    IndicesT,    
+                    IndicesT,
                     OctTreeGroups,
                     OctTreeTGrouped,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
                     VolumeProcessingT
                 > =
             VolumeSamplingSubdivisionProcessing<
-                    IndicesT,    
+                    IndicesT,
                     OctTreeGroups,
                     OctTreeTGrouped,
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -132,7 +178,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeProcessingContextT
@@ -144,7 +194,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeProcessingContextT
@@ -157,7 +211,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
         OctTreeLayersGrouped,
         OctTreesGrouped,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -183,8 +241,12 @@ class VolumeDomainSamplingSubdivisionProcessor<
 
         type VectorContextT = VectorSamplingContext<
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             FieldPointVectorContainerStatic,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             FieldPointVectorContainerStatic,
             MultiObjectsTemplate,
             ObjIDsT,
@@ -200,7 +262,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
         const multiObjectsIDs = context[EncapsulatingKey][MultiObjectsIDsKey]
 
         if (!context[SpaceKey]) {
-            makeVectorSamplingContext(volume, samplingContext, multiObjectsIDs)
+            makeVectorSamplingContext(volume.field, samplingContext, multiObjectsIDs)
 
             volume.init(samplingContext)
 
@@ -209,12 +271,12 @@ class VolumeDomainSamplingSubdivisionProcessor<
             const largestDistance = Math.max(...([min.x, min.y, min.z, max.x, max.y, max.z].map(x => Math.abs(x))))
 
             const exponentOfTwo = Math.ceil(Math.log2(largestDistance))
-            
+
             context[SpaceKey] = new OctTreeSpace(context[SubdivisionKey], exponentOfTwo)
-            
-            const context_samples = <VolumeSamplingSubdivisionSamplesOctTreesGrouped/* <VolumeSampleT> */[typeof SamplesKey]>(context[SamplesKey] = <any>{})
-            field_point_map<VolumeSampleT, FieldPointType, void>(
-                <FieldPointMapped<VolumeSampleT, FieldPointType>>volume.field.elementType,
+
+            const context_samples = <VolumeSamplingSubdivisionSamplesOctTreesGrouped<VolumeSampleElementType>[typeof SamplesKey]>(context[SamplesKey] = <any>{})
+            field_point_map<VolumeSampleElementType, FieldPointType, void>(
+                <FieldPointMapped<VolumeSampleElementType, FieldPointType>>volume.field.elementType,
                 type => type instanceof Function,
                 (type, path) => {
                     const multiObjIndex = path.indexOf(MultiObjectsGroupedObjectsKey)
@@ -232,13 +294,12 @@ class VolumeDomainSamplingSubdivisionProcessor<
         const layer = subdivision.depth
         const new_voxels = subdivision.layer_sizes.at(-1)!
         const space = context[SpaceKey]
-        
+
         const local_indices = new subdivision.typedArray(new_voxels)
         for (let local_index = 0; local_index < local_indices.length; local_index++)
             local_indices[local_index] = local_index
-        
+
         const positions = OctTreeSpace.vectorized.positionOfVoxel.layers_same.call(space, layer, local_indices)
-        // const positions = space.positions.subdivide(3 * new_voxels)
         space.positions.layers.push(positions)
 
         //TODO: support extra location parameters
@@ -247,17 +308,17 @@ class VolumeDomainSamplingSubdivisionProcessor<
         const locations_type = samplingContext[SampleDomainLocationFieldKey].elementType
         const locations_iterator = vectorIterator(locations_type, <any>false, multiObjectsIDs)
         const locations = field_point_vectorized_multi_objects_new(locations_type, new_voxels, <any>false, multiObjectsIDs?.IDsType, extraLocationParameters_objects)
-        
+
         locations.p = positions
         if (extraLocationParameters)
             for (let i = 0; i < new_voxels; i++)
                 locations_iterator.set(locations, locations, <VolumeLocationT>extraLocationParameters, i)
 
-        const samples = samplingContext[VectorSampleFunction](volume, <FieldPointVector<VolumeLocationT, FieldPointVectorContainerStatic<Float64Array>>>locations, samplingContext)
+        const samples = samplingContext[VectorSampleFunction](volume, <FieldPointVector<VolumeLocationElementType, FieldPointVectorContainerStatic<Float64Array>>>locations, samplingContext)
         item.samples = samples
 
-        const context_samples = <VolumeSamplingSubdivisionSamplesOctTreesGrouped/* <VolumeSampleT> */>context.samples
-        field_point_map<VolumeSampleT, TypedArray, void>(
+        const context_samples = <VolumeSamplingSubdivisionSamplesOctTreesGrouped<VolumeSampleElementType>>context.samples
+        field_point_map<VolumeSampleElementType, TypedArray, void>(
             samples,
             array => isTypedArray(array),
             (array, path) => {
@@ -291,14 +352,36 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped
                 >,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         VolumeProcessingT extends
             VolumeProcessingWithSampling<
                     IndicesT,
@@ -307,7 +390,11 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -319,7 +406,11 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -332,9 +423,14 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
-                    VolumeSamplingContextT //,
+                    VolumeSamplingContextT//,
+                    //VolumeSampleProcessingContextT//,
                     // VolumeProcessingContextT
                 > =
             VolumeProcessingContextWithSampling<
@@ -344,9 +440,14 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
-                    VolumeSamplingContextT //,
+                    VolumeSamplingContextT//,
+                    // VolumeSampleProcessingContextT//,
                     // VolumeProcessingContextT
                 >,
         SubdivisionProcessingT extends
@@ -355,9 +456,13 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeGroups,
                     OctTreeTGrouped,
                     OctTreeLayersGrouped,
-                    OctTreesGrouped,    
+                    OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -370,7 +475,11 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -384,7 +493,11 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeProcessingContextT
@@ -396,7 +509,11 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeProcessingContextT
@@ -409,7 +526,11 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -425,7 +546,11 @@ export class VolumeSamplingSubdividingProcessor<
                     OctTreeLayersGrouped,
                     OctTreesGrouped,
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -497,7 +622,7 @@ export class VolumeSamplingSubdividingProcessor<
                         OctTreesGrouped,
                         SubdivisionProcessingContextT
                     >
-        
+
         ///@ts-ignore
         const subdivisionContext = encapsulated(context[SamplingKey], context) as SubdividingProcessingContextT
 
@@ -523,7 +648,7 @@ export class VolumeSamplingSubdividingProcessor<
                         OctTreesGrouped,
                         SubdivisionProcessingT
                     >
-        
+
         type SubdividingProcessingContextT =
             VolumeProcessingContextT[typeof SamplingKey] &
                 WithEncapsulating<VolumeProcessingContextT> & {
@@ -537,10 +662,10 @@ export class VolumeSamplingSubdividingProcessor<
                         OctTreesGrouped,
                         SubdivisionProcessingContextT
                     >
-        
+
         const subdivisionItem = encapsulated(item[SamplingKey], item) as SubdividingProcessingT
         const subdivisionContext = encapsulated(context[SamplingKey], context) as SubdividingProcessingContextT
-        
+
         this.subdivisionProcessor.process(subdivisionItem as any, subdivisionContext)
 
         item[SamplingKey][SpaceKey] = subdivisionContext[SpaceKey]
@@ -569,7 +694,7 @@ export class VolumeSamplingSubdividingProcessor<
  *       However, actually for soft bodies, don't we want evenly sampled meshes?
  *       A decimation algorithm can reduce this for rendering and rigid bodies
  * Repeat until subdivision_limit reached
- * 
+ *
  * Paper-thin sampling:
  * Filter metasolids: select those with at least one volume hint point
  *   that does not have presence in its corresponding voxel
@@ -579,11 +704,11 @@ export class VolumeSamplingSubdividingProcessor<
 
 /**
  * Extensible adaptive sampling:
- * 
+ *
  * Subdivision advisors:
  * - give advice whether to subdivide
  * - compute penalty after
- * 
+ *
  * Some subdivision advisors:
  *   Surface
  *   - compute surface
@@ -595,7 +720,7 @@ export class VolumeSamplingSubdividingProcessor<
  *   If, in process(), it detects that subdivision advisor already meshed surfaces,
  *   then the processor will not need to.
  *   Either way, it will still test for paper-thin surfaces.
- *   
+ *
  *   Volume hint points
  *   - wherever an interior hint point is, if the voxel does not have presence, recommend subdivision
  */

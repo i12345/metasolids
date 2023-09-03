@@ -54,7 +54,7 @@ export type OctTreesTemplated<
 //                         LayersGrouped[K] extends Layer & ArrayLike<TGrouped[K]> ?
 //                             OctTree<TGrouped[K], LayersGrouped[K]> :
 //                             never :
-//                         never 
+//                         never
 //                 ) :
 //                 never : never
 //     }
@@ -68,25 +68,25 @@ type Template1 = {
     }
 }
 
-let trees!: OctTreesTemplated<
-        Template1,
-        {
-            a: string,
-            b: {
-                w: number
-                x: number
-                y: number
-            }
-        },
-        {
-            a: string[],
-            b: {
-                w: number[]
-                x: Uint8Array
-                y: Float32Array
-            }
-        }
-    >
+// let trees!: OctTreesTemplated<
+//         Template1,
+//         {
+//             a: string,
+//             b: {
+//                 w: number
+//                 x: number
+//                 y: number
+//             }
+//         },
+//         {
+//             a: string[],
+//             b: {
+//                 w: number[]
+//                 x: Uint8Array
+//                 y: Float32Array
+//             }
+//         }
+//     >
 
-// trees.b.
-trees.b.y
+// // trees.b.
+// trees.b.y

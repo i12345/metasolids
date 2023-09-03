@@ -8,7 +8,7 @@ export class VectorField implements Field<Vector> {
     readonly interpolationType = new VectorInterpolationType()
 
     readonly elementType = Float64Array
-    
+
     constructor(
         public readonly fuseMode: FuseMode<Vector>,
         public range: [min: number, max: number] = [
@@ -24,7 +24,7 @@ export class VectorField implements Field<Vector> {
         let distance = 0
         for (let i = 0; i < n; i++)
             distance += ScalarField.distance(x[i], y[i], this.range)
-        
+
         return distance
     }
 

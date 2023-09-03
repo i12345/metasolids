@@ -1,8 +1,8 @@
 import { Field, MultiObjectsFieldPointElement, MultiObjectsWithGroupFieldsProcessingContext } from "../../../fields/index.js";
 import { ScalarField, MultiObjectsField } from "../../../fields/fields/index.js";
-import { MultiObjectsInfluences, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupKindsTemplate } from "../../../fields/multi-objects.js";
+import { MultiObjectsInfluences, MultiObjectsInfluencesElementType, MultiObjectsInfluencesFuseMode, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupKindsTemplate } from "../../../fields/multi-objects.js";
 import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
-import { Texture, TextureLocation } from "../../../textures/texture.js";
+import { Texture, TextureLocation, TextureSamplingContext } from "../../../textures/texture.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
@@ -24,7 +24,6 @@ export type SurfaceSampleWithInfluences<
 export type SurfaceSampleProcessingContextWithInfluences<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        // ObjIDsT extends IndicesTypedArray = Uint32Array
     > =
     MultiObjectsWithGroupFieldsProcessingContext<
             Objects,
@@ -54,16 +53,29 @@ export type SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroup,
             InfluencesGroup,
             TextureLocation,
+            TextureLocation,
+            TextureLocation,
             MultiObjectsInfluences<Objects>,
+            MultiObjectsInfluencesElementType<Objects>,
+            MultiObjectsInfluencesFuseMode<Objects>,
+            TextureSamplingContext,
             Texture<
                     TextureLocation,
-                    MultiObjectsInfluences<Objects>
+                    MultiObjectsInfluences<Objects>,
+                    TextureLocation,
+                    TextureLocation,
+                    MultiObjectsInfluencesElementType<Objects>,
+                    MultiObjectsInfluencesFuseMode<Objects>
                 >,
             MultiObjectsGroupsMapped<
                     InfluencesGroup,
                     Texture<
                             TextureLocation,
-                            MultiObjectsInfluences<Objects>
+                            MultiObjectsInfluences<Objects>,
+                            TextureLocation,
+                            TextureLocation,
+                            MultiObjectsInfluencesElementType<Objects>,
+                            MultiObjectsInfluencesFuseMode<Objects>
                         >
                 >,
             SurfaceSampleT
@@ -88,7 +100,7 @@ export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceSampleT extends 
+        SurfaceSampleT extends
             SurfaceSampleWithInfluences<Objects, InfluencesGroup> =
             SurfaceSampleWithInfluences<Objects, InfluencesGroup>,
         SurfaceSampleProcessingContextT extends

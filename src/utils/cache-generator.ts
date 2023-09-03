@@ -5,7 +5,7 @@ export function cacheGenerator<T = unknown, TReturn = any, TNext = unknown>(gene
     return function* () {
         for (let i = 0; i < cache.length; i++)
             yield cache[i]
-        
+
         while (currentGenerator) {
             const { value, done } = generator.next()
             if (done) currentGenerator = undefined

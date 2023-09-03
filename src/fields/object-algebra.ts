@@ -9,10 +9,10 @@ export function change<Final, Start, Subtract>(
     ) {
     const subtracted = { ...start } as any
     for (const key of subtract) delete subtracted[key]
-    
+
     const added = subtracted as unknown as Final
     for (const [key, value] of Reflect_entries(add)) (added as any)[key] = value
-    
+
     return added
 }
 

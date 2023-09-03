@@ -10,10 +10,10 @@ export interface RenderedBuffer {
 export interface RenderedBufferForSemantic extends RenderedBuffer {
     /**
      * The key in {@link StandardMaterial} where this buffer should go
-     * 
+     *
      * For constants and textures, reference the corresponding constant or
      * texture `*Map` property.
-     * 
+     *
      * For vertex colors, reference the `*VertexColors` property and the
      * `*VertexColorChannels` will be automatically set.
      */
@@ -57,7 +57,7 @@ export function renderPack(
     //     const buffer_src = pack.sources[0].buffer
     //     if (buffer_dst.length !== buffer_src.length)
     //         throw new Error()
-        
+
     //     if ((buffer_dst instanceof Float32Array && buffer_src instanceof Float32Array) ||
     //         (buffer_dst instanceof Uint8Array && buffer_src instanceof Uint8Array))
     //         buffer_dst.set(buffer_src)
@@ -72,7 +72,7 @@ export function renderPack(
         const size_dst = indices_dst?.length ?? (pack.sources[0].buffer.length / pack.sources[0].channels)
         if (buffer_dst.length !== size_dst * pack.channels)
             throw new Error()
-        
+
         for (const source of pack.sources) {
             const target = pack.targets.find(target => target.source.semantic === source.semantic)!
             for (const [source_channel_index, pack_channel] of target.channels.entries()) {
@@ -111,7 +111,7 @@ export function* pack
 
     for (const texture of textures)
         (sizeGroups[texture.buffer.length / texture.channels] ??= []).push(texture)
-    
+
     for (const group of Object.values(sizeGroups)) {
         const blocks: {
             sources: RenderedBufferT[]
@@ -137,17 +137,17 @@ export function* pack
                 })
             }
         }
-        
+
         for (const block of blocks) {
             const targets: PackedRenderedBufferForSemantic<RenderedBufferT>["targets"] = []
-            
+
             const bufferChannels =
                 finalBufferChannels ?
                     finalBufferChannels
                         .filter(channels => channels >= block.channelsInUse)
                         .sort((a, b) => a - b)[0] :
                     block.channelsInUse
-            
+
             let channelNext = ColorChannelIndex.r
 
             for (const source of block.sources) {

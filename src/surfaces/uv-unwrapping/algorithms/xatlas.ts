@@ -6,7 +6,7 @@ let xAtlasAPI: XAtlasAPI
 
 export const init_XAtlasAPI = (xatlas_path: string = '/xatlasjs-esm') => new Promise<void>(async resolve => {
     const { XAtlasAPI: XAtlasAPIClass } = await (eval(`import("${xatlas_path}/index.js")`) as PromiseLike<{ XAtlasAPI: typeof XAtlasAPI }>)
-    
+
     xAtlasAPI = new XAtlasAPIClass(
         () => resolve(),
         (path, dir) => {
@@ -35,9 +35,9 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
         const results = xAtlasAPI.generateAtlas(xAtlasAPI.defaultChartOptions(), xAtlasAPI.defaultPackOptions())
         if (results.length !== 1)
             throw new Error(`xatlas: ${results.length} atlases generated`)
-        
+
         const atlas = results[0]
-        
+
         /** number of atlas vertices */
         const n_atlas = atlas.vertex.vertices.length / 3
 
@@ -49,7 +49,7 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
         const duplicatedVerts = new Array<number>()
         /** final vertex UV's */
         const UVs = atlas.vertex.coords1
-        
+
         function original_vert_index(x: number, y: number, z: number) {
             //TODO: use binary list
             for (let i = 0; i < vertices_start.length / 3; i++) {
@@ -62,7 +62,6 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
             throw new Error("element not found. If this is raised, implement nearest neighbor lookup")
         }
 
-        // for (let i_atlas = n_atlas - 1; i_atlas >= 0; i_atlas--) {
         for (let i_atlas = 0; i_atlas < n_atlas; i_atlas++) {
             const i_original = original_vert_index(
                 atlas.vertex.vertices[(3 * i_atlas) + 0],

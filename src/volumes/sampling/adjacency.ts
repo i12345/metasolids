@@ -28,14 +28,36 @@ export interface VolumeProcessingWithSamplingWithAdjacency<
                         OctTreeLayersGrouped
                     >,
             VolumeLocationT extends VolumeLocation = VolumeLocation,
+            VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+            VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
             VolumeSampleT extends VolumeSample = VolumeSample,
+            VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+            VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
             VolumeSampleProcessingContextT = any,
             VolumeSamplingContextT extends
-                VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-                VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+                VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+                VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
             VolumeT extends
-                VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-                VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>
+                VolumeWithBoundingBox<
+                        VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
+                        VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
+                        VolumeSampleProcessingContextT,
+                        VolumeSamplingContextT
+                    > =
+                VolumeWithBoundingBox<
+                        VolumeLocationT,
+                        VolumeLocationElementType,
+                        VolumeLocationFuseMode,
+                        VolumeSampleT,
+                        VolumeSampleElementType,
+                        VolumeSampleFuseMode,
+                        VolumeSampleProcessingContextT,
+                        VolumeSamplingContextT
+                    >,
         >
     extends VolumeProcessingWithSampling<
             IndicesT,
@@ -44,7 +66,11 @@ export interface VolumeProcessingWithSamplingWithAdjacency<
             OctTreeLayersGrouped,
             OctTreesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT
@@ -56,7 +82,11 @@ export interface VolumeProcessingWithSamplingWithAdjacency<
         OctTreeLayersGrouped,
         OctTreesGrouped,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT
@@ -68,14 +98,36 @@ export interface VolumeProcessingWithSamplingWithAdjacency<
 export class VolumeWithSamplingWithAdjacencyProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, VolumeSampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
         VolumeT extends
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT> =
-            VolumeWithBoundingBox<VolumeLocationT, VolumeSampleT, VolumeSampleProcessingContextT, VolumeSamplingContextT>,
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            VolumeWithBoundingBox<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
         VolumeProcessingT extends
             VolumeProcessingWithSamplingWithAdjacency<
                     IndicesT,
@@ -84,7 +136,11 @@ export class VolumeWithSamplingWithAdjacencyProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -96,7 +152,11 @@ export class VolumeWithSamplingWithAdjacencyProcessor<
                     {},
                     {},
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -107,7 +167,11 @@ export class VolumeWithSamplingWithAdjacencyProcessor<
     > implements
     VolumeProcessor<
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeSampleT,
+        VolumeSampleElementType,
+        VolumeSampleFuseMode,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,

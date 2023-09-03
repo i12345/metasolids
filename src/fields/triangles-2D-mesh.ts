@@ -2,15 +2,16 @@ import { Vec2 } from "playcanvas-extended"
 import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
 import { FieldPointType } from "./type.js"
 import { IndicesArray, IndicesTypedArray } from "../utils/indices-array.js"
-import { NumberArrayLike, TypedArray } from "../utils/typed-array.js"
+import { NumberArrayLike, NumberTypedArray } from "../utils/typed-array.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
 
 export class Triangles2DMeshInterpolator<
         VertexPoint extends FieldPoint = FieldPoint,
-        VertexContainer extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
-        VertexVector extends FieldPointVector<VertexPoint, VertexContainer> = FieldPointVector<VertexPoint, VertexContainer>,
+        VertexPointElementType extends FieldPoint = VertexPoint,
+        VertexContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        VertexVector extends FieldPointVector<VertexPointElementType, VertexContainer> = FieldPointVector<VertexPointElementType, VertexContainer>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainer<ObjIDsT>
@@ -24,14 +25,14 @@ export class Triangles2DMeshInterpolator<
     private readonly get_v02: (index: number) => VertexPoint
 
     constructor(
-        public readonly vertexType: FieldPointType<VertexPoint>,
+        public readonly vertexType: FieldPointType<VertexPointElementType>,
         public readonly vertices: VertexVector,
         public readonly triangles: IndicesArray,
         public readonly multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-        const iterator = vectorIterator(vertexType, <IsDynamicVector<VertexPoint, VertexContainer>>false, multiObjectIDs)
-        
-        this.v0 = <VertexVector><unknown>field_point_vectorized_multi_objects_new<VertexPoint, VertexContainer, ObjIDsT, ObjIDsContainer>(
+        const iterator = vectorIterator<VertexPoint, VertexContainer, Objects, ObjIDsT, VertexPointElementType, VertexVector>(vertexType, <IsDynamicVector<VertexPointElementType, VertexContainer>>false, multiObjectIDs)
+
+        this.v0 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             undefined,
@@ -39,7 +40,7 @@ export class Triangles2DMeshInterpolator<
             <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
         )
 
-        this.v01 = <VertexVector><unknown>field_point_vectorized_multi_objects_new<VertexPoint, VertexContainer, ObjIDsT, ObjIDsContainer>(
+        this.v01 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             undefined,
@@ -47,7 +48,7 @@ export class Triangles2DMeshInterpolator<
             <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
         )
 
-        this.v02 = <VertexVector><unknown>field_point_vectorized_multi_objects_new<VertexPoint, VertexContainer, ObjIDsT, ObjIDsContainer>(
+        this.v02 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             undefined,
@@ -63,7 +64,7 @@ export class Triangles2DMeshInterpolator<
         const set_v0 = iterator.set.bind(iterator, this.v0, this.v0)
         const set_v01 = iterator.set.bind(iterator, this.v0, this.v01)
         const set_v02 = iterator.set.bind(iterator, this.v0, this.v02)
-        
+
         //TODO: use non-reduced arithmetic fuse mode
         for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
             const v0 = get_vertex(triangles[i + 0])
@@ -99,7 +100,7 @@ export class Triangles2DMeshInterpolator<
 
         return result.value
     }
-    
+
     interpolate_add<ContainingFieldsPoint extends FieldsPoint>(
             result: ContainingFieldsPoint,
             key: keyof ContainingFieldsPoint,
@@ -148,7 +149,7 @@ export class Triangles2DMeshCollider {
                     .add(this.mesh.bounds.origin)
 
                 const max = new Vec2(resolution, resolution).add(min)
-                
+
                 this.cells[x + (y * resolution)] = new Triangles2DMeshQuad(
                     this.mesh,
                     { min, max }
@@ -161,11 +162,11 @@ export class Triangles2DMeshCollider {
         const cell = new Vec2()
             .sub2(p, this.mesh.bounds.origin)
             .div(this.mesh.bounds.size).floor()
-        
+
         if (cell.x < 0 || cell.x >= this.resolution ||
             cell.y < 0 || cell.y >= this.resolution)
             return
-        
+
         this.cells[cell.x + (cell.y * this.resolution)].collide(p, collisionHandler)
     }
 
@@ -173,11 +174,11 @@ export class Triangles2DMeshCollider {
         const cell = new Vec2()
             .sub2(p, this.mesh.bounds.origin)
             .div(this.mesh.bounds.size).floor()
-        
+
         if (cell.x < 0 || cell.x >= this.resolution ||
             cell.y < 0 || cell.y >= this.resolution)
             return undefined
-        
+
         return this.cells[cell.x + (cell.y * this.resolution)].collision_first(p)
     }
 }
@@ -205,10 +206,10 @@ export class Triangles2DMesh {
 
         /**
          * Each four elements means a matrix T^-1, where
-         * 
+         *
          * T = [xy01.x  xy02.x; xy01.y  xy02.y]
          * T (u v) = (x y [relative to v0])
-         * 
+         *
          * T^-1 = (1 / ((xy01.x)(xy02.y) - (xy02.x)(xy01.y))) *
          * [xy02.y  -xy02.x;  -xy01.y  xy01.x]
          */
@@ -221,7 +222,7 @@ export class Triangles2DMesh {
 
         let v_min_x = Number.POSITIVE_INFINITY, v_min_y = Number.POSITIVE_INFINITY,
             v_max_x = Number.NEGATIVE_INFINITY, v_max_y = Number.NEGATIVE_INFINITY
-        
+
         for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
             i0 = triangles[i + 0]
             i1 = triangles[i + 1]
@@ -290,7 +291,7 @@ class Triangles2DMeshQuad {
             v2_x: number, v2_y: number
         let min_x: number, min_y: number,
             max_x: number, max_y: number
-        
+
         for (let i = 0, tri = 0; i < this.mesh.triangles.length; i += 3) {
             i0 = triangles[i + 0]
             i1 = triangles[i + 1]
@@ -313,7 +314,7 @@ class Triangles2DMeshQuad {
                 min_y >= bounds.max.y ||
                 max_y <= bounds.min.y)
                 continue
-            
+
             this.filtered_triangles.push(tri++)
         }
 
@@ -322,7 +323,6 @@ class Triangles2DMeshQuad {
         this.margins = {
             min: -margin,
             max: 1 + margin
-            // max: 1 + (2 * margin)
         }
     }
 
@@ -357,7 +357,7 @@ class Triangles2DMeshQuad {
             if (w1 < margin_min || w2 < margin_min ||
                 w1 + w2 >= margin_max)
                 continue
-            
+
             collisionHandler(tri, w1, w2)
         }
     }
@@ -393,7 +393,7 @@ class Triangles2DMeshQuad {
             if (w1 < margin_min || w2 < margin_min ||
                 w1 + w2 >= margin_max)
                 continue
-            
+
             return { tri, w1, w2 }
         }
 

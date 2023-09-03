@@ -9,7 +9,7 @@ export class MaterialSemanticImplementationStorageClass_Constant<
     >
     implements MaterialSemanticImplementationStorageClass<VolumeLocationT> {
     readonly $class = MaterialSemanticImplementationStorageClass_Constant.$class
-    
+
     private readonly _defaultMaterials = new Map<typeof Material, Material>()
 
     defaultMaterial(materialType: typeof Material) {
@@ -60,12 +60,12 @@ class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
     implements MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT> {
     readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] = []
     private _hasRequestedIndividual_material = false
-    
+
     constructor(
         public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_Constant<VolumeLocationT>,
         public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
     ) { }
-    
+
     preoptimize(
             add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
             remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
@@ -76,7 +76,7 @@ class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
             if (removeIndex !== -1)
                 final.splice(removeIndex, 1)
         })
-        
+
         const maxStage = Math.max(0, ...final.map(renderedBuffer => renderedBuffer.implementation.stage))
         const nowRequestsIndividual_material = maxStage > 0
         if (nowRequestsIndividual_material && !this._hasRequestedIndividual_material)
@@ -92,7 +92,7 @@ class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
         ): void {
         for (const { semantic } of remove)
             (this.renderer.implementation.material as any)[semantic as string] = (this.$class.$class.defaultMaterial(this.$class.renderer.material.materialType) as any)[semantic]
-        
+
         for (const { semantic, buffer } of add) {
             const mat_semantic = (this.renderer.material.implementation as any)[semantic]
 

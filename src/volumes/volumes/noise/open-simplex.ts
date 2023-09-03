@@ -8,21 +8,23 @@ import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../../fields/vectorized/index.js";
 
-export class OpenSimlpexNoiseVolume<
+export class OpenSimplexNoiseVolume<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
         VolumeLocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         VolumeSampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
         SampleProcessingContextT = any,
         ContextT extends
-            VolumeSamplingContext<VolumeLocationT, SampleProcessingContextT> =
-            VolumeSamplingContext<VolumeLocationT, SampleProcessingContextT>,
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, SampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, SampleProcessingContextT>,
         LocationVector extends
-            FieldPointVector<VolumeLocationT, VolumeLocationContainer> =
-            FieldPointVector<VolumeLocationT, VolumeLocationContainer>,
-        SampleVector extends 
+            FieldPointVector<VolumeLocationElementType, VolumeLocationContainer> =
+            FieldPointVector<VolumeLocationElementType, VolumeLocationContainer>,
+        SampleVector extends
             FieldPointVectorWithMultiObjects<
                     VolumeSample,
                     VolumeSampleContainer,
@@ -38,7 +40,11 @@ export class OpenSimlpexNoiseVolume<
         VectorContext extends
             FusedVectorSamplingContext<
                     VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeLocationContainer,
+                    VolumeSample,
+                    VolumeSample,
                     VolumeSample,
                     VolumeSampleContainer,
                     Objects,
@@ -49,8 +55,12 @@ export class OpenSimlpexNoiseVolume<
                     SampleVector
                 > =
             FusedVectorSamplingContext<
-                    VolumeLocation,
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
                     VolumeLocationContainer,
+                    VolumeSample,
+                    VolumeSample,
                     VolumeSample,
                     VolumeSampleContainer,
                     Objects,
@@ -65,9 +75,13 @@ export class OpenSimlpexNoiseVolume<
         Objects,
         ObjIDsT,
         ObjIDsContainer,
-        
+
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         VolumeLocationContainer,
+        VolumeSample,
+        VolumeSample,
         VolumeSample,
         VolumeSampleContainer,
         ContextT,
@@ -76,14 +90,18 @@ export class OpenSimlpexNoiseVolume<
         VectorContext,
 
         Vec3,
+        Vec3,
+        Vec3,
         VolumeLocationContainer,
+        number,
+        number,
         number,
         VolumeSampleContainer,
         SeededSamplingContext<Vec3>
     >
     implements Volume {
     private _version!: keyof typeof openSimplex[3]
-    
+
     protected readonly transformsLocation = true
     protected readonly transformsSample = true
 
@@ -95,7 +113,7 @@ export class OpenSimlpexNoiseVolume<
         this._version = version
         this.inner = openSimplex[3][version]
     }
-    
+
     constructor(
         version: keyof typeof openSimplex[3] = "fallback",
     ) {

@@ -1,11 +1,11 @@
 import { IndicesTypedArray } from "../../utils/indices-array.js"
-import { TypedArray } from "../../utils/typed-array.js"
+import { NumberTypedArray } from "../../utils/typed-array.js"
 import { FieldPoint } from "../point.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType } from "./point.js"
 
 export interface FieldPointVectorIterator<
         Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<TypedArray> = FieldPointVectorContainer,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         VectorizedRoot = any,
         VectorizedPoint extends FieldPoint = Point
     > {
