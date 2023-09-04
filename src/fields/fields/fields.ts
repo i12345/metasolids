@@ -5,6 +5,7 @@ import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped, FieldsPoi
 import { FieldPointType } from "../type.js"
 import { deletePath, extract, pathsToValue } from "../../paradigm/trees/index.js";
 import { FuseMode } from "../vectorized/fusing.js";
+import { clone } from "../../utils/cloneable.js";
 
 export class FieldsField<
         Point extends FieldsPoint = FieldsPoint,
@@ -121,6 +122,16 @@ export class FieldsField<
             deletePath(omitted, group)
 
         return new FieldsField(omitted)
+    }
+
+    [clone]() {
+        return new FieldsField(
+            fields_point_map(
+                this.fields,
+                field => field.interpolationType && makeInterpolator in field.interpolationType,
+                field => field[clone]()
+            )
+        )
     }
 
     static readonly empty = new FieldsField({})

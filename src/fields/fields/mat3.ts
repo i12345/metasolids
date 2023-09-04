@@ -4,6 +4,7 @@ import { Mat3InterpolationType } from "../interpolators/mat3.js";
 import { mat4_from_mat3, trs } from "../../utils/matrix.js";
 import { Mat4Field } from "./mat4.js";
 import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";
+import { clone } from "../../utils/cloneable.js";
 
 export class Mat3Field implements Field<Mat3> {
     interpolationType = new Mat3InterpolationType()
@@ -20,6 +21,10 @@ export class Mat3Field implements Field<Mat3> {
             Mat4Field.fields.rotation.distance(trs_x.r, trs_y.r) +
             Mat4Field.fields.scale.distance(trs_x.s, trs_y.s)
         )
+    }
+
+    [clone]() {
+        return this
     }
 
     static readonly instance = new this(<FuseMode<Mat3>>fuseModes.ArithmeticPrimitiveFuseMode.multiply)

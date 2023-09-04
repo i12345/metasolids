@@ -1,4 +1,4 @@
-import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, MultiObjectsIDsKey, WithMultiObjectsIDs, extract, MultiObjectsGroupedObjectsKey, MultiObjectsMapped } from "../../../paradigm/trees/index.js";
+import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, MultiObjectsIDsKey, WithMultiObjectsIDs, extract, MultiObjectsGroupedObjectsKey, MultiObjectsMapped, MultiObjectsMappedAgainGroupTypes } from "../../../paradigm/trees/index.js";
 import { Field, FieldPoint, FieldPointType, MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
 import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
@@ -51,6 +51,41 @@ export type SurfaceSampleWithObjectsInterpolatingValuesUsingSurfaceUVUnwrapping<
             InterpolatingValue,
             InterpolatingValuesGrouped
         >
+
+export type SurfaceSampleElementTypeWithObjectsInterpolatingValuesUsingSurfaceUVUnwrapping<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        //TODO: let groups hold different objects and let these be typed by the value groups
+        ObjectsInterpolatingGrouped extends
+            MultiObjectsGrouped<Objects, InterpolatingGroups> =
+            MultiObjectsGrouped<Objects, InterpolatingGroups>,
+        InterpolatingValue extends FieldPoint = FieldPoint,
+        InterpolatingValuesGrouped extends
+            MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue> =
+            MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue>
+    > =
+    SurfaceSample &
+    MultiObjectsMappedAgainGroupTypes<
+            Objects,
+            InterpolatingGroups,
+            InterpolatingValue,
+            InterpolatingValuesGrouped
+        >
+
+export type SurfaceSampleFuseModeWithObjectsInterpolatingValuesUsingSurfaceUVUnwrapping<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        //TODO: let groups hold different objects and let these be typed by the value groups
+        ObjectsInterpolatingGrouped extends
+            MultiObjectsGrouped<Objects, InterpolatingGroups> =
+            MultiObjectsGrouped<Objects, InterpolatingGroups>,
+        InterpolatingValue extends FieldPoint = FieldPoint,
+        InterpolatingValuesGrouped extends
+            MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue> =
+            MultiObjectsGroupsMapped<InterpolatingGroups, InterpolatingValue>
+    > =
+    SurfaceSample &
+    InterpolatingValuesGrouped
 
 export type SurfaceSampleProcessingContextWithObjectsInterpolatingValuesUsingSurfaceUVUnwrapping<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

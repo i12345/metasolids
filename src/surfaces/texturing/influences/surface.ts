@@ -92,7 +92,11 @@ export type SurfaceProcessingContextWithInfluencesTextureUsingSurfaceUVUnwrappin
     SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroup,
             SampleProcessingContextT,
-            InfluencesGroup
+            InfluencesGroup,
+            MultiObjectsInfluences<Objects>,
+            MultiObjectsInfluencesElementType<Objects>,
+            MultiObjectsInfluencesFuseMode<Objects>,
+            MultiObjectsField<number, Objects>
         >
 
 export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<

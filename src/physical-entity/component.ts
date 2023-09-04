@@ -1,12 +1,13 @@
 import { Entity, GraphNode, Vec3 } from "playcanvas-extended";
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js";
-import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsTemplateOrLeaf, MultiObjectsMappedOrLeaf, MultiObjectsIDs, MultiObjectsIDsKey } from "../paradigm/trees/index.js";
+import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsTemplateOrLeaf, MultiObjectsMappedOrLeaf, MultiObjectsIDs, MultiObjectsIDsKey, extract } from "../paradigm/trees/index.js";
 import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template, SurfaceIndividualTextureLocationsGroupsField, SurfaceObjectsTextureLocationsGroupsField, ObjIDsT, ObjIDsType, SurfaceTextureLocationsGroupsFields } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
 import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 import { ComponentSystem, SYSTEM_ID } from "./system.js";
 import { defaultVolumeSampleField } from "../volumes/volume.js";
+import { GroupWithField } from "../fields/processing.js";
 
 export class Component<ID = string> extends processing.Component<
         VolumeProcessingT,
@@ -129,7 +130,7 @@ export class Component<ID = string> extends processing.Component<
                         .map(child => [
                             child.node.name,
                             new volumes.volumes.TransformVolume(
-                                child.render(volumeSampleField)! as volumes.volumes.VolumeWithBoundingBox<VolumeLocationT, SampleT, SampleProcessingContextT, VolumeDomainSamplingContextT>,
+                                child.render(volumeSampleField)! as VolumeT,
                                 child.node.getLocalTransform()
                             )
                         ] as [string, volumes.volumes.TransformVolume])
@@ -201,21 +202,39 @@ export class Component<ID = string> extends processing.Component<
 
         const objectsTemplate = <MultiObjectsTemplate>objectsTemplate_populate(compositeVolume_final)
 
+        function updateFieldMultiObjIDs(field: fields.Field) {
+            if (field instanceof fields.fields.MultiObjectsField)
+                field.multiObjectsIDs = multiObjectsIDs
+            else if (field instanceof fields.fields.FieldsField) {
+                fields.fields_point_map(
+                    field.fields,
+                    leaf => leaf.interpolationType && fields.makeInterpolator in leaf.interpolationType,
+                    subfield => updateFieldMultiObjIDs(subfield)
+                )
+            }
+        }
+
         function multiObjectsContext_insertObjects<
-            Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-            ObjectsGrouped extends
-            MultiObjectsGrouped<Objects, Groups> =
-            MultiObjectsGrouped<Objects, Groups>,
-            GroupsKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
-        >({
-            [MultiObjectsProcessingContextObjectsGrouped]: objectsGrouped
-        }: MultiObjectsProcessingContext<Objects, Groups, ObjectsGrouped, GroupsKinds>) {
+                Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+                ObjectsGrouped extends
+                MultiObjectsGrouped<Objects, Groups> =
+                MultiObjectsGrouped<Objects, Groups>,
+                GroupsKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate
+            >(context: MultiObjectsProcessingContext<Objects, Groups, ObjectsGrouped, GroupsKinds>) {
+            const {
+                [MultiObjectsProcessingContextObjectsGrouped]: objectsGrouped
+            } = context
+
             for (const path of pathsToNodeWithKey(objectsGrouped, MultiObjectsGroupedObjectsKey)) {
                 intract(
                     objectsGrouped,
                     [...path, MultiObjectsGroupedObjectsKey],
                     objectsTemplate
                 )
+
+                const field = extract<GroupWithField>(context, path)
+                if (field[fields.GroupFieldKey])
+                    updateFieldMultiObjIDs(field[fields.GroupFieldKey])
             }
         }
 
@@ -261,9 +280,12 @@ export class Component<ID = string> extends processing.Component<
                     ['material', 'textures']
                 ]
             },
-            material: {},
 
-            ...surface_multiObjectsContext
+            ...surface_multiObjectsContext,
+
+            material: {
+                textures: surfaces.rendering.material.Material_Groups_TextureContexts_Template
+            },
         }
 
         const solid_context: SolidProcessingContextT = {

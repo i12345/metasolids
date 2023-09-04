@@ -3,7 +3,7 @@ import { Reflect_entries, Reflect_fromEntries } from "./reflect-entries.js"
 export const clone = Symbol('clone')
 
 export interface Cloneable {
-    [clone](): object
+    [clone](): any
 }
 
 export function makeClone<T>(o: T): T {

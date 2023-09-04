@@ -1,6 +1,7 @@
 import { MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js";
 import { MultiObjectsIDs, MultiObjectsMapped, MultiObjectsTemplate, objectValuePaths } from "../../paradigm/trees/multi-objects.js";
 import { extract, hasPath } from "../../paradigm/trees/tree.js";
+import { clone } from "../../utils/cloneable.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { Field } from "../field.js";
 import { MultiObjectsInterpolationType } from "../interpolators/multi-objects.js";
@@ -25,7 +26,7 @@ export class MultiObjectsField<
 
     constructor(
         public readonly inner: Field<Point>,
-        public readonly multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
+        public multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
     ) { }
 
     distance(
@@ -43,5 +44,9 @@ export class MultiObjectsField<
         }
 
         return distances ** (1 / pow)
+    }
+
+    [clone]() {
+        return new MultiObjectsField(this.inner[clone](), this.multiObjectsIDs)
     }
 }

@@ -1,3 +1,4 @@
+import { clone } from "../../utils/cloneable.js";
 import { Field } from "../field.js";
 import { VectorInterpolationType } from "../interpolators/vector.js";
 import { Vector } from "../point.js";
@@ -11,7 +12,7 @@ export class VectorField implements Field<Vector> {
 
     constructor(
         public readonly fuseMode: FuseMode<Vector>,
-        public range: [min: number, max: number] = [
+        public readonly range: [min: number, max: number] = [
             Number.NEGATIVE_INFINITY,
             Number.POSITIVE_INFINITY
         ],
@@ -26,6 +27,10 @@ export class VectorField implements Field<Vector> {
             distance += ScalarField.distance(x[i], y[i], this.range)
 
         return distance
+    }
+
+    [clone]() {
+        return this
     }
 
     // static readonly instance = new this()

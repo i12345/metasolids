@@ -1,3 +1,4 @@
+import { Cloneable } from "../utils/cloneable.js";
 import { FieldInterpolationType } from "./interpolation.js";
 import { FieldPoint } from "./point.js";
 import { FieldPointType } from "./type.js"
@@ -7,7 +8,7 @@ export interface Field<
         Point extends FieldPoint = FieldPoint,
         ElementTypePoint extends FieldPoint = Point,
         FuseModePoint extends FieldPoint = Point
-    > {
+    > extends Cloneable {
     interpolationType: FieldInterpolationType<Point>
 
     elementType: FieldPointType<ElementTypePoint>

@@ -2,6 +2,7 @@ import { Color } from "playcanvas-extended";
 import { Field } from "../field.js";
 import { ColorRGBAClampedCurveInterpolationType } from "../interpolators/color.js";
 import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";
+import { clone } from "../../utils/cloneable.js";
 
 export class ColorField implements Field<Color> {
     interpolationType = new ColorRGBAClampedCurveInterpolationType()
@@ -18,6 +19,10 @@ export class ColorField implements Field<Color> {
             ((x.b - y.b) ** 2) +
             ((x.a - y.a) ** 2)
         )
+    }
+
+    [clone]() {
+        return this
     }
 
     static readonly instance = new this(<FuseMode<Color>>fuseModes.ArithmeticPrimitiveFuseMode.add)

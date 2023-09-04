@@ -1,3 +1,4 @@
+import { clone } from "../../utils/cloneable.js";
 import { Field } from "../field.js";
 import { ScalarInterpolationType } from "../interpolators/scalar.js";
 import { ArithmeticPrimitiveFuseMode } from "../vectorized/fuse-modes/arithmetic.js";
@@ -10,7 +11,7 @@ export class ScalarField implements Field<number> {
 
     constructor(
         public readonly fuseMode: FuseMode<number> = <ArithmeticPrimitiveFuseMode<number>>ArithmeticPrimitiveFuseMode.add,
-        public range: [min: number, max: number] = [
+        public readonly range: [min: number, max: number] = [
             Number.NEGATIVE_INFINITY,
             Number.POSITIVE_INFINITY
         ]
@@ -49,6 +50,10 @@ export class ScalarField implements Field<number> {
             return Math.min(directDistance, indirectDistance)
         }
         else return Math.abs(x - y)
+    }
+
+    [clone]() {
+        return this
     }
 
     static readonly instance = new this(<FuseMode<number>>fuseModes.ArithmeticPrimitiveFuseMode.add)

@@ -1,3 +1,4 @@
+import { clone } from "../../utils/cloneable.js";
 import { Sign } from "../../utils/sign.js";
 import { Field } from "../field.js";
 import { ConstantInterpolationType } from "../interpolators/constant.js";
@@ -12,6 +13,10 @@ export class SignField implements Field<Sign> {
 
     distance(x: Sign, y: Sign): number {
         return x === y ? 0 : 1
+    }
+
+    [clone]() {
+        return this
     }
 
     static readonly instance = new this(<FuseMode<Sign>>fuseModes.ConcatPrimitiveFuseMode.instance)

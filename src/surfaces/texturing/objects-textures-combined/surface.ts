@@ -103,33 +103,33 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
         ValueTextureSampleT extends TextureSample = TextureSample,
         ValueTextureSampleElementType extends TextureSample = ValueTextureSampleT,
         ValueTextureSampleFuseMode extends TextureSample = ValueTextureSampleT,
-    ValueTextureT extends
-        Texture<
-                    TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
-                    TextureLocationElementType & ValueTextureLocationT,
-                    TextureLocationFuseMode & ValueTextureLocationT,
-                    ValueTextureSampleElementType,
-                    ValueTextureSampleFuseMode,
-                    TextureSamplingContextT &
-                    TextureSamplingContext<
-                        TextureLocationT & ValueTextureLocationT,
+        ValueTextureT extends
+            Texture<
+                        TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
                         TextureLocationElementType & ValueTextureLocationT,
-                        TextureLocationFuseMode & ValueTextureLocationT
-                    >
-            > =
-        Texture<
-                    TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
-                    TextureLocationElementType & ValueTextureLocationT,
-                    TextureLocationFuseMode & ValueTextureLocationT,
-                    ValueTextureSampleElementType,
-                    ValueTextureSampleFuseMode,
-                    TextureSamplingContextT &
-                    TextureSamplingContext<
-                        TextureLocationT & ValueTextureLocationT,
+                        TextureLocationFuseMode & ValueTextureLocationT,
+                        ValueTextureSampleElementType,
+                        ValueTextureSampleFuseMode,
+                        TextureSamplingContextT &
+                        TextureSamplingContext<
+                            TextureLocationT & ValueTextureLocationT,
+                            TextureLocationElementType & ValueTextureLocationT,
+                            TextureLocationFuseMode & ValueTextureLocationT
+                        >
+                > =
+            Texture<
+                        TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
                         TextureLocationElementType & ValueTextureLocationT,
-                        TextureLocationFuseMode & ValueTextureLocationT
-                    >
-            >,
+                        TextureLocationFuseMode & ValueTextureLocationT,
+                        ValueTextureSampleElementType,
+                        ValueTextureSampleFuseMode,
+                        TextureSamplingContextT &
+                        TextureSamplingContext<
+                            TextureLocationT & ValueTextureLocationT,
+                            TextureLocationElementType & ValueTextureLocationT,
+                            TextureLocationFuseMode & ValueTextureLocationT
+                        >
+                >,
         ValueTexturesGrouped extends
             MultiObjectsGroupsMapped<ValueTexturesGroups, ValueTextureT> =
             MultiObjectsGroupsMapped<ValueTexturesGroups, ValueTextureT>,

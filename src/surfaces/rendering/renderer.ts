@@ -60,7 +60,7 @@ export class SurfaceRendererShared<
 
         const sharedContext = {
             [SampleDomainLocationFieldKey]: FieldsField.merge(
-                defaultField(extraLocationParameters) as FieldsField<TextureLocationT>,
+                defaultField(<any>extraLocationParameters) as FieldsField<TextureLocationT>,
                 new FieldsField<TextureLocationT>({
                     uv: new Vec2Field(<ArithmeticPrimitiveFuseMode<Vec2>>ArithmeticPrimitiveFuseMode.none)
                 } as FieldsPointMapped<TextureLocationT, Field>)

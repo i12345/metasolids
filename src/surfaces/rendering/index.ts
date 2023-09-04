@@ -1,3 +1,5 @@
 export * from './surface.js'
 export * from './processor.js'
 export * from './renderer.js'
+export * as mesh from './mesh/index.js'
+export * as material from './material/index.js'

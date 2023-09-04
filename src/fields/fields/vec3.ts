@@ -4,6 +4,7 @@ import { Vec3InterpolationType } from "../interpolators/vec3.js";
 import { ScalarField } from "./scalar.js";
 import { PrimitiveFuseMode } from "../vectorized/index.js";
 import { ArithmeticPrimitiveFuseMode } from "../vectorized/fuse-modes/index.js";
+import { clone } from "../../utils/cloneable.js";
 
 export class Vec3Field implements Field<Vec3> {
     readonly interpolationType = new Vec3InterpolationType()
@@ -12,7 +13,7 @@ export class Vec3Field implements Field<Vec3> {
 
     constructor(
         public readonly fuseMode: PrimitiveFuseMode<Vec3> = <ArithmeticPrimitiveFuseMode<Vec3>>ArithmeticPrimitiveFuseMode.add,
-        public range: [min: Vec3, max: Vec3] = [
+        public readonly range: [min: Vec3, max: Vec3] = [
             new Vec3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY),
             new Vec3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
         ]
@@ -24,6 +25,10 @@ export class Vec3Field implements Field<Vec3> {
             (ScalarField.distance(x.y, y.y, [this.range[0].y, this.range[1].y]) ** 2) +
             (ScalarField.distance(x.z, y.z, [this.range[0].z, this.range[1].z]) ** 2)
         )
+    }
+
+    [clone]() {
+        return this
     }
 
     static readonly instance = new this(<ArithmeticPrimitiveFuseMode<Vec3>>ArithmeticPrimitiveFuseMode.add)

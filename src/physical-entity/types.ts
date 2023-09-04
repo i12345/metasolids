@@ -1,5 +1,5 @@
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped, MultiObjectsIDs } from "../paradigm/trees/index.js";
-import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, GroupWithField, GroupFieldKey } from "../fields/index.js"
+import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, GroupWithField, GroupFieldKey, Field, MultiObjectsGroupsWithFieldsProcessingContext } from "../fields/index.js"
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { octtree } from "../paradigm/index.js";
@@ -10,6 +10,8 @@ import { mergeObjects } from "../utils/merge-objects.js";
 export type IndicesT = Uint32Array
 
 export type VolumeLocationT = volumes.VolumeLocation
+export type VolumeLocationElementType = volumes.VolumeLocation
+export type VolumeLocationFuseMode = volumes.VolumeLocation
 
 export type Objects = MultiObjectsTemplate
 export type ObjIDsT = Uint32Array
@@ -28,7 +30,9 @@ export const SurfaceObjectsTextureLocationsGroupsTemplate: SurfaceObjectsTexture
 
 export type SurfaceIndividualTextureLocationT = textures.TextureLocation
 export type SurfaceObjectsTextureLocationsT = textures.TextureLocation
-export type SurfaceCombinedTextureLocationT = textures.TextureLocation
+
+export type SurfaceIndividualTextureSampleT = textures.TextureSample
+export type SurfaceObjectsTextureSamplesT = textures.TextureSample
 
 export const SurfaceIndividualTextureLocationsGroupsField = ():
     MultiObjectsGroupsMapped<SurfaceIndividualTextureLocationsGroupsT, GroupWithField<fields.Field<SurfaceIndividualTextureLocationT>>> =>
@@ -179,7 +183,7 @@ export type VolumeSamplingSubdividingOctTreeGroupsT =
     {}
 
 export const VolumeSamplingSubdividingOctTreeGroupsTemplate = mergeGroups<VolumeSamplingSubdividingOctTreeGroupsT>(
-    volumes.sampling.VolumeSamplingSubdivisionSamplesGroupsTemplate<SampleT>(),
+    volumes.sampling.VolumeSamplingSubdivisionSamplesGroupsTemplate(<Field<SampleT, SampleElementType, SampleFuseMode>><unknown>volumes.defaultVolumeSampleField),
     octtree.OctTreeWithDualGroupsTemplate,
     surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeGroupsTemplate,
 )
@@ -258,6 +262,38 @@ export type SampleT = volumes.VolumeSample &
             SurfaceObjectsTextureLocationsT
         > &
     surfaces.texturing.SurfaceSampleWithObjectsInterpolatingValuesUsingSurfaceUVUnwrapping<
+            Objects,
+            OtherInterpolatingGroupsT,
+            ObjectsOtherInterpolatingGrouped,
+            OtherInterpolatingValuesT,
+            OtherInterpolatingValuesGrouped
+        > &
+    {}
+
+export type SampleElementType = volumes.VolumeSample &
+    surfaces.texturing.SurfaceSampleElementTypeForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
+            Objects,
+            InfluenceGroup,
+            SurfaceObjectsTextureLocationsGroupsT,
+            SurfaceObjectsTextureLocationsT
+        > &
+    surfaces.texturing.SurfaceSampleElementTypeWithObjectsInterpolatingValuesUsingSurfaceUVUnwrapping<
+            Objects,
+            OtherInterpolatingGroupsT,
+            ObjectsOtherInterpolatingGrouped,
+            OtherInterpolatingValuesT,
+            OtherInterpolatingValuesGrouped
+        > &
+    {}
+
+export type SampleFuseMode = volumes.VolumeSample &
+    surfaces.texturing.SurfaceSampleFuseModeForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
+            Objects,
+            InfluenceGroup,
+            SurfaceObjectsTextureLocationsGroupsT,
+            SurfaceObjectsTextureLocationsT
+        > &
+    surfaces.texturing.SurfaceSampleFuseModeWithObjectsInterpolatingValuesUsingSurfaceUVUnwrapping<
             Objects,
             OtherInterpolatingGroupsT,
             ObjectsOtherInterpolatingGrouped,
@@ -384,14 +420,20 @@ export const SampleProcessingContext_MultiObjects_Template: SampleProcessingCont
 export type VolumeDomainSamplingContextT =
     volumes.VolumeSamplingContext<
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleProcessingContextT
         > &
     solids.sampling.VolumeSamplingContextWithSolidHints<
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleProcessingContextT
         > &
     surfaces.sampling.VolumeSamplingContextWithSurfaceHints<
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleProcessingContextT
         > &
     MultiObjectsGroupsProcessingContext<
@@ -458,6 +500,7 @@ export type SurfaceObjectsTexturesGrouped = textures.TexturesTemplatedWithObject
 export type SurfaceCombinedTexturesGroupsT = MultiObjectsGroupsCombined<SurfaceObjectsTexturesGroupsT>
 export const SurfaceCombinedTexturesGroupsTemplate: SurfaceCombinedTexturesGroupsT = MultiObjectsGroupsCombinedTemplate(SurfaceObjectsTexturesGroupsTemplate)
 
+export type SurfaceCombinedTextureLocationT = textures.TextureLocation
 export type SurfaceCombinedTexelTypesT = SurfaceObjectsTexelTypesT
 export type SurfaceCombinedTexturesTexelTypesGrouped = MultiObjectsGroupsCombinedMapped<
         SurfaceObjectsTexturesGroupsT,
@@ -469,8 +512,18 @@ export type SurfaceCombinedTextureSampleT =
     OtherInterpolatingValuesT &
     {}
 
+export type SurfaceCombinedTextureSamplingContextT =
+    textures.TextureSamplingContext<SurfaceCombinedTextureLocationT>
+
 export type SurfaceCombinedTextureT =
-    textures.Texture<SurfaceCombinedTextureLocationT, OtherInterpolatingValuesT> &
+    textures.Texture<
+        SurfaceCombinedTextureLocationT, OtherInterpolatingValuesT,
+        SurfaceCombinedTextureLocationT,
+        SurfaceCombinedTextureLocationT,
+        OtherInterpolatingValuesT,
+        OtherInterpolatingValuesT,
+        SurfaceCombinedTextureSamplingContextT
+    > &
     {}
 
 export type SurfaceCombinedTexturesGrouped =
@@ -496,6 +549,7 @@ export const SurfaceIndividualTexturesGroupsTemplate = mergeGroups<SurfaceIndivi
 
 export type SurfaceIndividualTexturesGrouped =
     SurfaceCombinedTexturesGrouped &
+    MultiObjectsGroupsMapped<InfluenceGroup, textures.Texture<SurfaceIndividualTextureLocationT, number>> &
     surfaces.rendering.SurfaceWithRendering_TexturesTemplated<VolumeLocationT>
 
 export type SurfaceObjectsTexturesGroupsKindsMappedGroupsT =
@@ -549,13 +603,19 @@ export type SurfaceT = surfaces.Surface<IndicesT, SampleT> &
             SurfaceUVUnwrappingGroupT,
             Objects,
             InfluenceGroup,
+            SurfaceObjectsTextureLocationsT,
+            SurfaceObjectsTextureLocationsT,
+            SurfaceObjectsTextureLocationsT,
+            SurfaceCombinedTextureSamplingContextT,
             SurfaceObjectsTextureLocationsGroupsT,
             SurfaceObjectsTexturesGroupsT,
-            SurfaceObjectsTextureLocationsT,
+            SurfaceCombinedTextureLocationT,
             SurfaceCombinedTextureSampleT,
-            SurfaceCombinedTextureT//,
-            // SurfaceCombinedTexturesGrouped,
-            // SampleT
+            SurfaceCombinedTextureSampleT,
+            SurfaceCombinedTextureSampleT,
+            SurfaceCombinedTextureT,
+            SurfaceCombinedTexturesGrouped,
+            SampleElementType
         > &
     surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
             IndicesT,
@@ -565,12 +625,12 @@ export type SurfaceT = surfaces.Surface<IndicesT, SampleT> &
             ObjectsOtherInterpolatingGrouped,
             OtherInterpolatingValuesT,
             OtherInterpolatingValuesGrouped,
-            SampleT
+            SampleElementType
         > &
     surfaces.rendering.SurfaceWithRendering<
             IndicesT,
             VolumeLocationT,
-            SampleT,
+            SampleElementType,
             SurfaceUVUnwrappingGroupT
         > &
     {}
@@ -621,7 +681,11 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
             SurfaceT,
             SurfaceCombinedTextureLocationT,
             SurfaceCombinedTextureSampleT,
-            textures.TextureSamplingContext<SurfaceCombinedTextureLocationT>
+            SurfaceCombinedTextureLocationT,
+            SurfaceCombinedTextureLocationT,
+            SurfaceCombinedTextureSampleT,
+            SurfaceCombinedTextureSampleT,
+            SurfaceCombinedTextureSamplingContextT
         > &
     surfaces.rendering.SurfaceProcessingContextWithRendering<
             SurfaceUVUnwrappingGroupT,
@@ -634,31 +698,44 @@ export type SurfaceProcessingContext_MultiObjects =
         SurfaceUVUnwrappingGroupT,
         surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds
     > &
-    MultiObjectsProcessingContext<
+    MultiObjectsGroupsWithFieldsProcessingContext<
+        InfluenceGroup,
+        MultiObjectsInfluencesGroupKinds,
+        fields.MultiObjectsInfluences<Objects>,
+        fields.MultiObjectsInfluencesElementType<Objects>,
+        fields.MultiObjectsInfluencesFuseMode<Objects>,
+        fields.fields.MultiObjectsField<number, Objects>
+    > &
+    MultiObjectsWithGroupFieldsProcessingContext<
         Objects,
         SurfaceObjectsTexturesGroupsT,
         ObjectsSurfaceObjectsTexturesGrouped,
-        surfaces.texturing.SurfaceObjectsTexturesGroupKinds
+        surfaces.texturing.SurfaceObjectsTexturesGroupKinds,
+        SurfaceObjectsTextureSamplesT
     > &
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
         Objects,
         SurfaceObjectsTexturesGroupsT,
         ObjectsSurfaceObjectsTexturesGrouped,
-        surfaces.texturing.SurfaceTexturesGroupKinds
+        surfaces.texturing.SurfaceTexturesGroupKinds,
+        SurfaceObjectsTextureSamplesT
     > &
-    MultiObjectsGroupsProcessingContext<
+    MultiObjectsGroupsWithFieldsProcessingContext<
         SurfaceIndividualTexturesGroupsT,
-        surfaces.texturing.SurfaceIndividualTexturesGroupKinds
+        surfaces.texturing.SurfaceIndividualTexturesGroupKinds,
+        SurfaceIndividualTextureSampleT
     > &
-    MultiObjectsGroupsProcessingContext<
+    MultiObjectsGroupsWithFieldsProcessingContext<
         SurfaceIndividualTexturesGroupsT,
-        surfaces.texturing.SurfaceTexturesGroupKinds
+        surfaces.texturing.SurfaceTexturesGroupKinds,
+        SurfaceIndividualTextureSampleT
     > &
-    MultiObjectsProcessingContext<
+    MultiObjectsWithGroupFieldsProcessingContext<
         Objects,
         OtherInterpolatingGroupsT,
         ObjectsOtherInterpolatingGrouped,
-        OtherInterpolatingGroupsKindsT
+        OtherInterpolatingGroupsKindsT,
+        OtherInterpolatingValuesT
     > &
     {}
 
@@ -681,7 +758,15 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
     ...SurfaceUVUnwrappingGroupsKindsMappedGroupsTemplate,
 
     // influences is a feature of the sample
-    // ...MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate,
+    ...MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate,
+
+    ...mapGroups(InfluenceGroupTemplate, () => ({
+        [GroupFieldKey]: new fields.fields.MultiObjectsField(fields.fields.ScalarField.instance, undefined!),
+    })),
+
+    material: {
+        textures: <surfaces.rendering.material.Material_Groups_TextureContexts<VolumeLocationT>>surfaces.rendering.material.Material_Groups_TextureContexts_Template
+    },
 
     ...SurfaceTexturesGroupsKindsMappedGroupsTemplate,
 
@@ -708,7 +793,7 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
 
     [MultiObjectsProcessingContextGroupKinds]: {
         // influences is a feature of the samplemplate,
-        // ...MultiObjectsInfluencesGroupKindsTemplate
+        ...MultiObjectsInfluencesGroupKindsTemplate,
 
         ...surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindsTemplate,
 
@@ -744,7 +829,11 @@ export type SolidProcessingContextT =
 export type VolumeProcessingT =
     volumes.VolumeProcessing<
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT
@@ -770,7 +859,11 @@ export type VolumeProcessingT =
             {},
             {},
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT //,
             // ...
@@ -782,7 +875,11 @@ export type VolumeProcessingT =
             octtree.OctTreeWithDualLayersGrouped,
             octtree.OctTreeWithDualOctTreesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT //,
             // ...
@@ -794,7 +891,11 @@ export type VolumeProcessingT =
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT //,
             // ...
@@ -802,7 +903,11 @@ export type VolumeProcessingT =
     surfaces.meshing.VolumeProcessingWithMeshing<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -811,7 +916,11 @@ export type VolumeProcessingT =
     surfaces.VolumeProcessingWithSurfaces<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -820,7 +929,11 @@ export type VolumeProcessingT =
     solids.VolumeProcessingWithSolids<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -832,7 +945,11 @@ export type VolumeProcessingInstanceT =
     surfaces.VolumeProcessingWithSurfacesInstance<
         IndicesT,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         SampleT,
+        SampleElementType,
+        SampleFuseMode,
         SampleProcessingContextT,
         VolumeDomainSamplingContextT,
         VolumeT,
@@ -866,7 +983,11 @@ export type VolumeProcessingContextT =
             octtree.OctTreeWithDualLayersGrouped,
             octtree.OctTreeWithDualOctTreesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT //,
             // ...
@@ -878,7 +999,11 @@ export type VolumeProcessingContextT =
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreeLayersGrouped,
             surfaces.sampling.SurfaceNetVolumeSamplingSubdivisionProcessingOctTreesGrouped,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT //,
             // ...
@@ -890,7 +1015,11 @@ export type VolumeProcessingContextT =
     surfaces.meshing.VolumeProcessingContextWithMeshing<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             SurfaceProcessingContextT
@@ -917,7 +1046,11 @@ export const VolumeProcessingContext_MultiObjects_Template: VolumeProcessingCont
 export type VolumeT =
     volumes.volumes.VolumeWithBoundingBox<
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         SampleT,
+        SampleElementType,
+        SampleFuseMode,
         SampleProcessingContextT,
         VolumeDomainSamplingContextT
     >
@@ -925,7 +1058,11 @@ export type VolumeT =
 export type VolumeProcessorT =
     volumes.VolumeProcessor<
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -944,7 +1081,11 @@ export type VolumeSurfaceProcessorT =
     surfaces.VolumeSurfaceProcessor<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -966,7 +1107,11 @@ export type VolumeSolidProcessorT =
     solids.VolumeSolidProcessor<
             IndicesT,
             VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
             SampleT,
+            SampleElementType,
+            SampleFuseMode,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,

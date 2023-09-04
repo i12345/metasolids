@@ -6,6 +6,7 @@ import { Vec3Field } from "./vec3.js";
 import { QuatField } from "./quat.js";
 import { Ratio3Field } from "./ratio3.js";
 import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";
+import { clone } from "../../utils/cloneable.js";
 
 export class Mat4Field implements Field<Mat4> {
     interpolationType = new Mat4InterpolationType()
@@ -23,6 +24,10 @@ export class Mat4Field implements Field<Mat4> {
             Mat4Field.fields.rotation.distance(trs_x.r, trs_y.r) +
             Mat4Field.fields.scale.distance(trs_x.s, trs_y.s)
         )
+    }
+
+    [clone]() {
+        return this
     }
 
     static readonly fields = {
