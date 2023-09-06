@@ -7,6 +7,7 @@ import { FieldPointWithMultiObjectPath, FusingFieldPointVectorWithMultiObjects, 
 import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, FieldPointVectorDynamic, FieldPointVectorStatic, ItemObjValuesOffsetsKey, FieldPointVectorContainer, isDynamicVector, ItemObjIDsKey } from "../point.js"
 import { mat4_from_mat3 } from "../../../utils/matrix.js"
 import { NumberTypedArray, isNumberTypedArray } from "../../../utils/typed-array.js"
+import { equals } from "../../../utils/equals.js"
 
 export enum ArithmeticPrimitiveFuseModeOp {
     none,
@@ -477,7 +478,8 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
                 points: boolean
             }
         ): void {
-        const isDynamicVectorPoint = isDynamicVector<Point, Container>(points[0].vectorized)
+        //TODO: not sure if elementType should be used here
+        const isDynamicVectorPoint = isDynamicVector<Point, Container>(elementType, points[0].vectorized)
         const elementSize = field_point_type_size(elementType)
 
         const isMultiObjMappedResult = isMultiObjMapped?.result ?? false
@@ -529,7 +531,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -583,7 +585,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -656,7 +658,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -701,7 +703,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -757,7 +759,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -831,7 +833,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -1206,7 +1208,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -1260,7 +1262,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -1333,7 +1335,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -1373,7 +1375,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -1429,7 +1431,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -1503,7 +1505,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                                     if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                                         do {
-                                                            objID = pointObjIDs[pointVectorObjOffset_next]
+                                                            objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                             for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                                 if (resultObjIDs[resultVectorIndex] === objID)
@@ -2229,7 +2231,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2259,7 +2261,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2289,7 +2291,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2319,7 +2321,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2349,7 +2351,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2383,7 +2385,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2577,7 +2579,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2608,7 +2610,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2639,7 +2641,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2670,7 +2672,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2701,7 +2703,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2735,7 +2737,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
 
                                         if (pointVectorObjOffset_next !== pointVectorObjOffset_prev) {
                                             do {
-                                                objID = pointObjIDs[pointVectorObjOffset_next]
+                                                objID = pointObjIDs[pointVectorObjOffset_prev]
 
                                                 for (resultVectorIndex = resultObjOffsets_prev; resultVectorIndex < resultObjOffsets_next; resultVectorIndex++)
                                                     if (resultObjIDs[resultVectorIndex] === objID)
@@ -2992,6 +2994,11 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
                 }
             }
         }
+    }
+
+    [equals](that: PrimitiveFuseMode<Point>): boolean {
+        return that instanceof ArithmeticPrimitiveFuseMode &&
+            this.op === that.op
     }
 
     static readonly none = new this(ArithmeticPrimitiveFuseModeOp.none)

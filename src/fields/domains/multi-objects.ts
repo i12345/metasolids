@@ -1,13 +1,13 @@
-import { GeneratorType, IndicesTypedArray, Reflect_entries, Reflect_fromEntries, addDeltas } from "../../utils/index.js"
+import { GeneratorType, IndicesTypedArray, Reflect_entries, Reflect_fromEntries, addDeltas, clone } from "../../utils/index.js"
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { makeInterpolator } from "../interpolation.js"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDsKey, extract, PropertyPath, intract, WithMultiObjectsIDs, MultiObjectsGroupedObjectsAndRegularValuesType, MultiObjectsGroupsOverwritten } from "../../paradigm/trees/index.js"
-import { FieldPoint, FieldPointMapped, FieldsPoint, field_point_map, fields_point_map } from "../point.js"
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDsKey, extract, PropertyPath, intract, WithMultiObjectsIDs, MultiObjectsGroupedObjectsAndRegularValuesType, MultiObjectsGroupsOverwritten, MultiObjectsGroupsOrLeafMapped, MultiObjectsGroupsTemplateOrLeaf } from "../../paradigm/trees/index.js"
+import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped, field_point_map, fields_point_map } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
 import { vectorized } from "vectorized-functions"
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../vectorized/point.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../vectorized/point.js"
 import { FieldPointWithMultiObjectPath, FuseMode, FusingFieldPointVectorWithMultiObjects, fusePoints, fuseVectors, fuse_mode_contains, fuse_mode_equal } from "../vectorized/index.js"
 import { FusedVectorSamplingContext, FusingVectorSampleDomain, fusingVectorSampling } from "./fusing.js"
 import { VectorSampleDomain, VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "./vector.js"
@@ -556,7 +556,9 @@ export class MultiObjectsSampleDomain<
                     LocationFuseMode,
                     LeafContext
                 >,
-        LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
         LeafSampleVector extends
             FieldPointVectorWithMultiObjects<
                     LeafSample,
@@ -847,20 +849,20 @@ export class MultiObjectsSampleDomain<
     }
 
     init(context: MultiObjectsSamplingContext<
-            Objects,
-            ContextGroups,
-            ContextGroupKinds,
-            Location,
-            LocationElementType,
-            LocationFuseMode,
-            LeafContext
-        >): void {
+        Objects,
+        ContextGroups,
+        ContextGroupKinds,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LeafContext
+    >): void {
         this.groupsMemoized = {
             context: [...groupKinds(context, this.multiObj.context.groupKindsTemplate, this.multiObj.context.groupsTemplate)],
             sample: this.multiObj.sample ? [...groupKinds(this.sampleContext(context), this.multiObj.sample.groupKindsTemplate, this.multiObj.sample.groupsTemplate)] : [],
         }
 
-        const sampleMultiObjTemplate = <{ root: MultiObjectsGroupsMapped<SampleGroups, true> }>{ }
+        const sampleMultiObjTemplate = <{ root: MultiObjectsGroupsMapped<SampleGroups, true> }>{}
         this.groupsMemoized.sample.forEach(path => intract(sampleMultiObjTemplate, ['root', ...path.group.path], true))
 
         const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
@@ -869,23 +871,36 @@ export class MultiObjectsSampleDomain<
             if (sampleMultiObjMapped === true)
                 return new MultiObjectsField(field, multiObjectsIDs)
             else if (field instanceof FieldsField) {
-                const result_fields = <FieldPointMapped<FieldsPoint, Field>>{}
-
-                fields_point_map(
-                    field.fields,
-                    subfield => subfield.interpolationType !== undefined && subfield.interpolationType[makeInterpolator] !== undefined,
-                    (subfield, path) =>
-                        intract(
-                            result_fields,
-                            path,
-                            multiObjField_recursive(
-                                subfield,
-                                extract(sampleMultiObjMapped, path)
-                            )
+                function fields_recursive(
+                    fields: FieldPointMapped<FieldPoint, Field>,
+                    sampleMultiObjMapped: MultiObjectsGroupsOrLeafMapped<MultiObjectsGroupsTemplateOrLeaf, true>
+                ): FieldPointMapped<FieldPoint, Field> {
+                    if (sampleMultiObjMapped === true) {
+                        return new MultiObjectsField(
+                            ((<Field>fields).interpolationType && (makeInterpolator in (<Field>fields).interpolationType)) ?
+                                <Field>fields :
+                                new FieldsField(<FieldPointMapped<FieldsPoint, Field>>fields),
+                            multiObjectsIDs
                         )
-                )
+                    }
+                    else if ((<Field>fields).interpolationType && (makeInterpolator in (<Field>fields).interpolationType))
+                        return fields
+                    else {
+                        return Reflect_fromEntries(
+                            Reflect_entries(fields).map(([key, subfields]) => [
+                                key,
+                                fields_recursive(
+                                    <FieldPointMapped<FieldPoint, Field>>subfields,
+                                    sampleMultiObjMapped[key]
+                                )
+                            ] as [typeof key, FieldPointMapped<FieldPoint, Field>]))
+                    }
+                }
 
-                return new FieldsField(result_fields)
+                const mapped = fields_recursive((<FieldsField>field).fields, sampleMultiObjMapped)
+                if (mapped.interpolationType && makeInterpolator in mapped.interpolationType)
+                    return <Field>mapped
+                else return new FieldsField(<FieldsPointMapped<FieldsPoint, Field>>mapped)
             }
             else return field
         }
@@ -897,6 +912,7 @@ export class MultiObjectsSampleDomain<
         >
 
         this.field = <SampleField><unknown>multiObjField_recursive(this.childField, sampleMultiObjTemplate.root)
+        this.childrenFieldTypes = <typeof this.childrenFieldTypes>{}
 
         for (const key of Reflect.ownKeys(this.children)) {
             const child = this.children[key]
@@ -947,7 +963,7 @@ export class MultiObjectsSampleDomain<
             child.init(child_context as any)
 
             for (const { group } of this.groupsMemoized.context) {
-                const context_original_group = group.get(context_original_groups)
+                const context_original_group = group.get(context_original_groups) ?? {}
                 const context_child_group = group.get(child_context)
                 context_original_group[key] = context_child_group
                 group.delete(child_context)
@@ -1111,7 +1127,12 @@ export class MultiObjectsSampleDomain<
             sampleType: FieldPointType<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>>,
             fuseMode: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>,
         ): void {
-        const location_iterator = vectorIterator<LocationElementType, LocationContainer>(context[SampleDomainLocationFieldKey].elementType, undefined, context[MultiObjectsIDsKey])
+        const location_iterator = vectorIterator<LocationElementType, LocationContainer>(
+            context[SampleDomainLocationFieldKey].elementType,
+            <IsDynamicVector<LocationElementType, LocationContainer>>false,
+            context[MultiObjectsIDsKey]
+        )
+
         const sample_count = location_iterator.length(locations, locations)
         const multiObjectsIDs = context[MultiObjectsIDsKey]
 
@@ -1293,6 +1314,7 @@ export class MultiObjectsSampleDomain<
                 const context_original_group = group.get(context_original_groups)
                 const context_child_group = context_original_group[key]
                 group.set(child_context, context_child_group)
+                group.set(child_leaf_context, context_child_group)
             }
 
             multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
@@ -1304,7 +1326,7 @@ export class MultiObjectsSampleDomain<
                 const leaf_samples = child_leaf_context[VectorSampleFunction](<ChildLeafVectorDomain><unknown>sampleDomain, locations, child_leaf_context)
                 const multiObjVector = <FieldPointVectorWithMultiObjects<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>, SampleContainer, ObjIDsT, ObjIDsContainer>><unknown>leaf_samples
 
-                if (multiObjVector[ItemObjIDsKey] || multiObjVector[ItemObjValuesOffsetsKey])
+                if (multiObjVector[ItemObjIDsKey]?.length > 0)
                     throw new Error("did not expect children to have multi objects")
 
                 multiObjVector[ItemObjIDsKey] = <FieldPointVector<ObjIDsT, ObjIDsContainer>><FieldPointVectorContainerStatic<ObjIDsT>>new multiObjectsIDs.IDsType(sample_count)

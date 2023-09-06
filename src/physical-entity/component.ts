@@ -1,8 +1,8 @@
 import { Entity, GraphNode, Vec3 } from "playcanvas-extended";
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js";
-import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsTemplateOrLeaf, MultiObjectsMappedOrLeaf, MultiObjectsIDs, MultiObjectsIDsKey, extract } from "../paradigm/trees/index.js";
-import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template, SurfaceIndividualTextureLocationsGroupsField, SurfaceObjectsTextureLocationsGroupsField, ObjIDsT, ObjIDsType, SurfaceTextureLocationsGroupsFields } from "./types.js";
+import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsTemplateOrLeaf, MultiObjectsMappedOrLeaf, MultiObjectsIDs, MultiObjectsIDsKey, extract, mapGroups } from "../paradigm/trees/index.js";
+import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, Volume_Context_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template, SurfaceIndividualTextureLocationsGroupsField, SurfaceObjectsTextureLocationsGroupsField, ObjIDsT, ObjIDsType, SurfaceTextureLocationsGroupsFields, SampleElementType, SampleFuseMode, ObjIDsContainer, Volume_Sample_PreservedGroupsKindsT, Volume_Sample_PreservedGroupsT, Volume_Context_PreservedGroupsT, Volume_Context_PreservedGroupsKinds, VolumeLocationElementType, VolumeLocationFuseMode } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
 import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 import { ComponentSystem, SYSTEM_ID } from "./system.js";
@@ -40,6 +40,7 @@ export class Component<ID = string> extends processing.Component<
         const map_volume_component = new Map<VolumeT, Component<ID>>()
 
         type MultiObjPrerender = MultiObjectsMappedOrLeaf<MultiObjectsTemplateOrLeaf, symbol>
+        type ChildVolumeSampleT = SampleFuseMode
 
         class VolumeNode {
             private readonly sym = Symbol()
@@ -114,7 +115,7 @@ export class Component<ID = string> extends processing.Component<
             }
 
             render(
-                    volumeSampleField: fields.Field<SampleT>,
+                    childVolumeSampleField: fields.Field<ChildVolumeSampleT>,
                     require_multiObjects = false
                 ): VolumeT | undefined {
                 const entity = this.node as Entity
@@ -130,7 +131,7 @@ export class Component<ID = string> extends processing.Component<
                         .map(child => [
                             child.node.name,
                             new volumes.volumes.TransformVolume(
-                                child.render(volumeSampleField)! as VolumeT,
+                                child.render(childVolumeSampleField)! as VolumeT,
                                 child.node.getLocalTransform()
                             )
                         ] as [string, volumes.volumes.TransformVolume])
@@ -142,7 +143,23 @@ export class Component<ID = string> extends processing.Component<
                 else if (children.length === 1 && component?.volume !== undefined && !require_multiObjects)
                     return children[0][1]
                 else {
-                    return new volumes.volumes.MultiObjectsVolume(
+                    return new volumes.volumes.MultiObjectsVolume
+                        // <
+                        //     Objects,
+                        //     ObjIDsT,
+                        //     ObjIDsContainer,
+                        //     Volume_Sample_PreservedGroupsT,
+                        //     Volume_Sample_PreservedGroupsKindsT,
+                        //     Volume_Context_PreservedGroupsT,
+                        //     Volume_Context_PreservedGroupsKinds,
+                        //     VolumeLocationT,
+                        //     VolumeLocationElementType,
+                        //     VolumeLocationFuseMode,
+                        //     VolumeLocationContainer,
+                        //     SampleProcessingContextT,
+                        //     SampleFuseMode,
+                        // >
+                        (
                         Reflect_fromEntries<Record<string, VolumeT>>(children),
                         {
                             context: {
@@ -152,7 +169,7 @@ export class Component<ID = string> extends processing.Component<
                                 groupKindsTemplate: Volume_Sample_PreservedGroupsKindsTemplate
                             }
                         },
-                        volumeSampleField,
+                        childVolumeSampleField,
                         fields.MultiObjectsInfluencesGroupsDefaultTemplate
                     ) as any as VolumeT
                 }
@@ -180,11 +197,19 @@ export class Component<ID = string> extends processing.Component<
         const { multiObjectsIDs, pathsMap } = VolumeNode.multiObjectIDs(prerendering)
         volumeNode.assignPaths(pathsMap)
 
-        const volumeSampleField = fields.fields.FieldsField.merge<SampleT>(
-            <fields.fields.FieldsField<SampleT>>defaultVolumeSampleField,
-            new fields.fields.FieldsField<SampleT>(<any>{
-                ...fields.MultiObjectsInfluencesGroupsDefaultField(multiObjectsIDs),
-                ...SurfaceTextureLocationsGroupsFields(multiObjectsIDs),
+        const volumeSampleField = fields.fields.FieldsField.merge<ChildVolumeSampleT>(
+            <fields.fields.FieldsField<ChildVolumeSampleT>>defaultVolumeSampleField,
+            new fields.fields.FieldsField<ChildVolumeSampleT>(<any>{
+                ...mapGroups(
+                    fields.MultiObjectsInfluencesGroupsDefaultTemplate,
+                    () => fields.fields.ScalarField.instance
+                ),
+                ...mapGroups(
+                    surfaces.texturing.SurfaceObjectsTextureLocationsGroupsDefaultTemplate,
+                    () => textures.defaultTextureLocationField
+                )
+                // ...fields.MultiObjectsInfluencesGroupsDefaultField(multiObjectsIDs),
+                // ...SurfaceTextureLocationsGroupsFields(multiObjectsIDs),
             })
         )
 

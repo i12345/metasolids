@@ -1,11 +1,11 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, field_point_invalid } from "../../fields/index.js";
+import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, field_point_invalid, MultiObjectsInfluencesGroupsDefault, WithInfluence, MultiObjectsInfluencesProcessingContext, WithInfluenceProcessingContext, MultiObjectsInfluencesGroupKindsTemplate } from "../../fields/index.js";
 import { SampleDomain, SampleDomainLocationFieldKey } from "../../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/texture.js";
-import { extract, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { VolumeLocation, VolumeSample, VolumeSampleKey } from "../../volumes/index.js";
+import { extract, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate, mapGroups, MultiObjectsGroupsMapped, WithMultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/trees/index.js";
+import { VolumeLocation, VolumeSample, VolumeSampleKey, defaultVolumeSampleField } from "../../volumes/index.js";
 import { VolumeSurfacesKey, texturing } from "../../surfaces/index.js";
-import { FusedVectorSamplingContext, TransformingSampleDomain } from "../../fields/domains/index.js";
+import { FusedVectorSamplingContext, TransformingSampleDomain, VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/index.js";
 import { ScalarField, Vec2Field, Vec3Field, FieldsField  } from "../../fields/fields/index.js";
 import { VolumeSamplingContextWithSolidHints } from "../sampling/hints.js";
 import { VolumeSamplingContextWithSurfaceHints } from "../../surfaces/sampling/hints.js";
@@ -13,7 +13,12 @@ import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js";
 import { FuseMode } from "../../fields/vectorized/fusing.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, isDynamicVector } from "../../fields/vectorized/point.js";
+import { SurfaceObjectsTextureLocationsGroupsDefaultTemplate } from "../../surfaces/texturing/types.js";
+import { vectorized } from "vectorized-functions";
+import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
+import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
+import { onlyOne } from "../../utils/only-one.js";
 
 export type MetaSolidLocation = VolumeLocation
 
@@ -55,7 +60,7 @@ export type MetaSolidParametersIn = {
     }
 }
 
-export type MetaSolidSample = FieldsPointOptional<MetaSolidParametersIn> & {
+export type MetaSolidSample = MetaSolidParametersIn & {
     /**
      * The closest distance to the shape in normalized distance units
      * (they might not be uniform through the local vector space)
@@ -96,13 +101,14 @@ export type MetaSolidSampleExtraFields<Sample extends MetaSolidSample = MetaSoli
 
 export type MetaSolidVolumeSample<
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
-        InnerSample extends MetaSolidSample = MetaSolidSample
+        InnerSample extends MetaSolidSample = MetaSolidSample,
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault
     > =
     VolumeSample &
+    WithInfluence<InfluenceGroup> &
     Omit<TxSample, keyof MetaSolidParametersIn> &
-    MetaSolidSampleExtraFields<InnerSample> & {
-        [texturing.SurfaceObjectsTextureLocationsGroupsDefaultKey]: TextureLocation
-    }
+    MetaSolidSampleExtraFields<InnerSample> &
+    MultiObjectsGroupsMapped<texturing.SurfaceObjectsTextureLocationsGroupsDefault, TextureLocation>
 
 export type MetaSolidTextureLocation<
         Location extends MetaSolidLocation = MetaSolidLocation,
@@ -139,6 +145,7 @@ export const MetaSolidSamplingContext_Volume = Symbol('metasolid:volume')
 export const MetaSolidSamplingContext_Texture = Symbol('metasolid:texture')
 
 export interface MetaSolidVolumeSamplingContext<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
         Location extends MetaSolidLocation = MetaSolidLocation,
         OuterSampleProcessingContextT = any,
@@ -146,6 +153,7 @@ export interface MetaSolidVolumeSamplingContext<
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>
     > extends
+    WithInfluenceProcessingContext<InfluenceGroup>,
     VolumeSamplingContextWithSurfaceHints<Location, Location, Location, OuterSampleProcessingContextT>,
     VolumeSamplingContextWithSolidHints<Location, Location, Location, OuterSampleProcessingContextT> {
     [MetaSolidSamplingContext_Texture]: TextureContext
@@ -160,19 +168,32 @@ export const MetaSolidVolumeMultiObjectsInternalPreservedGroupsTemplate: MetaSol
 }
 
 export interface MetaSolidShapeSamplingContext<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
-        OuterSampleProcessingContextT = any,
+        VolumeSampleProcessingContextT = any,
         TextureContext extends
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
         VolumeContext extends
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>
+            MetaSolidVolumeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext
+                > =
+            MetaSolidVolumeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext
+                >
     > extends
-    VolumeSamplingContextWithSurfaceHints<Location, Location, Location, OuterSampleProcessingContextT>,
-    VolumeSamplingContextWithSolidHints<Location, Location, Location, OuterSampleProcessingContextT> {
+    VolumeSamplingContextWithSurfaceHints<Location, Location, Location, VolumeSampleProcessingContextT>,
+    VolumeSamplingContextWithSolidHints<Location, Location, Location, VolumeSampleProcessingContextT> {
     [MetaSolidSamplingContext_Volume]: VolumeContext
     [MetaSolidSamplingContext_Texture]: {
         item: Texture<
@@ -188,20 +209,49 @@ export interface MetaSolidShapeSamplingContext<
 }
 
 export interface MetaSolidShape<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
         Sample extends MetaSolidSample = MetaSolidSample,
-        OuterSampleProcessingContextT = any,
+        VolumeSampleProcessingContextT = any,
         TextureContext extends
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
         VolumeContext extends
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>,
+            MetaSolidVolumeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext
+                > =
+            MetaSolidVolumeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext
+                >,
         Context extends
-            MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
-            MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+            MetaSolidShapeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    TxSample,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext,
+                    VolumeContext
+                > =
+            MetaSolidShapeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    TxSample,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext,
+                    VolumeContext
+                >,
     >
     extends SampleDomain<
         Location, Sample,
@@ -215,22 +265,35 @@ export interface MetaSolidShape<
 }
 
 export class MetaSolidVolume<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         Location extends MetaSolidLocation = MetaSolidLocation,        
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         InnerSample extends
             Omit<TxLocation, keyof TextureLocation> & MetaSolidSample =
             Omit<TxLocation, keyof TextureLocation> & MetaSolidSample,
-        OuterSampleProcessingContextT = any,
+        VolumeSampleProcessingContextT = any,
         TextureContext extends
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
         VolumeContext extends
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>,
+            MetaSolidVolumeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext
+                > =
+            MetaSolidVolumeSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    Location,
+                    VolumeSampleProcessingContextT,
+                    TextureContext
+                >,
         Context extends
-            MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
-            MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+            MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, VolumeSampleProcessingContextT, TextureContext, VolumeContext> =
+            MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, VolumeSampleProcessingContextT, TextureContext, VolumeContext>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
@@ -295,23 +358,26 @@ export class MetaSolidVolume<
         MetaSolidVolumeSample<TxSample, InnerSample>,
         MetaSolidVolumeSample<TxSample, InnerSample>,
         MetaSolidVolumeSample<TxSample, InnerSample>,
-        OuterSampleProcessingContextT,
+        VolumeSampleProcessingContextT,
         VolumeContext
     > {
     protected readonly transformsLocation = false
     protected readonly transformsSample = true
     
+    private influenceGroup_set!: (o: object, influence: number | FieldPointVectorContainer<NumberTypedArray>) => void
+
     get boundingBox(): BoundingBox {
         return this.shape?.boundingBox
     }
 
     get shape() {
         return this.inner as MetaSolidShape<
+            InfluenceGroup,
             TxLocation,
             TxSample,
             Location,
             InnerSample,
-            OuterSampleProcessingContextT,
+            VolumeSampleProcessingContextT,
             TextureContext,
             VolumeContext,
             Context
@@ -324,11 +390,12 @@ export class MetaSolidVolume<
 
     constructor(
             shape: MetaSolidShape<
+                    InfluenceGroup,
                     TxLocation,
                     TxSample,
                     Location,
                     InnerSample,
-                    OuterSampleProcessingContextT,
+                    VolumeSampleProcessingContextT,
                     TextureContext,
                     VolumeContext,
                     Context
@@ -341,12 +408,15 @@ export class MetaSolidVolume<
                     TxSample,
                     TxSample,
                     TextureContext
-                >
+                >,
+            public influenceGroup?: InfluenceGroup
         ) {
         super(shape)
     }
 
     override init(context: VolumeContext): void {
+        this.influenceGroup_set = onlyOne(groupKinds(context, MultiObjectsInfluencesGroupKindsTemplate, this.influenceGroup)).group.set
+
         context[MetaSolidSamplingContext_Texture] = {
             [SampleDomainLocationFieldKey]: FieldsField.merge<MetaSolidTxLocation<Location, TxLocation>>(
                 (context[SampleDomainLocationFieldKey] as FieldsField<Location>).omit({
@@ -374,6 +444,28 @@ export class MetaSolidVolume<
             )
         } as any as TextureContext
         this.texture?.init(context[MetaSolidSamplingContext_Texture])
+        
+        const multiObjectIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
+        if (this.texture && multiObjectIDs) {
+            type TextureVectorContext = VectorSamplingContext<
+                    MetaSolidTxLocation<Location, TxLocation>,
+                    MetaSolidTxLocation<Location, TxLocation>,
+                    MetaSolidTxLocation<Location, TxLocation>,
+                    FieldPointVectorContainerStatic,
+                    TxSample,
+                    TxSample,
+                    TxSample,
+                    FieldPointVectorContainerStatic,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    TextureContext,
+                    FieldPointVectorStatic<MetaSolidTxLocation<Location, TxLocation>, FieldPointVectorContainerStatic>,
+                    FieldPointVectorStatic<TxSample, FieldPointVectorContainerStatic>
+                >
+
+            makeVectorSamplingContext(this.texture.field, <TextureVectorContext>context[MetaSolidSamplingContext_Texture], multiObjectIDs)
+        }
     }
 
     protected override init_transfer_context(innerContext: Context, outerContext: VolumeContext): void {
@@ -383,16 +475,12 @@ export class MetaSolidVolume<
     }
 
     protected override init_make_field(innerField: Field<InnerSample>, context: { inner: Context }): Field<MetaSolidVolumeSample<TxSample, InnerSample>> {
-        const presenceField = new FieldsField({
-            presence: ScalarField.instance
-        })
-
         const textureLocationField = new FieldsField({
             [texturing.SurfaceObjectsTextureLocationsGroupsDefaultKey]: context.inner[MetaSolidSamplingContext_Texture].context[SampleDomainLocationFieldKey]
         })
 
         return FieldsField.merge<MetaSolidVolumeSample<TxSample, InnerSample>>(
-            presenceField as FieldsField<MetaSolidVolumeSample<TxSample, InnerSample>>,
+            defaultVolumeSampleField as FieldsField<MetaSolidVolumeSample<TxSample, InnerSample>>,
             textureLocationField as FieldsField<MetaSolidVolumeSample<TxSample, InnerSample>>,
             ((innerField as FieldsField<InnerSample>).omit({
                 distance: FieldsPoint_Omit_Leaf,
@@ -409,10 +497,11 @@ export class MetaSolidVolume<
 
     protected override transformContext(context: VolumeContext): Context {
         type InnerContextT = MetaSolidShapeSamplingContext<
+            InfluenceGroup,
             TxLocation,
             TxSample,
             Location,
-            OuterSampleProcessingContextT,
+            VolumeSampleProcessingContextT,
             TextureContext,
             VolumeContext
         >
@@ -429,6 +518,7 @@ export class MetaSolidVolume<
         return inner as Context
     }
 
+    @vectorized(MetaSolidVolume.transformSample_vectorized)
     protected override transformSample(
             sample: InnerSample,
             innerLocation: Location,
@@ -465,7 +555,7 @@ export class MetaSolidVolume<
         const surface_distance = !is_valid ? NaN : (sample.distance - parameters.unit.height) / parameters.unit.length
         const alpha = !is_valid ? 0 : ((1 - Math.min(1, Math.max(0, surface_distance))) ** parameters.falloff.rate)
 
-        return change<
+        const result = change<
                 MetaSolidVolumeSample<TxSample, InnerSample>,
                 InnerSample & TxSample & { alpha: number },
                 Omit<MetaSolidSample, keyof { gradient: Vec3 }>
@@ -480,6 +570,177 @@ export class MetaSolidVolume<
             alpha,
             [texturing.SurfaceObjectsTextureLocationsGroupsDefaultKey]: texture_location
         }, ['falloff', 'unit', 'uv', 'distance'], {})
+        
+        this.influenceGroup_set(result, alpha)
+
+        return result
+    }
+
+    private static transformSample_vectorized<
+            InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
+            Location extends MetaSolidLocation = MetaSolidLocation,        
+            TxLocation extends TextureLocation = TextureLocation,
+            TxSample extends MetaSolidTxSample = MetaSolidTxSample,
+            InnerSample extends
+                Omit<TxLocation, keyof TextureLocation> & MetaSolidSample =
+                Omit<TxLocation, keyof TextureLocation> & MetaSolidSample,
+            OuterSampleProcessingContextT = any,
+            TextureContext extends
+                TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
+                TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
+            VolumeContext extends
+                MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
+                MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext>,
+            Context extends
+                MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
+                MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
+            ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+            LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+            SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        >(
+            this: MetaSolidVolume<
+                    InfluenceGroup,
+                    Location,
+                    TxLocation,
+                    TxSample,
+                    InnerSample,
+                    OuterSampleProcessingContextT,
+                    TextureContext,
+                    VolumeContext,
+                    Context,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    LocationContainer,
+                    SampleContainer
+                >,
+            samples: FieldPointVector<InnerSample, SampleContainer>,
+            innerLocations: FieldPointVector<Location, LocationContainer>,
+            outerLocations: FieldPointVector<Location, LocationContainer>,
+            context: {
+                outer: FusedVectorSamplingContext<
+                        Location,
+                        Location,
+                        Location,
+                        LocationContainer,
+                        MetaSolidVolumeSample<TxSample, InnerSample>,
+                        MetaSolidVolumeSample<TxSample, InnerSample>,
+                        MetaSolidVolumeSample<TxSample, InnerSample>,
+                        SampleContainer,
+                        Objects,
+                        ObjIDsT,
+                        ObjIDsContainer,
+                        VolumeContext,
+                        FieldPointVector<Location, LocationContainer>,
+                        FieldPointVectorWithMultiObjects<
+                                MetaSolidVolumeSample<TxSample, InnerSample>,
+                                SampleContainer,
+                                ObjIDsT,
+                                ObjIDsContainer
+                            >
+                    >
+                inner: Context
+            }
+        ): FieldPointVectorWithMultiObjects<
+                MetaSolidVolumeSample<TxSample, InnerSample>,
+                SampleContainer,
+                ObjIDsT,
+                ObjIDsContainer
+            > {
+        const texture_context = <TextureVectorContext>context.inner[MetaSolidSamplingContext_Texture].context
+        const texture_location_field = texture_context[SampleDomainLocationFieldKey] as FieldsField<MetaSolidTxLocation<Location, TxLocation>>
+        
+        const multiObjectsIDs = context.outer[MultiObjectsIDsKey]
+        const locations = innerLocations
+        
+        const texture_location =
+            texture_location_field ?
+            <FieldPointVector<MetaSolidTxLocation<Location, TxLocation>, FieldPointVectorContainerStatic>>
+            fields_point_map<MetaSolidTxLocation<Location, TxLocation>, Field, FieldPointVectorContainerStatic>(
+                texture_location_field.fields,
+                leaf =>
+                    leaf.interpolationType !== undefined &&
+                    leaf.interpolationType[makeInterpolator] !== undefined,
+                (_, path) => extract(locations, path) ?? extract(samples, path)
+            ) :
+            undefined
+        
+        type TextureVectorContext = VectorSamplingContext<
+                MetaSolidTxLocation<Location, TxLocation>,
+                MetaSolidTxLocation<Location, TxLocation>,
+                MetaSolidTxLocation<Location, TxLocation>,
+                FieldPointVectorContainerStatic,
+                TxSample,
+                TxSample,
+                TxSample,
+                FieldPointVectorContainerStatic,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                TextureContext,
+                FieldPointVector<MetaSolidTxLocation<Location, TxLocation>, FieldPointVectorContainerStatic>,
+                FieldPointVector<TxSample, FieldPointVectorContainerStatic>
+            >
+
+        const texture_samples = this.texture ? texture_context[VectorSampleFunction](this.texture, texture_location!, texture_context) : undefined
+
+        const parameters = MetaSolidVolume.combineParameters_vectorized(<FieldPointVector<MetaSolidParametersIn>>samples, <FieldPointVector<MetaSolidParametersIn>>texture_samples)
+        
+        const samples_iterator = vectorIterator(this.inner.field.elementType, <IsDynamicVector<InnerSample, SampleContainer>>false, multiObjectsIDs)
+        const length = samples_iterator.length(samples, samples)
+
+        if (MultiObjectsIDsKey in samples)
+            throw new Error("cannot handle metasolids with multiobjects samples")
+
+        type ResultSamplesVector = FieldPointVectorWithMultiObjects<
+                MetaSolidVolumeSample<TxSample, InnerSample>,
+                SampleContainer,
+                ObjIDsT,
+                ObjIDsContainer
+            >
+        
+        const result_samples = <ResultSamplesVector><unknown>samples
+
+        const samples_distance = (<FieldPointVector<MetaSolidSample, SampleContainer>>samples).distance
+        const parameters_unit_height = <NumberTypedArray>parameters.unit!.height
+        const parameters_unit_length = <NumberTypedArray>parameters.unit!.length
+        const parameters_falloff_rate = <NumberTypedArray>parameters.falloff!.rate
+        const result_alpha = (<FieldPointVector<MetaSolidVolumeSample, SampleContainer>><unknown>result_samples).alpha = <SampleContainer><unknown>(new Float64Array(length))
+
+        let surface_distance: number
+        let isValid: boolean
+        let parameter_unit_height: number,
+            parameter_unit_length: number,
+            parameter_falloff_rate: number
+        for (let i = 0; i < length; i++) {
+            parameter_unit_height = parameters_unit_height[i]
+            parameter_unit_length = parameters_unit_length[i]
+            parameter_falloff_rate = parameters_falloff_rate[i]
+            isValid = (
+                !Number.isNaN(parameter_unit_height) &&
+                !Number.isNaN(parameter_unit_length) &&
+                !Number.isNaN(parameter_falloff_rate)
+            )
+
+            if (isValid) {
+                surface_distance = (samples_distance[i] - parameter_unit_height) / parameter_unit_length
+                result_alpha[i] = ((1 - Math.min(1, Math.max(0, surface_distance))) ** parameter_falloff_rate)
+            }
+            else result_alpha[i] = 0
+        }
+
+        this.influenceGroup_set(result_samples, typedArrayClone(result_alpha));
+
+        (<FieldPointVector<MetaSolidVolumeSample, SampleContainer>><unknown>result_samples)[texturing.SurfaceObjectsTextureLocationsGroupsDefaultKey] = <any><FieldPointVector<MetaSolidTextureLocation<Location>>>texture_location
+
+        delete (<Partial<FieldPointVector<MetaSolidSample, SampleContainer>>>result_samples).falloff
+        delete (<Partial<FieldPointVector<MetaSolidSample, SampleContainer>>>result_samples).unit
+        delete (<Partial<FieldPointVector<MetaSolidSample, SampleContainer>>>result_samples).uv
+        delete (<Partial<FieldPointVector<MetaSolidSample, SampleContainer>>>result_samples).distance
+
+        return result_samples
     }
 
     static readonly defaultParameters: MetaSolidParametersIn = {
@@ -494,13 +755,13 @@ export class MetaSolidVolume<
 
     private static defaultFields_parametersIn = new FieldsField({
         falloff: {
-            bias: ScalarField.instance,
+            rate: ScalarField.instance,
         },
         unit: {
             height: new ScalarField(<FuseMode<number>>ArithmeticPrimitiveFuseMode.add, [0, Infinity]),
             length: new ScalarField(<FuseMode<number>>ArithmeticPrimitiveFuseMode.add, [0, Infinity]),
         }
-    } as any as FieldsPointMapped<MetaSolidParametersIn, Field>)
+    } as FieldsPointMapped<MetaSolidParametersIn, Field>)
 
     static readonly defaultFields = {
         parametersIn: this.defaultFields_parametersIn,
@@ -530,6 +791,37 @@ export class MetaSolidVolume<
         parameters.falloff.rate *= b?.falloff?.rate ?? 1
 
         return parameters
+    }
+
+    static combineParameters_vectorized(
+            accumulator: FieldPointVector<MetaSolidParametersIn>,
+            multiplier?: FieldPointVector<Partial<MetaSolidParametersIn>>
+        ): FieldPointVector<Partial<MetaSolidParametersIn>> {
+        const accumulator_unit_height = accumulator?.unit?.height
+        const accumulator_unit_length = accumulator?.unit?.length
+        const accumulator_falloff_rate = accumulator?.falloff?.rate
+
+        const multiplier_unit_height = multiplier?.unit?.height
+        const multiplier_unit_length = multiplier?.unit?.length
+        const multiplier_falloff_rate = multiplier?.falloff?.rate
+        
+        if (!accumulator_unit_height ||
+            !accumulator_unit_length ||
+            !accumulator_falloff_rate) 
+            return <FieldPointVector<Partial<MetaSolidParametersIn>>>accumulator
+
+        if (!multiplier_unit_height ||
+            !multiplier_unit_length ||
+            !multiplier_falloff_rate)
+            return accumulator
+
+        for (let i = 0; i < length; i++) {
+            accumulator_unit_height[i] *= multiplier_unit_height[i]
+            accumulator_unit_length[i] *= multiplier_unit_length[i]
+            accumulator_falloff_rate[i] *= multiplier_falloff_rate[i]
+        }
+
+        return accumulator
     }
 
     static parametersValid(parameters: MetaSolidParametersIn) {

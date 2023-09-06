@@ -1,11 +1,12 @@
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped, MultiObjectsIDs } from "../paradigm/trees/index.js";
-import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, GroupWithField, GroupFieldKey, Field, MultiObjectsGroupsWithFieldsProcessingContext } from "../fields/index.js"
+import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, GroupWithField, GroupFieldKey, Field, MultiObjectsGroupsWithFieldsProcessingContext, WithInfluenceProcessingContext } from "../fields/index.js"
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { octtree } from "../paradigm/index.js";
 import { MultiObjectsField } from "../fields/fields/multi-objects.js";
 import { TypedArrayConstructor } from "../utils/typed-array.js";
 import { mergeObjects } from "../utils/merge-objects.js";
+import { FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
 
 export type IndicesT = Uint32Array
 
@@ -16,6 +17,7 @@ export type VolumeLocationFuseMode = volumes.VolumeLocation
 export type Objects = MultiObjectsTemplate
 export type ObjIDsT = Uint32Array
 export const ObjIDsType: TypedArrayConstructor<number, ObjIDsT> = Uint32Array
+export type ObjIDsContainer = FieldPointVectorContainerStatic<ObjIDsT>
 
 export type InfluenceGroup = MultiObjectsInfluencesGroupsDefault
 export const InfluenceGroupTemplate = MultiObjectsInfluencesGroupsDefaultTemplate
@@ -436,12 +438,14 @@ export type VolumeDomainSamplingContextT =
             VolumeLocationFuseMode,
             SampleProcessingContextT
         > &
+    WithInfluenceProcessingContext<InfluenceGroup> &
     MultiObjectsGroupsProcessingContext<
             Volume_Context_PreservedGroupsT,
             Volume_Context_PreservedGroupsKinds
         >
 
 export type VolumeDomainSamplingContext_MultiObjects =
+    WithInfluenceProcessingContext<InfluenceGroup> &
     MultiObjectsGroupsProcessingContext<
             Volume_Context_PreservedGroupsT,
             Volume_Context_PreservedGroupsKinds
@@ -451,8 +455,11 @@ export type VolumeDomainSamplingContext_MultiObjects =
 export const VolumeDomainSamplingContext_MultiObjects_Template: VolumeDomainSamplingContext_MultiObjects = {
     ...Volume_Context_PreservedGroupsKindsMappedGroupsTemplate,
 
+    ...MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate,
+
     [MultiObjectsProcessingContextGroupKinds]: {
         ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
+        ...MultiObjectsInfluencesGroupKindsTemplate,
     },
 }
 

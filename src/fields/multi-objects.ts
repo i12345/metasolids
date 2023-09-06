@@ -1,10 +1,57 @@
-import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsIDs, MultiObjectsCombined, MultiObjectsGroup } from "../paradigm/trees/index.js";
+import { PropertyPath, extract, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsMappedAndCombinedGrouped, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsProcessingResult, MultiObjectsTemplate, groupKindObjectsGrouped, groupKinds, iterObjects, PROPERTYKEY_ALL, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsIDs, MultiObjectsCombined, MultiObjectsGroup, MultiObjectsGroupsProcessingContext } from "../paradigm/trees/index.js";
 import { Processor } from "../paradigm/processing/processor.js";
 import { IndicesTypedArray, onlyOne } from "../utils/index.js";
 import { FieldPoint, FieldsPoint, fields_point_add_inplace_weighted, field_point_divide } from "./point.js";
 import { GroupFieldKey, GroupWithField, MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext } from "./processing.js";
 import { MultiObjectsField } from "./fields/multi-objects.js";
 import { ScalarField } from "./fields/scalar.js";
+
+export const MultiObjectsInfluencesGroupKindKey: unique symbol = Symbol('group-kind:influence')
+export type MultiObjectsInfluencesGroupKinds = {
+    [MultiObjectsInfluencesGroupKindKey]: typeof MultiObjectsGroupsKindsTemplate_Leaf
+}
+
+export const MultiObjectsInfluencesGroupKindsTemplate: MultiObjectsInfluencesGroupKinds = {
+    [MultiObjectsInfluencesGroupKindKey]: MultiObjectsGroupsKindsTemplate_Leaf
+}
+
+export const MultiObjectsInfluencesGroupsDefaultKey = Symbol("influences")
+export type MultiObjectsInfluencesGroupsDefault = {
+    [MultiObjectsInfluencesGroupsDefaultKey]: MultiObjectsGroupsTemplateLeaf
+}
+export const MultiObjectsInfluencesGroupsDefaultTemplate: MultiObjectsInfluencesGroupsDefault = {
+    [MultiObjectsInfluencesGroupsDefaultKey]: MultiObjectsGroupsTemplate_Leaf
+}
+
+export const MultiObjectsInfluencesGroupsDefaultField = <
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+    >(multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>):
+    MultiObjectsGroupsMapped<MultiObjectsInfluencesGroupsDefault, GroupWithField<MultiObjectsField<number, Objects, ObjIDsT>>> => ({
+    [MultiObjectsInfluencesGroupsDefaultKey]: {
+        [GroupFieldKey]: new MultiObjectsField(ScalarField.instance, multiObjectsIDs)
+    }
+})
+
+export type MultiObjectsInfluencesGroupsKindsMappedGroupsDefault =
+    MultiObjectsGroupsKindsTemplateMapped<
+        MultiObjectsInfluencesGroupKinds,
+        MultiObjectsInfluencesGroupsDefault
+    >
+
+export const MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate:
+    MultiObjectsInfluencesGroupsKindsMappedGroupsDefault = {
+    [MultiObjectsInfluencesGroupKindKey]: MultiObjectsInfluencesGroupsDefaultTemplate
+}
+
+export type WithInfluence<InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault> =
+    MultiObjectsGroupsMapped<InfluenceGroup, number>
+
+export type WithInfluenceProcessingContext<InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault> =
+    MultiObjectsGroupsProcessingContext<
+        InfluenceGroup,
+        MultiObjectsInfluencesGroupKinds
+    >
 
 export type MultiObjectsFieldPoint<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -50,44 +97,6 @@ export type MultiObjectsInfluencesProcessingResult<
 // let influencesGrouped: MultiObjectsInfluencesGrouped
 // influencesProcessing = influencesGrouped // works
 // influencesGrouped = influencesProcessing // works
-
-export const MultiObjectsInfluencesGroupKindKey: unique symbol = Symbol('group-kind:influence')
-export type MultiObjectsInfluencesGroupKinds = {
-    [MultiObjectsInfluencesGroupKindKey]: typeof MultiObjectsGroupsKindsTemplate_Leaf
-}
-
-export const MultiObjectsInfluencesGroupKindsTemplate: MultiObjectsInfluencesGroupKinds = {
-    [MultiObjectsInfluencesGroupKindKey]: MultiObjectsGroupsKindsTemplate_Leaf
-}
-
-export const MultiObjectsInfluencesGroupsDefaultKey = Symbol("influences")
-export type MultiObjectsInfluencesGroupsDefault = {
-    [MultiObjectsInfluencesGroupsDefaultKey]: MultiObjectsGroupsTemplateLeaf
-}
-export const MultiObjectsInfluencesGroupsDefaultTemplate: MultiObjectsInfluencesGroupsDefault = {
-    [MultiObjectsInfluencesGroupsDefaultKey]: MultiObjectsGroupsTemplate_Leaf
-}
-
-export const MultiObjectsInfluencesGroupsDefaultField = <
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
-    >(multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>):
-    MultiObjectsGroupsMapped<MultiObjectsInfluencesGroupsDefault, GroupWithField<MultiObjectsField<number, Objects, ObjIDsT>>> => ({
-    [MultiObjectsInfluencesGroupsDefaultKey]: {
-        [GroupFieldKey]: new MultiObjectsField(ScalarField.instance, multiObjectsIDs)
-    }
-})
-
-export type MultiObjectsInfluencesGroupsKindsMappedGroupsDefault =
-    MultiObjectsGroupsKindsTemplateMapped<
-        MultiObjectsInfluencesGroupKinds,
-        MultiObjectsInfluencesGroupsDefault
-    >
-
-export const MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate:
-    MultiObjectsInfluencesGroupsKindsMappedGroupsDefault = {
-    [MultiObjectsInfluencesGroupKindKey]: MultiObjectsInfluencesGroupsDefaultTemplate
-}
 
 export type MultiObjectsInfluencesProcessingContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

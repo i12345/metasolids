@@ -1,18 +1,17 @@
 import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsIDs } from "../../../paradigm/trees/multi-objects.js"
 import { intract, hasPath, extract } from "../../../paradigm/trees/tree.js"
-import { FieldPointMapped, FieldPoint, FieldPointPrimitive, FieldPointMappedObjectsGroupedRemoved } from "../../point.js"
+import { FieldPointMapped, FieldPoint } from "../../point.js"
 import { FieldPointType } from "../../type.js"
 import { vectorIterator } from "./factory.js"
 import { FieldPointVectorIterator } from "../iterator.js"
-import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, FieldPointVectorContainerType } from "../point.js"
+import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, FieldPointVectorContainerType, FieldPointVectorContainerDynamic } from "../point.js"
 import { IndicesTypedArray, invalidIndex } from "../../../utils/indices-array.js"
-import { PrimitiveFieldPointVectorIterator } from "./primitive.js"
 
 export class MultiObjectsFieldPointVectorIterator<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainerDynamic = FieldPointVectorContainerDynamic,
+        Container extends FieldPointVectorContainer = FieldPointVectorContainer,
         VectorizedRoot extends FieldPointVectorWithMultiObjects = FieldPointVectorWithMultiObjects
     > implements
     FieldPointVectorIterator<
@@ -21,8 +20,8 @@ export class MultiObjectsFieldPointVectorIterator<
         VectorizedRoot,
         Point
     > {
-    get canGetByReference() {
-        return this.typeIterator.canGetByReference
+    get canGetSetByReference() {
+        return this.typeIterator.canGetSetByReference
     }
 
     private readonly typeIterator: FieldPointVectorIterator<Point, Container, VectorizedRoot>
@@ -83,13 +82,6 @@ export class MultiObjectsFieldPointVectorIterator<
         }
 
         vectorizedRoot[ItemObjValuesOffsetsKey][index] = offset
-    }
-
-    makeContainer(length: number): Container {
-        if (!(this.typeIterator instanceof PrimitiveFieldPointVectorIterator))
-            throw new Error("can only make container for primitive field types")
-
-        return (<PrimitiveFieldPointVectorIterator<FieldPointPrimitive, Container, VectorizedRoot>><FieldPointVectorIterator<FieldPointPrimitive>>this.typeIterator).makeContainer(length)
     }
 
     copyStatic(vectorized: FieldPointMapped<Point, Container>, vectorizedRoot: VectorizedRoot): FieldPointVector<Point, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>> {

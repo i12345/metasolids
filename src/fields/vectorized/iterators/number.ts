@@ -9,7 +9,7 @@ const elementSize = 1
 @vectorIteratorFactory(type, false)
 class FieldPointVectorizedIteratorStatic<VectorizedRoot = any>
     extends PrimitiveFieldPointVectorIteratorStatic<Type> {
-    get canGetByReference() { return false }
+    get canGetSetByReference() { return false }
     readonly elementType = type
 
     get_returnValue(vectorized: FieldPointVector<Type, FieldPointVectorContainerStatic>, vectorizedRoot: VectorizedRoot, index: number): Type {
@@ -28,7 +28,7 @@ class FieldPointVectorizedIteratorStatic<VectorizedRoot = any>
 @vectorIteratorFactory(type, true)
 class FieldPointVectorizedIteratorDynamic<VectorizedRoot = any>
     extends PrimitiveFieldPointVectorIteratorDynamic<Type> {
-    get canGetByReference() { return false }
+    get canGetSetByReference() { return false }
     readonly elementType = type
 
     get_returnValue(vectorized: FieldPointVector<Type, FieldPointVectorContainerDynamic>, vectorizedRoot: VectorizedRoot, index: number): Type {

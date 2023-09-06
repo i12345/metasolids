@@ -1,4 +1,5 @@
 import { MultiObjectsTemplate, MultiObjectsIDs } from "../../../paradigm/trees/multi-objects.js"
+import { equals } from "../../../utils/equals.js"
 import { IndicesTypedArray } from "../../../utils/indices-array.js"
 import { NumberTypedArray, typedArrayClone } from "../../../utils/typed-array.js"
 import { FieldPointPrimitive, FieldPoint } from "../../point.js"
@@ -58,7 +59,8 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
         const resultElementOffsets = results.vectorizedRoot[ItemObjValuesOffsetsKey]
         const resultElementIndexNext = typedArrayClone(results.vectorizedRoot[ItemNextObjectIndexKey])
 
-        if (isDynamicVector(points[0].vectorized)) {
+        //TODO: not sure if elementType should be used here
+        if (isDynamicVector(elementType, points[0].vectorized)) {
             const resultVectorized = <FieldPointVectorDynamic<Point>>results.vectorized
 
             for (const { vectorized, vectorizedRoot } of points) {
@@ -108,6 +110,10 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
                 }
             }
         }
+    }
+
+    [equals](that: PrimitiveFuseMode<Point>): boolean {
+        return that instanceof ConcatPrimitiveFuseMode
     }
 
     private constructor() { }

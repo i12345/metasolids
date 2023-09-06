@@ -195,40 +195,60 @@ export class LevelOfDetailInfoComputerIndividual<
     update() {
         const app = Application.getApplication()!
         const camera = app.systems.camera!.cameras[0]
-        const distance = this.renderer.renderer.entity.getPosition().distance(camera.entity.getPosition())
+        if (camera === undefined) {
+            this._info = {
+                distance: 0,
+                edge: {
+                    distances: {
+                        absolute: {
+                            world: [NaN, NaN],
+                            screen: [NaN, NaN],
+                            uv: [NaN, NaN],
+                        },
+                        ratios: {
+                            screen_UV: [NaN, NaN],
+                            world_UV: [NaN, NaN],
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            const distance = this.renderer.renderer.entity.getPosition().distance(camera.entity.getPosition())
 
-        const cache = this.shared.cached(this.renderer.decimation.quality)
-        const edge_distance_world = cache.edge.distances.absolute.world
-        const edge_distance_world_mean = (edge_distance_world[RANGE_MIN] +  edge_distance_world[RANGE_MAX]) / 2
+            const cache = this.shared.cached(this.renderer.decimation.quality)
+            const edge_distance_world = cache.edge.distances.absolute.world
+            const edge_distance_world_mean = (edge_distance_world[RANGE_MIN] + edge_distance_world[RANGE_MAX]) / 2
 
-        const edge_distance_calc_world_0 = camera.entity.forward.clone().mulScalar(distance).add(camera.entity.getPosition())
-        const edge_distance_calc_world_1 = camera.entity.right.clone().mulScalar(edge_distance_world_mean).add(edge_distance_calc_world_0)
-        const edge_distance_calc_screen_0 = camera.worldToScreen(edge_distance_calc_world_0)
-        const edge_distance_calc_screen_1 = camera.worldToScreen(edge_distance_calc_world_1)
-        const edge_distance_calc_screen_0_v2 = new Vec2(edge_distance_calc_screen_0.x, edge_distance_calc_screen_0.y)
-        const edge_distance_calc_screen_1_v2 = new Vec2(edge_distance_calc_screen_1.x, edge_distance_calc_screen_1.y)
-        const edge_distance_screen_mean = edge_distance_calc_screen_0_v2.distance(edge_distance_calc_screen_1_v2)
+            const edge_distance_calc_world_0 = camera.entity.forward.clone().mulScalar(distance).add(camera.entity.getPosition())
+            const edge_distance_calc_world_1 = camera.entity.right.clone().mulScalar(edge_distance_world_mean).add(edge_distance_calc_world_0)
+            const edge_distance_calc_screen_0 = camera.worldToScreen(edge_distance_calc_world_0)
+            const edge_distance_calc_screen_1 = camera.worldToScreen(edge_distance_calc_world_1)
+            const edge_distance_calc_screen_0_v2 = new Vec2(edge_distance_calc_screen_0.x, edge_distance_calc_screen_0.y)
+            const edge_distance_calc_screen_1_v2 = new Vec2(edge_distance_calc_screen_1.x, edge_distance_calc_screen_1.y)
+            const edge_distance_screen_mean = edge_distance_calc_screen_0_v2.distance(edge_distance_calc_screen_1_v2)
 
-        const ratio_screen_per_world = edge_distance_screen_mean / edge_distance_world_mean
+            const ratio_screen_per_world = edge_distance_screen_mean / edge_distance_world_mean
 
-        this._info = {
-            distance,
-            edge: {
-                distances: {
-                    absolute: {
-                        world: cache.edge.distances.absolute.world,
-                        uv: cache.edge.distances.absolute.uv,
-                        screen: [
-                            ratio_screen_per_world * cache.edge.distances.absolute.world[RANGE_MIN],
-                            ratio_screen_per_world * cache.edge.distances.absolute.world[RANGE_MAX]
-                        ]
-                    },
-                    ratios: {
-                        world_UV: cache.edge.distances.ratios.world_UV,
-                        screen_UV: [
-                            ratio_screen_per_world * cache.edge.distances.ratios.world_UV[RANGE_MIN],
-                            ratio_screen_per_world * cache.edge.distances.ratios.world_UV[RANGE_MAX]
-                        ]
+            this._info = {
+                distance,
+                edge: {
+                    distances: {
+                        absolute: {
+                            world: cache.edge.distances.absolute.world,
+                            uv: cache.edge.distances.absolute.uv,
+                            screen: [
+                                ratio_screen_per_world * cache.edge.distances.absolute.world[RANGE_MIN],
+                                ratio_screen_per_world * cache.edge.distances.absolute.world[RANGE_MAX]
+                            ]
+                        },
+                        ratios: {
+                            world_UV: cache.edge.distances.ratios.world_UV,
+                            screen_UV: [
+                                ratio_screen_per_world * cache.edge.distances.ratios.world_UV[RANGE_MIN],
+                                ratio_screen_per_world * cache.edge.distances.ratios.world_UV[RANGE_MAX]
+                            ]
+                        }
                     }
                 }
             }

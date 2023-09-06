@@ -511,7 +511,8 @@ export const fusingVectorSampling = {
             fuseMode?: FuseMode<SampleFuseMode>
         ): FusingFieldPointVectorWithMultiObjects<SampleElementType, ObjIDsT, SampleContainer, ObjIDsContainer> {
         const multiObjectIDs = context[MultiObjectsIDsKey]
-        const n_sample = vectorIterator(context[SampleDomainLocationFieldKey].elementType, isDynamicVector<LocationElementType, LocationContainer>(locations), multiObjectIDs).length(locations, locations)
+        const location_type = context[SampleDomainLocationFieldKey].elementType
+        const n_sample = vectorIterator(location_type, isDynamicVector<LocationElementType, LocationContainer>(location_type, locations), multiObjectIDs).length(locations, locations)
 
         const sampleType = domain.field.elementType
         fuseMode ??= domain.field.fuseMode
@@ -536,6 +537,8 @@ export const fusingVectorSampling = {
             objOffsets[i_sample] = (i_sample > 0 ? objOffsets[i_sample - 1] : 0) + objCounts[i_sample]
 
         domain.sample_fused_results(samples, locations, context, sampleType, fuseMode)
+
+        delete (<Partial<FusingFieldPointVectorWithMultiObjects>>samples)[ItemNextObjectIndexKey]
 
         return samples
     }

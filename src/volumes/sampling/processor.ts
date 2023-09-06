@@ -11,14 +11,14 @@ import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, Volu
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"
 import { VolumeKey } from "../processor.js"
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js"
-import { FieldPointVector, FieldPointVectorContainerStatic, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vector_fill, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js"
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js"
 import { SampleDomainLocationFieldKey } from "../../fields/domain.js"
-import { FieldPointMapped, field_point_map } from "../../fields/point.js"
+import { FieldPoint, FieldPointMapped, field_point_map } from "../../fields/point.js"
 import { extract, intract } from "../../paradigm/trees/tree.js"
 import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js"
-import { FieldPointType } from "../../fields/type.js"
+import { FieldPointType, field_point_type_default } from "../../fields/type.js"
 
 class VolumeDomainSamplingSubdivisionProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -262,9 +262,11 @@ class VolumeDomainSamplingSubdivisionProcessor<
         const multiObjectsIDs = context[EncapsulatingKey][MultiObjectsIDsKey]
 
         if (!context[SpaceKey]) {
-            makeVectorSamplingContext(volume.field, samplingContext, multiObjectsIDs)
-
+            samplingContext[MultiObjectsIDsKey] = multiObjectsIDs
+            
             volume.init(samplingContext)
+
+            makeVectorSamplingContext(volume.field, samplingContext, multiObjectsIDs)
 
             const min = volume.boundingBox.getMin()
             const max = volume.boundingBox.getMax()
@@ -302,17 +304,15 @@ class VolumeDomainSamplingSubdivisionProcessor<
         const positions = OctTreeSpace.vectorized.positionOfVoxel.layers_same.call(space, layer, local_indices)
         space.positions.layers.push(positions)
 
-        //TODO: support extra location parameters
-        const extraLocationParameters_objects = undefined
-
         const locations_type = samplingContext[SampleDomainLocationFieldKey].elementType
         const locations_iterator = vectorIterator(locations_type, <any>false, multiObjectsIDs)
-        const locations = field_point_vectorized_multi_objects_new(locations_type, new_voxels, <any>false, multiObjectsIDs?.IDsType, extraLocationParameters_objects)
+        const locations = field_point_vectorized_multi_objects_new(locations_type, new_voxels, <any>false, multiObjectsIDs?.IDsType)
 
         locations.p = positions
-        if (extraLocationParameters)
-            for (let i = 0; i < new_voxels; i++)
-                locations_iterator.set(locations, locations, <VolumeLocationT>extraLocationParameters, i)
+        if (extraLocationParameters) {
+            const extraLocations_type = field_point_type_default(<FieldPoint>extraLocationParameters)
+            field_point_vector_fill(extraLocations_type, locations, <FieldPoint>extraLocationParameters, multiObjectsIDs)
+        }
 
         const samples = samplingContext[VectorSampleFunction](volume, <FieldPointVector<VolumeLocationElementType, FieldPointVectorContainerStatic<Float64Array>>>locations, samplingContext)
         item.samples = samples

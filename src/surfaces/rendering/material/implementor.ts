@@ -471,7 +471,7 @@ function qualityMetrics_compute<
             return texture.value
         else if (texture instanceof VertexInterpolatingTexture) {
             const vertices = texture.vertices
-            const vertexIterator = vectorIterator(sample_type, <any>isDynamicVector(vertices), vertices)
+            const vertexIterator = vectorIterator(sample_type, <any>isDynamicVector(sample_type, vertices), vertices)
             const length = vertexIterator.length(vertices, vertices)
 
             if (length === 0)
@@ -558,7 +558,7 @@ function qualityMetrics_compute<
         undefined
     )
 
-    const samples_iterator = vectorIterator<TexelTypeT>(texture.field.elementType, <any>isDynamicVector(samples), multiObjectsIDs)
+    const samples_iterator = vectorIterator<TexelTypeT>(texture.field.elementType, <any>isDynamicVector(sample_type, samples), multiObjectsIDs)
     const samples_add = (sample: TexelTypeT) => samples_iterator.set(samples, samples, sample, samples_iterator.length(samples, samples))
 
     function calculate_constancy() {
@@ -609,7 +609,7 @@ function qualityMetrics_compute<
         undefined
     )
 
-    const interpolator_values_locations_iterator = vectorIterator/* <Material_Texture_Location<VolumeLocationT>> */(location_type, <any>isDynamicVector(interpolator_values_locations), multiObjectsIDs)
+    const interpolator_values_locations_iterator = vectorIterator/* <Material_Texture_Location<VolumeLocationT>> */(location_type, <any>isDynamicVector(location_type, interpolator_values_locations), multiObjectsIDs)
 
     const interpolator_values_samples = field_point_vectorized_multi_objects_new<TexelTypeT>(
         sample_type,
@@ -619,7 +619,7 @@ function qualityMetrics_compute<
         undefined
     )
 
-    const interpolator_values_samples_iterator = vectorIterator<TexelTypeT>(sample_type, <any>isDynamicVector(interpolator_values_samples), multiObjectsIDs)
+    const interpolator_values_samples_iterator = vectorIterator<TexelTypeT>(sample_type, <any>isDynamicVector(sample_type, interpolator_values_samples), multiObjectsIDs)
 
     const interpolator_triangles = []
 

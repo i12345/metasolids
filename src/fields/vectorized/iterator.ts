@@ -9,7 +9,7 @@ export interface FieldPointVectorIterator<
         VectorizedRoot = any,
         VectorizedPoint extends FieldPoint = Point
     > {
-    readonly canGetByReference: boolean
+    readonly canGetSetByReference: boolean
 
     length(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot): number
     get_returnValue(vectorized: FieldPointVector<VectorizedPoint, Container>, vectorizedRoot: VectorizedRoot, index: number): Point

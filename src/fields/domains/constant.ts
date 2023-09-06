@@ -89,14 +89,15 @@ export class ConstantSampleDomain<
                 SampleVector
             >
         ): SampleVector {
-        const isDynamic = isDynamicVector<LocationElementType, LocationContainer>(locations)
-        const locationsIterator = vectorIterator(context[SampleDomainLocationFieldKey].elementType, isDynamic, context[MultiObjectsIDsKey])
+        const locations_type = context[SampleDomainLocationFieldKey].elementType
+        const locations_isDynamic = isDynamicVector<LocationElementType, LocationContainer>(locations_type, locations)
+        const locations_iterator = vectorIterator(locations_type, locations_isDynamic, context[MultiObjectsIDsKey])
         console.warn("this is not intended to work for constant value w/ obj-mapped values")
 
         return <SampleVector>field_point_vectorized_new(
             this.field.elementType,
-            locationsIterator.length(locations, locations),
-            <IsDynamicVector<SampleElementType, SampleContainer>><unknown>isDynamic,
+            locations_iterator.length(locations, locations),
+            <IsDynamicVector<SampleElementType, SampleContainer>><unknown>locations_isDynamic,
             undefined,
             <SampleElementType><unknown>this.value
         )

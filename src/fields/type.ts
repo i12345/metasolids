@@ -1,8 +1,11 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended"
 import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey } from "../paradigm/trees/multi-objects-groups.js"
-import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf } from "../paradigm/trees/multi-objects.js"
-import { Reflect_entries } from "../utils/reflect-entries.js"
+import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDs, objectValuePaths } from "../paradigm/trees/multi-objects.js"
+import { Reflect_entries, Reflect_fromEntries } from "../utils/reflect-entries.js"
 import { FieldPoint, FieldPointPrimitive, Vector, FieldsPoint } from "./point.js"
+import { IndicesTypedArray } from "../utils/indices-array.js"
+import { hasPath } from "../paradigm/trees/tree.js"
+import { TypedArray, typedArrayConstructor } from "../utils/typed-array.js"
 
 export type FieldPointType<Point extends FieldPoint = FieldPoint> =
     Point extends FieldPointPrimitive ? (
@@ -54,6 +57,47 @@ export function field_point_new<Point extends FieldPoint = FieldPoint>(type: Fie
     }
 }
 
+/**
+ * Makes a type that describes this value.
+ * 
+ * Does not work for multi-object mapped values.
+ * 
+ * @param p the value to make a type for
+ */
+export function field_point_type_default<Point extends FieldPoint>(p: Point): FieldPointType<Point> {
+    if (typeof p === 'number')
+        return <FieldPointType<Point>>Number
+    else if (p instanceof Vec2)
+        return <FieldPointType<Point>>Vec2
+    else if (p instanceof Vec3)
+        return <FieldPointType<Point>>Vec3
+    else if (p instanceof Vec4)
+        return <FieldPointType<Point>>Vec4
+    else if (p instanceof Quat)
+        return <FieldPointType<Point>>Quat
+    else if (p instanceof Mat3)
+        return <FieldPointType<Point>>Mat3
+    else if (p instanceof Mat4)
+        return <FieldPointType<Point>>Mat4
+    else if (p instanceof Color)
+        return <FieldPointType<Point>>Color
+    else if (p instanceof Int8Array ||
+        p instanceof Uint8Array ||
+        p instanceof Uint8ClampedArray ||
+        p instanceof Int16Array ||
+        p instanceof Uint16Array ||
+        p instanceof Int32Array ||
+        p instanceof Uint32Array ||
+        p instanceof Float32Array ||
+        p instanceof Float64Array)
+        return <FieldPointType<Point>>typedArrayConstructor(<TypedArray>p)
+    else {
+        return Reflect_fromEntries<FieldPointType<Point>>(
+            Reflect_entries(<FieldsPoint>p).map(([key, value]) =>
+                [key, <FieldPointType>field_point_type_default(value)] as [keyof FieldPointType<Point>, FieldPointType<Point>[keyof FieldPointType<Point>]]))
+    }
+}
+
 export function field_point_type_contains<Superset extends FieldPoint, Subset extends FieldPoint>(
         superset: FieldPointType<Superset>,
         subset: FieldPointType<Subset>
@@ -93,6 +137,31 @@ export function field_point_type_size<Point extends FieldPoint = FieldPoint>(typ
     if (type instanceof Function)
         return field_point_sizes.get(type)!
     else return Reflect_entries(type).reduce((sum, [, subtype]) => sum + field_point_type_size(<FieldPointType>subtype), 0)
+}
+
+export function field_point_type_multiObj_count<
+        PointT extends FieldPoint = FieldPoint,
+        PointElementType extends FieldPoint = PointT,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+    >(
+        type: FieldPointType<PointElementType>,
+        point: PointT,
+        multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
+    ): number | undefined {
+    if (type instanceof Function)
+        return undefined
+    else if (MultiObjectsGroupedObjectsKey in type) {
+        let objs = 0
+        for (const path of objectValuePaths(multiObjectIDs!.template))
+            if (hasPath(point, path))
+                objs++
+        return objs
+    }
+    else {
+        const subsizes = Reflect.ownKeys(type).map(key => field_point_type_multiObj_count(type[key], (<FieldsPoint>point)[key], multiObjectIDs)).filter(size => size !== undefined)
+        return subsizes.length > 0 ? Math.max(...(<number[]>subsizes)) : undefined
+    }
 }
 
 function field_point_fits_type_obj<

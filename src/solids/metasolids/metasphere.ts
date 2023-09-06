@@ -6,8 +6,11 @@ import { MetaSolidShape, MetaSolidLocation, MetaSolidParametersIn, MetaSolidSamp
 import { VolumeSurfacesKey, meshing } from "../../surfaces/index.js";
 import { FieldsPoint, FieldsPointOptional } from "../../fields/point.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
+import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/multi-objects-groups.js";
+import { MultiObjectsInfluencesGroupsDefault } from "../../fields/multi-objects.js";
 
 export class MetaSphere<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
@@ -17,13 +20,14 @@ export class MetaSphere<
             TextureSamplingContext<MetaSolidTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>> =
             TextureSamplingContext<MetaSolidTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>>,
         VolumeContext extends
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>,
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext>,
         Context extends
-            MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
-            MetaSolidShapeSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+            MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
+            MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
     > implements
     MetaSolidShape<
+        InfluenceGroup,
         TxLocation,
         TxSample,
         Location,
@@ -45,9 +49,10 @@ export class MetaSphere<
         const gradient = location.p.clone().divScalar(distance)
 
         return {
+            ...MetaSolidVolume.defaultParameters,
             distance,
             gradient,
-            uv,
+            uv
         } as Sample
     }
 

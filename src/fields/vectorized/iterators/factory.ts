@@ -17,7 +17,7 @@ export function vectorIteratorFactory<Point extends FieldPointPrimitive, IsDynam
     return target => {
         const factories = vectorIteratorFactories.get(type) ?? [undefined, undefined]
         factories[isDynamic ? 1 : 0] = <any>new (<{ new(): FieldPointVectorIterator }><Function>target)()
-        vectorIteratorFactories.set(target, <any>factories)
+        vectorIteratorFactories.set(type, <any>factories)
     }
 }
 
@@ -40,8 +40,8 @@ export function vectorIterator<
         return vectorIteratorFactories.get(type)![isDynamicVector! ? 1 : 0] as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
     }
     else if (MultiObjectsGroupedObjectsKey in type) {
-        if (isDynamicVector === false)
-            throw new Error("must use dynamic container for multi objects")
+        // if (isDynamicVector === false)
+        //     throw new Error("must use dynamic container for multi objects")
         if (multiObjectsIDs === undefined)
             throw new Error("must specify multiObjectsIDs for a multi objects type")
 
@@ -69,14 +69,14 @@ export function vectorizedIteratorGetSetLengthCurried<
         set(index: number): void
         length: number
     } {
-    const iterator = vectorIterator(type, <IsDynamicVector<Point, Container>>isDynamicVector(vectorized), multiObjectsIDs)
+    const iterator = vectorIterator(type, <IsDynamicVector<Point, Container>>isDynamicVector(type, vectorized), multiObjectsIDs)
     const length = iterator.length(vectorized, vectorized)
 
     if (type instanceof Function) {
         const set_bound = iterator.set.bind(iterator, vectorized, vectorized)
         const set = (index: number) => set_bound((item.obj as any)[item.property], index)
 
-        if (iterator.canGetByReference) {
+        if (iterator.canGetSetByReference) {
             const get = iterator.get_returnParam.bind(iterator, vectorized, vectorized, (item.obj as any)[item.property] as Point)
             return { get, set, length }
         }

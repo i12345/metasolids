@@ -1,5 +1,6 @@
 import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey, PropertyPath, extract, hasPath, intract } from "../../paradigm/trees/index.js"
 import { MultiObjectsCombinedValue, MultiObjectsIDs, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsTemplateOrLeaf, MultiObjectsTemplate_Leaf } from "../../paradigm/trees/multi-objects.js"
+import { Equalable, equals } from "../../utils/equals.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { Reflect_entries } from "../../utils/reflect-entries.js"
 import { NumberTypedArray } from "../../utils/typed-array.js"
@@ -32,9 +33,10 @@ export type FuseMode<Point extends FieldPoint = FieldPoint> =
     never
 
 export function fuse_mode_equal<Point extends FieldPoint>(mode1: FuseMode<Point>, mode2: FuseMode<Point>): boolean {
-    if ((mode1 === undefined || mode2 === undefined) ||
-        (mode1 instanceof Function || mode2 instanceof Function))
+    if (mode1 === undefined || mode2 === undefined)
         return mode1 === mode2
+    else if (equals in mode1)
+        return (<PrimitiveFuseMode>mode1)[equals](<PrimitiveFuseMode>mode2)
     else {
         for (const key of new Set([...Reflect.ownKeys(mode1), ...Reflect.ownKeys(mode2)]))
             if (!fuse_mode_equal<FieldPoint>((<FuseMode<FieldsPoint>>mode1)[key], (<FuseMode<FieldsPoint>>mode2)[key]))
@@ -44,9 +46,12 @@ export function fuse_mode_equal<Point extends FieldPoint>(mode1: FuseMode<Point>
 }
 
 export function fuse_mode_contains<Superset extends FieldPoint, Subset extends FieldPoint>(superset: FuseMode<Superset>, subset: FuseMode<Subset>): boolean {
-    if ((superset === undefined || subset === undefined) ||
-        (superset instanceof Function || subset instanceof Function))
-        return superset === <any>subset
+    if (subset === undefined)
+        return true
+    else if (superset === undefined)
+        return false
+    else if (equals in superset)
+        return (<PrimitiveFuseMode>superset)[equals](<PrimitiveFuseMode>subset)
     else {
         for (const key of Reflect.ownKeys(subset))
             if (!fuse_mode_contains<FieldPoint, FieldPoint>((<FuseMode<FieldsPoint>>superset)[key], (<FuseMode<FieldsPoint>>subset)[key]))
@@ -60,7 +65,8 @@ export type FieldPointWithMultiObjectPath<Point extends FieldPoint = FieldPoint>
     multiObjPath?: PropertyPath
 }
 
-export interface PrimitiveFuseMode<Point extends FieldPointPrimitive = FieldPointPrimitive> {
+export interface PrimitiveFuseMode<Point extends FieldPointPrimitive = FieldPointPrimitive>
+    extends Equalable<PrimitiveFuseMode<Point>> {
     fuseSingle<
             Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
             ObjIDsT extends IndicesTypedArray = Uint32Array
@@ -453,7 +459,7 @@ export function fuseVectors<
                 }
             )
         }
-        else if (fuseMode instanceof Function) {
+        else if (pointType instanceof Function) {
             (<PrimitiveFuseMode>fuseMode).fuseVector(
                 <FieldPointType<FieldPointPrimitive>>resultType,
                 <FieldPointVectorWithMultiObjRoot<

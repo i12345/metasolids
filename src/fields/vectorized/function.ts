@@ -4,9 +4,9 @@ import { PropertyPath } from "../../paradigm/trees/path.js"
 import { extract } from "../../paradigm/trees/tree.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { FieldPoint } from "../point.js"
-import { FieldPointType } from "../type.js"
-import { vectorizedIteratorGetSetLengthCurried } from "./iterators/factory.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, field_point_vectorized_multi_objects_new } from "./point.js"
+import { FieldPointType, field_point_new } from "../type.js"
+import { vectorIterator, vectorizedIteratorGetSetLengthCurried } from "./iterators/factory.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, field_point_vectorized_multi_objects_new, isDynamicVector } from "./point.js"
 import { NumberTypedArray } from "../../utils/typed-array.js"
 
 export const VectorCallManager = Symbol()
@@ -136,50 +136,52 @@ export class FieldPointVectorFunction<
                 args[argIndexNext++] = paramValue
             else if (type === VectorCallManager) { }
             else {
+                args[argIndexNext] = field_point_new(<FieldPointType>type)
+
                 const { get, length } = vectorizedIteratorGetSetLengthCurried(
                     <FieldPointType>type,
                     paramValue as any,
                     {
                         obj: args,
-                        property: argIndexNext++
+                        property: argIndexNext
                     },
                     multiObjectsIDs,
                 )
 
+                argIndexNext++
                 getters.push(get)
                 vectorizedLength ??= length
             }
         })
 
+        if (vectorizedLength === undefined)
+            throw new Error("no vectorized args given")
+
         if (this.returnType) {
             const result = field_point_vectorized_multi_objects_new(
                 this.returnType,
-                length,
+                vectorizedLength,
                 false,
                 multiObjectsIDs?.IDsType,
             )
 
-            const result_objRef = { value: <any>undefined }
-            const result_iterator = vectorizedIteratorGetSetLengthCurried(
+            const result_iterator = vectorIterator(
                 this.returnType,
-                result,
-                {
-                    obj: result_objRef,
-                    property: "value"
-                },
-                multiObjectsIDs,
+                isDynamicVector<FieldPoint, FieldPointVectorContainer>(<FieldPointType>this.returnType, result),
+                multiObjectsIDs
             )
 
-            for (let i = 0; i < length; i++) {
+            let result_value: FieldPoint
+            for (let i = 0; i < vectorizedLength; i++) {
                 getters.forEach(getter => getter(i))
-                result_objRef.value = singularMethod.call(target, ...args)
-                result_iterator.set(i)
+                result_value = <FieldPoint>singularMethod.call(target, ...args)
+                result_iterator.set(result, result, result_value, i)
             }
 
             return <ReturnType<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedArgsTypes, VectorizedReturnType, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>>>result
         }
         else {
-            for (let i = 0; i < length; i++) {
+            for (let i = 0; i < vectorizedLength; i++) {
                 getters.forEach(getter => getter(i))
                 singularMethod.call(target, ...args)
             }

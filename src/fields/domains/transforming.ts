@@ -438,6 +438,7 @@ export abstract class TransformingSampleDomain<
 
         const inner = <InnerDomain><unknown>this.inner
         if (inner.sample_fused_objectCounts === undefined) {
+            this.can_fuse = undefined!
             this.sample_fused_objectCounts = undefined!
             this.sample_fused_results = undefined!
         }

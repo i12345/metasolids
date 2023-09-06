@@ -1,6 +1,6 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
-import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
-import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint } from "../../fields/index.js";
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
+import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault } from "../../fields/index.js";
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from '../../fields/domains/index.js'
 import { FieldsField } from '../../fields/fields/fields.js'
 import { Pi, PiOver2, TwoPi } from "../../utils/pi.js";
@@ -30,22 +30,24 @@ export type MetaSplineSegmentFigure<
 
 export const MetaSplineSegmentSamplingContext_Figure = Symbol('metaspline.segment:radial-figure')
 export interface MetaSplineSegmentSamplingContext<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
-        OuterSampleProcessingContextT = any,
+        VolumeSampleProcessingContextT = any,
         TextureContext extends
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
         VolumeContext extends
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, VolumeSampleProcessingContextT, TextureContext> =
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, VolumeSampleProcessingContextT, TextureContext>
     > extends
     MetaSolidShapeSamplingContext<
+        InfluenceGroup,
         TxLocation,
         TxSample,
         Location,
-        OuterSampleProcessingContextT,
+        VolumeSampleProcessingContextT,
         TextureContext,
         VolumeContext
     > {
@@ -61,23 +63,24 @@ export const MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate: MetaS
 }
 
 class MetaSpline<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
         Sample extends MetaSolidSample = MetaSolidSample,
-        OuterSampleProcessingContextT = any,
+        VolumeSampleProcessingContextT = any,
         TextureContext extends
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
         VolumeContext extends
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, VolumeSampleProcessingContextT, TextureContext> =
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, VolumeSampleProcessingContextT, TextureContext>
     > {
     // private t: number[]
     private transform_interpolator: FieldInterpolator<number, Mat4>
     private figure_interpolator: Interpolator<number, MetaSplineSegmentFigure<Location, Sample>>
 
-    constructor(public segments: MetaSplineSegment<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>[]) {
+    constructor(public segments: MetaSplineSegment<InfluenceGroup, TxLocation, TxSample, Location, Sample, VolumeSampleProcessingContextT, TextureContext, VolumeContext>[]) {
         this.transform_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.transform_relative_root })), MetaSplineSegment.defaultFields.t)
         this.figure_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.figure })), MetaSplineSegment.defaultFields.t)
     }
@@ -187,13 +190,14 @@ class MetaSpline<
         theta: number,
         phi: number,
         extraLocation: ExtraFields<Location, MetaSolidLocation>,
-        context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>[typeof MetaSplineSegmentSamplingContext_Figure]
+        context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, VolumeSampleProcessingContextT, TextureContext, VolumeContext>[typeof MetaSplineSegmentSamplingContext_Figure]
     ) {
         return this.figure_interpolator(t).sample({ phi, theta, ...extraLocation }, context)
     }
 }
 
 export class MetaSplineSegment<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
         Location extends MetaSolidLocation = MetaSolidLocation,
@@ -203,10 +207,11 @@ export class MetaSplineSegment<
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
         VolumeContext extends
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
-            MetaSolidVolumeSamplingContext<TxLocation, Location, OuterSampleProcessingContextT, TextureContext>
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext>
     > implements
     MetaSolidShape<
+        InfluenceGroup,
         TxLocation,
         TxSample,
         Location,
@@ -215,6 +220,7 @@ export class MetaSplineSegment<
         TextureContext,
         VolumeContext,
         MetaSplineSegmentSamplingContext<
+            InfluenceGroup,
             TxLocation,
             TxSample,
             Location,
@@ -232,8 +238,8 @@ export class MetaSplineSegment<
     ) {
     }
 
-    private readonly spline_potential: MetaSpline<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>[] = []
-    private spline?: MetaSpline<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>
+    private readonly spline_potential: MetaSpline<InfluenceGroup, TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>[] = []
+    private spline?: MetaSpline<InfluenceGroup, TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>
     private spline_segment_index!: number
 
     readonly transform_relative_root = new Mat4()
@@ -244,7 +250,7 @@ export class MetaSplineSegment<
 
     readonly boundingBox = new BoundingBox()
 
-    init(context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>): void {
+    init(context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>): void {
         this.spline_potential.splice(0, this.spline_potential.length)
         this.init_figure(context)
 
@@ -273,7 +279,7 @@ export class MetaSplineSegment<
         )
     }
 
-    private init_figure(context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>): void {
+    private init_figure(context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>): void {
         context[MetaSplineSegmentSamplingContext_Figure] = {
             [SampleDomainLocationFieldKey]: FieldsField.merge<MetaSplineSegmentFigureLocation<Location>>(
                 (context[SampleDomainLocationFieldKey] as FieldsField<Location>).omit({
@@ -290,7 +296,7 @@ export class MetaSplineSegment<
             context: EncapsulatingDomainSamplingContext<Location, Sample>,
             transform_to_parent: Mat4 = new Mat4().setIdentity()
         ): {
-            segment: MetaSplineSegment<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+            segment: MetaSplineSegment<InfluenceGroup, TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
             transform_to_parent: Mat4
         } | undefined {
         //TODO: consider this method
@@ -302,7 +308,7 @@ export class MetaSplineSegment<
             const main_metasolid = (parent.children["$$main"] as any as MetaSolidVolume)?.shape
 
             if (main_metasolid && main_metasolid instanceof MetaSplineSegment && main_metasolid !== this) {
-                const segment = main_metasolid as MetaSplineSegment<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>
+                const segment = main_metasolid as MetaSplineSegment<InfluenceGroup, TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>
 
                 return {
                     segment,
@@ -332,8 +338,8 @@ export class MetaSplineSegment<
     }
 
     private init_spline_potential(
-        spline: MetaSpline<TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
-        context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>
+        spline: MetaSpline<InfluenceGroup, TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+        context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>
     ) {
         if (!this.spline_potential.includes(spline))
             this.spline_potential.push(spline)
@@ -367,7 +373,7 @@ export class MetaSplineSegment<
         }
     }
 
-    private init_bounding_box(context: MetaSplineSegmentSamplingContext<TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>) {
+    private init_bounding_box(context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>) {
         if (this.spline_segment_index === 0) {
             this.boundingBox.setMinMax(Vec3.ZERO, Vec3.ZERO)
             return
@@ -479,6 +485,7 @@ export class MetaSplineSegment<
     sample(
             location: Location,
             context: MetaSplineSegmentSamplingContext<
+                    InfluenceGroup,
                     TxLocation,
                     TxSample,
                     Location,
@@ -503,6 +510,7 @@ export class MetaSplineSegment<
         const uv = this.uv(t, theta, phi)
 
         const shape_sample = {
+            ...MetaSolidVolume.defaultParameters,
             ...figure_sample,
             distance: r,
             gradient: v.normalize(),

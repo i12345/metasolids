@@ -157,8 +157,7 @@ export type Material_Groups = {
      * NOTE: this field is not set by the user; it is constructed using
      * interpolated surface normals (from {@link VolumeSample.gradient}) and
      * surface distance textures calculated from the metasphapes' textures for
-     * metasolid parameters (unit.height, unit.length, falloff.bias,
-     * falloff.rate), merged with corresponding weights:
+     * metasolid parameters, merged with corresponding weights:
      *
      * ```text
      * combine(
@@ -641,8 +640,7 @@ export type Material_Groups_Textures_TexelTypes = {
      * NOTE: this field is not set by the user; it is constructed using
      * interpolated surface normals (from {@link VolumeSample.gradient}) and
      * surface distance textures calculated from the metasphapes' textures for
-     * metasolid parameters (unit.height, unit.length, falloff.bias,
-     * falloff.rate), merged with corresponding weights:
+     * metasolid parameters, merged with corresponding weights:
      *
      * ```text
      * combine(
@@ -1083,8 +1081,7 @@ export const Material_Groups_Textures_TexelTypes_Template: FieldPointType<Materi
      * NOTE: this field is not set by the user; it is constructed using
      * interpolated surface normals (from {@link VolumeSample.gradient}) and
      * surface distance textures calculated from the metasphapes' textures for
-     * metasolid parameters (unit.height, unit.length, falloff.bias,
-     * falloff.rate), merged with corresponding weights:
+     * metasolid parameters, merged with corresponding weights:
      *
      * ```text
      * combine(

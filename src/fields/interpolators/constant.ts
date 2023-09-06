@@ -3,10 +3,10 @@ import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/inde
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { keypoint_index } from "../../utils/keypoints_index.js";
 import { Field } from "../field.js";
-import { InterpolationKeypoint, InterpolationType, Interpolator, VectorFieldInterpolationType, VectorInterpolator, makeInterpolator } from "../interpolation.js";
-import { FieldPoint, FieldPointMappedObjectsGroupedRemoved } from "../point.js";
+import { InterpolationKeypoint, Interpolator, VectorFieldInterpolationType, VectorInterpolator, makeInterpolator } from "../interpolation.js";
+import { FieldPoint } from "../point.js";
 import { FieldPointType } from "../type.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorIterator, FieldPointVectorWithMultiObjects, IsDynamicVector, field_point_vector_multiObjs_count, field_point_vector_multi_objs_static_length, field_point_vectorized_multi_objects_new, isDynamicVector } from "../vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorIterator, IsDynamicVector, field_point_vector_multi_objs_static_length, field_point_vectorized_multi_objects_new } from "../vectorized/index.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
 
 export class ConstantInterpolationType<

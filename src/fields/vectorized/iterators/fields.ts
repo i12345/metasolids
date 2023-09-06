@@ -17,7 +17,7 @@ export class FieldsFieldPointVectorIterator<
         Container extends FieldPointVectorContainer<NumberTypedArray> = Float64Array,
         VectorizedRoot = any
     > implements FieldPointVectorIterator<Point, Container, VectorizedRoot> {
-    readonly canGetByReference = true
+    readonly canGetSetByReference = true
 
     private readonly typeIterators: [PropertyKey, FieldPointVectorIterator<FieldPoint, Container>][]
 
@@ -113,7 +113,7 @@ export class FieldsFieldPointVectorIterator<
     get_returnParam(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot, result: Point, index: number): void {
         for (let [key, typeIterator] of this.typeIterators) {
             if (key in vectorized) {
-                if (typeIterator.canGetByReference)
+                if (typeIterator.canGetSetByReference)
                     typeIterator.get_returnParam(vectorized[key], vectorizedRoot, (result as any)[key], index)
                 else
                     (result as any)[key] = typeIterator.get_returnValue(vectorized[key], vectorizedRoot, index)
@@ -132,12 +132,12 @@ export class FieldsFieldPointVectorIterator<
 
         field_point_map<Point, Function, void>(
             <FieldPointMapped<Point, Function>>this.types,
-            type => type instanceof Function,
-            (type, path) => {
+            subtype => subtype instanceof Function,
+            (subtype, path) => {
                 const subvectorized = extract<FieldPointVector<FieldPoint, Container>>(vectorized, path)
-                const iterator = vectorIterator(<FieldPointType>type, isDynamicVector<FieldPoint, Container>(subvectorized), this.multiObjectsIDs)
+                const iterator = vectorIterator(<FieldPointType>subtype, isDynamicVector<FieldPoint, Container>(<FieldPointType>subtype, subvectorized), this.multiObjectsIDs)
 
-                if (iterator.canGetByReference) {
+                if (iterator.canGetSetByReference) {
                     const subresult = extract<FieldPoint>(result, path)
                     functions.push(iterator.get_returnParam.bind(iterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot, subresult))
                 }
@@ -158,19 +158,19 @@ export class FieldsFieldPointVectorIterator<
 
         field_point_map<Point, Function, void>(
             <FieldPointMapped<Point, Function>>this.types,
-            type => type instanceof Function,
-            (type, path) => {
+            subtype => subtype instanceof Function,
+            (subtype, path) => {
                 const subvectorized = extract<FieldPointVector<FieldPoint, Container>>(vectorized, path)
-                const iterator = vectorIterator(<FieldPointType>type, isDynamicVector<FieldPoint, Container>(subvectorized), this.multiObjectsIDs)
+                const subiterator = vectorIterator(<FieldPointType>subtype, isDynamicVector<FieldPoint, Container>(<FieldPointType<FieldPointPrimitive>>subtype, subvectorized), this.multiObjectsIDs)
 
-                if (iterator.canGetByReference) {
+                if (subiterator.canGetSetByReference) {
                     const subvalue = extract<FieldPoint>(value, path)
-                    functions.push(iterator.set.bind(iterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot, subvalue))
+                    functions.push(subiterator.set.bind(subiterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot, subvalue))
                 }
                 else {
                     const subvalue_parent = extract<FieldsPoint>(value, path.slice(0, -1))
                     const lastKey = path.at(-1)!
-                    const set = iterator.set.bind(iterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot)
+                    const set = subiterator.set.bind(subiterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot)
                     functions.push((index: number) => set(subvalue_parent[lastKey], index))
                 }
             }

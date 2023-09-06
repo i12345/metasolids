@@ -14,7 +14,7 @@ export abstract class PrimitiveFieldPointVectorIterator<
         VectorizedRoot = any
     > implements
     FieldPointVectorIterator<Point, Container, VectorizedRoot, Point> {
-    abstract get canGetByReference(): boolean
+    abstract get canGetSetByReference(): boolean
 
     abstract get elementType(): FieldPointType<Point>
 

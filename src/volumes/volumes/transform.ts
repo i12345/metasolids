@@ -280,19 +280,20 @@ export class TransformVolume<
         outerLocations: LocationVector,
         context: { outer: VectorContext, inner: VectorContext }
     ): LocationVector {
+        const outerLocations_type = context.outer[SampleDomainLocationFieldKey].elementType
         const transform_inverse = this.transformInverse
-        const isDynamic_locations = isDynamicVector<LocationElementType, LocationContainer>(outerLocations)
-        const location_vectorIterator = vectorIterator(
-            context.outer[SampleDomainLocationFieldKey].elementType,
-            isDynamic_locations,
+        const isDynamic_outerLocations = isDynamicVector<LocationElementType, LocationContainer>(outerLocations_type, outerLocations)
+        const outerLocations_vectorIterator = vectorIterator(
+            outerLocations_type,
+            isDynamic_outerLocations,
             context.outer[MultiObjectsIDsKey]
         )
-        const length = location_vectorIterator.length(outerLocations, outerLocations)
+        const length = outerLocations_vectorIterator.length(outerLocations, outerLocations)
 
         const p_local = field_point_vectorized_new<VolumeLocation["p"]>(
             <FieldPointType<VolumeLocation["p"]>>(<FieldsField<VolumeLocation>><unknown>context.inner[SampleDomainLocationFieldKey]).fields.p.elementType,
             length,
-            isDynamic_locations
+            isDynamic_outerLocations
         )
 
         const p_world = outerLocations.p
@@ -309,7 +310,7 @@ export class TransformVolume<
         const p_item_local = new Vec3()
         const p_item_world = new Vec3()
 
-        if (isDynamic_locations) {
+        if (isDynamic_outerLocations) {
             const p_world_container = <FieldPointVectorContainerDynamic><unknown>p_world
             const p_local_container = <FieldPointVectorContainerDynamic>p_local
 
@@ -492,10 +493,11 @@ export class TransformVolume<
             outerLocations: LocationVector,
             context: { outer: VectorContext; inner: VectorContext }
         ): void {
+        const outerLocations_type = context.outer[SampleDomainLocationFieldKey].elementType
         const transform = this.transform
         const length = vectorIterator(
-            context.outer[SampleDomainLocationFieldKey].elementType,
-            isDynamicVector<LocationElementType, LocationContainer>(outerLocations),
+            outerLocations_type,
+            isDynamicVector<LocationElementType, LocationContainer>(outerLocations_type, outerLocations),
             context.outer[MultiObjectsIDsKey]
         ).length(outerLocations, outerLocations)
 

@@ -1,8 +1,8 @@
 import { mockDOM } from "node-canvas-webgl" 
+import jsdomSetup from "jsdom-global"
 import fs from 'node:fs'
 import { describe, it, beforeEach, afterEach } from "mocha"
 import { Application, Color, Entity, StandardMaterial } from "playcanvas-extended"
-import jsdomSetup from "jsdom-global"
 
 describe("playcanvas-node", () => {
     let jsdomCleanup: Function
@@ -20,7 +20,6 @@ describe("playcanvas-node", () => {
     })
 
     it("creates application", () => {
-        console.log('app1')
         const canvas = document.createElement("canvas")
         canvas.width = canvas.height = 512
         const app = new Application(canvas)
@@ -30,7 +29,6 @@ describe("playcanvas-node", () => {
     })
 
     it("creates entity", () => {
-        console.log('app2')
         const canvas = document.createElement("canvas")
         canvas.width = canvas.height = 512
         const app = new Application(canvas)
@@ -44,7 +42,6 @@ describe("playcanvas-node", () => {
     })
 
     it("renders frame", () => {
-        console.log('app3')
         const canvas = document.createElement("canvas")
         canvas.width = canvas.height = 512
         const app = new Application(canvas)
@@ -84,7 +81,7 @@ describe("playcanvas-node", () => {
         app.root.addChild(light1)
 
         app.tick()
-        fs.writeFileSync('playcanvas-node-screenshot.png', (<any>canvas).toBuffer())
+        fs.writeFileSync('test-screenshot-playcanvas-node.png', (<any>canvas).toBuffer())
         app.destroy()
     })
 })
