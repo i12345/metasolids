@@ -135,7 +135,7 @@ export class FieldsFieldPointVectorIterator<
             subtype => subtype instanceof Function,
             (subtype, path) => {
                 const subvectorized = extract<FieldPointVector<FieldPoint, Container>>(vectorized, path)
-                const iterator = vectorIterator(<FieldPointType>subtype, isDynamicVector<FieldPoint, Container>(<FieldPointType>subtype, subvectorized), this.multiObjectsIDs)
+                const iterator = vectorIterator(<FieldPointType>subtype, isDynamicVector<FieldPoint, Container>(<FieldPointType>subtype, subvectorized, <any>vectorized), this.multiObjectsIDs)
 
                 if (iterator.canGetSetByReference) {
                     const subresult = extract<FieldPoint>(result, path)
@@ -161,7 +161,7 @@ export class FieldsFieldPointVectorIterator<
             subtype => subtype instanceof Function,
             (subtype, path) => {
                 const subvectorized = extract<FieldPointVector<FieldPoint, Container>>(vectorized, path)
-                const subiterator = vectorIterator(<FieldPointType>subtype, isDynamicVector<FieldPoint, Container>(<FieldPointType<FieldPointPrimitive>>subtype, subvectorized), this.multiObjectsIDs)
+                const subiterator = vectorIterator(<FieldPointType>subtype, isDynamicVector<FieldPoint, Container>(<FieldPointType<FieldPointPrimitive>>subtype, subvectorized, <any>vectorized), this.multiObjectsIDs)
 
                 if (subiterator.canGetSetByReference) {
                     const subvalue = extract<FieldPoint>(value, path)

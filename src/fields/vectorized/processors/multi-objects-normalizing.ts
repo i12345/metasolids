@@ -61,7 +61,7 @@ export class FieldPointVectorMultiObjectsNormalizingProcessor<
         for (const { group } of groupKindsWithFields(context, this.groupsKinds, this.groups)) {
             const type = <FieldPointType<SubPoint>>(<FieldPointType<MultiObjectsGroup<SubPoint>>>group.field.elementType)[MultiObjectsGroupedObjectsKey]
             const subvector = group.get<SubVector>(vector)
-            const isDynamic = isDynamicVector<SubPoint, Container>(type, subvector)
+            const isDynamic = isDynamicVector<SubPoint, Container>(type, subvector, vector)
             const iterator = vectorIterator(type, isDynamic, context[MultiObjectsIDsKey])
             const length = iterator.length(subvector, vector)
 

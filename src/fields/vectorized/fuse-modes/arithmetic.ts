@@ -480,7 +480,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
             }
         ): void {
         //TODO: not sure if elementType should be used here
-        const isDynamicVectorPoint = isDynamicVector<Point, Container>(elementType, points[0].vector)
+        const isDynamicVectorPoint = isDynamicVector<Point, Container>(elementType, points[0].vector, points[0].vectorizedRoot)
         const elementSize = field_point_type_size(elementType)
 
         const isMultiObjMappedResult = isMultiObjMapped?.result ?? false

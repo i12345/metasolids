@@ -47,7 +47,8 @@ const processors: VolumeProcessorT[] = [
     ),
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
-        new surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
+        // new surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
+        new surfaces.texturing.SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
             InterpolatingGroupsKindsTemplate
         ) as unknown as VolumeSurfaceProcessorT
     ),

@@ -74,7 +74,7 @@ export function vectorizedIteratorGetSetLengthCurried<
         set(index: number): void
         length: number
     } {
-    const iterator = vectorIterator(type, <IsDynamicVector<Point, Container>>isDynamicVector(type, vectorized), multiObjectsIDs)
+    const iterator = vectorIterator(type, <IsDynamicVector<Point, Container>>isDynamicVector(type, vectorized, vectorized), multiObjectsIDs)
     const length = iterator.length(vectorized, vectorized)
 
     if (type instanceof Function) {

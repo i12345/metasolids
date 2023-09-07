@@ -62,12 +62,13 @@ export function isDynamicVector<
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainerStatic
     >(
         elementType: FieldPointType<ElementType>,
-        vector: FieldPointVector<ElementType, Container>
+        vector: FieldPointVector<ElementType, Container>,
+        vectorRoot?: FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<NumberTypedArray>, IndicesTypedArray, FieldPointVectorContainer<IndicesTypedArray>>
     ): IsDynamicVector<ElementType, Container> {
     function recursive(
         elementType: FieldPointType,
         vector: FieldPointVector<FieldPoint, FieldPointVectorContainer<NumberTypedArray>>,
-        vectorRoot: any = vector
+        vectorRoot?: FieldPointVectorWithMultiObjects
     ): boolean | undefined {
         if (elementType instanceof Function) {
             if (isNumberTypedArray(vector))
@@ -76,8 +77,8 @@ export function isDynamicVector<
                 return <IsDynamicVector<ElementType, Container>>true
             return <IsDynamicVector<ElementType, Container>>undefined
         }
-        else if (MultiObjectsGroupedObjectsKey in vector)
-            return recursive(Number, <FieldPointVectorContainer<NumberTypedArray>>(<FieldPointVectorWithMultiObjects>vectorRoot)[ItemObjIDsKey], vectorRoot)
+        else if (MultiObjectsGroupedObjectsKey in elementType)
+            return isDynamicVectorContainer(vectorRoot![ItemObjIDsKey])
         else {
             for (const key of Reflect.ownKeys(elementType)) {
                 const isDynamic = recursive(elementType[key], (<FieldPointVector<FieldsPoint>>vector)[key], vectorRoot)
@@ -89,7 +90,7 @@ export function isDynamicVector<
         }
     }
 
-    return <IsDynamicVector<ElementType, Container>>recursive(elementType, vector)!
+    return <IsDynamicVector<ElementType, Container>>recursive(elementType, vector, vectorRoot ?? <any>vector)!
 }
 
 export type WithMultiObjects = {
@@ -259,7 +260,7 @@ function field_point_vector_append_scattered_prelim<
         scatter_indices: IndicesTypedArray,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-    const isDynamic = isDynamicVector<ElementType, Container>(type, src.vector)
+    const isDynamic = isDynamicVector<ElementType, Container>(type, src.vector, src.vectorizedRoot)
     const iterator = vectorIterator(type, isDynamic, multiObjectsIDs)
     const src_length = iterator.length(src.vector, src.vectorizedRoot)
     const final_length = src_length + scatter_indices.length

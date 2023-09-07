@@ -61,7 +61,7 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
         const resultElementIndexNext = typedArrayClone(results.vectorizedRoot[ItemNextObjectIndexKey])
 
         //TODO: not sure if elementType should be used here
-        if (isDynamicVector(elementType, points[0].vector)) {
+        if (isDynamicVector(elementType, points[0].vector, points[0].vectorizedRoot)) {
             const resultVectorized = <FieldPointVectorDynamic<Point>>results.vector
 
             for (const { vector: vectorized, vectorizedRoot } of points) {

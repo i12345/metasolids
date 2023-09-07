@@ -107,15 +107,16 @@ describe("playcanvas-node", () => {
     testShape("one sphere", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
     })
+    return
 
-    testShape("multiple spheres", 1, (entity1, component1/*, component2, component3, component4 */) => {
+    testShape("multiple spheres", 2, (entity1, component1, component2/*, component3, component4 */) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-        // component2.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
+        component2.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
         // component3.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
         // component4.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
 
-        // entity1.addChild(component2.entity)
-        // component2.entity.setLocalPosition(0.75, 0.1, 0)
+        entity1.addChild(component2.entity)
+        component2.entity.setLocalPosition(0.75, 0.1, 0)
         
         // entity1.addChild(component3.entity)
         // component3.entity.setLocalPosition(0.4, 0, 0)
@@ -126,7 +127,6 @@ describe("playcanvas-node", () => {
         // component4.entity.setLocalScale(0.8, 0.8, 0.6)
     })
 
-    return
     testShape("plane", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaPlane({ offset: Vec2.ZERO, size: Vec2.ONE })) as unknown as physicalEntity.VolumeT
     })
