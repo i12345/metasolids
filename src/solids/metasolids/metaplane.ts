@@ -134,6 +134,7 @@ export class MetaPlane<
             ...MetaSolidVolume.defaultParameters,
             distance,
             gradient,
+            side,
             uv
         } as unknown as Sample
     }

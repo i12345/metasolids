@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped, MultiObjectsIDs } from "../paradigm/trees/index.js";
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped, MultiObjectsIDs, WithMultiObjectsIDs, MultiObjectsIDsKey } from "../paradigm/trees/index.js";
 import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, GroupWithField, GroupFieldKey, Field, MultiObjectsGroupsWithFieldsProcessingContext, WithInfluenceProcessingContext } from "../fields/index.js"
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
@@ -305,6 +305,7 @@ export type SampleFuseMode = volumes.VolumeSample &
     {}
 
 export type SampleProcessingContextT = {} &
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     surfaces.texturing.SurfaceSampleProcessingContextForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
             Objects,
             InfluenceGroup,
@@ -334,6 +335,7 @@ export type SampleProcessingContextT = {} &
     {}
 
 export type SampleProcessingContext_MultiObjects =
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     MultiObjectsInfluencesProcessingContext<
         Objects,
         InfluenceGroup,
@@ -369,6 +371,8 @@ export type SampleProcessingContext_MultiObjects =
     {}
 
 export const SampleProcessingContext_MultiObjects_Template: SampleProcessingContext_MultiObjects = {
+    [MultiObjectsIDsKey]: undefined!,
+    
     ...MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate,
     ...fields.MultiObjectsInfluencesGroupsDefaultField(undefined!),
 
@@ -656,6 +660,7 @@ export type SurfaceInstanceT =
 // a[fields.MultiObjectsInfluencesGroupsDefaultKey]
 
 export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<SampleProcessingContextT> &
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     // surfaces.SurfaceProcessingContextWithSurfaceArea<SampleProcessingContextT> (doesn't exist) &
     surfaces.texturing.SurfaceProcessingContextWithInfluencesTextureUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroupT,
@@ -701,6 +706,7 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
         >
 
 export type SurfaceProcessingContext_MultiObjects =
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     MultiObjectsGroupsProcessingContext<
         SurfaceUVUnwrappingGroupT,
         surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds
@@ -762,6 +768,8 @@ export type SurfaceProcessingContext_MultiObjects =
 // a_diff.sample as SampleProcessingContextT
 
 export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingContext_MultiObjects = {
+    [MultiObjectsIDsKey]: undefined!,
+
     ...SurfaceUVUnwrappingGroupsKindsMappedGroupsTemplate,
 
     // influences is a feature of the sample

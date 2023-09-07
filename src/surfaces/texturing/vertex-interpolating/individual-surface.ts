@@ -1,4 +1,4 @@
-import { PROPERTYKEY_ALL, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsTemplate, WithMultiObjectsIDs, MultiObjectsIDsKey } from "../../../paradigm/trees/index.js";
+import { groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsTemplate, WithMultiObjectsIDs, MultiObjectsIDsKey } from "../../../paradigm/trees/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
 import { Field, FieldPoint, MultiObjectsGroupsWithFieldsProcessingContext, groupKindsWithFields } from "../../../fields/index.js";
 import { TextureLocation, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
@@ -125,6 +125,7 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
                 InterpolatingValueField
             >
     > =
+    Partial<WithMultiObjectsIDs> &
     SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup,
         SampleProcessingContextT,
@@ -236,7 +237,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
         const connections = {
             inputs: [
                 surfaceUVUnwrappingGroup.path,
-                ...interpolatingGroups.map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
+                ...interpolatingGroups.map(({ group: { path } }) => ['samples', ...path])
             ],
             outputs: [
                 ...interpolatingGroups.map(({ group: { path } }) => path)
@@ -293,7 +294,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
         type InterpolatingContainer = FieldPointVectorContainerStatic<NumberTypedArray>
         type InterpolatingVector = FieldPointVector<InterpolatingValueElementType, InterpolatingContainer>
 
-        const multiObjectsIDs = (<WithMultiObjectsIDs><unknown>context)[MultiObjectsIDsKey]
+        const multiObjectsIDs = context[MultiObjectsIDsKey]
 
         for (const { group: interpolatingGroup } of interpolatingGroups) {
             const values_original = interpolatingGroup.get<InterpolatingVector>(surface.samples)
@@ -307,7 +308,10 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     InterpolatingVector
                 >(
                     interpolatingGroup.field.elementType,
-                    values_original,
+                    {
+                        vector: values_original,
+                        vectorizedRoot: <any>surface.samples
+                    },
                     UVunwrapping.duplicatedVerts,
                     multiObjectsIDs
                 )

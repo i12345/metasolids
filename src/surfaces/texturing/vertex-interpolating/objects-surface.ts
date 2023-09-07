@@ -1,5 +1,5 @@
-import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, MultiObjectsIDsKey, WithMultiObjectsIDs, extract, MultiObjectsGroupedObjectsKey, MultiObjectsMapped, MultiObjectsMappedAgainGroupTypes } from "../../../paradigm/trees/index.js";
-import { Field, FieldPoint, FieldPointType, MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
+import { intract, objectValuePaths, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, MultiObjectsIDsKey, WithMultiObjectsIDs, extract, MultiObjectsGroupedObjectsKey, MultiObjectsMapped, MultiObjectsMappedAgainGroupTypes } from "../../../paradigm/trees/index.js";
+import { FieldPoint, FieldPointType, MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
 import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/index.js";
@@ -7,7 +7,6 @@ import { SurfaceSample } from "../../surface.js";
 import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
 import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
 import { SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping } from "../types.js";
-import { Vec2 } from "playcanvas-extended";
 import { FieldPointVector, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/index.js";
 
 // type A = {
@@ -190,6 +189,7 @@ export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSu
                     InterpolatingValue
                 >
     > =
+    Partial<WithMultiObjectsIDs> &
     SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroup,
             SampleProcessingContextT,
@@ -301,7 +301,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
         const connections = {
             inputs: [
                 surfaceUVUnwrappingGroup.path,
-                ...interpolatingGroups.map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
+                ...interpolatingGroups.map(({ group: { path } }) => ['samples', ...path])
             ],
             outputs: [
                 ...interpolatingGroups.map(({ group: { path } }) => path)
@@ -362,7 +362,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
         type InterpolatingContainer = FieldPointVectorContainerStatic<NumberTypedArray>
         type InterpolatingVector = FieldPointVector<InterpolatingValueType, InterpolatingContainer>
 
-        const multiObjectsIDs = (<WithMultiObjectsIDs><unknown>context)[MultiObjectsIDsKey]
+        const multiObjectsIDs = context[MultiObjectsIDsKey]
 
         for (const { group: interpolatingGroup, objects: { template } } of interpolatingGroups) {
             for (const objectRelativePath of objectValuePaths(template)) {
@@ -379,7 +379,10 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                         InterpolatingVector
                     >(
                         <FieldPointType<InterpolatingValueType>><unknown>interpolatingGroup.field.elementType,
-                        values_original,
+                        {
+                            vector: values_original,
+                            vectorizedRoot: <any>surface.samples
+                        },
                         UVunwrapping.duplicatedVerts,
                         multiObjectsIDs
                     )

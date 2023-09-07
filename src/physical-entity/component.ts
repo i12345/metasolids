@@ -292,11 +292,16 @@ export class Component<ID = string> extends processing.Component<
 
         const sample_context = <SampleProcessingContextT>{
             ...sample_multiObjectsContext,
-            ...fields.MultiObjectsInfluencesGroupsDefaultField<Objects, ObjIDsT>(multiObjectsIDs),
-            ...SurfaceTextureLocationsGroupsFields(multiObjectsIDs),
+
+            [MultiObjectsIDsKey]: multiObjectsIDs,
+            // ...fields.MultiObjectsInfluencesGroupsDefaultField<Objects, ObjIDsT>(multiObjectsIDs),
+            // ...SurfaceTextureLocationsGroupsFields(multiObjectsIDs),
         }
 
         const surface_context: SurfaceProcessingContextT = {
+            ...surface_multiObjectsContext,
+
+            [MultiObjectsIDsKey]: multiObjectsIDs,
             samples: sample_context,
             surfaceLevel,
             [textures.TexturersKey]: {
@@ -305,9 +310,6 @@ export class Component<ID = string> extends processing.Component<
                     ['material', 'textures']
                 ]
             },
-
-            ...surface_multiObjectsContext,
-
             material: {
                 textures: surfaces.rendering.material.Material_Groups_TextureContexts_Template
             },
@@ -320,6 +322,7 @@ export class Component<ID = string> extends processing.Component<
 
         const volume_domain_sampling_context: VolumeDomainSamplingContextT = {
             ...volume_domain_sampling_multiObjectsContext,
+
             [fields.SampleDomainLocationFieldKey]: fields.fields.FieldsField.merge<VolumeLocationT>(
                 volumes.defaultVolumeLocationField,
                 fields.fields.defaultField(this.extraLocationParameters ?? {}) as fields.fields.FieldsField<VolumeLocationT>
@@ -347,15 +350,13 @@ export class Component<ID = string> extends processing.Component<
         } as VolumeProcessingContextT[typeof volumes.sampling.SamplingKey]
 
         const volume_context: VolumeProcessingContextT = {
+            ...volume_multiObjectsContext,
+
             [MultiObjectsIDsKey]: multiObjectsIDs,
             [volumes.VolumeSampleKey]: sample_context,
             [volumes.sampling.SamplingKey]: volume_sampling_context,
-
             [surfaces.VolumeSurfacesKey]: surface_context,
-
             [solids.VolumeSolidsKey]: solid_context,
-
-            ...volume_multiObjectsContext
         }
 
         const volume_processing = {

@@ -2,7 +2,7 @@
 // import { Processor } from "../../../../processor/processor.js";
 // import { ObjectsCombiningTexture, ObjectsCombiningTexturesTemplated, ObjectsTextureLocationsTextureSample, Texture, TextureLocation, TextureSample, TextureSamplesExtracted, TextureSamplesExtracted1, VertexInterpolatingTexture } from "../../../../textures/index.js";
 // import { onlyOne } from "../../../../utils/only-one.js";
-// import { PropertyPath, PROPERTYKEY_ALL } from "../../../../utils/property-path.js";
+// import { PropertyPath } from "../../../../utils/property-path.js";
 // import { SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithObjectsTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceWithIndividualTextures, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceWithIndividualTexturesUsingSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations } from "../types.js";
 
 ////TODO: see changes to implementation in surface.ts
@@ -316,7 +316,7 @@
 //         ]
 
 //         this._dependencies = [
-//             ...sampleDependencies.map(path => ['samples', PROPERTYKEY_ALL, ...path]),
+//             ...sampleDependencies.map(path => ['samples', ...path]),
 //             ...valueTextureGroups.map(({ group: { path } }) => path)
 //         ]
 //     }

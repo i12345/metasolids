@@ -1,8 +1,8 @@
 import { Processor } from "../../../paradigm/processing/processor.js";
-import { PROPERTYKEY_ALL, groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js";
+import { groupKinds, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate } from "../../../paradigm/trees/index.js";
 import { Field, FieldPoint, MultiObjectsGroupsWithFieldsProcessingContext, groupKindsWithFields } from "../../../fields/index.js";
 import { TextureLocation, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
-import { IndicesTypedArray, NumberTypedArray, TypedArray, onlyOne } from "../../../utils/index.js";
+import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/index.js";
 import { Surface, SurfaceSample } from "../../surface.js";
 import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations } from "../types.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
@@ -269,8 +269,8 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
 
         const connections = {
             inputs: [
-                ['samples', PROPERTYKEY_ALL, ...surfaceTextureLocationGroup.path],
-                ...interpolatingGroups.map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
+                ['samples', ...surfaceTextureLocationGroup.path],
+                ...interpolatingGroups.map(({ group: { path } }) => ['samples', ...path])
             ],
             outputs: [
                 ...interpolatingGroups.map(({ group: { path } }) => path)

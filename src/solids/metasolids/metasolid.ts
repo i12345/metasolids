@@ -1,9 +1,9 @@
 import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
-import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, field_point_invalid, MultiObjectsInfluencesGroupsDefault, WithInfluence, MultiObjectsInfluencesProcessingContext, WithInfluenceProcessingContext, MultiObjectsInfluencesGroupKindsTemplate } from "../../fields/index.js";
+import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, field_point_invalid, MultiObjectsInfluencesGroupsDefault, WithInfluence, WithInfluenceProcessingContext, MultiObjectsInfluencesGroupKindsTemplate } from "../../fields/index.js";
 import { SampleDomain, SampleDomainLocationFieldKey } from "../../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/texture.js";
-import { extract, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate, mapGroups, MultiObjectsGroupsMapped, WithMultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/trees/index.js";
-import { VolumeLocation, VolumeSample, VolumeSampleKey, defaultVolumeSampleField } from "../../volumes/index.js";
+import { extract, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate, MultiObjectsGroupsMapped, WithMultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/trees/index.js";
+import { VolumeLocation, VolumeSample, defaultVolumeSampleField } from "../../volumes/index.js";
 import { VolumeSurfacesKey, texturing } from "../../surfaces/index.js";
 import { FusedVectorSamplingContext, TransformingSampleDomain, VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/index.js";
 import { ScalarField, Vec2Field, Vec3Field, FieldsField  } from "../../fields/fields/index.js";
@@ -13,8 +13,7 @@ import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js";
 import { FuseMode } from "../../fields/vectorized/fusing.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, isDynamicVector } from "../../fields/vectorized/point.js";
-import { SurfaceObjectsTextureLocationsGroupsDefaultTemplate } from "../../surfaces/texturing/types.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, IsDynamicVector } from "../../fields/vectorized/point.js";
 import { vectorized } from "vectorized-functions";
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
@@ -364,7 +363,7 @@ export class MetaSolidVolume<
     protected readonly transformsLocation = false
     protected readonly transformsSample = true
     
-    private influenceGroup_set!: (o: object, influence: number | FieldPointVectorContainer<NumberTypedArray>) => void
+    private influenceGroup_set!: (o: object, influence: any) => void
 
     get boundingBox(): BoundingBox {
         return this.shape?.boundingBox
@@ -479,9 +478,13 @@ export class MetaSolidVolume<
             [texturing.SurfaceObjectsTextureLocationsGroupsDefaultKey]: context.inner[MetaSolidSamplingContext_Texture].context[SampleDomainLocationFieldKey]
         })
 
+        const influenceGroup_fields = {} as FieldsPointMapped<MetaSolidVolumeSample<TxSample, InnerSample>, Field>
+        this.influenceGroup_set(influenceGroup_fields, ScalarField.instance)
+
         return FieldsField.merge<MetaSolidVolumeSample<TxSample, InnerSample>>(
             defaultVolumeSampleField as FieldsField<MetaSolidVolumeSample<TxSample, InnerSample>>,
             textureLocationField as FieldsField<MetaSolidVolumeSample<TxSample, InnerSample>>,
+            new FieldsField(influenceGroup_fields),
             ((innerField as FieldsField<InnerSample>).omit({
                 distance: FieldsPoint_Omit_Leaf,
                 uv: FieldsPoint_Omit_Leaf,

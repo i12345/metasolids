@@ -5,7 +5,7 @@ import { NumberTypedArray, typedArrayClone } from "../../../utils/typed-array.js
 import { FieldPointPrimitive, FieldPoint } from "../../point.js"
 import { FieldPointType, field_point_type_size } from "../../type.js"
 import { PrimitiveFuseMode, FusingFieldPointVectorWithMultiObjects, ItemNextObjectIndexKey, FieldPointWithMultiObjectPath } from "../fusing.js"
-import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, ItemObjValuesOffsetsKey, FieldPointVectorContainerDynamic, FieldPointVectorContainer, IsDynamicVector, FieldPointVectorStatic, FieldPointVectorDynamic, isDynamicVector } from "../point.js"
+import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, ItemObjValuesOffsetsKey, FieldPointVectorContainerDynamic, FieldPointVectorContainer, IsDynamicVector, FieldPointVectorStatic, FieldPointVectorDynamic, isDynamicVector, FieldPointVector } from "../point.js"
 
 export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implements PrimitiveFuseMode<Point> {
     fuseSingle<
@@ -40,6 +40,7 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
             results: FieldPointVectorWithMultiObjRoot<
                     Point,
                     Container,
+                    FieldPointVector<Point, Container>,
                     ObjIDsT,
                     ObjIDsContainer,
                     FusingFieldPointVectorWithMultiObjects<FieldPoint, ObjIDsT, FieldPointVectorContainerStatic, ObjIDsContainer>
@@ -60,10 +61,10 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
         const resultElementIndexNext = typedArrayClone(results.vectorizedRoot[ItemNextObjectIndexKey])
 
         //TODO: not sure if elementType should be used here
-        if (isDynamicVector(elementType, points[0].vectorized)) {
-            const resultVectorized = <FieldPointVectorDynamic<Point>>results.vectorized
+        if (isDynamicVector(elementType, points[0].vector)) {
+            const resultVectorized = <FieldPointVectorDynamic<Point>>results.vector
 
-            for (const { vectorized, vectorizedRoot } of points) {
+            for (const { vector: vectorized, vectorizedRoot } of points) {
                 const pointVector = <FieldPointVectorDynamic<Point>>vectorized
                 const objOffsets = vectorizedRoot[ItemObjValuesOffsetsKey]
                 let objOffset_prev = 0
@@ -86,9 +87,9 @@ export class ConcatPrimitiveFuseMode<Point extends FieldPointPrimitive> implemen
             }
         }
         else {
-            const resultVectorized = <FieldPointVectorStatic<Point>><any>results.vectorized
+            const resultVectorized = <FieldPointVectorStatic<Point>><any>results.vector
 
-            for (const { vectorized, vectorizedRoot } of points) {
+            for (const { vector: vectorized, vectorizedRoot } of points) {
                 const pointVector = <FieldPointVectorStatic<Point>>vectorized
                 const objOffsets = vectorizedRoot[ItemObjValuesOffsetsKey]
                 let objOffset_prev = 0

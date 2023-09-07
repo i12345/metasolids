@@ -4,7 +4,7 @@ import { IndicesTypedArray } from "../../../utils/indices-array.js"
 import { FieldPoint, FieldPointPrimitive } from "../../point.js"
 import { FieldPointType, field_point_type_size } from "../../type.js"
 import { FieldPointWithMultiObjectPath, FusingFieldPointVectorWithMultiObjects, PrimitiveFuseMode } from "../fusing.js"
-import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, FieldPointVectorDynamic, FieldPointVectorStatic, ItemObjValuesOffsetsKey, FieldPointVectorContainer, isDynamicVector, ItemObjIDsKey } from "../point.js"
+import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, FieldPointVectorDynamic, FieldPointVectorStatic, ItemObjValuesOffsetsKey, FieldPointVectorContainer, isDynamicVector, ItemObjIDsKey, FieldPointVector } from "../point.js"
 import { mat4_from_mat3 } from "../../../utils/matrix.js"
 import { NumberTypedArray, isNumberTypedArray } from "../../../utils/typed-array.js"
 import { equals } from "../../../utils/equals.js"
@@ -468,6 +468,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
             results: FieldPointVectorWithMultiObjRoot<
                     Point,
                     Container,
+                    FieldPointVector<Point, Container>,
                     ObjIDsT,
                     ObjIDsContainer,
                     FusingFieldPointVectorWithMultiObjects<FieldPoint, ObjIDsT, FieldPointVectorContainerStatic, ObjIDsContainer>
@@ -479,7 +480,7 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
             }
         ): void {
         //TODO: not sure if elementType should be used here
-        const isDynamicVectorPoint = isDynamicVector<Point, Container>(elementType, points[0].vectorized)
+        const isDynamicVectorPoint = isDynamicVector<Point, Container>(elementType, points[0].vector)
         const elementSize = field_point_type_size(elementType)
 
         const isMultiObjMappedResult = isMultiObjMapped?.result ?? false
@@ -493,10 +494,10 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
             [ArithmeticPrimitiveFuseModeOp.multiply, ArithmeticPrimitiveFuseModeOp.divide].includes(this.op)) {
             if (isMultiObjMappedPoints) {
                 if (isDynamicVectorPoint) { // Quat/Matrix multiObj dynamic
-                    const resultVector = <FieldPointVectorDynamic<Point>><any>results.vectorized
+                    const resultVector = <FieldPointVectorDynamic<Point>><any>results.vector
                     let resultVector_i: number
 
-                    for (const { vectorized, vectorizedRoot } of points) {
+                    for (const { vector: vectorized, vectorizedRoot } of points) {
                         const pointVector = <FieldPointVectorDynamic<Point>><any>vectorized
                         const pointVectorLength = vectorizedRoot[ItemObjValuesOffsetsKey].length / elementSize
 
@@ -1170,10 +1171,10 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
                     }
                 }
                 else { // Quat/Matrix multiObj static
-                    const resultVector = <FieldPointVectorStatic<Point, FieldPointVectorContainerStatic>><any>results.vectorized
+                    const resultVector = <FieldPointVectorStatic<Point, FieldPointVectorContainerStatic>><any>results.vector
                     let resultVector_i: number
 
-                    for (const { vectorized, vectorizedRoot } of points) {
+                    for (const { vector: vectorized, vectorizedRoot } of points) {
                         const pointVector = <FieldPointVectorStatic<Point, FieldPointVectorContainerStatic>><any>vectorized
                         const pointVectorLength = vectorizedRoot[ItemObjValuesOffsetsKey].length / elementSize
 
@@ -1829,10 +1830,10 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
             }
             else {
                 if (isDynamicVectorPoint) { // Quat/Matrix non-multi-obj dynamic
-                    const resultVector = <FieldPointVectorDynamic<Point>><any>results.vectorized
+                    const resultVector = <FieldPointVectorDynamic<Point>><any>results.vector
                     let resultVector_i: number
 
-                    for (const { vectorized } of points) {
+                    for (const { vector: vectorized } of points) {
                         const pointVector = <FieldPointVectorDynamic<Point>><any>vectorized
                         let pointVector_i = 0
 
@@ -1979,10 +1980,10 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
                     }
                 }
                 else { // Quat/Matrix non-multi-obj static
-                    const resultVector = <FieldPointVectorStatic<Point, FieldPointVectorContainerStatic>><any>results.vectorized
+                    const resultVector = <FieldPointVectorStatic<Point, FieldPointVectorContainerStatic>><any>results.vector
                     let resultVector_i: number
 
-                    for (const { vectorized } of points) {
+                    for (const { vector: vectorized } of points) {
                         const pointVector = <FieldPointVectorStatic<Point, FieldPointVectorContainerStatic>><any>vectorized
                         let pointVector_i = 0
 
@@ -2194,9 +2195,9 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
         }
         else if (isMultiObjMappedPoints) {
             if (isDynamicVectorPoint) {
-                const resultVector = <FieldPointVectorDynamic<Point>>results.vectorized
+                const resultVector = <FieldPointVectorDynamic<Point>>results.vector
 
-                for (const { vectorized, vectorizedRoot } of points) {
+                for (const { vector: vectorized, vectorizedRoot } of points) {
                     const pointVector = <FieldPointVectorDynamic<Point>>vectorized
                     const pointVectorLength = vectorizedRoot[ItemObjValuesOffsetsKey].length / elementSize
 
@@ -2542,9 +2543,9 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
                 }
             }
             else {
-                const resultVector = <FieldPointVectorStatic<Point>>results.vectorized
+                const resultVector = <FieldPointVectorStatic<Point>>results.vector
 
-                for (const { vectorized, vectorizedRoot } of points) {
+                for (const { vector: vectorized, vectorizedRoot } of points) {
                     const pointVector = <FieldPointVectorStatic<Point>>vectorized
                     const pointVectorLength = vectorizedRoot[ItemObjValuesOffsetsKey].length / elementSize
 
@@ -2900,9 +2901,9 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
         }
         else {
             if (isDynamicVectorPoint) {
-                const resultVector = <FieldPointVectorDynamic<Point>><any>results.vectorized
+                const resultVector = <FieldPointVectorDynamic<Point>><any>results.vector
 
-                for (const { vectorized } of points) {
+                for (const { vector: vectorized } of points) {
                     const pointVector = <FieldPointVectorDynamic<Point>><any>vectorized
 
                     switch (this.op) {
@@ -2947,9 +2948,9 @@ export class ArithmeticPrimitiveFuseMode<Point extends FieldPointPrimitive = Fie
                 }
             }
             else {
-                const resultVector = <FieldPointVectorStatic<Point>>results.vectorized
+                const resultVector = <FieldPointVectorStatic<Point>>results.vector
 
-                for (const { vectorized } of points) {
+                for (const { vector: vectorized } of points) {
                     const pointVector = <FieldPointVectorStatic<Point>>vectorized
 
                     switch (this.op) {

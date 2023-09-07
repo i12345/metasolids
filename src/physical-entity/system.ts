@@ -1,10 +1,11 @@
 import { AppBase } from "playcanvas-extended"
 import { fields, solids, surfaces, textures, volumes } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js"
-import { InterpolatingGroupsKindsTemplate, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
+import { InfluenceGroupTemplate, InterpolatingGroupsKindsTemplate, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
 import { Component } from "./component.js"
 import { ComponentData } from "./data.js"
 import { StorageService } from "../storage/index.js"
+import { MultiObjectsInfluencesGroupKindsTemplate } from "../fields/multi-objects.js"
 
 export const SYSTEM_ID = 'physical-entity'
 
@@ -26,7 +27,11 @@ const processors: VolumeProcessorT[] = [
         surfaces.VolumeSurfacesParallelizer,
         new processing.processors.ParallelizingProcessor(
             surfaces.SurfaceSamplesParallelizer,
-            new fields.MultiObjectsInfluencesNormalizingProcessor() as any
+            new fields.vectorized.processors.FieldPointVectorMultiObjectsNormalizingProcessor(
+                MultiObjectsInfluencesGroupKindsTemplate,
+                InfluenceGroupTemplate
+            ) as any
+            // new fields.MultiObjectsInfluencesArrayNormalizingProcessor() as any
         ) as unknown as VolumeSurfaceProcessorT
     ),
     new processing.processors.ParallelizingProcessor(

@@ -92,6 +92,7 @@ export interface PrimitiveFuseMode<Point extends FieldPointPrimitive = FieldPoin
             results: FieldPointVectorWithMultiObjRoot<
                     Point,
                     Container,
+                    FieldPointVector<Point, Container>,
                     ObjIDsT,
                     ObjIDsContainer,
                     FusingFieldPointVectorWithMultiObjects<FieldPoint, ObjIDsT, FieldPointVectorContainerStatic, ObjIDsContainer>
@@ -388,8 +389,8 @@ export function fuseVectors<
     const pointIterator = vectorIterator<PointElementType, Container, Objects, ObjIDsT>(pointsType, <any>resultDynamic, multiObjectIDs)
     const length = (typeof resultsOrResultDefaultLength === 'number' ? resultsOrResultDefaultLength : undefined) ?? pointIterator.length(vectors[0], vectors[0])
 
-    const vectorizedWithRoots = vectors.map<FieldPointVectorWithMultiObjRoot<PointElementType, Container, ObjIDsT, ObjIDsContainer>>(vector => ({
-        vectorized: vector,
+    const vectorizedWithRoots = vectors.map<FieldPointVectorWithMultiObjRoot<PointElementType, Container, FieldPointVector<PointElementType, Container>, ObjIDsT, ObjIDsContainer>>(vector => ({
+        vector: vector,
         vectorizedRoot: <FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>>vector
     }))
 
@@ -411,14 +412,14 @@ export function fuseVectors<
             results[ItemNextObjectIndexKey] = <ObjIDsT>new multiObjectIDs.IDsType(length).fill(0)
     }
 
-    const resultWithRoot: FieldPointVectorWithMultiObjRoot<ResultElementType, Container, ObjIDsT, ObjIDsContainer, FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>> = {
-        vectorized: results,
+    const resultWithRoot: FieldPointVectorWithMultiObjRoot<ResultElementType, Container, FieldPointVector<ResultElementType, Container>, ObjIDsT, ObjIDsContainer, FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>> = {
+        vector: results,
         vectorizedRoot: <any>results
     }
 
     function recursive(
             results: typeof resultWithRoot,
-            points: FieldPointVectorWithMultiObjRoot<FieldPoint, Container, ObjIDsT, ObjIDsContainer>[],
+            points: FieldPointVectorWithMultiObjRoot<FieldPoint, Container, FieldPointVector<FieldPoint, Container>, ObjIDsT, ObjIDsContainer>[],
             resultType: FieldPointType,
             pointType: FieldPointType,
             fuseMode: FuseMode,
@@ -465,10 +466,11 @@ export function fuseVectors<
                 <FieldPointVectorWithMultiObjRoot<
                     FieldPointPrimitive,
                     Container,
+                    FieldPointVector<FieldPointPrimitive, Container>,
                     ObjIDsT,
                     ObjIDsContainer,
                     FusingFieldPointVectorWithMultiObjects<FieldPoint, ObjIDsT, FieldPointVectorContainerStatic, ObjIDsContainer>
-                >>results,
+                >><any>results,
                 <FieldPointVectorWithMultiObjRoot<FieldPointPrimitive, Container>[]>points,
                 isMultiObjMapped
             )
@@ -477,14 +479,14 @@ export function fuseVectors<
             for (const [key, subtype] of Reflect_entries(resultType)) {
                 const submode = (<FuseMode<FieldsPoint>>fuseMode)[key]
                 if (submode) {
-                    const subresults = <FieldPointVector<FieldPoint, Container>>(<FieldPointVector<FieldsPoint, Container>>results.vectorized)[key]
-                    const subpoints = points.map(({ vectorized, vectorizedRoot }) => ({
-                        vectorized: <FieldPointVector<FieldPoint, Container>>(<FieldPointVector<FieldsPoint, Container>>vectorized)[key],
+                    const subresults = <FieldPointVector<FieldPoint, Container>>(<FieldPointVector<FieldsPoint, Container>>results.vector)[key]
+                    const subpoints = points.map<typeof points extends (infer T)[] ? T : never>(({ vector, vectorizedRoot }) => ({
+                        vector: <FieldPointVector<FieldPoint, Container>>(<FieldPointVector<FieldsPoint, Container>>vector)[key],
                         vectorizedRoot
                     }))
                     recursive(
                         {
-                            vectorized: <any>subresults,
+                            vector: <any>subresults,
                             vectorizedRoot: results.vectorizedRoot
                         },
                         subpoints,

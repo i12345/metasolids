@@ -45,6 +45,7 @@ export abstract class PrimitiveFieldPointVectorIterator<
             results: FieldPointVectorWithMultiObjRoot<
                 Point,
                 Container,
+                FieldPointVector<Point, Container>,
                 IndicesTypedArray,
                 FieldPointVectorContainerStatic<IndicesTypedArray>,
                 FusingFieldPointVectorWithMultiObjects

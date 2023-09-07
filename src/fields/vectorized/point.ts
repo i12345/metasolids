@@ -126,13 +126,14 @@ export function field_point_vector_multi_objs_static_length<
 export type FieldPointVectorWithMultiObjRoot<
         ElementType extends FieldPoint,
         Container extends FieldPointVectorContainer<NumberTypedArray>,
+        Vector extends FieldPointVector<ElementType, Container> = FieldPointVector<ElementType, Container>,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         VectorizedRoot extends
             FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<NumberTypedArray>, ObjIDsT, ObjIDsContainer> =
             FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<NumberTypedArray>, ObjIDsT, ObjIDsContainer>
     > = {
-    vectorized: FieldPointVector<ElementType, Container>
+    vector: Vector
     vectorizedRoot: VectorizedRoot
 }
 
@@ -213,8 +214,10 @@ export function field_point_vectorized_multi_objects_new<
 export function field_point_vector_multiObjs_count<
         ElementType extends FieldPoint = FieldPoint,
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
     >(
-        src: FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container>,
+        src: FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>,
         indices?: IndicesTypedArray
     ): number | undefined {
     if (indices === undefined)
@@ -246,31 +249,31 @@ function field_point_vector_append_scattered_prelim<
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
-        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Vector extends FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
     >(
         type: FieldPointType<ElementType>,
-        src: Vector,
-        scatter_src: Vector,
+        src: FieldPointVectorWithMultiObjRoot<ElementType, Container, Vector, ObjIDsT, ObjIDsContainer>,
+        scatter_src: FieldPointVectorWithMultiObjRoot<ElementType, Container, Vector, ObjIDsT, ObjIDsContainer>,
         /** scatter_indices[offset from end of src] = index in scatter_src */
         scatter_indices: IndicesTypedArray,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-    const isDynamic = isDynamicVector<ElementType, Container>(type, src)
+    const isDynamic = isDynamicVector<ElementType, Container>(type, src.vector)
     const iterator = vectorIterator(type, isDynamic, multiObjectsIDs)
-    const src_length = iterator.length(src, src)
+    const src_length = iterator.length(src.vector, src.vectorizedRoot)
     const final_length = src_length + scatter_indices.length
 
-    const objectValuesStaticLength_src = field_point_vector_multiObjs_count<ElementType, Container>(src)
-    const objectValuesStaticLength_scatter = field_point_vector_multiObjs_count<ElementType, Container>(scatter_src, scatter_indices)
+    const objectValuesStaticLength_src = field_point_vector_multiObjs_count(<any>src.vectorizedRoot)
+    const objectValuesStaticLength_scatter = field_point_vector_multiObjs_count(<any>scatter_src.vectorizedRoot, scatter_indices)
     if ((objectValuesStaticLength_src === undefined) !== (objectValuesStaticLength_scatter === undefined))
         throw new Error()
 
     const objectValuesStaticLength = ((objectValuesStaticLength_src !== undefined) && (objectValuesStaticLength_scatter !== undefined)) ? (objectValuesStaticLength_src + objectValuesStaticLength_scatter) : undefined
 
-    const isMultiObj = ItemObjIDsKey in (<FieldPointVectorWithMultiObjects>src)
+    const isMultiObj = ItemObjIDsKey in src.vectorizedRoot
     const dst = isMultiObj ?
-        <Vector>field_point_vectorized_multi_objects_new(type, final_length, isDynamic, multiObjectsIDs!.IDsType, <any>(isDynamic ? undefined : objectValuesStaticLength)) :
+        <Vector>field_point_vectorized_multi_objects_new<ElementType, Container, ObjIDsT, ObjIDsContainer>(type, final_length, isDynamic, multiObjectsIDs!.IDsType, <any>(isDynamic ? undefined : objectValuesStaticLength)) :
         <Vector>field_point_vectorized_new(type, final_length, isDynamic)
 
     if (isMultiObj) {
@@ -278,13 +281,13 @@ function field_point_vector_append_scattered_prelim<
         const dst_objIDs_dynamic = isDynamicVectorContainer(dst_objIDs_container)
         const dst_objOffsets = (<FieldPointVectorWithMultiObjects>dst)[ItemObjValuesOffsetsKey]
 
-        const src_objIDs_container = (<FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>src)[ItemObjIDsKey]
+        const src_objIDs_container = src.vectorizedRoot[ItemObjIDsKey]
         const src_objIDs_dynamic = isDynamicVectorContainer(src_objIDs_container)
-        const src_objOffsets = (<FieldPointVectorWithMultiObjects>src)[ItemObjValuesOffsetsKey]
+        const src_objOffsets = src.vectorizedRoot[ItemObjValuesOffsetsKey]
 
-        const scatter_objIDs_container = (<FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>scatter_src)[ItemObjIDsKey]
+        const scatter_objIDs_container = scatter_src.vectorizedRoot[ItemObjIDsKey]
         const scatter_objIDs_dynamic = isDynamicVectorContainer(scatter_objIDs_container)
-        const scatter_objOffsets = (<FieldPointVectorWithMultiObjects>scatter_src)[ItemObjValuesOffsetsKey]
+        const scatter_objOffsets = scatter_src.vectorizedRoot[ItemObjValuesOffsetsKey]
 
         if (dst_objIDs_dynamic === false && src_objIDs_dynamic === false && scatter_objIDs_dynamic === false) {
             const dst_objIDs = <FieldPointVectorContainerStatic<ObjIDsT>>dst_objIDs_container
@@ -330,12 +333,12 @@ export function field_point_vector_append_scattered_separate<
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
-        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Vector extends FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
     >(
         type: FieldPointType<ElementType>,
-        src: Vector,
-        scatter_src: Vector,
+        src: FieldPointVectorWithMultiObjRoot<ElementType, Container, Vector, ObjIDsT, ObjIDsContainer>,
+        scatter_src: FieldPointVectorWithMultiObjRoot<ElementType, Container, Vector, ObjIDsT, ObjIDsContainer>,
         /** scatter_indices[offset from end of src] = index in scatter_src */
         scatter_indices: IndicesTypedArray,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
@@ -362,12 +365,12 @@ export function field_point_vector_append_scattered_separate<
 
     const copyIndices = new Uint32Array(src_length)
     for (let i = 0; i < copyIndices.length; i++) copyIndices[i] = i
-    iterator.scatter(dst, dst, src, src, copyIndices)
+    iterator.scatter(dst, dst, src.vector, src.vectorizedRoot, copyIndices)
 
     const addedScatterIndices = new (typedArrayConstructor(scatter_indices))(final_length)
     addedScatterIndices.fill(-1, 0, src_length)
     addedScatterIndices.subarray(src_length, addedScatterIndices.length).set(scatter_indices)
-    iterator.scatter(dst, dst, scatter_src, scatter_src, addedScatterIndices)
+    iterator.scatter(dst, dst, scatter_src.vector, scatter_src.vectorizedRoot, addedScatterIndices)
 
     return dst
 }
@@ -377,11 +380,11 @@ export function field_point_vector_append_scattered_same<
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
-        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Vector extends FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
     >(
         type: FieldPointType<ElementType>,
-        src: Vector,
+        src: FieldPointVectorWithMultiObjRoot<ElementType, Container, Vector, ObjIDsT, ObjIDsContainer>,
         /** scatter_indices[offset from end of src] = index in src */
         scatter_indices: IndicesTypedArray,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
@@ -409,7 +412,7 @@ export function field_point_vector_append_scattered_same<
     const final_scatter_indices = new (typedArrayConstructor(scatter_indices))(final_length)
     for (let i = 0; i < src_length; i++) final_scatter_indices[i] = i
     final_scatter_indices.subarray(src_length, final_scatter_indices.length).set(scatter_indices)
-    iterator.scatter(dst, dst, src, src, final_scatter_indices)
+    iterator.scatter(dst, dst, src.vector, src.vectorizedRoot, final_scatter_indices)
 
     return dst
 }

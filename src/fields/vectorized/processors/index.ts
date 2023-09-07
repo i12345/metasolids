@@ -1,0 +1,1 @@
+export * from './multi-objects-normalizing.js'

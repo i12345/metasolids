@@ -973,9 +973,9 @@ export class MultiObjectsSampleDomain<
             multiObjectsIDs.template = multiObjectsIDs_original_template
             multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
 
-            if (field_point_type_contains(this.childField.elementType, child.field.elementType))
+            if (field_point_type_contains(child.field.elementType, this.childField.elementType))
                 this.childrenFieldTypes[<keyof Objects>key] = "leaf"
-            else if (field_point_type_contains(this.field.elementType, child.field.elementType))
+            else if (field_point_type_contains(child.field.elementType, this.field.elementType))
                 this.childrenFieldTypes[<keyof Objects>key] = "stem"
             else
                 throw new Error()

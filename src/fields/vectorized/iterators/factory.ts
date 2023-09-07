@@ -6,7 +6,7 @@ import { NumberTypedArray } from "../../../utils/typed-array.js";
 import { FieldPoint, FieldPointPrimitive, FieldsPoint } from "../../point.js";
 import { FieldPointType } from "../../type.js"
 import { FieldPointVectorIterator } from "../iterator.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorWithMultiObjects, IsDynamicVector, isDynamicVector } from "../point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, isDynamicVector, isDynamicVectorContainer } from "../point.js";
 import { FieldsFieldPointVectorIterator } from "./fields.js";
 import { MultiObjectsFieldPointVectorIterator } from "./multi-objects.js";
 
@@ -32,6 +32,7 @@ export function vectorIterator<
         type: FieldPointType<PointElementType>,
         isDynamicVector?: IsDynamicVector<PointElementType, Container>,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
+        vectorizedRoot?: VectorizedRoot
     ): FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType> {
     if (type instanceof Function) {
         if (typeof isDynamicVector !== 'boolean')
@@ -45,7 +46,11 @@ export function vectorIterator<
         if (multiObjectsIDs === undefined)
             throw new Error("must specify multiObjectsIDs for a multi objects type")
 
-        return new MultiObjectsFieldPointVectorIterator<Objects, ObjIDsT, FieldPoint>(<FieldPointType><any>type[MultiObjectsGroupedObjectsKey], multiObjectsIDs) as unknown as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
+        return new MultiObjectsFieldPointVectorIterator<Objects, ObjIDsT, FieldPoint>(
+            <FieldPointType><any>type[MultiObjectsGroupedObjectsKey],
+            multiObjectsIDs,
+            (vectorizedRoot && (ItemObjIDsKey in (<FieldPointVector<FieldPoint, Container>>vectorizedRoot))) ? isDynamicVectorContainer((<FieldPointVectorWithMultiObjects><unknown>vectorizedRoot)[ItemObjIDsKey]) : false
+        ) as unknown as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
     }
     else return new FieldsFieldPointVectorIterator<Objects, ObjIDsT, FieldsPoint, Container>(type, isDynamicVector, multiObjectsIDs) as FieldPointVectorIterator<FieldsPoint, Container> as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
 }

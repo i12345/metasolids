@@ -28,9 +28,10 @@ export class MultiObjectsFieldPointVectorIterator<
 
     constructor(
         public readonly type: FieldPointType<Point>,
-        public readonly multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
+        public readonly multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>,
+        public readonly isDynamicChildren: boolean
     ) {
-        this.typeIterator = vectorIterator<Point, Container, Objects, ObjIDsT>(type, <IsDynamicVector<Point, Container>>true, multiObjectsIDs)
+        this.typeIterator = vectorIterator<Point, Container, Objects, ObjIDsT>(type, <IsDynamicVector<Point, Container>>isDynamicChildren, multiObjectsIDs)
     }
 
     length(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot): number {

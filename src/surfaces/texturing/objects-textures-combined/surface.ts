@@ -1,14 +1,13 @@
-import { PropertyPath, PROPERTYKEY_ALL, groupKindObjectsGrouped, groupKinds, MultiObjectsCombined, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsCombined, MultiObjectsGroupsCombinedMapped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedAndCombinedGrouped, MultiObjectsTemplate, MultiObjectsIDsKey, WithMultiObjectsIDs, MultiObjectsTemplate_Leaf, MultiObjectsGroup } from "../../../paradigm/trees/index.js";
+import { groupKindObjectsGrouped, groupKinds, MultiObjectsCombinedValue, MultiObjectsGrouped, MultiObjectsGroupsCombined, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsIDsKey, WithMultiObjectsIDs, MultiObjectsGroup } from "../../../paradigm/trees/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
 import { MultiObjectsInfluences, MultiObjectsInfluencesElementType, MultiObjectsInfluencesFuseMode, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext } from "../../../fields/multi-objects.js";
-import { ObjectsCombiningTexture, ObjectsCombiningTexturesTemplated, ObjectsTextureLocationsTextureSample, Texture, TextureLocation, TextureSample, TextureSamplesExtracted, TextureSamplesExtracted1, TextureSamplingContext, VertexInterpolatingTexture } from "../../../textures/index.js";
+import { ObjectsCombiningTexture, Texture, TextureLocation, TextureSample, TextureSamplingContext, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/index.js";
 import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping } from "../index.js";
-import { SurfaceProcessingContextWithIndividualTextures, SurfaceProcessingContextWithObjectsTextures, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceWithIndividualTextures, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceWithIndividualTexturesUsingSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations, SurfaceSampleElementTypeWithObjectsTextureLocations, SurfaceSampleFuseModeWithObjectsTextureLocations, SurfaceObjectsTextureLocationsGroupKinds } from "../types.js";
-import { Vec2 } from "playcanvas-extended";
+import { SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceSampleElementTypeWithObjectsTextureLocations, SurfaceSampleFuseModeWithObjectsTextureLocations, SurfaceObjectsTextureLocationsGroupKinds } from "../types.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/point.js";
-import { Field, groupKindsWithFields } from "../../../fields/index.js";
+import { groupKindsWithFields } from "../../../fields/index.js";
 import { MultiObjectsField } from "../../../fields/fields/multi-objects.js";
 
 export type SurfaceSampleForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
@@ -388,7 +387,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             inputs: [
                 surfaceUVUnwrappingGroup.path,
                 influencesGroup.path,
-                ['samples', PROPERTYKEY_ALL, ...valueTextureLocationGroups.path],
+                ['samples', ...valueTextureLocationGroups.path],
                 ...valueTextureGroups.map(({ group: { path } }) => path)
             ],
             outputs: [
@@ -494,7 +493,10 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
                 ObjectsTextureLocationsVector
             >(
                 location_field.elementType,
-                locations_original,
+                {
+                    vector: locations_original,
+                    vectorizedRoot: <any>surface.samples
+                },
                 UVunwrapping.duplicatedVerts,
                 multiObjectsIDs
             )

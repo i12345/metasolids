@@ -8,6 +8,7 @@ import { FieldsPoint, FieldsPointOptional } from "../../fields/point.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/multi-objects-groups.js";
 import { MultiObjectsInfluencesGroupsDefault } from "../../fields/multi-objects.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vector_fill, field_point_vectorized_new } from "../../fields/vectorized/point.js";
 
 export class MetaSphere<
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
@@ -54,6 +55,87 @@ export class MetaSphere<
             gradient,
             uv
         } as Sample
+    }
+
+    private static sample_vectorized<
+        InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
+        TxLocation extends TextureLocation = TextureLocation,
+        TxSample extends MetaSolidTxSample = MetaSolidTxSample,
+        Location extends MetaSolidLocation = MetaSolidLocation,
+        Sample extends MetaSolidSample = MetaSolidSample,
+        OuterSampleProcessingContextT = any,
+        TextureContext extends
+            TextureSamplingContext<MetaSolidTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>> =
+            TextureSamplingContext<MetaSolidTextureLocation<Location, FieldsPoint & Omit<TxLocation, keyof TextureLocation>>>,
+        VolumeContext extends
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
+            MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext>,
+        Context extends
+            MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext> =
+            MetaSolidShapeSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>,
+        >(
+            this: MetaSphere<
+                    InfluenceGroup,
+                    TxLocation,
+                    TxSample,
+                    Location,
+                    Sample,
+                    OuterSampleProcessingContextT,
+                    TextureContext,
+                    VolumeContext,
+                    Context
+                >,
+            locations: FieldPointVector<Location, FieldPointVectorContainerStatic>,
+            context: Context
+        ): FieldPointVector<Sample, FieldPointVectorContainerStatic> {
+        let theta: number,
+            phi: number
+        
+        const location_p = locations.p
+        let location_p_i = 0,
+            location_p_x: number,
+            location_p_y: number,
+            location_p_z: number,
+            location_p_sq_sum_xy: number,
+            distance: number
+        
+        const length = location_p.length / 3
+
+        const results = field_point_vectorized_new(this.field.elementType, length, <IsDynamicVector<Sample, FieldPointVectorContainerStatic>>false)
+        const results_uv = results.uv
+        const results_distance = results.distance
+        const results_gradient = results.gradient
+        
+        field_point_vector_fill(
+            MetaSolidVolume.defaultFields.parametersIn.elementType,
+            results,
+            MetaSolidVolume.defaultParameters
+        )
+
+        let results_uv_i = 0,
+            results_distance_i = 0,
+            results_gradient_i = 0
+
+        for (let i = 0; i < length; i++) {
+            location_p_x = location_p[location_p_i++]
+            location_p_y = location_p[location_p_i++]
+            location_p_z = location_p[location_p_i++]
+            location_p_sq_sum_xy = (location_p_x * location_p_x) + (location_p_y + location_p_y)
+
+            theta = Math.atan2(location_p_y, location_p_x)
+            phi = Math.atan2(Math.sqrt(location_p_sq_sum_xy), location_p_z)
+
+            results_uv[results_uv_i++] = ((theta / TwoPi) + 1) % 1
+            results_uv[results_uv_i++] = phi / Pi
+
+            results_distance[results_distance_i++] = distance = Math.sqrt(location_p_sq_sum_xy + (location_p_z * location_p_z))
+            
+            results_gradient[results_gradient_i++] = location_p_x / distance
+            results_gradient[results_gradient_i++] = location_p_y / distance
+            results_gradient[results_gradient_i++] = location_p_z / distance
+        }
+
+        return results
     }
 
     init(context: Context): void {

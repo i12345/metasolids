@@ -1,10 +1,10 @@
-import { PropertyPath, makeExtractor, intract, PROPERTYKEY_ALL, objectValuePaths, groupKindObjectsGrouped, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, extract } from "../../../paradigm/trees/index.js";
+import { intract, objectValuePaths, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, extract } from "../../../paradigm/trees/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
-import { Field, FieldPoint, MultiObjectsGroupsWithFieldsProcessingContext, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
-import { Texture, TextureLocation, TextureSample, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
+import { FieldPoint, MultiObjectsGroupsWithFieldsProcessingContext, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
+import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/index.js";
 import { Surface, SurfaceSample } from "../../surface.js";
-import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations, SurfaceWithObjectsTextures, SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations } from "../types.js";
+import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations } from "../types.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../../fields/vectorized/index.js";
 import { Vec2 } from "playcanvas-extended";
 
@@ -280,8 +280,8 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
 
         const connections = {
             inputs: [
-                ['samples', PROPERTYKEY_ALL, ...surfaceTextureLocationGroup.path],
-                ...interpolatingGroups.map(({ group: { path } }) => ['samples', PROPERTYKEY_ALL, ...path])
+                ['samples', ...surfaceTextureLocationGroup.path],
+                ...interpolatingGroups.map(({ group: { path } }) => ['samples', ...path])
             ],
             outputs: [
                 ...interpolatingGroups.map(({ group: { path } }) => path)
