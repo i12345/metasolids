@@ -9,8 +9,8 @@ import { IndicesTypedArray } from '../../utils/indices-array.js'
 import { vectorIterator } from '../vectorized/iterators/factory.js'
 
 export class ConstantSampleDomain<
-        Location extends FieldPoint,
-        Sample extends FieldPoint,
+        Location extends FieldPoint = FieldPoint,
+        Sample extends FieldPoint = FieldPoint,
         LocationElementType extends FieldPoint = Location,
         LocationFuseMode extends FieldPoint = Location,
         SampleElementType extends FieldPoint = Sample,
