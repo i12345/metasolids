@@ -17,6 +17,10 @@
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "request": "launch",
             "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js",
+                "!**/node_modules/**"
+            ],
             "skipFiles": [
                 "<node_internals>/**"
             ],

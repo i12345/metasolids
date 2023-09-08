@@ -154,13 +154,13 @@ export class TransformVolume<
     }
 
     init(context: Context) {
+        super.init(context)
+        
         this.transformInverse.copy(this.transform).invert()
 
         const innerBoundingBox = <VolumeWithBoundingBox><unknown>this.inner
         if (innerBoundingBox.boundingBox)
             this.boundingBox.setFromTransformedAabb(innerBoundingBox.boundingBox, this.transform)
-
-        super.init(context)
     }
 
     @vectorized(TransformVolume.transformLocation_vectorized)

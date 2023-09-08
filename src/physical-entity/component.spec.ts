@@ -73,7 +73,7 @@ describe("playcanvas-node", () => {
 
             const component1 = entity1.addComponent(physicalEntity.SYSTEM_ID)! as physicalEntity.Component
             component1.volumeSamplingSettings = {
-                max_depth: 6,
+                max_depth: 8,
                 indicesType: Uint32Array,
                 recommendation_threshold: 1
             }
