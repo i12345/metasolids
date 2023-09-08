@@ -3,14 +3,14 @@ import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, Fi
 import { FieldPointType } from "./type.js"
 import { IndicesArray, IndicesTypedArray } from "../utils/indices-array.js"
 import { NumberArrayLike, NumberTypedArray } from "../utils/typed-array.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
 
 export class Triangles2DMeshInterpolator<
         VertexPoint extends FieldPoint = FieldPoint,
         VertexPointElementType extends FieldPoint = VertexPoint,
-        VertexContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        VertexContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         VertexVector extends FieldPointVector<VertexPointElementType, VertexContainer> = FieldPointVector<VertexPointElementType, VertexContainer>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
@@ -35,7 +35,7 @@ export class Triangles2DMeshInterpolator<
         this.v0 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
-            undefined,
+            <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
             multiObjectIDs?.IDsType,
             <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
         )
@@ -43,7 +43,7 @@ export class Triangles2DMeshInterpolator<
         this.v01 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
-            undefined,
+            <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
             multiObjectIDs?.IDsType,
             <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
         )
@@ -51,7 +51,7 @@ export class Triangles2DMeshInterpolator<
         this.v02 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
-            undefined,
+            <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
             multiObjectIDs?.IDsType,
             <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
         )

@@ -1,5 +1,5 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate, MultiObjectsIDsKey, WithMultiObjectsIDs, groups } from "../../../../paradigm/trees/index.js"
+import { MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs, groups } from "../../../../paradigm/trees/index.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../fields/range.js"
 import { textures } from "../../../../index.js"
 import { TextureLocation, TextureSample } from "../../../../textures/texture.js"
@@ -15,6 +15,7 @@ import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 import { VertexInterpolatingTexture } from "../../../../textures/index.js"
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, IsDynamicVector, field_point_vectorized_multi_objects_new } from "../../../../fields/vectorized/point.js"
 import { SampleDomainLocationFieldKey } from "../../../../fields/domain.js"
+import { IndicesTypedArray } from "../../../../utils/indices-array.js"
 
 export type MaterialSemanticImplementation_Texture_SideEffect<
         VolumeLocationT extends VolumeLocation = VolumeLocation
@@ -116,7 +117,12 @@ export class MaterialSemanticImplementation_Texture<
 
         (<FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>>locations).uv = <Float64Array><unknown>UVs
 
-        const texture_location_interpolator = new VertexInterpolatingTexture <
+        type Objects = MultiObjectsTemplate
+        type ObjIDsT = IndicesTypedArray
+
+        const texture_location_interpolator = new VertexInterpolatingTexture<
+                Objects,
+                ObjIDsT,
                 TextureLocation,
                 TextureLocation,
                 TextureLocation,

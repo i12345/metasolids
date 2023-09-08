@@ -455,6 +455,7 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         )).group
 
         const influences_texture = influencesGroup.get<VertexInterpolatingTexture<
+            Objects, ObjIDsT,
             TextureLocationT, TextureLocationElementType, TextureLocationFuseMode,
             MultiObjectsInfluences<Objects>,
             MultiObjectsInfluencesElementType<Objects>,
@@ -502,6 +503,8 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
             )
 
         const locations_texture = new VertexInterpolatingTexture<
+                Objects,
+                ObjIDsT,
                 TextureLocation,
                 TextureLocation,
                 TextureLocation,

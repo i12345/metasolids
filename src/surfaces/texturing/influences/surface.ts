@@ -103,6 +103,7 @@ export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         SurfaceSampleT extends
             SurfaceSampleWithInfluences<Objects, InfluencesGroup> =
@@ -113,6 +114,8 @@ export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
     > extends
     SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor<
             IndicesT,
+            Objects,
+            ObjIDsT,
             SurfaceUVUnwrappingGroup,
             InfluencesGroup,
             MultiObjectsInfluencesGroupKinds,

@@ -686,6 +686,7 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
     surfaces.texturing.SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroupT,
             Objects,
+            ObjIDsT,
             OtherInterpolatingGroupsT,
             ObjectsOtherInterpolatingGrouped,
             OtherInterpolatingValuesT,

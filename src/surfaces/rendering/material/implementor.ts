@@ -601,17 +601,17 @@ function qualityMetrics_compute<
         }
     }
 
-    const interpolator_values_locations = field_point_vectorized_multi_objects_new/*<Material_Texture_Location<VolumeLocationT>>*/(
+    const interpolator_values_locations = field_point_vectorized_multi_objects_new<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic>(
         location_type,
         3 * tri_n,
-        <any>/* <IsDynamicVector<Material_Texture_Location<VolumeLocationT>>> */false,
+        <IsDynamicVector<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic>>false,
         multiObjectsIDs?.IDsType,
         undefined
     )
 
     const interpolator_values_locations_iterator = vectorIterator/* <Material_Texture_Location<VolumeLocationT>> */(location_type, <any>isDynamicVector(location_type, interpolator_values_locations), multiObjectsIDs)
 
-    const interpolator_values_samples = field_point_vectorized_multi_objects_new<TexelTypeT>(
+    const interpolator_values_samples = field_point_vectorized_multi_objects_new<TexelTypeT, FieldPointVectorContainerStatic>(
         sample_type,
         3 * tri_n,
         <IsDynamicVector<TexelTypeT>>false,

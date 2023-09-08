@@ -1,4 +1,4 @@
-import { intract, objectValuePaths, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, extract } from "../../../paradigm/trees/index.js";
+import { intract, objectValuePaths, groupKinds, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsMappedAgainGrouped, extract, WithMultiObjectsIDs, MultiObjectsIDsKey } from "../../../paradigm/trees/index.js";
 import { Processor } from "../../../paradigm/processing/processor.js";
 import { FieldPoint, MultiObjectsGroupsWithFieldsProcessingContext, groupKindObjectsGroupedWithFields } from "../../../fields/index.js";
 import { Texture, TextureLocation, VertexInterpolatingTexture } from "../../../textures/index.js";
@@ -145,6 +145,7 @@ export type SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTexture
 
 export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsInterpolatingGrouped extends
@@ -168,6 +169,7 @@ export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSh
                     InterpolatingGroupKinds
                 >
     > =
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations<
             SurfaceTextureLocationGroup,
             Objects,
@@ -184,6 +186,7 @@ export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSh
 export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocationsProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsInterpolatingGrouped extends
@@ -240,6 +243,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 >,
             SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
                     Objects,
+                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
@@ -257,6 +261,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
 
     init(context: SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
                     Objects,
+                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
@@ -304,6 +309,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 >,
             context: SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
                     Objects,
+                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
@@ -344,7 +350,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 const objectPath = [...interpolatingGroup.path, ...objectRelativePath]
                 const values = extract<FieldPointVector<InterpolatingValue, InterpolatingContainer>>(surface.samples, objectPath)
 
-                const texture = new VertexInterpolatingTexture<TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValue, InterpolatingValue, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field)
+                const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValue, InterpolatingValue, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field, context[MultiObjectsIDsKey])
                 intract(surface, objectPath, texture)
             }
         }

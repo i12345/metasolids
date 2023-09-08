@@ -167,6 +167,7 @@ export type SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping
 export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsInterpolatingGrouped extends
             MultiObjectsGrouped<Objects, InterpolatingGroups> =
@@ -189,7 +190,7 @@ export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSu
                     InterpolatingValue
                 >
     > =
-    Partial<WithMultiObjectsIDs> &
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     SurfaceProcessingContextWithObjectsTexturesUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroup,
             SampleProcessingContextT,
@@ -207,6 +208,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsInterpolatingGrouped extends
             MultiObjectsGrouped<Objects, InterpolatingGroups> =
@@ -261,6 +263,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
             SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                     SurfaceUVUnwrappingGroup,
                     Objects,
+                    ObjIDsT,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
                     InterpolatingValue,
@@ -278,6 +281,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
     init(context: SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                     SurfaceUVUnwrappingGroup,
                     Objects,
+                    ObjIDsT,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
                     InterpolatingValue,
@@ -325,6 +329,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
             context: SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                     SurfaceUVUnwrappingGroup,
                     Objects,
+                    ObjIDsT,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
                     InterpolatingValue,
@@ -357,7 +362,6 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                     this.interpolatingGroups
                 )
 
-        type ObjIDsT = Uint32Array
         type InterpolatingValueType = { [MultiObjectsGroupedObjectsKey]: InterpolatingValue }
         type InterpolatingContainer = FieldPointVectorContainerStatic<NumberTypedArray>
         type InterpolatingVector = FieldPointVector<InterpolatingValueType, InterpolatingContainer>
@@ -387,7 +391,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                         multiObjectsIDs
                     )
 
-                const texture = new VertexInterpolatingTexture<TextureLocation, TextureLocation, TextureLocation, MultiObjectsMapped<Objects, InterpolatingValue>, InterpolatingValueType, InterpolatingValue, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field)
+                const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, MultiObjectsMapped<Objects, InterpolatingValue>, InterpolatingValueType, InterpolatingValue, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field, multiObjectsIDs)
                 intract(surface, objectPath, texture)
             }
         }
