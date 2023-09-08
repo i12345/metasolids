@@ -758,6 +758,13 @@ export class MetaSolidVolume<
         }
     }
 
+    static readonly emptySample: MetaSolidSample = {
+        ...this.defaultParameters,
+        distance: Infinity,
+        uv: new Vec2(),
+        gradient: new Vec3(),
+    }
+
     private static defaultFields_parametersIn = new FieldsField({
         falloff: {
             rate: ScalarField.instance,

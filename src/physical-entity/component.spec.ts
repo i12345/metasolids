@@ -126,12 +126,11 @@ describe("playcanvas-node", () => {
         // component4.entity.setLocalScale(0.8, 0.8, 0.6)
     })
 
-    return
     testShape("plane", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaPlane({ offset: Vec2.ZERO, size: Vec2.ONE })) as unknown as physicalEntity.VolumeT
     })
 
-    testShape("spline", 2, (entity1, component1, component2) => {
+    testShape("spline 1", 2, (entity1, component1, component2) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(
             new solids.metasolids.MetaSplineSegment(
                 new fields.domains.ConstantSampleDomain({
@@ -149,8 +148,62 @@ describe("playcanvas-node", () => {
         ) as unknown as physicalEntity.VolumeT
 
         component1.entity.addChild(component2.entity)
-        component2.entity.setLocalPosition(0, 0, 1)
+        component2.entity.setLocalPosition(0, 0, 2)
         component2.volume = new solids.metasolids.MetaSolidVolume(
+            new solids.metasolids.MetaSplineSegment(
+                new fields.domains.ConstantSampleDomain({
+                        unit: {
+                            height: 1,
+                            length: 0.5
+                        },
+                        falloff: {
+                            rate: 1
+                        }
+                    },
+                    solids.metasolids.MetaSolidVolume.defaultFields.parametersIn
+                )
+            )
+        ) as unknown as physicalEntity.VolumeT
+    })
+
+    testShape("spline 2", 3, (entity1, component1, component2, component3) => {
+        component1.volume = new solids.metasolids.MetaSolidVolume(
+            new solids.metasolids.MetaSplineSegment(
+                new fields.domains.ConstantSampleDomain({
+                        unit: {
+                            height: 1,
+                            length: 0.5
+                        },
+                        falloff: {
+                            rate: 1
+                        }
+                    },
+                    solids.metasolids.MetaSolidVolume.defaultFields.parametersIn
+                )
+            )
+        ) as unknown as physicalEntity.VolumeT
+
+        component1.entity.addChild(component2.entity)
+        component2.entity.setLocalPosition(0, 0, 2)
+        component2.volume = new solids.metasolids.MetaSolidVolume(
+            new solids.metasolids.MetaSplineSegment(
+                new fields.domains.ConstantSampleDomain({
+                        unit: {
+                            height: 1.23,
+                            length: 0.5
+                        },
+                        falloff: {
+                            rate: 1
+                        }
+                    },
+                    solids.metasolids.MetaSolidVolume.defaultFields.parametersIn
+                )
+            )
+        ) as unknown as physicalEntity.VolumeT
+
+        component2.entity.addChild(component3.entity)
+        component3.entity.setLocalPosition(0, 0, 2)
+        component3.volume = new solids.metasolids.MetaSolidVolume(
             new solids.metasolids.MetaSplineSegment(
                 new fields.domains.ConstantSampleDomain({
                         unit: {

@@ -1,6 +1,6 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
 import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
-import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault } from "../../fields/index.js";
+import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault, field_point_new } from "../../fields/index.js";
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from '../../fields/domains/index.js'
 import { FieldsField } from '../../fields/fields/fields.js'
 import { Pi, PiOver2, TwoPi } from "../../utils/pi.js";
@@ -230,6 +230,7 @@ export class MetaSplineSegment<
         >
     > {
     field!: Field<Sample>
+    private emptySample!: Sample
 
     //TODO: let there be multiple figures with different times for a single SplineSegment
     constructor(
@@ -277,6 +278,10 @@ export class MetaSplineSegment<
             (this.figure.field as FieldsField<MetaSplineSegmentFigureSample<Sample>>) as FieldsField<Sample>,
             MetaSolidVolume.defaultFields.sample as FieldsField<Sample>
         )
+
+        this.emptySample = field_point_new(this.field.elementType)
+        this.emptySample.distance = Infinity
+        Object.assign(this.emptySample, MetaSolidVolume.defaultParameters)
     }
 
     private init_figure(context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, OuterSampleProcessingContextT, TextureContext, VolumeContext>): void {
@@ -470,7 +475,7 @@ export class MetaSplineSegment<
         }
 
         if (hints_surface_offset > 0) {
-            this.boundingBox.compute(hints_surface, hints_surface_offset)
+            this.boundingBox.compute(hints_surface, hints_surface_offset / 3)
 
             const hints_surface_array = new Float32Array(hints_surface_offset)
             hints_surface_array.set(hints_surface.subarray(0, hints_surface_offset))
@@ -498,12 +503,12 @@ export class MetaSplineSegment<
         // For this and the next `return undefined!` statements,
         // is that how transparency should be processed?
         if (this.spline_segment_index === 0)
-            return undefined!
+            return this.emptySample
 
         const location_extra = extraFields<MetaSolidLocation, Location>(location, { p: true })
 
         const plane_sample = this.spline!.intersectingPlane(location.p, this.spline_segment_index)
-        if (!plane_sample) return undefined!
+        if (!plane_sample) return this.emptySample
 
         const { t, r, theta, phi, v } = plane_sample
         const figure_sample = this.spline!.figureSample(t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])

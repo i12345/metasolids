@@ -108,7 +108,7 @@ export class MetaPlane<
         }
 
         if (hints_surface_offset > 0) {
-            this.boundingBox.compute(hints_surface, hints_surface_offset)
+            this.boundingBox.compute(hints_surface, hints_surface_offset / 3)
 
             const hints_surface_array = new Float32Array(hints_surface_offset)
             hints_surface_array.set(hints_surface.subarray(0, hints_surface_offset))
