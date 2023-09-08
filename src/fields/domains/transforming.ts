@@ -8,7 +8,7 @@ import { vectorized } from 'vectorized-functions'
 import { VectorSampleFunction, makeVectorSamplingContext } from './vector.js'
 import { FusedVectorSamplingContext, FusingVectorSampleDomain } from './fusing.js'
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, FieldPointVectorWithMultiObjects, FuseMode, FusingFieldPointVectorWithMultiObjects, fuseVectors } from '../vectorized/index.js'
-import { MultiObjectsIDsKey, MultiObjectsTemplate } from '../../paradigm/trees/index.js'
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsIDsKey, MultiObjectsTemplate } from '../../paradigm/trees/index.js'
 import { IndicesTypedArray } from '../../utils/indices-array.js'
 
 export type TransformingDefaultInnerSamplingContext<
@@ -39,7 +39,15 @@ export type TransformingDefaultInnerSamplingContext<
     > &
     { [SampleDomainLocationFieldKey]: Field<InnerLocation, InnerLocationElementType, InnerLocationFuseMode> }
 
-const TransformingTransformedLocationsKey = Symbol("transformed-locations")
+export const TransformingTransformedLocationsKey = Symbol("transformed-locations")
+
+export type TransformingSampleDomainPreservedGroups = {
+    [TransformingTransformedLocationsKey]: MultiObjectsGroupsTemplateLeaf
+}
+
+export const TransformingSampleDomainPreservedGroupsTemplate: TransformingSampleDomainPreservedGroups = {
+    [TransformingTransformedLocationsKey]: MultiObjectsGroupsTemplate_Leaf
+}
 
 type TransformingFusingVectorSampleContextPrivate<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -406,7 +414,6 @@ export abstract class TransformingSampleDomain<
     private location_field!: Field<InnerLocation, InnerLocationElementType, InnerLocationFuseMode>
 
     init(context: OuterContext): void {
-        this.init_fusing()
         this.location_field = this.init_location_field(context)
         const innerContext = this.transformContext(context)
         this.inner.init(innerContext)
@@ -415,9 +422,40 @@ export abstract class TransformingSampleDomain<
             inner: innerContext,
             outer: context
         })
+        this.init_fusing(context)
     }
 
-    private init_fusing() {
+    private init_fusing(context: OuterContext) {
+        type ContextPrivateT = TransformingFusingVectorSampleContextPrivate<
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            OuterLocation,
+            OuterLocationElementType,
+            OuterLocationFuseMode,
+            OuterLocationContainer,
+            OuterSample,
+            OuterSampleElementType,
+            OuterSampleFuseMode,
+            OuterSampleContainer,
+            OuterContext,
+            OuterLocationVector,
+            OuterSampleVector,
+            OuterVectorContext,
+            InnerLocation,
+            InnerLocationElementType,
+            InnerLocationFuseMode,
+            InnerLocationContainer,
+            InnerSample,
+            InnerSampleElementType,
+            InnerSampleFuseMode,
+            InnerSampleContainer,
+            InnerContext,
+            InnerLocationVector,
+            InnerSampleVector,
+            InnerVectorContext
+        >
+        
         type InnerDomain = FusingVectorSampleDomain<
             InnerLocation,
             InnerLocationElementType,
@@ -435,6 +473,9 @@ export abstract class TransformingSampleDomain<
             InnerSampleVector,
             InnerVectorContext
         >
+
+        const contextPrivate = <ContextPrivateT>context
+        contextPrivate[TransformingTransformedLocationsKey] = new Map()
 
         const inner = <InnerDomain><unknown>this.inner
         if (inner.sample_fused_objectCounts === undefined) {

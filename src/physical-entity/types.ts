@@ -200,31 +200,34 @@ export const VolumeSamplingSubdividingGroupsKindMappedGroupsTemplate: VolumeSamp
     [octtree.OctTreeSubdividingGroupsKindKey]: VolumeSamplingSubdividingOctTreeGroupsTemplate
 }
 
-export type Volume_Context_PreservedGroupsT =
+export type VolumeDomain_SamplingContext_PreservedGroupsT =
     solids.metasolids.MetaSolidVolumeMultiObjectsInternalPreservedGroups &
     solids.metasolids.MetaSplineSegmentMultiObjectsInternalPreservedGroups &
+    // fields.domains.TransformingSampleDomainPreservedGroups &
     {}
 
-export const Volume_Context_PreservedGroupsTemplate = [
+export const VolumeDomain_SamplingContext_PreservedGroupsTemplate = [
     solids.metasolids.MetaSolidVolumeMultiObjectsInternalPreservedGroupsTemplate,
     solids.metasolids.MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate,
-].reduce(mergeGroupsInplace, {}) as Volume_Context_PreservedGroupsT
+    // fields.domains.TransformingSampleDomainPreservedGroupsTemplate,
+].reduce(mergeGroupsInplace, {}) as VolumeDomain_SamplingContext_PreservedGroupsT
 
 export type Volume_Context_PreservedGroupsKinds =
-    fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds
+    fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds &
+    {}
 
-export const Volume_Context_PreservedGroupsKindsTemplate: Volume_Context_PreservedGroupsKinds = {
-    ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate
+export const VolumeDomain_SamplingContext_PreservedGroupsKindsTemplate: Volume_Context_PreservedGroupsKinds = {
+    ...fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsTemplate,
 }
 
-export type Volume_Context_PreservedGroupsKindsMappedGroupsT =
+export type VolumeDomain_SamplingContext_PreservedGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
             fields.domains.MultiObjectsDomainInternalPreservedGroupsKinds,
-            Volume_Context_PreservedGroupsT
+            VolumeDomain_SamplingContext_PreservedGroupsT
         >
 
-export const Volume_Context_PreservedGroupsKindsMappedGroupsTemplate: Volume_Context_PreservedGroupsKindsMappedGroupsT = {
-    [fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsKey]: Volume_Context_PreservedGroupsTemplate
+export const VolumeDomain_SamplingContext_PreservedGroupsKindsMappedGroupsTemplate: VolumeDomain_SamplingContext_PreservedGroupsKindsMappedGroupsT = {
+    [fields.domains.MultiObjectsDomainInternalPreservedGroupsKindsKey]: VolumeDomain_SamplingContext_PreservedGroupsTemplate
 }
 
 export type Volume_Sample_PreservedGroupsT =
@@ -444,20 +447,20 @@ export type VolumeDomainSamplingContextT =
         > &
     WithInfluenceProcessingContext<InfluenceGroup> &
     MultiObjectsGroupsProcessingContext<
-            Volume_Context_PreservedGroupsT,
+            VolumeDomain_SamplingContext_PreservedGroupsT,
             Volume_Context_PreservedGroupsKinds
         >
 
 export type VolumeDomainSamplingContext_MultiObjects =
     WithInfluenceProcessingContext<InfluenceGroup> &
     MultiObjectsGroupsProcessingContext<
-            Volume_Context_PreservedGroupsT,
+            VolumeDomain_SamplingContext_PreservedGroupsT,
             Volume_Context_PreservedGroupsKinds
         > &
     {}
 
 export const VolumeDomainSamplingContext_MultiObjects_Template: VolumeDomainSamplingContext_MultiObjects = {
-    ...Volume_Context_PreservedGroupsKindsMappedGroupsTemplate,
+    ...VolumeDomain_SamplingContext_PreservedGroupsKindsMappedGroupsTemplate,
 
     ...MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate,
 

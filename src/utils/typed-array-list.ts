@@ -7,6 +7,7 @@ export class TypedArrayList<
     private readonly blocks: TypedArrayT[] = []
     private _length: number = 0
     private _capacity: number = 0
+    private _defaultValue: T | undefined
 
     get length() {
         return this._length
@@ -26,8 +27,12 @@ export class TypedArrayList<
     }
 
     set capacity(capacity) {
-        if(capacity > this._capacity)
-            this.blocks.push(<TypedArrayT>new this.type(capacity - this._capacity))
+        if (capacity > this._capacity) {
+            const newBlock = <TypedArrayT>new this.type(capacity - this._capacity)
+            this.blocks.push(newBlock)
+            if (this.defaultValue !== undefined)
+                newBlock.fill(<never>this.defaultValue)
+        }
         else if (capacity < this._capacity) {
             while (capacity < this._capacity) {
                 const excess = capacity - this._capacity
@@ -44,12 +49,25 @@ export class TypedArrayList<
         }
     }
 
+    get defaultValue() {
+        return this._defaultValue
+    }
+
+    set defaultValue(defaultValue) {
+        this._defaultValue = defaultValue
+        if (defaultValue !== undefined)
+            for (const block of this.blocks)
+                block.fill(<never>defaultValue)
+    }
+
     constructor(
         public readonly type: TypedArrayT extends TypedArray<T> ? TypedArrayConstructor<T, TypedArrayT> : never,
         size: number = 0,
         // I'm not sure how to best page align this array
-        public readonly defaultBlockSize = (4096 - 8 - 8) / type.BYTES_PER_ELEMENT
+        public readonly defaultBlockSize = (4096 - 8 - 8) / type.BYTES_PER_ELEMENT,
+        defaultValue?: T
     ) {
+        this._defaultValue = defaultValue
         this.length = size
     }
 
@@ -106,7 +124,7 @@ export class TypedArrayList<
     }
 
     clone() {
-        const result = new TypedArrayList<T, TypedArrayT>(this.type, 0, this.defaultBlockSize)
+        const result = new TypedArrayList<T, TypedArrayT>(this.type, 0, this.defaultBlockSize, this.defaultValue)
         const array = this.arrayView(false)
         result.blocks.push(array)
         result._capacity = result._length = array.length

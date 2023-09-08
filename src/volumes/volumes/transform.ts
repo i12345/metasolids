@@ -319,7 +319,7 @@ export class TransformVolume<
                 p_item_world.y = p_world_container.get(p_i_local++)
                 p_item_world.z = p_world_container.get(p_i_local++)
 
-                transform_inverse.transformVector(p_item_world, p_item_local)
+                transform_inverse.transformPoint(p_item_world, p_item_local)
 
                 p_local_container.set(p_i_world++, p_item_local.x)
                 p_local_container.set(p_i_world++, p_item_local.y)
@@ -335,7 +335,7 @@ export class TransformVolume<
                 p_item_world.y = p_world_container[p_i_local++]
                 p_item_world.z = p_world_container[p_i_local++]
 
-                transform_inverse.transformVector(p_item_world, p_item_local)
+                transform_inverse.transformPoint(p_item_world, p_item_local)
 
                 p_local_container[p_i_world++] = p_item_local.x
                 p_local_container[p_i_world++] = p_item_local.y

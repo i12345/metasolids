@@ -73,7 +73,7 @@ export function addDeltas<T extends number | bigint, AccumulatorT extends TypedA
         let next: T
         for (let i = 0; i < deltasAccumulator.length; i++) {
             next = <T>(<OffsetsT>offsets)[i]
-            deltasAccumulator[i] = (next - prev)
+            deltasAccumulator[i] += <any>(next - prev)
             prev = next
         }
     }

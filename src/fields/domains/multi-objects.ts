@@ -3,7 +3,7 @@ import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
 import { makeInterpolator } from "../interpolation.js"
-import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDsKey, extract, PropertyPath, intract, WithMultiObjectsIDs, MultiObjectsGroupedObjectsAndRegularValuesType, MultiObjectsGroupsOverwritten, MultiObjectsGroupsOrLeafMapped, MultiObjectsGroupsTemplateOrLeaf } from "../../paradigm/trees/index.js"
+import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, groupKinds, MultiObjectsGroupsFiltered, MultiObjectsGroupedObjectsAndRegularValues, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDsKey, extract, PropertyPath, intract, WithMultiObjectsIDs, MultiObjectsGroupedObjectsAndRegularValuesType, MultiObjectsGroupsOverwritten, MultiObjectsGroupsOrLeafMapped, MultiObjectsGroupsTemplateOrLeaf, groupsProxyOverwritten, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js"
 import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped, field_point_map, fields_point_map } from "../point.js"
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from "./encapsulating.js"
 import { vectorized } from "vectorized-functions"
@@ -69,6 +69,7 @@ export const FusedSamplingNonfusedSamples = Symbol("fused-sampling-nonfused-samp
 
 export type MultiObjectsSamplingContext<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         ContextGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ContextGroupKinds extends MultiObjectsDomainInternalPreservedGroupsKinds = MultiObjectsDomainInternalPreservedGroupsKinds,
         Location extends FieldPoint = FieldPoint,
@@ -79,6 +80,7 @@ export type MultiObjectsSamplingContext<
             SamplingContext<Location, LocationElementType, LocationFuseMode> & MultiObjectsGroupsMapped<ContextGroups, any>
     > =
     SamplingContext<Location, LocationElementType, LocationFuseMode> &
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     // MultiObjectsGroupsOmitted<Groups, LeafContext> &
     MultiObjectsGroupsOverwritten<ContextGroups, LeafContext, {}> &
     MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, MultiObjectsGroupsFiltered<ContextGroups, LeafContext>> &
@@ -139,6 +141,7 @@ export type MultiObjectsVectorSamplingContext<
     > =
     MultiObjectsSamplingContext<
             Objects,
+            ObjIDsT,
             ContextGroups,
             ContextGroupKinds,
             Location,
@@ -218,6 +221,7 @@ export type MultiObjectsFusedVectorSamplingContext<
     > =
     MultiObjectsSamplingContext<
             Objects,
+            ObjIDsT,
             ContextGroups,
             ContextGroupKinds,
             Location,
@@ -313,6 +317,7 @@ export type MultiObjectsLeafContext<
                 >,
     > =
     LeafContext &
+    WithMultiObjectsIDs<Objects, ObjIDsT> &
     EncapsulatingDomainSamplingContext<
         Location,
         LocationElementType,
@@ -325,6 +330,7 @@ export type MultiObjectsLeafContext<
         MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>,
         MultiObjectsSamplingContext<
             Objects,
+            ObjIDsT,
             ContextGroups,
             ContextGroupKinds,
             Location,
@@ -354,6 +360,7 @@ export type MultiObjectsLeafContext<
             >,
             context: MultiObjectsSamplingContext<
                     Objects,
+                    ObjIDsT,
                     ContextGroups,
                     ContextGroupKinds,
                     Location,
@@ -540,6 +547,7 @@ export class MultiObjectsSampleDomain<
         SingularContext extends
             MultiObjectsSamplingContext<
                     Objects,
+                    ObjIDsT,
                     ContextGroups,
                     ContextGroupKinds,
                     Location,
@@ -549,6 +557,7 @@ export class MultiObjectsSampleDomain<
                 > =
             MultiObjectsSamplingContext<
                     Objects,
+                    ObjIDsT,
                     ContextGroups,
                     ContextGroupKinds,
                     Location,
@@ -751,6 +760,7 @@ export class MultiObjectsSampleDomain<
             SingularContext extends
                 MultiObjectsSamplingContext<
                         Objects,
+                        ObjIDsT,
                         ContextGroups,
                         ContextGroupKinds,
                         Location,
@@ -760,6 +770,7 @@ export class MultiObjectsSampleDomain<
                     > =
                 MultiObjectsSamplingContext<
                         Objects,
+                        ObjIDsT,
                         ContextGroups,
                         ContextGroupKinds,
                         Location,
@@ -838,6 +849,7 @@ export class MultiObjectsSampleDomain<
      */
     protected sampleContext(context: MultiObjectsSamplingContext<
             Objects,
+            ObjIDsT,
             ContextGroups,
             ContextGroupKinds,
             Location,
@@ -848,15 +860,132 @@ export class MultiObjectsSampleDomain<
         return context as unknown as MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds>
     }
 
+    private childContext<T>(
+            context: MultiObjectsSamplingContext<
+                Objects,
+                ObjIDsT,
+                ContextGroups,
+                ContextGroupKinds,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LeafContext
+            >,
+            child_key: keyof Objects,
+            worker: (child_context: MultiObjectsLeafContext<
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    SampleGroups,
+                    SampleGroupKinds,
+                    ContextGroups,
+                    ContextGroupKinds,
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    LeafSample,
+                    SampleContainer,
+                    LeafContext,
+                    LeafDomain,
+                    LocationVector,
+                    LeafSampleVector
+                >
+            ) => T
+        ): T {
+        const child_context = {
+            ...context,
+            [MultiObjectsSamplingContextParent]: {
+                item: this,
+                context
+            },
+            [EncapsulatingDomainSamplingContextParentContext]: context,
+            [EncapsulatingDomainSamplingContextParentDomain]: this
+        } as any as MultiObjectsLeafContext<
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            SampleGroups,
+            SampleGroupKinds,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            LeafSample,
+            SampleContainer,
+            LeafContext,
+            LeafDomain,
+            LocationVector,
+            LeafSampleVector
+        >
+
+        const context_original_groups =
+            {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
+
+        for (const { group } of this.groupsMemoized.context)
+            group.set(context_original_groups, group.get(context))
+
+        const multiObjectsIDs = context[MultiObjectsIDsKey]
+        
+        const multiObjectsIDs_original_template = multiObjectsIDs.template
+        const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
+
+        for (const { group } of this.groupsMemoized.context) {
+            // const context_original_group = group.get(child_context)
+            // group.set(context_original_groups, context_original_group)
+            // group.delete(child_context)
+
+            const context_original_group = group.get(context_original_groups)
+            if (context_original_group) {
+                const context_child_group = context_original_group[child_key]
+                group.set(child_context, context_child_group)
+            }
+        }
+
+        multiObjectsIDs.template = <any>multiObjectsIDs_original_template[child_key]
+        multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[child_key]
+
+        const result = worker(child_context)
+
+        for (const { group } of this.groupsMemoized.context) {
+            const context_original_group = group.get(context_original_groups) ?? {}
+            const context_child_group = group.get(child_context)
+            context_original_group[child_key] = context_child_group
+            // group.delete(child_context)
+            group.set(context, context_original_group)
+        }
+
+        const toplevel_exclude_copy: PropertyKey[] = [
+            MultiObjectsSamplingContextParent,
+            EncapsulatingDomainSamplingContextParentContext,
+            EncapsulatingDomainSamplingContextParentDomain,
+            VectorSampleFunction,
+        ]
+
+        for (const toplevel_key of Reflect.ownKeys(child_context))
+            if (context[toplevel_key] !== child_context[toplevel_key] &&
+                !toplevel_exclude_copy.includes(toplevel_key) &&
+                !this.groupsMemoized.context.some(({ group }) => group.path.length > 0 && group.path[0] === toplevel_key))
+                (<any>context)[toplevel_key] = child_context[toplevel_key]
+        
+        multiObjectsIDs.template = multiObjectsIDs_original_template
+        multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
+
+        return result
+    }
+
     init(context: MultiObjectsSamplingContext<
-        Objects,
-        ContextGroups,
-        ContextGroupKinds,
-        Location,
-        LocationElementType,
-        LocationFuseMode,
-        LeafContext
-    >): void {
+            Objects,
+            ObjIDsT,
+            ContextGroups,
+            ContextGroupKinds,
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LeafContext
+        >): void {
         this.groupsMemoized = {
             context: [...groupKinds(context, this.multiObj.context.groupKindsTemplate, this.multiObj.context.groupsTemplate)],
             sample: this.multiObj.sample ? [...groupKinds(this.sampleContext(context), this.multiObj.sample.groupKindsTemplate, this.multiObj.sample.groupsTemplate)] : [],
@@ -917,61 +1046,7 @@ export class MultiObjectsSampleDomain<
         for (const key of Reflect.ownKeys(this.children)) {
             const child = this.children[key]
 
-            let child_context = {
-                ...context,
-                [MultiObjectsSamplingContextParent]: {
-                    item: this,
-                    context
-                },
-                [EncapsulatingDomainSamplingContextParentContext]: context,
-                [EncapsulatingDomainSamplingContextParentDomain]: this
-            } as any as MultiObjectsLeafContext<
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                SampleGroups,
-                SampleGroupKinds,
-                ContextGroups,
-                ContextGroupKinds,
-                Location,
-                LocationElementType,
-                LocationFuseMode,
-                LocationContainer,
-                LeafSample,
-                SampleContainer,
-                LeafContext,
-                LeafDomain,
-                LocationVector,
-                LeafSampleVector
-            >
-
-            const context_original_groups =
-                {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-
-            const multiObjectsIDs_original_template = multiObjectsIDs.template
-            const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
-
-            for (const { group } of this.groupsMemoized.context) {
-                const context_original_group = group.get(child_context)
-                group.set(context_original_groups, context_original_group)
-                group.delete(child_context)
-            }
-
-            multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
-            multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
-
-            child.init(child_context as any)
-
-            for (const { group } of this.groupsMemoized.context) {
-                const context_original_group = group.get(context_original_groups) ?? {}
-                const context_child_group = group.get(child_context)
-                context_original_group[key] = context_child_group
-                group.delete(child_context)
-                group.set(context, context_original_group)
-            }
-
-            multiObjectsIDs.template = multiObjectsIDs_original_template
-            multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
+            this.childContext<void>(context, key, child_context => child.init(child_context as any))
 
             if (field_point_type_contains(child.field.elementType, this.childField.elementType))
                 this.childrenFieldTypes[<keyof Objects>key] = "leaf"
@@ -987,6 +1062,7 @@ export class MultiObjectsSampleDomain<
             location: Location,
             context: MultiObjectsSamplingContext<
                     Objects,
+                    ObjIDsT,
                     ContextGroups,
                     ContextGroupKinds,
                     Location,
@@ -995,64 +1071,14 @@ export class MultiObjectsSampleDomain<
                     LeafContext
                 >
         ): MultiObjectsSample<Objects, SampleGroups, LeafSample> {
-        const child_context = {
-            ...context,
-            [MultiObjectsSamplingContextParent]: {
-                item: this,
-                context
-            },
-            [EncapsulatingDomainSamplingContextParentContext]: context,
-            [EncapsulatingDomainSamplingContextParentDomain]: this
-        } as any as MultiObjectsLeafContext<
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                SampleGroups,
-                SampleGroupKinds,
-                ContextGroups,
-                ContextGroupKinds,
-                Location,
-                LocationElementType,
-                LocationFuseMode,
-                LocationContainer,
-                LeafSample,
-                SampleContainer,
-                LeafContext,
-                LeafDomain,
-                LocationVector,
-                LeafSampleVector
-            >
-
-        const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
-
-        const context_original_groups =
-            {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-
-        for (const { group } of this.groupsMemoized.context)
-            group.set(context_original_groups, group.get(context))
-
-        const multiObjectsIDs_original_template = multiObjectsIDs.template
-        const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
-
         const child_samples = Reflect.ownKeys(this.children).map(key => {
-            for (const { group } of this.groupsMemoized.context) {
-                const context_original_group = group.get(context_original_groups)
-                const context_child_group = context_original_group[key]
-                group.set(child_context, context_child_group)
-            }
-            multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
-            multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
-
-            const sample = this.children[key].sample(location, child_context as any)
+            const sample = this.childContext<LeafSample>(context, key, child_context => this.children[key].sample(location, child_context as any))
 
             return <FieldPointWithMultiObjectPath<LeafSample>>{
                 value: sample,
                 multiObjPath: [key],
             }
         })
-
-        for (const { group } of this.groupsMemoized.context)
-            group.set(context, group.get(context_original_groups))
 
         type Sample = MultiObjectsSample<Objects, SampleGroups, LeafSample>
         type SampleElementType = MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>
@@ -1063,11 +1089,8 @@ export class MultiObjectsSampleDomain<
             this.childField.elementType,
             this.fuseMode ?? this.field.fuseMode,
             <FieldPointWithMultiObjectPath<LeafSample>[]><unknown>child_samples,
-            multiObjectsIDs
+            context[MultiObjectsIDsKey]
         )
-
-        multiObjectsIDs.template = multiObjectsIDs_original_template
-        multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
 
         return fused
     }
@@ -1136,58 +1159,58 @@ export class MultiObjectsSampleDomain<
         const sample_count = location_iterator.length(locations, locations)
         const multiObjectsIDs = context[MultiObjectsIDsKey]
 
-        const child_context = {
-            ...context,
-            [MultiObjectsSamplingContextParent]: {
-                item: this,
-                context
-            },
-            [EncapsulatingDomainSamplingContextParentContext]: context,
-            [EncapsulatingDomainSamplingContextParentDomain]: this
-        } as typeof context & MultiObjectsLeafContext<
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                SampleGroups,
-                SampleGroupKinds,
-                ContextGroups,
-                ContextGroupKinds,
-                Location,
-                LocationElementType,
-                LocationFuseMode,
-                LocationContainer,
-                LeafSample,
-                SampleContainer,
-                LeafContext,
-                LeafDomain,
-                LocationVector,
-                LeafSampleVector
-            >
+        // const child_context = {
+        //     ...context,
+        //     [MultiObjectsSamplingContextParent]: {
+        //         item: this,
+        //         context
+        //     },
+        //     [EncapsulatingDomainSamplingContextParentContext]: context,
+        //     [EncapsulatingDomainSamplingContextParentDomain]: this
+        // } as typeof context & MultiObjectsLeafContext<
+        //         Objects,
+        //         ObjIDsT,
+        //         ObjIDsContainer,
+        //         SampleGroups,
+        //         SampleGroupKinds,
+        //         ContextGroups,
+        //         ContextGroupKinds,
+        //         Location,
+        //         LocationElementType,
+        //         LocationFuseMode,
+        //         LocationContainer,
+        //         LeafSample,
+        //         SampleContainer,
+        //         LeafContext,
+        //         LeafDomain,
+        //         LocationVector,
+        //         LeafSampleVector
+        //     >
 
-        const child_leaf_context = {
-            ...child_context,
-            [VectorSampleFunction]: undefined
-        } as MultiObjectsLeafVectorSamplingContext<
-            Objects,
-            ObjIDsT,
-            ObjIDsContainer,
-            SampleGroups,
-            SampleGroupKinds,
-            ContextGroups,
-            ContextGroupKinds,
-            Location,
-            LocationElementType,
-            LocationFuseMode,
-            LocationContainer,
-            LeafSample,
-            SampleContainer,
-            LeafContext,
-            LeafDomain,
-            LocationVector,
-            LeafSampleVector
-        >
+        // const child_leaf_context = {
+        //     ...child_context,
+        //     [VectorSampleFunction]: undefined
+        // } as MultiObjectsLeafVectorSamplingContext<
+        //     Objects,
+        //     ObjIDsT,
+        //     ObjIDsContainer,
+        //     SampleGroups,
+        //     SampleGroupKinds,
+        //     ContextGroups,
+        //     ContextGroupKinds,
+        //     Location,
+        //     LocationElementType,
+        //     LocationFuseMode,
+        //     LocationContainer,
+        //     LeafSample,
+        //     SampleContainer,
+        //     LeafContext,
+        //     LeafDomain,
+        //     LocationVector,
+        //     LeafSampleVector
+        // >
 
-        makeVectorSamplingContext(this.childField, child_leaf_context, multiObjectsIDs)
+        // makeVectorSamplingContext(this.childField, child_leaf_context, multiObjectsIDs)
 
         type ChildFusingSampleDomain = FusingVectorSampleDomain<
                 Location,
@@ -1297,49 +1320,88 @@ export class MultiObjectsSampleDomain<
                 >
             >
 
-        const context_original_groups =
-            {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-
-        for (const { group } of this.groupsMemoized.context)
-            group.set(context_original_groups, group.get(context))
-
-        const multiObjectsIDs_original_template = multiObjectsIDs.template
-        const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
-
         ///@ts-ignore
         const nonfusing = Reflect_entries<Record<keyof Objects, ChildFusingSampleDomain>>(<any>this.children).filter(([, child]) => !(child.can_fuse && child.can_fuse(sampleType, fuseMode, <any>context)))
 
         const nonfused_samples = nonfusing.map(([key, sampleDomain]) => {
-            for (const { group } of this.groupsMemoized.context) {
-                const context_original_group = group.get(context_original_groups)
-                const context_child_group = context_original_group[key]
-                group.set(child_context, context_child_group)
-                group.set(child_leaf_context, context_child_group)
-            }
+            // for (const { group } of this.groupsMemoized.context) {
+            //     const context_original_group = group.get(context_original_groups)
+            //     const context_child_group = context_original_group[key]
+            //     group.set(child_context, context_child_group)
+            //     group.set(child_leaf_context, context_child_group)
+            // }
 
-            multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
-            multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
+            // multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
+            // multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
 
             let samples: SampleVector
 
             if (this.childrenFieldTypes[key] === "leaf") {
-                const leaf_samples = child_leaf_context[VectorSampleFunction](<ChildLeafVectorDomain><unknown>sampleDomain, locations, child_leaf_context)
-                const multiObjVector = <FieldPointVectorWithMultiObjects<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>, SampleContainer, ObjIDsT, ObjIDsContainer>><unknown>leaf_samples
+                samples = this.childContext<SampleVector>(context, key, child_context => {
+                    const child_leaf_context = child_context as MultiObjectsLeafVectorSamplingContext<
+                        Objects,
+                        ObjIDsT,
+                        ObjIDsContainer,
+                        SampleGroups,
+                        SampleGroupKinds,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LocationContainer,
+                        LeafSample,
+                        SampleContainer,
+                        LeafContext,
+                        LeafDomain,
+                        LocationVector,
+                        LeafSampleVector
+                    >
+                    
+                    makeVectorSamplingContext(this.childField, child_leaf_context, multiObjectsIDs)
+                    const leaf_samples = child_leaf_context[VectorSampleFunction](<ChildLeafVectorDomain><unknown>sampleDomain, locations, child_leaf_context)
 
-                if (multiObjVector[ItemObjIDsKey]?.length > 0)
-                    throw new Error("did not expect children to have multi objects")
+                    const multiObjVector = <FieldPointVectorWithMultiObjects<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>, SampleContainer, ObjIDsT, ObjIDsContainer>><unknown>leaf_samples
 
-                multiObjVector[ItemObjIDsKey] = <FieldPointVector<ObjIDsT, ObjIDsContainer>><FieldPointVectorContainerStatic<ObjIDsT>>new multiObjectsIDs.IDsType(sample_count)
-                multiObjVector[ItemObjValuesOffsetsKey] = new Uint32Array(sample_count)
+                    if (multiObjVector[ItemObjIDsKey]?.length > 0)
+                        throw new Error("did not expect children to have multi objects")
+    
+                    multiObjVector[ItemObjIDsKey] = <FieldPointVector<ObjIDsT, ObjIDsContainer>><FieldPointVectorContainerStatic<ObjIDsT>>new multiObjectsIDs.IDsType(sample_count)
+                    multiObjVector[ItemObjValuesOffsetsKey] = new Uint32Array(sample_count)
+    
+                    multiObjVector[ItemObjIDsKey].fill(<number>multiObjectsIDs.IDs)
+                    const offsets = multiObjVector[ItemObjValuesOffsetsKey]
+                    for (let i = 0; i < sample_count; i++)
+                        offsets[i] = i + 1
 
-                multiObjVector[ItemObjIDsKey].fill(<number>multiObjectsIDs.IDs)
-                const offsets = multiObjVector[ItemObjValuesOffsetsKey]
-                for (let i = 0; i < sample_count; i++)
-                    offsets[i] = i + 1
-
-                samples = <SampleVector>multiObjVector
+                    return <SampleVector>multiObjVector
+                })
             }
-            else samples = child_context[VectorSampleFunction](<ChildStemVectorDomain><unknown>sampleDomain, locations, child_context)
+            else {
+                samples = this.childContext<SampleVector>(context, key, child_context_ => {
+                    const child_context = child_context_ as typeof context & MultiObjectsLeafContext<
+                        Objects,
+                        ObjIDsT,
+                        ObjIDsContainer,
+                        SampleGroups,
+                        SampleGroupKinds,
+                        ContextGroups,
+                        ContextGroupKinds,
+                        Location,
+                        LocationElementType,
+                        LocationFuseMode,
+                        LocationContainer,
+                        LeafSample,
+                        SampleContainer,
+                        LeafContext,
+                        LeafDomain,
+                        LocationVector,
+                        LeafSampleVector
+                    >
+                
+                    return child_context[VectorSampleFunction](<ChildStemVectorDomain><unknown>sampleDomain, locations, child_context)
+                })
+            }
 
             return <[keyof Objects, SampleVector]>[key, samples]
         })
@@ -1351,26 +1413,31 @@ export class MultiObjectsSampleDomain<
             if (nonfused_samples.find(([key1]) => key === key1))
                 continue
 
-            for (const { group } of this.groupsMemoized.context) {
-                const context_original_group = group.get(context_original_groups)
-                const context_child_group = context_original_group[key]
-                group.set(child_context, context_child_group)
-            }
+            if (this.childrenFieldTypes[key] !== "leaf")
+                throw new Error()
+            
+            // for (const { group } of this.groupsMemoized.context) {
+            //     const context_original_group = group.get(context_original_groups)
+            //     const context_child_group = context_original_group[key]
+            //     group.set(child_context, context_child_group)
+            // }
 
-            multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
-            multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
+            // multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
+            // multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
 
-            child.sample_fused_objectCounts(objCounts, locations, <any>context, sampleType, fuseMode)
+            this.childContext<void>(context, key, child_context => {
+                child.sample_fused_objectCounts(objCounts, locations, <any>child_context, sampleType, fuseMode)
+            })
         }
 
         for (const [, samples] of nonfused_samples)
             addDeltas(objCounts, samples[ItemObjValuesOffsetsKey])
 
-        for (const { group } of this.groupsMemoized.context)
-            group.set(child_context, group.get(context_original_groups))
+        // for (const { group } of this.groupsMemoized.context)
+        //     group.set(child_context, group.get(context_original_groups))
 
-        multiObjectsIDs.template = multiObjectsIDs_original_template
-        multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
+        // multiObjectsIDs.template = multiObjectsIDs_original_template
+        // multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
     }
 
     sample_fused_results(
@@ -1403,34 +1470,6 @@ export class MultiObjectsSampleDomain<
         sampleType: FieldPointType<MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>>,
         fuseMode: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>,
     ): void {
-        const child_context = {
-            ...context,
-            [MultiObjectsSamplingContextParent]: {
-                item: this,
-                context
-            },
-            [EncapsulatingDomainSamplingContextParentContext]: context,
-            [EncapsulatingDomainSamplingContextParentDomain]: this
-        } as typeof context & MultiObjectsLeafContext<
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                SampleGroups,
-                SampleGroupKinds,
-                ContextGroups,
-                ContextGroupKinds,
-                Location,
-                LocationElementType,
-                LocationFuseMode,
-                LocationContainer,
-                LeafSample,
-                SampleContainer,
-                LeafContext,
-                LeafDomain,
-                LocationVector,
-                LeafSampleVector
-            >
-
         type ChildFusingSampleDomain = FusingVectorSampleDomain<
                 Location,
                 LocationElementType,
@@ -1469,15 +1508,6 @@ export class MultiObjectsSampleDomain<
 
         const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
 
-        const context_original_groups =
-            {} as MultiObjectsGroupedObjectsAndRegularValues<Objects, ContextGroups, LeafContext>
-
-        const multiObjectsIDs_original_template = multiObjectsIDs.template
-        const multiObjectsIDs_original_IDs = multiObjectsIDs.IDs
-
-        for (const { group } of this.groupsMemoized.context)
-            group.set(context_original_groups, group.get(context))
-
         const nonfused_sample_vectors = context[FusedSamplingNonfusedSamples].get(<any>this)!
 
         type SampleFusingVector = FusingFieldPointVectorWithMultiObjects<MultiObjectsGroupedObjectsAndRegularValuesType<Objects, SampleGroups, LeafSample>, ObjIDsT, SampleContainer, ObjIDsContainer>
@@ -1505,24 +1535,11 @@ export class MultiObjectsSampleDomain<
 
         for (const [key, child] of Reflect_entries<Record<keyof Objects, ChildFusingSampleDomain>>(<any>this.children)) {
             if (child.sample_fused_results) {
-                for (const { group } of this.groupsMemoized.context) {
-                    const context_original_group = group.get(context_original_groups)
-                    const context_child_group = context_original_group[key]
-                    group.set(child_context, context_child_group)
-                }
-
-                multiObjectsIDs.template = <any>multiObjectsIDs_original_template[key]
-                multiObjectsIDs.IDs = <any>multiObjectsIDs_original_IDs[key]
-
-                child.sample_fused_results(<SampleFusingVector>samples, locations, <any>context, sampleType, fuseMode)
+                this.childContext<void>(context, key, child_context =>
+                    child.sample_fused_results(<SampleFusingVector>samples, locations, <any>context, sampleType, fuseMode)
+                )
             }
         }
-
-        for (const { group } of this.groupsMemoized.context)
-            group.set(child_context, group.get(context_original_groups))
-
-        multiObjectsIDs.template = multiObjectsIDs_original_template
-        multiObjectsIDs.IDs = multiObjectsIDs_original_IDs
     }
 
     private static sample_vectorized<
@@ -1598,6 +1615,7 @@ export class MultiObjectsSampleDomain<
             SingularContext extends
                 MultiObjectsSamplingContext<
                         Objects,
+                        ObjIDsT,
                         ContextGroups,
                         ContextGroupKinds,
                         Location,
@@ -1607,6 +1625,7 @@ export class MultiObjectsSampleDomain<
                     > =
                 MultiObjectsSamplingContext<
                         Objects,
+                        ObjIDsT,
                         ContextGroups,
                         ContextGroupKinds,
                         Location,
@@ -1794,6 +1813,7 @@ export class MultiObjectsSampleDomain<
             SingularContext extends
                 MultiObjectsSamplingContext<
                         Objects,
+                        ObjIDsT,
                         ContextGroups,
                         ContextGroupKinds,
                         Location,
@@ -1803,6 +1823,7 @@ export class MultiObjectsSampleDomain<
                     > =
                 MultiObjectsSamplingContext<
                         Objects,
+                        ObjIDsT,
                         ContextGroups,
                         ContextGroupKinds,
                         Location,

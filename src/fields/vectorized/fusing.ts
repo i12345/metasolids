@@ -3,11 +3,11 @@ import { MultiObjectsCombinedValue, MultiObjectsIDs, MultiObjectsMapped, MultiOb
 import { Equalable, equals } from "../../utils/equals.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { Reflect_entries } from "../../utils/reflect-entries.js"
-import { NumberTypedArray } from "../../utils/typed-array.js"
+import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js"
 import { FieldPoint, FieldPointMapped, FieldPointPrimitive, FieldsPoint } from "../point.js"
 import { FieldPointType } from "../type.js"
 import { vectorIterator } from "./iterators/factory.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, FieldPointVectorWithMultiObjects, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new } from "./point.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjRoot, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new } from "./point.js"
 
 export const ItemNextObjectIndexKey = Symbol("nextObjectIndex")
 
@@ -410,6 +410,35 @@ export function fuseVectors<
 
         if (multiObjectIDs)
             results[ItemNextObjectIndexKey] = <ObjIDsT>new multiObjectIDs.IDsType(length).fill(0)
+    }
+
+    if (updateNextIndices) {
+        const results_objIndices_next = typedArrayClone(results[ItemNextObjectIndexKey])
+        const results_objOffsets = results[ItemObjValuesOffsetsKey]
+        const results_objIDs = results[ItemObjIDsKey]
+
+        for (const vector of vectors) {
+            const vector_multiObj = <FieldPointVectorWithMultiObjects<PointElementType, Container, ObjIDsT, ObjIDsContainer>><unknown>vector
+            const vector_objOffsets = vector_multiObj[ItemObjValuesOffsetsKey]
+            const vector_objIDs = vector_multiObj[ItemObjIDsKey]
+            if (vector_objOffsets) {
+                let vector_objOffset_prev = 0
+                let vector_objOffset_next: number
+
+                let results_objOffset_prev = 0
+                let results_objOffset_insert: number
+                for (let item = 0; item < length; item++) {
+                    vector_objOffset_next = vector_objOffsets[item]
+                    results_objOffset_insert = results_objOffset_prev + results_objIndices_next[item]
+
+                    results_objIndices_next[item] += vector_objOffset_next - vector_objOffset_prev
+                    while (vector_objOffset_prev < vector_objOffset_next)
+                        results_objIDs[results_objOffset_insert++] = vector_objIDs[vector_objOffset_prev++]
+
+                    results_objOffset_prev = results_objOffsets[item]
+                }
+            }
+        }
     }
 
     const resultWithRoot: FieldPointVectorWithMultiObjRoot<ResultElementType, Container, FieldPointVector<ResultElementType, Container>, ObjIDsT, ObjIDsContainer, FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>> = {

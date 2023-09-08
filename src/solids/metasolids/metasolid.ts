@@ -160,10 +160,12 @@ export interface MetaSolidVolumeSamplingContext<
 
 export type MetaSolidVolumeMultiObjectsInternalPreservedGroups = {
     [MetaSolidSamplingContext_Texture]: MultiObjectsGroupsTemplateLeaf
+    [MetaSolidSamplingContext_Volume]: MultiObjectsGroupsTemplateLeaf
 }
 
 export const MetaSolidVolumeMultiObjectsInternalPreservedGroupsTemplate: MetaSolidVolumeMultiObjectsInternalPreservedGroups = {
-    [MetaSolidSamplingContext_Texture]: MultiObjectsGroupsTemplate_Leaf
+    [MetaSolidSamplingContext_Texture]: MultiObjectsGroupsTemplate_Leaf,
+    [MetaSolidSamplingContext_Volume]: MultiObjectsGroupsTemplate_Leaf,
 }
 
 export interface MetaSolidShapeSamplingContext<

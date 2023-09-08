@@ -73,13 +73,13 @@ describe("playcanvas-node", () => {
 
             const component1 = entity1.addComponent(physicalEntity.SYSTEM_ID)! as physicalEntity.Component
             component1.volumeSamplingSettings = {
-                max_depth: 4,
+                max_depth: 6,
                 indicesType: Uint32Array,
                 recommendation_threshold: 1
             }
 
             const components = [component1]
-            for (let i = 1; 1 < number_entities; i++) {
+            for (let i = 1; i < number_entities; i++) {
                 const entityN = new Entity(`Entity ${i}`)
                 const componentN = entityN.addComponent(physicalEntity.SYSTEM_ID)! as physicalEntity.Component
                 components.push(componentN)
@@ -107,26 +107,26 @@ describe("playcanvas-node", () => {
     testShape("one sphere", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
     })
-    return
 
-    testShape("multiple spheres", 2, (entity1, component1, component2/*, component3, component4 */) => {
+    testShape("multiple spheres", 4, (entity1, component1, component2, component3, component4) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
         component2.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-        // component3.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-        // component4.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
+        component3.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
+        component4.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
 
         entity1.addChild(component2.entity)
-        component2.entity.setLocalPosition(0.75, 0.1, 0)
+        component2.entity.setLocalPosition(0, 1, 0)
         
-        // entity1.addChild(component3.entity)
-        // component3.entity.setLocalPosition(0.4, 0, 0)
+        entity1.addChild(component3.entity)
+        component3.entity.setLocalPosition(1, 1, 2)
         // component3.entity.setLocalScale(0.1, 1.4, 1.4)
 
-        // entity1.addChild(component4.entity)
-        // component4.entity.setLocalPosition(0.2, 0, 1.5)
+        entity1.addChild(component4.entity)
+        component4.entity.setLocalPosition(1, 1, 0)
         // component4.entity.setLocalScale(0.8, 0.8, 0.6)
     })
 
+    return
     testShape("plane", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaPlane({ offset: Vec2.ZERO, size: Vec2.ONE })) as unknown as physicalEntity.VolumeT
     })

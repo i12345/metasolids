@@ -105,7 +105,7 @@ export type FieldPointVectorWithMultiObjects<
     > = FieldPointVector<ElementType, Container> & {
     //TODO: this does not support dynamic indices
     [ItemObjValuesOffsetsKey]: Uint32Array
-    [ItemObjIDsKey]: FieldPointVector<ObjIDsT, ObjIDsContainer>
+    [ItemObjIDsKey]: ObjIDsContainer
 }
 
 export function field_point_vector_multi_objs_static_length<
@@ -205,8 +205,15 @@ export function field_point_vectorized_multi_objects_new<
     const result = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>field_point_vectorized_new(type, length, isDynamic, objectValuesStaticLength)
 
     if (objIDsType) {
-        result[ItemObjIDsKey] = <FieldPointVector<ObjIDsT, ObjIDsContainer>>((isDynamic || (objectValuesStaticLength === undefined)) ? new TypedArrayList<number, ObjIDsT>(<any>objIDsType!) : new objIDsType(objectValuesStaticLength))
-        result[ItemObjValuesOffsetsKey] = new Uint32Array(length).fill(invalidIndex(objIDsType))
+        const objID_invalid = invalidIndex(objIDsType)
+        if (isDynamic || (objectValuesStaticLength === undefined)) {
+            const objIDs = new TypedArrayList<number, ObjIDsT>(<any>objIDsType!)
+            objIDs.defaultValue = objID_invalid
+            result[ItemObjIDsKey] = <ObjIDsContainer>objIDs
+        }
+        else result[ItemObjIDsKey] = <ObjIDsContainer>new objIDsType(objectValuesStaticLength).fill(objID_invalid)
+        
+        result[ItemObjValuesOffsetsKey] = new Uint32Array(length).fill(invalidIndex(Uint32Array))
     }
 
     return result

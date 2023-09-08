@@ -113,7 +113,7 @@ export abstract class Component<
         instance: this._processing_instance_changed,
     })
 
-    private _root: Component<SharedT, InstanceT, ContextT, ID>
+    private _root: Component<SharedT, InstanceT, ContextT, ID> = this.findRoot()
     private _makeRoot = false
 
     get root() {
@@ -126,7 +126,7 @@ export abstract class Component<
 
     set makeRoot(makeRoot) {
         this._makeRoot = makeRoot
-        this._root = this.findRoot()
+        this.updateRoot()
     }
 
     get isRoot() {
@@ -138,13 +138,13 @@ export abstract class Component<
         entity: Entity
     ) {
         super(system, entity)
-
-        this._root = this.findRoot()
+        this.updateRoot()
     }
 
     protected abstract initializeProcessingFromRaw(): ProcessingPair<SharedT, ContextT>
 
     processFromRaw() {
+        this.updateRoot()
         if (!this.isRoot)
             throw new Error("Non-root component cannot process from raw")
 
@@ -190,8 +190,9 @@ export abstract class Component<
     }
 
     onEnable(): void {
+        this.updateRoot()
         if (!this.isRoot)
-            throw new Error("Enabling/disabling non-root component has no effect")
+            return
 
         type SystemT = ComponentSystem<
             SharedT,
@@ -207,8 +208,9 @@ export abstract class Component<
     }
 
     onDisable(): void {
+        this.updateRoot()
         if (!this.isRoot)
-            throw new Error("Enabling/disabling non-root component has no effect")
+            return
 
         type SystemT = ComponentSystem<
             SharedT,
@@ -271,6 +273,11 @@ export abstract class Component<
             system.combinedInstancers.set_enabled(newValue, true)
     }
 
+    protected updateRoot() {
+        this._root = undefined!
+        this._root = this.findRoot()
+    }
+
     private findRoot() {
         type SystemT = ComponentSystem<
             SharedT,
@@ -287,7 +294,7 @@ export abstract class Component<
         for (let entity: GraphNode = this.entity; entity !== entity.root; entity = entity.parent) {
             if (entity instanceof Entity) {
                 const entity_component = entity.c[system.id] as Component<SharedT, InstanceT, ContextT, ID>
-                if (entity_component)
+                if (entity_component && entity_component.root !== undefined)
                     return entity_component.root
             }
         }

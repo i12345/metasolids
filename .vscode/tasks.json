@@ -2,19 +2,21 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "npm run pretest",
-            "type": "shell",
-            "command": "npm run pretest",
-            "problemMatcher": [
-                "$tsc"
-            ]
-        },
-        {
             "type": "npm",
             "script": "pretest",
             "problemMatcher": ["$tsc"],
             "label": "npm: pretest",
-            "detail": "npm run build:debug"
+            "detail": "npm run build:debug",
+            "presentation": {
+                "echo": true,
+                "close": true,
+                "reveal": "silent",
+                "revealProblems": "onProblem",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": false
+            }
         }
     ]
 }

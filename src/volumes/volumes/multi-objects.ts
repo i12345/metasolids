@@ -86,6 +86,7 @@ export class MultiObjectsVolume<
         SingularContext extends
             MultiObjectsSamplingContext<
                     Objects,
+                    ObjIDsT,
                     ContextGroups,
                     ContextGroupKinds,
                     Location,
@@ -95,6 +96,7 @@ export class MultiObjectsVolume<
                 > =
             MultiObjectsSamplingContext<
                     Objects,
+                    ObjIDsT,
                     ContextGroups,
                     ContextGroupKinds,
                     Location,
@@ -195,7 +197,7 @@ export class MultiObjectsVolume<
         return context[VolumeSampleKey]
     }
 
-    init(context: MultiObjectsSamplingContext<Objects, ContextGroups, ContextGroupKinds, Location, LeafContext>): void {
+    init(context: MultiObjectsSamplingContext<Objects, ObjIDsT, ContextGroups, ContextGroupKinds, Location, LeafContext>): void {
         super.init(context)
 
         this.boundingBox = undefined!
