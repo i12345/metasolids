@@ -8,6 +8,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStat
 import { VectorSampleDomain, VectorSamplingContext } from "./vector.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
 import { FieldPointType } from "../type.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 
 export const FusedVectorSamplingKey = Symbol("fused-vector-sampling")
 
@@ -284,10 +285,51 @@ export class FusingVectorSampleDomainFacade<
             LocationVector,
             SampleVector,
             Context
-        > {
+        >,
+    Cloneable<FusingVectorSampleDomainFacade<
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        Sample,
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        SingularContext,
+        LocationVector,
+        SampleVector,
+        Context,
+        Inner
+    >> {
     get field() { return this.inner.field }
 
     constructor(public readonly inner: Inner) {}
+
+    [clone]() {
+        return new FusingVectorSampleDomainFacade<
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                Sample,
+                SampleElementType,
+                SampleFuseMode,
+                SampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                SingularContext,
+                LocationVector,
+                SampleVector,
+                Context,
+                Inner
+            >(
+                makeClone(this.inner),
+            )
+    }
 
     init(context: Context): void {
         this.inner.init(context)

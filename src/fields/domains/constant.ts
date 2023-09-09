@@ -7,6 +7,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, fie
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from '../../paradigm/trees/index.js'
 import { IndicesTypedArray } from '../../utils/indices-array.js'
 import { vectorIterator } from '../vectorized/iterators/factory.js'
+import { Cloneable, clone, makeClone } from '../../utils/cloneable.js'
 
 export class ConstantSampleDomain<
         Location extends FieldPoint = FieldPoint,
@@ -27,11 +28,35 @@ export class ConstantSampleDomain<
         SampleElementType,
         SampleFuseMode,
         Context
-    > {
+    >,
+    Cloneable<ConstantSampleDomain<
+        Location,
+        Sample,
+        LocationElementType,
+        LocationFuseMode,
+        SampleElementType,
+        SampleFuseMode,
+        Context
+    >> {
     constructor(
         public value: Sample,
         public field: Field<Sample, SampleElementType, SampleFuseMode>
     ) { }
+
+    [clone]() {
+        return new ConstantSampleDomain<
+                Location,
+                Sample,
+                LocationElementType,
+                LocationFuseMode,
+                SampleElementType,
+                SampleFuseMode,
+                Context
+            >(
+                makeClone(this.value),
+                makeClone(this.field),
+            )
+    }
 
     init(context: Context): void {}
 

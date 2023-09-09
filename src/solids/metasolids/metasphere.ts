@@ -9,6 +9,7 @@ import { VolumeSolidsKey } from "../volume-solids.js";
 import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/multi-objects-groups.js";
 import { MultiObjectsInfluencesGroupsDefault } from "../../fields/multi-objects.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vector_fill, field_point_vectorized_new } from "../../fields/vectorized/point.js";
+import { Cloneable, clone } from "../../utils/cloneable.js";
 
 export class MetaSphere<
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
@@ -37,9 +38,32 @@ export class MetaSphere<
         TextureContext,
         VolumeContext,
         Context
-    > {
+    >,
+    Cloneable<MetaSphere<
+        InfluenceGroup,
+        TxLocation,
+        TxSample,
+        Location,
+        Sample,
+        OuterSampleProcessingContextT,
+        TextureContext,
+        VolumeContext
+    >> {
     readonly boundingBox = new BoundingBox()
     readonly field = MetaSolidVolume.defaultFields.sample as FieldsField<Sample>
+
+    [clone]() {
+        return new MetaSphere<
+            InfluenceGroup,
+            TxLocation,
+            TxSample,
+            Location,
+            Sample,
+            OuterSampleProcessingContextT,
+            TextureContext,
+            VolumeContext
+        >()
+    }
 
     sample(location: Location, context: Context): Sample {
         const theta = Math.atan2(location.p.y, location.p.x)

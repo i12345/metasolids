@@ -18,6 +18,7 @@ import { vectorized } from "vectorized-functions";
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
 import { onlyOne } from "../../utils/only-one.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 
 export type MetaSolidLocation = VolumeLocation
 
@@ -361,7 +362,23 @@ export class MetaSolidVolume<
         MetaSolidVolumeSample<TxSample, InnerSample>,
         VolumeSampleProcessingContextT,
         VolumeContext
-    > {
+    >,
+    Cloneable<MetaSolidVolume<
+        InfluenceGroup,
+        Location,
+        TxLocation,
+        TxSample,
+        InnerSample,
+        VolumeSampleProcessingContextT,
+        TextureContext,
+        VolumeContext,
+        Context,
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        LocationContainer,
+        SampleContainer
+    >> {
     protected readonly transformsLocation = false
     protected readonly transformsSample = true
     
@@ -413,6 +430,29 @@ export class MetaSolidVolume<
             public influenceGroup?: InfluenceGroup
         ) {
         super(shape)
+    }
+
+    [clone]() {
+        return new MetaSolidVolume<
+                InfluenceGroup,
+                Location,
+                TxLocation,
+                TxSample,
+                InnerSample,
+                VolumeSampleProcessingContextT,
+                TextureContext,
+                VolumeContext,
+                Context,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                LocationContainer,
+                SampleContainer
+            >(
+                makeClone(this.shape),
+                makeClone(this.texture),
+                makeClone(this.influenceGroup),
+            )
     }
 
     override init(context: VolumeContext): void {

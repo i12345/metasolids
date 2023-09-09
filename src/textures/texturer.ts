@@ -187,21 +187,19 @@ export abstract class Texturer<
                 TextureSamplingContextT
             >
     > {
-    readonly mappings: {
-        inputs: MultiObjectsGroupsMapped<Inputs, PropertyPath>,
-        outputs: MultiObjectsGroupsMapped<Outputs, PropertyPath>,
-    }
-
     constructor(
         public readonly templates: {
             inputs: Inputs,
             outputs: Outputs,
-        }
-    ) {
-        this.mappings = {
+        },
+        public readonly mappings: {
+            inputs: MultiObjectsGroupsMapped<Inputs, PropertyPath>,
+            outputs: MultiObjectsGroupsMapped<Outputs, PropertyPath>,
+        } = {
             inputs: mapGroups(templates.inputs, () => undefined!),
             outputs: mapGroups(templates.outputs, () => undefined!),
         }
+    ) {
     }
 
     //TODO: replace with texturetemplated<> it will be major refactoring

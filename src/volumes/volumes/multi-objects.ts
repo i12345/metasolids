@@ -2,7 +2,7 @@ import { BoundingBox } from 'playcanvas-extended'
 import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, groups, groupKinds, MultiObjectsGroupsProcessingContext } from "../../paradigm/trees/index.js"
 import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKinds, Field, SampleDomain, SamplingContext } from '../../fields/index.js'
 import { Volume, VolumeLocation, VolumeSample, VolumeSampleKey, VolumeSamplingContext } from '../volume.js'
-import { GeneratorType, IndicesTypedArray, onlyOne } from '../../utils/index.js'
+import { Cloneable, GeneratorType, IndicesTypedArray, clone, makeClone, onlyOne } from '../../utils/index.js'
 import { MultiObjectsSamplingContext, MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsSampleDomain, MultiObjectsSampleFuseMode, MultiObjectsLeafContext, MultiObjectsLeafSample, MultiObjectsSampleElementType, MultiObjectsSample } from '../../fields/domains/index.js'
 import { VolumeWithBoundingBox } from './bounded.js'
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, FuseMode } from '../../fields/vectorized/index.js'
@@ -153,7 +153,29 @@ export class MultiObjectsVolume<
         LeafSampleVector,
         SampleVector
     >
-    // implements VolumeWithBoundingBox<
+    implements Cloneable<MultiObjectsVolume<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        SampleGroups,
+        SampleGroupKinds,
+        ContextGroups,
+        ContextGroupKinds,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        SampleProcessingContextT,
+        LeafSample,
+        SampleContainer,
+        LeafContext,
+        LeafDomain,
+        SingularContext,
+        LocationVector,
+        LeafSampleVector,
+        SampleVector
+    >>
+    // VolumeWithBoundingBox<
     //     Location,
     //     LocationElementType,
     //     LocationFuseMode,
@@ -181,7 +203,7 @@ export class MultiObjectsVolume<
                 groupKindsTemplate: ContextGroupKinds,
                 groupsTemplate?: ContextGroups
             },
-            sample: {
+            sample?: {
                 groupKindsTemplate: SampleGroupKinds,
                 groupsTemplate?: SampleGroups
             }
@@ -191,6 +213,37 @@ export class MultiObjectsVolume<
         fuseMode?: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>
     ) {
         super(children as any, multiObj, childField, fuseMode)
+    }
+
+    [clone]() {
+        return new MultiObjectsVolume<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                SampleGroups,
+                SampleGroupKinds,
+                ContextGroups,
+                ContextGroupKinds,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                SampleProcessingContextT,
+                LeafSample,
+                SampleContainer,
+                LeafContext,
+                LeafDomain,
+                SingularContext,
+                LocationVector,
+                LeafSampleVector,
+                SampleVector
+            >(
+                <any>makeClone(this.children),
+                makeClone(this.multiObj),
+                makeClone(this.childField),
+                makeClone(this.influenceGroup),
+                makeClone(this.fuseMode),
+            )
     }
 
     protected override sampleContext(context: any): MultiObjectsGroupsProcessingContext<SampleGroups, SampleGroupKinds> {

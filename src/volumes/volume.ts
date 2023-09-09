@@ -32,7 +32,8 @@ export type VolumeSample = {
 }
 
 export const defaultVolumeSampleField = new FieldsField<VolumeSample>({
-    alpha: new ScalarField(<FuseMode<number>>fuseModes.ArithmeticPrimitiveFuseMode.max),
+    alpha: ScalarField.instance,
+    // alpha: new ScalarField(<FuseMode<number>>fuseModes.ArithmeticPrimitiveFuseMode.max),
     gradient: Vec3Field.instance,
 })
 

@@ -1,4 +1,4 @@
-import { AppBase } from "playcanvas-extended"
+import { AppBase, Entity, Component as pc_Component } from "playcanvas-extended"
 import { fields, solids, surfaces, textures, volumes } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js"
 import { InfluenceGroupTemplate, InterpolatingGroupsKindsTemplate, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessorT, VolumeSurfaceProcessorT } from "./types.js"
@@ -6,6 +6,7 @@ import { Component } from "./component.js"
 import { ComponentData } from "./data.js"
 import { StorageService } from "../storage/index.js"
 import { MultiObjectsInfluencesGroupKindsTemplate } from "../fields/multi-objects.js"
+import { makeClone } from "../utils/cloneable.js"
 
 export const SYSTEM_ID = 'physical-entity'
 
@@ -95,5 +96,35 @@ export class ComponentSystem<ID = string>
             instancers,
             storage
         )
+    }
+
+    initializeComponentData(component: Component<ID>, data: ComponentData<ID>, properties: any) {
+        super.initializeComponentData(component, data, properties)
+        component.volume = data.volume
+        component.texturers = data.texturers
+        component.interpolatingGroups = data.interpolatingGroups
+        component.extraLocationParameters = data.extraLocationParameters
+        component.volumeSamplingSettings = data.volumeSamplingSettings
+        component.surfaceLevel = data.surfaceLevel
+    }
+
+    cloneComponent(entity: Entity, clone: Entity): pc_Component {
+        const component = entity.c[this.id] as Component<ID>
+
+        const data: ComponentData<ID> = {
+            enabled: component.enabled,
+            makeRoot: component.makeRoot,
+            id: component.processing.id,
+            volume: makeClone(component.volume),
+
+            //TODO: these should be shared
+            texturers: component.texturers,
+            interpolatingGroups: component.interpolatingGroups,
+            extraLocationParameters: component.extraLocationParameters,
+            volumeSamplingSettings: component.volumeSamplingSettings,
+            surfaceLevel: component.surfaceLevel,
+        }
+
+        return this.addComponent(clone, data)
     }
 }

@@ -1,10 +1,15 @@
 import { Vec3 } from "playcanvas-extended";
 import { Field } from "../../fields/field.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext, defaultVolumeSampleField } from "../volume.js";
+import { Cloneable, clone } from "../../utils/cloneable.js";
 
-export class HalfspaceVolume implements Volume {
-    readonly field: Field<VolumeSample> = defaultVolumeSampleField
+export class HalfspaceVolume implements Volume, Cloneable<HalfspaceVolume> {
+    readonly field: Field<VolumeSample> = defaultVolumeSampleField;
 
+    [clone](): HalfspaceVolume {
+        return new HalfspaceVolume()
+    }
+    
     init(context: VolumeSamplingContext<VolumeLocation, any>): void {
     }
 

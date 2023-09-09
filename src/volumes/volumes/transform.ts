@@ -11,6 +11,7 @@ import { vectorIterator } from '../../fields/vectorized/iterators/factory.js'
 import { vectorized } from 'vectorized-functions'
 import { FieldsField } from '../../fields/fields/fields.js'
 import { FieldPointType } from '../../fields/type.js'
+import { Cloneable, clone, makeClone } from '../../utils/cloneable.js'
 
 export class TransformVolume<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -139,7 +140,26 @@ export class TransformVolume<
         SampleFuseMode,
         SampleProcessingContextT,
         Context
-    > {
+    >,
+    Cloneable<TransformVolume<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        Sample,
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
+        SampleProcessingContextT,
+        Context,
+        LocationVector,
+        SampleVector,
+        VectorContext,
+        VolumeT
+    >> {
     private transformInverse = new Mat4()
     readonly boundingBox = new BoundingBox(new Vec3(NaN, NaN, NaN), new Vec3(NaN, NaN, NaN))
 
@@ -151,6 +171,31 @@ export class TransformVolume<
         public transform: Mat4
     ) {
         super(inner)
+    }
+
+    [clone]() {
+        return new TransformVolume<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                Sample,
+                SampleElementType,
+                SampleFuseMode,
+                SampleContainer,
+                SampleProcessingContextT,
+                Context,
+                LocationVector,
+                SampleVector,
+                VectorContext,
+                VolumeT
+            >(
+                makeClone(this.inner),
+                makeClone(this.transform),
+            )
     }
 
     init(context: Context) {

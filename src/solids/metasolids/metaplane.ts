@@ -8,6 +8,7 @@ import { FieldsField } from "../../fields/fields/fields.js";
 import { SignField } from "../../fields/fields/sign.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/index.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 
 export type MetaPlaneSample = MetaSolidSample & {
     side: Sign
@@ -40,7 +41,17 @@ export class MetaPlane<
         TextureContext,
         VolumeContext,
         Context
-    > {
+    >,
+    Cloneable<MetaPlane<
+        InfluenceGroup,
+        TxLocation,
+        TxSample,
+        Location,
+        Sample,
+        OuterSampleProcessingContextT,
+        TextureContext,
+        VolumeContext
+    >> {
     readonly boundingBox = new BoundingBox()
     readonly field = FieldsField.merge<Sample>(
         MetaSolidVolume.defaultFields.sample as FieldsField<Sample>,
@@ -58,6 +69,21 @@ export class MetaPlane<
                 size: new Vec2(2, 2)
             }
         ) { }
+
+    [clone]() {
+        return new MetaPlane<
+                InfluenceGroup,
+                TxLocation,
+                TxSample,
+                Location,
+                Sample,
+                OuterSampleProcessingContextT,
+                TextureContext,
+                VolumeContext
+            >(
+                makeClone(this.maxDomain),
+            )
+    }
 
     init(context: Context): void {
         const texture = context[MetaSolidSamplingContext_Texture]?.item

@@ -1,4 +1,5 @@
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
@@ -100,7 +101,24 @@ export class LocationFieldObserverSampleDomain<
         LocationVector,
         SampleVector,
         VectorContext
-    > {
+    >
+    implements Cloneable<LocationFieldObserverSampleDomain<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        Sample,
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
+        Context,
+        LocationVector,
+        SampleVector,
+        VectorContext
+    >> {
     private _locationField?: Field<Location, LocationElementType, LocationFuseMode>
 
     get locationField() {
@@ -120,6 +138,28 @@ export class LocationFieldObserverSampleDomain<
             Context
         >) {
         super(inner)
+    }
+
+    [clone]() {
+        return new LocationFieldObserverSampleDomain<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                Sample,
+                SampleElementType,
+                SampleFuseMode,
+                SampleContainer,
+                Context,
+                LocationVector,
+                SampleVector,
+                VectorContext
+            >(
+                makeClone(this.inner),
+            )
     }
 
     protected override init_location_field(context: Context): Field<Location, LocationElementType, LocationFuseMode> {

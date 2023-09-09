@@ -1,4 +1,5 @@
 import { MultiObjectsTemplate, extract, intract } from "../../paradigm/trees/index.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SampleDomain, SamplingContext } from "../domain.js";
 import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_equal, field_point_map, field_point_modulo, field_point_multiply } from "../point.js";
@@ -99,7 +100,25 @@ export class RepeatingSampleDomain<
         LocationVector,
         SampleVector,
         VectorContext
-    > {
+    >
+    implements
+    Cloneable<RepeatingSampleDomain<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        Sample,
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
+        Context,
+        LocationVector,
+        SampleVector,
+        VectorContext
+    >> {
     private size_double!: Location
 
     protected readonly transformsLocation = true
@@ -111,6 +130,30 @@ export class RepeatingSampleDomain<
         public mirror: FieldPointMapped<FieldPointNumbers<Location>, boolean>
     ) {
         super(inner)
+    }
+
+    [clone]() {
+        return new RepeatingSampleDomain<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                Sample,
+                SampleElementType,
+                SampleFuseMode,
+                SampleContainer,
+                Context,
+                LocationVector,
+                SampleVector,
+                VectorContext
+            >(
+                makeClone(this.inner),
+                makeClone(this.size),
+                makeClone(this.mirror),
+            )
     }
 
     override init(context: Context): void {

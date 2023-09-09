@@ -99,7 +99,6 @@ describe("playcanvas-node", () => {
 
             setup(entity1, ...components)
 
-            component1.makeRoot = true
             component1.processFromRaw()
         })
     }

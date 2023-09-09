@@ -10,6 +10,7 @@ import { addDeltas } from "../../utils/typed-array.js";
 import { FuseMode, FusingFieldPointVectorWithMultiObjects, fuseVectors } from "../vectorized/fusing.js";
 import { FieldPointType } from "../type.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
+import { Cloneable, clone } from "../../utils/cloneable.js";
 
 export class IdentityDomain<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -85,7 +86,19 @@ export class IdentityDomain<
         LocationSampleVector,
         LocationSampleVector,
         VectorContext
-    > {
+    >,
+    Cloneable<IdentityDomain<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        LocationSample,
+        LocationSampleElementType,
+        LocationSampleFuseMode,
+        LocationSampleContainer,
+        Context,
+        LocationSampleVector,
+        VectorContext
+    >> {
     private _field!: Field<LocationSample, LocationSampleElementType, LocationSampleFuseMode>
 
     get field() {
@@ -93,6 +106,21 @@ export class IdentityDomain<
     }
 
     constructor() { }
+
+    [clone]() {
+        return new IdentityDomain<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                LocationSample,
+                LocationSampleElementType,
+                LocationSampleFuseMode,
+                LocationSampleContainer,
+                Context,
+                LocationSampleVector,
+                VectorContext
+            >()
+    }
 
     init(context: Context): void {
         this._field = context[SampleDomainLocationFieldKey]

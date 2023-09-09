@@ -7,6 +7,7 @@ import { Vec3Field } from "../../../fields/fields/vec3.js";
 import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../../fields/vectorized/index.js";
+import { Cloneable, clone } from "../../../utils/cloneable.js";
 
 export class OpenSimplexNoiseVolume<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -99,7 +100,22 @@ export class OpenSimplexNoiseVolume<
         VolumeSampleContainer,
         SeededSamplingContext<Vec3>
     >
-    implements Volume {
+    implements Volume,
+    Cloneable<OpenSimplexNoiseVolume<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
+        VolumeLocationContainer,
+        VolumeSampleContainer,
+        SampleProcessingContextT,
+        ContextT,
+        LocationVector,
+        SampleVector,
+        VectorContext
+    >> {
     private _version!: keyof typeof openSimplex[3]
 
     protected readonly transformsLocation = true
@@ -119,6 +135,26 @@ export class OpenSimplexNoiseVolume<
     ) {
         super(undefined!)
         this.version = version
+    }
+    
+    [clone]() {
+        return new OpenSimplexNoiseVolume<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                VolumeLocationT,
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
+                VolumeLocationContainer,
+                VolumeSampleContainer,
+                SampleProcessingContextT,
+                ContextT,
+                LocationVector,
+                SampleVector,
+                VectorContext
+            >(
+                this._version,
+            )
     }
 
     readonly field = defaultVolumeSampleField

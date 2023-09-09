@@ -205,6 +205,9 @@ export abstract class Component<
 
         if (this.processing.instance)
             system.combinedInstancers.set_enabled(this.processing.instance, true)
+
+        this.entity.on('insert', this.entity_inserted, this)
+        this.entity.on('inserthierarchy', this.entity_inserted, this)
     }
 
     onDisable(): void {
@@ -223,6 +226,13 @@ export abstract class Component<
 
         if (this.processing.instance)
             system.combinedInstancers.set_enabled(this.processing.instance, false)
+
+        this.entity.off('insert', this.entity_inserted, this)
+        this.entity.off('inserthierarchy', this.entity_inserted, this)
+    }
+
+    private entity_inserted(parent: Entity) {
+        this.updateRoot()
     }
 
     private async _processing_id_changed(oldValue: ID | undefined, newValue: ID | undefined) {

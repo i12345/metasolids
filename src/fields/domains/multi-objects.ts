@@ -1,4 +1,4 @@
-import { GeneratorType, IndicesTypedArray, Reflect_entries, Reflect_fromEntries, addDeltas, clone } from "../../utils/index.js"
+import { Cloneable, GeneratorType, IndicesTypedArray, Reflect_entries, Reflect_fromEntries, addDeltas, clone, makeClone } from "../../utils/index.js"
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js"
 import { Field } from "../field.js"
 import { FieldsField } from "../fields/fields.js"
@@ -629,7 +629,28 @@ export class MultiObjectsSampleDomain<
             ContextGroupKinds,
             LeafContext
         >
-    > {
+    >,
+    Cloneable<MultiObjectsSampleDomain<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        SampleGroups,
+        SampleGroupKinds,
+        ContextGroups,
+        ContextGroupKinds,
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        LeafSample,
+        SampleContainer,
+        LeafContext,
+        LeafDomain,
+        SingularContext,
+        LocationVector,
+        LeafSampleVector,
+        SampleVector
+    >> {
     field!: Field<
             MultiObjectsSample<Objects, SampleGroups, LeafSample>,
             MultiObjectsSampleElementType<Objects, SampleGroups, LeafSample>,
@@ -667,6 +688,35 @@ export class MultiObjectsSampleDomain<
         public readonly childField: Field<LeafSample>,
         public readonly fuseMode?: FuseMode<MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>>,
     ) { }
+
+    [clone]() {
+        return new MultiObjectsSampleDomain<
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                SampleGroups,
+                SampleGroupKinds,
+                ContextGroups,
+                ContextGroupKinds,
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                LeafSample,
+                SampleContainer,
+                LeafContext,
+                LeafDomain,
+                SingularContext,
+                LocationVector,
+                LeafSampleVector,
+                SampleVector
+            >(
+                makeClone(this.children),
+                makeClone(this.multiObj),
+                makeClone(this.childField),
+                makeClone(this.fuseMode),
+            )
+    }
 
     isCompositeArithmetic(...ops: ArithmeticPrimitiveFuseModeOp[]): boolean {
         const fuseMode = (this.fuseMode ?? this.field.fuseMode)

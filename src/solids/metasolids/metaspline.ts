@@ -12,6 +12,7 @@ import { VolumeSurfacesKey, meshing } from "../../surfaces/index.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { ScalarField } from "../../fields/fields/scalar.js";
 import { FuseMode, fuseModes } from "../../fields/vectorized/index.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 
 export type MetaSplineSegmentFigureLocation<Location extends MetaSolidLocation = MetaSolidLocation> =
     { theta: number, phi: number } //& MetaSolidLocationExtraFields<Location>
@@ -228,7 +229,17 @@ export class MetaSplineSegment<
             TextureContext,
             VolumeContext
         >
-    > {
+    >,
+    Cloneable<MetaSplineSegment<
+        InfluenceGroup,
+        TxLocation,
+        TxSample,
+        Location,
+        Sample,
+        OuterSampleProcessingContextT,
+        TextureContext,
+        VolumeContext
+    >> {
     field!: Field<Sample>
     private emptySample!: Sample
 
@@ -237,6 +248,22 @@ export class MetaSplineSegment<
         public figure: MetaSplineSegmentFigure<Location, Sample>,
         public t_offset: number = 1
     ) {
+    }
+
+    [clone]() {
+        return new MetaSplineSegment<
+                InfluenceGroup,
+                TxLocation,
+                TxSample,
+                Location,
+                Sample,
+                OuterSampleProcessingContextT,
+                TextureContext,
+                VolumeContext
+            >(
+                makeClone(this.figure),
+                this.t_offset,
+            )
     }
 
     private readonly spline_potential: MetaSpline<InfluenceGroup, TxLocation, TxSample, Location, Sample, OuterSampleProcessingContextT, TextureContext, VolumeContext>[] = []

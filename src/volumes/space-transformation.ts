@@ -1,12 +1,18 @@
 import { GraphNode, Mat4 } from "playcanvas-extended"
+import { Cloneable, clone } from "../utils/cloneable.js"
 
 export interface SpaceTransformation {
     transform(points: Float32Array): void
 }
 
 export class WorldSpaceTransformation
-    implements SpaceTransformation {
+    implements SpaceTransformation,
+    Cloneable<WorldSpaceTransformation> {
     constructor(public readonly world = new Mat4()) { }
+
+    [clone]() {
+        return new WorldSpaceTransformation(this.world.clone())
+    }
 
     transform(points: Float32Array): void {
         const [
@@ -29,9 +35,14 @@ export class WorldSpaceTransformation
 }
 
 export class GraphNodeWorldSpaceTransformation
-    extends WorldSpaceTransformation {
+    extends WorldSpaceTransformation
+    implements Cloneable<GraphNodeWorldSpaceTransformation> {
     constructor(public readonly node: GraphNode) {
         super(node.getWorldTransform())
+    }
+
+    [clone]() {
+        return new GraphNodeWorldSpaceTransformation(this.node)
     }
 
     override transform(points: Float32Array): void {

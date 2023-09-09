@@ -409,7 +409,7 @@ export abstract class TransformingSampleDomain<
             InnerSampleFuseMode,
             InnerContext
         >) { }
-
+    
     field!: Field<OuterSample, OuterSampleElementType, OuterSampleFuseMode>
     private location_field!: Field<InnerLocation, InnerLocationElementType, InnerLocationFuseMode>
 

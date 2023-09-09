@@ -7,6 +7,7 @@ import { FieldInterpolationKeypoint, FieldInterpolator, InterpolationManager, ma
 import { FieldPoint } from "../point.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, IsDynamicVector } from "../vectorized/index.js";
 import { VectorSampleDomain, VectorSamplingContext } from "./vector.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 
 export class KeypointsSampleDomain<
         Location extends FieldPoint = FieldPoint,
@@ -75,13 +76,53 @@ export class KeypointsSampleDomain<
             LocationVector,
             SampleVector,
             VectorContext
-        > {
+        >,
+    Cloneable<KeypointsSampleDomain<
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        Sample,
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        SingularContext,
+        LocationVector,
+        SampleVector,
+        VectorContext
+    >> {
     private interpolator!: FieldInterpolator<Location, Sample>
 
     constructor(
         public keypoints: FieldInterpolationKeypoint<Location, Sample>[],
         public field: Field<Sample, SampleElementType, SampleFuseMode>
     ) {}
+
+    [clone]() {
+        return new KeypointsSampleDomain<
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                Sample,
+                SampleElementType,
+                SampleFuseMode,
+                SampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                SingularContext,
+                LocationVector,
+                SampleVector,
+                VectorContext
+            >(
+                makeClone(this.keypoints),
+                makeClone(this.field),
+            )
+    }
 
     init(context: SingularContext): void {
         this.interpolator = InterpolationManager[makeInterpolator](this.keypoints, context[SampleDomainLocationFieldKey])

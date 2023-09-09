@@ -1,6 +1,7 @@
 import { ConstantSampleDomain } from "../../fields/domains/index.js";
 import { defaultField } from "../../fields/fields/index.js";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, PropertyPath } from "../../paradigm/trees/index.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "../texture.js";
 import { Texturer } from "../texturer.js";
 
@@ -56,9 +57,43 @@ export class ConstantTexturer<
         InputsT,
         TextureSampleT,
         InputTexelTypesGrouped<TextureLocationT, TextureSampleT, TexelTypeT>
-    > {
-    constructor(public readonly value: TexelTypeT) {
-        super(template)
+    >
+    implements Cloneable<ConstantTexturer<
+        TextureableT,
+        TextureLocationT,
+        TextureSampleT,
+        TextureLocationElementType,
+        TextureLocationFuseMode,
+        TextureSampleElementType,
+        TextureSampleFuseMode,
+        TextureSamplingContextT,
+        TexelTypeT
+    >> {
+    constructor(
+        public readonly value: TexelTypeT,
+        mappings?: {
+            inputs: MultiObjectsGroupsMapped<InputsT, PropertyPath>,
+            outputs: MultiObjectsGroupsMapped<OutputsT, PropertyPath>,
+        }
+    ) {
+        super(template, mappings)
+    }
+
+    [clone]() {
+        return new ConstantTexturer<
+                TextureableT,
+                TextureLocationT,
+                TextureSampleT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                TextureSampleElementType,
+                TextureSampleFuseMode,
+                TextureSamplingContextT,
+                TexelTypeT
+            >(
+                makeClone(this.value),
+                makeClone(this.mappings),
+            )
     }
 
     protected factory(

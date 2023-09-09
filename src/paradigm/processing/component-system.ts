@@ -67,9 +67,9 @@ export class ComponentSystem<
             enabled: component.enabled,
             makeRoot: component.makeRoot,
             id: component.processing.id
-        };
+        }
 
-        return this.addComponent(clone, data);
+        return this.addComponent(clone, data)
     }
 
     protected _onBeforeRemove(entity: Entity, component: ComponentT) {

@@ -50,10 +50,6 @@ export class Component<ID = string> extends processing.Component<
                 public readonly children: VolumeNode[]
             ) { }
 
-            get shouldHide() {
-                return this.node.name.startsWith("$$")
-            }
-
             prerender(require_multiObjects = false): MultiObjPrerender | undefined {
                 const entity = this.node as Entity
                 const component = entity?.c[SYSTEM_ID] as Component<ID>
@@ -61,7 +57,6 @@ export class Component<ID = string> extends processing.Component<
                 const children = [
                     ...(component?.volume ? [['$$main', this.sym]] : []),
                     ...this.children
-                        .filter(child => !child.shouldHide)
                         .map(child => [
                             child.node.name,
                             child.prerender()
@@ -127,7 +122,6 @@ export class Component<ID = string> extends processing.Component<
                 const children = [
                     ...(component?.volume ? [['$$main', component.volume]] : []),
                     ...this.children
-                        .filter(child => !child.shouldHide)
                         .map(child => [
                             child.node.name,
                             new volumes.volumes.TransformVolume(
@@ -176,6 +170,9 @@ export class Component<ID = string> extends processing.Component<
             }
 
             static construct(node: GraphNode, isRoot = false): VolumeNode | undefined {
+                if (node.name.startsWith("$$"))
+                    return undefined
+
                 const entity = node as Entity
                 const component = entity?.c[SYSTEM_ID] as Component<ID>
 
