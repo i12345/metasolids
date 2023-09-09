@@ -8,7 +8,7 @@ import { FieldPointType } from "../../type.js"
 import { FieldPointVectorIterator } from "../iterator.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, isDynamicVector, isDynamicVectorContainer } from "../point.js";
 import { FieldsFieldPointVectorIterator } from "./fields.js";
-import { MultiObjectsFieldPointVectorIterator } from "./multi-objects.js";
+import { MultiObjectsFieldPointVectorIteratorDynamic, MultiObjectsFieldPointVectorIteratorStatic } from "./multi-objects.js";
 
 
 const vectorIteratorFactories = new Map<Function, [FieldPointVectorIterator<FieldPoint, Float64Array>, FieldPointVectorIterator<FieldPoint, TypedArrayList<number, Float64Array>>]>()
@@ -41,12 +41,11 @@ export function vectorIterator<
         return vectorIteratorFactories.get(type)![isDynamicVector! ? 1 : 0] as FieldPointVectorIterator<Point, Container, VectorizedRoot, PointElementType>
     }
     else if (MultiObjectsGroupedObjectsKey in type) {
-        // if (isDynamicVector === false)
-        //     throw new Error("must use dynamic container for multi objects")
+        const factory = isDynamicVector ? MultiObjectsFieldPointVectorIteratorDynamic<Objects, ObjIDsT, FieldPoint> : MultiObjectsFieldPointVectorIteratorStatic<Objects, ObjIDsT, FieldPoint>
         if (multiObjectsIDs === undefined)
             throw new Error("must specify multiObjectsIDs for a multi objects type")
 
-        return new MultiObjectsFieldPointVectorIterator<Objects, ObjIDsT, FieldPoint>(
+        return new factory(
             <FieldPointType><any>type[MultiObjectsGroupedObjectsKey],
             multiObjectsIDs,
             (vectorizedRoot && (ItemObjIDsKey in (<FieldPointVector<FieldPoint, Container>>vectorizedRoot))) ? isDynamicVectorContainer((<FieldPointVectorWithMultiObjects><unknown>vectorizedRoot)[ItemObjIDsKey]) : false
