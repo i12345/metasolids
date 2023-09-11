@@ -10,6 +10,7 @@ import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/multi-objects-g
 import { MultiObjectsInfluencesGroupsDefault } from "../../fields/multi-objects.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vector_fill, field_point_vectorized_new } from "../../fields/vectorized/point.js";
 import { Cloneable, clone } from "../../utils/cloneable.js";
+import { vectorized } from "vectorized-functions";
 
 export class MetaSphere<
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
@@ -65,6 +66,7 @@ export class MetaSphere<
         >()
     }
 
+    @vectorized(MetaSphere.sample_vectorized)
     sample(location: Location, context: Context): Sample {
         const theta = Math.atan2(location.p.y, location.p.x)
         const phi = Math.atan2(new Vec2(location.p.x, location.p.y).length(), location.p.z)
@@ -125,12 +127,18 @@ export class MetaSphere<
         
         const length = location_p.length / 3
 
-        const results = field_point_vectorized_new(this.field.elementType, length, <IsDynamicVector<Sample, FieldPointVectorContainerStatic>>false)
+        const results = field_point_vectorized_new<Sample, FieldPointVectorContainerStatic>(
+            this.field.elementType,
+            length,
+            <IsDynamicVector<Sample, FieldPointVectorContainerStatic>>false
+        )
+        
         const results_uv = results.uv
         const results_distance = results.distance
         const results_gradient = results.gradient
         
         field_point_vector_fill(
+            MetaSolidVolume.defaultFields.parametersIn.elementType,
             MetaSolidVolume.defaultFields.parametersIn.elementType,
             results,
             MetaSolidVolume.defaultParameters

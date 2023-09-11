@@ -1,7 +1,7 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
-import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
-import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault, field_point_new } from "../../fields/index.js";
-import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain } from '../../fields/domains/index.js'
+import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate, extract, hasPath, intract } from "../../paradigm/trees/index.js";
+import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault, field_point_new, VectorInterpolator, field_point_map, FieldPointPrimitive, field_point_identity, field_point_add_inplace_weighted } from "../../fields/index.js";
+import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from '../../fields/domains/index.js'
 import { FieldsField } from '../../fields/fields/fields.js'
 import { Pi, PiOver2, TwoPi } from "../../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../../textures/texture.js";
@@ -11,8 +11,11 @@ import { MetaSolidShape, MetaSolidLocation, MetaSolidLocationExtraFields, MetaSo
 import { VolumeSurfacesKey, meshing } from "../../surfaces/index.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { ScalarField } from "../../fields/fields/scalar.js";
-import { FuseMode, fuseModes } from "../../fields/vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, FuseMode, IsDynamicVector, field_point_vector_fill, field_point_vector_mat4_transformPoint, field_point_vector_mat4_transformPoint_single_multiple, field_point_vector_vec3_normalize, field_point_vectorized_new, fuseModes, fuseVectors } from "../../fields/vectorized/index.js";
+import { vectorized } from "vectorized-functions";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../utils/indices-array.js";
 
 export type MetaSplineSegmentFigureLocation<Location extends MetaSolidLocation = MetaSolidLocation> =
     { theta: number, phi: number } //& MetaSolidLocationExtraFields<Location>
@@ -63,6 +66,14 @@ export const MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate: MetaS
     [MetaSplineSegmentSamplingContext_Figure]: MultiObjectsGroupsTemplate_Leaf
 }
 
+type MetaSplineIntersectingPlane = {
+    t: number
+    v: Vec3
+    r: number
+    phi: number
+    theta: number
+}
+
 class MetaSpline<
         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
         TxLocation extends TextureLocation = TextureLocation,
@@ -79,26 +90,28 @@ class MetaSpline<
     > {
     // private t: number[]
     private transform_interpolator: FieldInterpolator<number, Mat4>
-    private figure_interpolator: Interpolator<number, MetaSplineSegmentFigure<Location, Sample>>
-
+    private transform_interpolator_vectorized: VectorInterpolator<number, number, number, Float64Array, Mat4, Mat4, Mat4, Float64Array>
+    
     constructor(public segments: MetaSplineSegment<InfluenceGroup, TxLocation, TxSample, Location, Sample, VolumeSampleProcessingContextT, TextureContext, VolumeContext>[]) {
-        this.transform_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.transform_relative_root })), MetaSplineSegment.defaultFields.t)
-        this.figure_interpolator = InterpolationManager[makeInterpolator](segments.map(segment => ({ location: segment.t, value: segment.figure })), MetaSplineSegment.defaultFields.t)
+        const transform_keypoints = segments.map(segment => ({ location: segment.t, value: segment.transform_relative_root }))
+        this.transform_interpolator = InterpolationManager[makeInterpolator](transform_keypoints, MetaSplineSegment.defaultFields.t)
+        this.transform_interpolator_vectorized = InterpolationManager.makeInterpolatorVectorized(transform_keypoints, MetaSplineSegment.defaultFields.t, Mat4, false, false)
     }
 
     planeAt(t: number): Mat4 {
         return this.transform_interpolator(t)
     }
 
+    @vectorized(MetaSpline.prototype.intersectingPlane_vectorized)
     intersectingPlane(
             p: Vec3,
             index: number
-        ) {
+        ): MetaSplineIntersectingPlane | undefined {
         if (index === 0)
             return undefined
 
         const segment = this.segments[index]
-        const canResultOutOfBounds = index === 1 || index === this.segments.length - 1
+        const canResultOutOfBounds = true // index === 1 || index === this.segments.length - 1
         p = segment.transform_relative_root.transformPoint(p)
 
         // This function will binary search to minimize
@@ -144,7 +157,7 @@ class MetaSpline<
                 // Key found.
                 else
                     return { ...cmp, t: mid, outOfBounds: false }
-            } while (--iterations > 0)
+            } while (--iterations >= 0)
 
             if (low === 0) {
                 return {
@@ -186,14 +199,397 @@ class MetaSpline<
         }
     }
 
+    // private static intersectingPlane_vectorized<
+    //         InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
+    //         TxLocation extends TextureLocation = TextureLocation,
+    //         TxSample extends MetaSolidTxSample = MetaSolidTxSample,
+    //         Location extends MetaSolidLocation = MetaSolidLocation,
+    //         Sample extends MetaSolidSample = MetaSolidSample,
+    //         VolumeSampleProcessingContextT = any,
+    //         TextureContext extends
+    //             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
+    //             TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
+    //         VolumeContext extends
+    //             MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, VolumeSampleProcessingContextT, TextureContext> =
+    //             MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, VolumeSampleProcessingContextT, TextureContext>
+    //     >(
+    //         this: MetaSpline<
+    //                 InfluenceGroup,
+    //                 TxLocation,
+    //                 TxSample,
+    //                 Location,
+    //                 Sample,
+    //                 VolumeSampleProcessingContextT,
+    //                 TextureContext,
+    //                 VolumeContext
+    //             >,
+    //         p: FieldPointVectorStatic<Vec3>,
+    //         index: number
+    //     ): FieldPointVectorStatic<MetaSplineIntersectingPlane> {
+    intersectingPlane_vectorized(
+            p: FieldPointVectorStatic<Vec3>,
+            index: number
+        ): FieldPointVectorStatic<MetaSplineIntersectingPlane> {
+        const length = p.length / 3
+        
+        if (index === 0) {
+            return {
+                t: new Float64Array(length).fill(NaN),
+                v: new Float64Array(3 * length).fill(NaN),
+                r: new Float64Array(length).fill(NaN),
+                phi: new Float64Array(length).fill(NaN),
+                theta: new Float64Array(length).fill(NaN),
+            }
+        }
+
+        const segment = this.segments[index]
+        const canResultOutOfBounds = true // index === 1 || index === this.segments.length - 1
+
+        p = field_point_vector_mat4_transformPoint_single_multiple(segment.transform_relative_root, p, new Float64Array(3 * length))
+
+        // This function will binary search to minimize
+        // dot( (p(t) - v), n(t) ) to find the closest t
+
+        const t0 = this.segments[index - 1].t
+        const t_m = segment.t_offset
+
+        /**
+         * intersecting plane status
+         * 0 = normal
+         * 1 = exactly on-plane
+         * 2 = out of bounds
+         */
+        const status = new Uint8Array(length).fill(0)
+        const mid = new Float64Array(length)
+        const low = new Float64Array(length).fill(t0)
+        const high = new Float64Array(length).fill(t0 + t_m)
+
+        const m = new Float64Array(16 * length)
+        const distance = new Float64Array(length)
+
+        // adapted from https://github.com/darkskyapp/binary-search/blob/master/index.js
+
+        for (let iteration = 0; iteration < segment.t_iterations; iteration++) {
+            for (let i = 0; i < length; i++)
+                mid[i] = (low[i] + high[i]) / 2
+            this.transform_interpolator_vectorized(mid, m)
+            
+            for (let i = 0, p_offset = 0, m_offset = 0;
+                i < length;
+                i++, p_offset += 3, m_offset += 16) {
+                if(status[i] !== 0) continue
+                // p0 = m[i].getTranslation() = m[3,0:2]
+                // n = m[i].getZ() = m[2,0:2]
+                // distance = (p0 - p) dot n
+                distance[i] = (
+                    ((m[m_offset + 12] - p[p_offset + 0]) * m[m_offset + 8]) +
+                    ((m[m_offset + 13] - p[p_offset + 1]) * m[m_offset + 9]) +
+                    ((m[m_offset + 14] - p[p_offset + 2]) * m[m_offset + 10])
+                )
+            }
+
+            let distance_i: number
+            for (let i = 0; i < length; i++) {
+                if(status[i] !== 0) continue
+                distance_i = distance[i]
+                if (distance_i < 0.0)
+                    low[i] = mid[i]
+                else if (distance_i > 0.0)
+                    high[i] = mid[i]
+                else status[i] = 1
+            }
+        }
+
+        const m_0 = this.transform_interpolator(0).data
+        const m_1 = this.transform_interpolator(1).data
+
+        if (canResultOutOfBounds) {
+            for (let i = 0, p_offset = 0, m_offset = 0;
+                i < length;
+                i++, p_offset += 3, m_offset += 16) {
+                if (low[i] === 0) {
+                    mid[i] = 0
+                    status[i] = 2
+
+                    m[m_offset + 0] = m_0[0]
+                    m[m_offset + 1] = m_0[1]
+                    m[m_offset + 2] = m_0[2]
+                    m[m_offset + 3] = m_0[3]
+                    m[m_offset + 4] = m_0[4]
+                    m[m_offset + 5] = m_0[5]
+                    m[m_offset + 6] = m_0[6]
+                    m[m_offset + 7] = m_0[7]
+                    m[m_offset + 8] = m_0[8]
+                    m[m_offset + 9] = m_0[9]
+                    m[m_offset + 10] = m_0[10]
+                    m[m_offset + 11] = m_0[11]
+                    m[m_offset + 12] = m_0[12]
+                    m[m_offset + 13] = m_0[13]
+                    m[m_offset + 14] = m_0[14]
+                    m[m_offset + 15] = m_0[15]
+
+                    // p0 = m[i].getTranslation() = m[3,0:2]
+                    // n = m[i].getZ() = m[2,0:2]
+                    // distance = (p0 - p) dot n
+                    distance[i] = (
+                        ((m[m_offset + 12] - p[p_offset + 0]) * m[m_offset + 8]) +
+                        ((m[m_offset + 13] - p[p_offset + 1]) * m[m_offset + 9]) +
+                        ((m[m_offset + 14] - p[p_offset + 2]) * m[m_offset + 10])
+                    )
+                }
+                else if (high[i] === 1) {
+                    mid[i] = 1
+                    status[i] = 2
+
+                    m[m_offset + 0] = m_1[0]
+                    m[m_offset + 1] = m_1[1]
+                    m[m_offset + 2] = m_1[2]
+                    m[m_offset + 3] = m_1[3]
+                    m[m_offset + 4] = m_1[4]
+                    m[m_offset + 5] = m_1[5]
+                    m[m_offset + 6] = m_1[6]
+                    m[m_offset + 7] = m_1[7]
+                    m[m_offset + 8] = m_1[8]
+                    m[m_offset + 9] = m_1[9]
+                    m[m_offset + 10] = m_1[10]
+                    m[m_offset + 11] = m_1[11]
+                    m[m_offset + 12] = m_1[12]
+                    m[m_offset + 13] = m_1[13]
+                    m[m_offset + 14] = m_1[14]
+                    m[m_offset + 15] = m_1[15]
+
+                    // p0 = m[i].getTranslation() = m[3,0:2]
+                    // n = m[i].getZ() = m[2,0:2]
+                    // distance = (p0 - p) dot n
+                    distance[i] = (
+                        ((m[m_offset + 12] - p[p_offset + 0]) * m[m_offset + 8]) +
+                        ((m[m_offset + 13] - p[p_offset + 1]) * m[m_offset + 9]) +
+                        ((m[m_offset + 14] - p[p_offset + 2]) * m[m_offset + 10])
+                    )
+                }
+            }
+        }
+        else {
+            for (let i = 0, p_offset = 0, m_offset = 0;
+                i < length;
+                i++, p_offset += 3, m_offset += 16) {
+                if (low[i] === 0) {
+                    mid[i] = NaN
+                    status[i] = 2
+                }
+                else if (high[i] === 1) {
+                    mid[i] = NaN
+                    status[i] = 2
+                }
+            }
+        }
+
+        const t = mid
+        const v = new Float64Array(3 * length)
+        const r = new Float64Array(length)
+        const phi = new Float64Array(length)
+        const theta = new Float64Array(length)
+
+        const m_i = new Mat4()
+        const m_i_data = m_i.data
+
+        const transform_relative_root_inv = segment.transform_relative_root_inv.data
+
+        let p_i_x: number
+        let p_i_y: number
+        let p_i_z: number
+
+        let p_local_x: number
+        let p_local_y: number
+        let p_local_z: number
+
+        if (!canResultOutOfBounds) {
+            for (let i = 0; i < length; i++) {
+                if (status[i] === 2) {
+                    t[i] = NaN
+                    v[(3 * i) + 0] = v[(3 * i) + 1] = v[(3 * i) + 2] = NaN
+                    r[i] = NaN
+                    phi[i] = NaN
+                    theta[i] = NaN
+                }
+            }
+        }
+
+        for (let i = 0, p_offset = 0, m_offset = 0;
+            i < length;
+            i++, p_offset += 3, m_offset += 16) {
+            if (status[i] === 2) continue
+            
+            m_i_data[0] = m[m_offset + 0]
+            m_i_data[1] = m[m_offset + 1]
+            m_i_data[2] = m[m_offset + 2]
+            m_i_data[3] = m[m_offset + 3]
+            m_i_data[4] = m[m_offset + 4]
+            m_i_data[5] = m[m_offset + 5]
+            m_i_data[6] = m[m_offset + 6]
+            m_i_data[7] = m[m_offset + 7]
+            m_i_data[8] = m[m_offset + 8]
+            m_i_data[9] = m[m_offset + 9]
+            m_i_data[10] = m[m_offset + 10]
+            m_i_data[11] = m[m_offset + 11]
+            m_i_data[12] = m[m_offset + 12]
+            m_i_data[13] = m[m_offset + 13]
+            m_i_data[14] = m[m_offset + 14]
+            m_i_data[15] = m[m_offset + 15]
+
+            p_i_x = p[p_offset + 0]
+            p_i_y = p[p_offset + 1]
+            p_i_z = p[p_offset + 2]
+
+            // p_local = p[i] - m[i].getTranslation()
+            p_local_x = p_i_x - m[m_offset + 12]
+            p_local_y = p_i_y - m[m_offset + 13]
+            p_local_z = p_i_z - m[m_offset + 14]
+
+            v[p_offset + 0] = (
+                (p_local_x * transform_relative_root_inv[0]) +
+                (p_local_y * transform_relative_root_inv[4]) +
+                (p_local_z * transform_relative_root_inv[8])
+            )
+            v[p_offset + 1] = (
+                (p_local_x * transform_relative_root_inv[1]) +
+                (p_local_y * transform_relative_root_inv[5]) +
+                (p_local_z * transform_relative_root_inv[9])
+            )
+            v[p_offset + 2] = (
+                (p_local_x * transform_relative_root_inv[2]) +
+                (p_local_y * transform_relative_root_inv[6]) +
+                (p_local_z * transform_relative_root_inv[10])
+            )
+
+            m_i.invert()
+
+            // p_local = m[i].clone().invert().transformPoint(p[i])
+            p_local_x = (
+                (p_i_x * m_i_data[0]) +
+                (p_i_y * m_i_data[4]) +
+                (p_i_z * m_i_data[8]) +
+                m_i_data[12]
+            )
+            p_local_y = (
+                (p_i_x * m_i_data[1]) +
+                (p_i_y * m_i_data[5]) +
+                (p_i_z * m_i_data[9]) +
+                m_i_data[13]
+            )
+            p_local_z = (
+                (p_i_x * m_i_data[2]) +
+                (p_i_y * m_i_data[6]) +
+                (p_i_z * m_i_data[10]) +
+                m_i_data[14]
+            )
+
+            r[i] = Math.sqrt(
+                (p_local_x * p_local_x) +
+                (p_local_y * p_local_y) +
+                (p_local_z * p_local_z)
+            )
+
+            phi[i] = Math.atan2(
+                p_local_z,
+                Math.sqrt(
+                    (p_local_x * p_local_x) +
+                    (p_local_y * p_local_y)
+                )
+            )
+
+            theta[i] = Math.atan2(p_local_y, p_local_x)
+
+            // const v = segment.transform_relative_root_inv.transformVector(new Vec3().sub2(p, closest.m.getTranslation()))
+            // const v_plane = closest.m.invert().transformPoint(p)
+            // const r = v_plane.length() // = v.length()
+            // const phi = canResultOutOfBounds ? 0 : Math.atan2(v_plane.z, new Vec2(v_plane.x, v_plane.y).length())
+            // const theta = Math.atan2(v_plane.y, v_plane.x)
+        }
+
+        return {
+            t,
+            v,
+            r,
+            phi,
+            theta,
+        }
+    }
+
     figureSample(
+        index: number,
         t: number,
         theta: number,
         phi: number,
         extraLocation: ExtraFields<Location, MetaSolidLocation>,
         context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, VolumeSampleProcessingContextT, TextureContext, VolumeContext>[typeof MetaSplineSegmentSamplingContext_Figure]
     ) {
-        return this.figure_interpolator(t).sample({ phi, theta, ...extraLocation }, context)
+        if (index === 0)
+            throw new Error()
+
+        const figure_location: MetaSplineSegmentFigureLocation<Location> = { phi, theta, ...extraLocation }
+        
+        const figure_sample_0 = this.segments[index - 1].figure.sample(figure_location, context)
+        const figure_sample_1 = this.segments[index - 0].figure.sample(figure_location, context)
+
+        let figure_sample = field_point_identity(figure_sample_0)
+        figure_sample = field_point_add_inplace_weighted(figure_sample, figure_sample_0, t)
+        figure_sample = field_point_add_inplace_weighted(figure_sample, figure_sample_1, 1 - t)
+        return figure_sample
+    }
+
+    figureSample_vectorized(
+            index: number,
+            t: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            theta: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            phi: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            extraLocation: FieldPointVector<FieldsPoint & ExtraFields<Location, MetaSolidLocation>, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            context: MetaSplineSegmentSamplingContext<InfluenceGroup, TxLocation, TxSample, Location, VolumeSampleProcessingContextT, TextureContext, VolumeContext>[typeof MetaSplineSegmentSamplingContext_Figure]
+        ): FieldPointVector<MetaSplineSegmentFigureSample<Sample>, FieldPointVectorContainerStatic<NumberTypedArray>> {
+        if (index === 0)
+            throw new Error()
+
+        const figure_location: FieldPointVector<MetaSplineSegmentFigureLocation<Location>, FieldPointVectorContainerStatic<NumberTypedArray>> = { phi, theta, ...extraLocation }
+        const figure0 = this.segments[index - 1].figure
+        const figure1 = this.segments[index - 0].figure
+
+        type VectorContextT = VectorSamplingContext<
+            MetaSplineSegmentFigureLocation<Location>,
+            MetaSplineSegmentFigureLocation<Location>,
+            MetaSplineSegmentFigureLocation<Location>,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            MetaSplineSegmentFigureSample<Sample>,
+            MetaSplineSegmentFigureSample<Sample>,
+            MetaSplineSegmentFigureSample<Sample>,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            MultiObjectsTemplate,
+            IndicesTypedArray,
+            FieldPointVectorContainerStatic<IndicesTypedArray>,
+            typeof context
+        >
+        
+        const vectorContext = <VectorContextT>context
+        makeVectorSamplingContext<
+                MetaSplineSegmentFigureLocation<Location>,
+                MetaSplineSegmentFigureLocation<Location>,
+                MetaSplineSegmentFigureLocation<Location>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                MetaSplineSegmentFigureSample<Sample>,
+                MetaSplineSegmentFigureSample<Sample>,
+                MetaSplineSegmentFigureSample<Sample>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                MultiObjectsTemplate,
+                IndicesTypedArray,
+                FieldPointVectorContainerStatic<IndicesTypedArray>,
+                typeof context
+            >(figure0.field, vectorContext)
+
+        const figure_sample_0 = vectorContext[VectorSampleFunction](figure0, figure_location, vectorContext)
+        const figure_sample_1 = vectorContext[VectorSampleFunction](figure1, figure_location, vectorContext)
+
+        //TODO: add weighted sum to arithmetic fusing mode and use here
+
+        return figure_sample_0
     }
 }
 
@@ -450,7 +846,7 @@ export class MetaSplineSegment<
                 const texture_location = { uv, gradient: v } as MetaSolidTxLocation<Location, TxLocation> & Sample
                 const texture_sample = texture?.sample(texture_location, context[MetaSolidSamplingContext_Texture].context)
 
-                const figure_sample = this.spline!.figureSample(t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
+                const figure_sample = this.spline!.figureSample(this.spline_segment_index, t, theta, 0, {} as any, context[MetaSplineSegmentSamplingContext_Figure])
 
                 const parameters = MetaSolidVolume.combineParameters(
                     (texture_sample ?? MetaSolidVolume.defaultParameters) as FieldsPointOptional<MetaSolidParametersIn>,
@@ -514,6 +910,7 @@ export class MetaSplineSegment<
         }
     }
 
+    @vectorized(MetaSplineSegment.sample_vectorized)
     sample(
             location: Location,
             context: MetaSplineSegmentSamplingContext<
@@ -538,7 +935,7 @@ export class MetaSplineSegment<
         if (!plane_sample) return this.emptySample
 
         const { t, r, theta, phi, v } = plane_sample
-        const figure_sample = this.spline!.figureSample(t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
+        const figure_sample = this.spline!.figureSample(this.spline_segment_index, t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
         const uv = this.uv(t, theta, phi)
 
         const shape_sample = {
@@ -552,8 +949,150 @@ export class MetaSplineSegment<
         return shape_sample
     }
 
+    private static sample_vectorized<
+            InfluenceGroup extends MultiObjectsGroupsTemplate = MultiObjectsInfluencesGroupsDefault,
+            TxLocation extends TextureLocation = TextureLocation,
+            TxSample extends MetaSolidTxSample = MetaSolidTxSample,
+            Location extends MetaSolidLocation = MetaSolidLocation,
+            Sample extends MetaSolidSample = MetaSolidSample,
+            OuterSampleProcessingContextT = any,
+            TextureContext extends
+                TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>> =
+                TextureSamplingContext<MetaSolidTxLocation<Location, TxLocation>>,
+            VolumeContext extends
+                MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext> =
+                MetaSolidVolumeSamplingContext<InfluenceGroup, TxLocation, Location, OuterSampleProcessingContextT, TextureContext>
+        >(
+            this: MetaSplineSegment<
+                    InfluenceGroup,
+                    TxLocation,
+                    TxSample,
+                    Location,
+                    Sample,
+                    OuterSampleProcessingContextT,
+                    TextureContext,
+                    VolumeContext
+                >,
+            locations: FieldPointVector<Location, FieldPointVectorContainerStatic>,
+            context: MetaSplineSegmentSamplingContext<
+                    InfluenceGroup,
+                    TxLocation,
+                    TxSample,
+                    Location,
+                    OuterSampleProcessingContextT,
+                    TextureContext,
+                    VolumeContext
+                >
+        ): FieldPointVector<Sample, FieldPointVectorContainerStatic> {
+        /**
+         *  singular implementation
+            if (this.spline_segment_index === 0)
+                return this.emptySample
+
+            const location_extra = extraFields<MetaSolidLocation, Location>(location, { p: true })
+
+            const plane_sample = this.spline!.intersectingPlane(location.p, this.spline_segment_index)
+            if (!plane_sample) return this.emptySample
+
+            const { t, r, theta, phi, v } = plane_sample
+            const figure_sample = this.spline!.figureSample(t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
+            const uv = this.uv(t, theta, phi)
+
+            const shape_sample = {
+                ...MetaSolidVolume.defaultParameters,
+                ...figure_sample,
+                distance: r,
+                gradient: v.normalize(),
+                uv,
+            } as Sample
+
+            return shape_sample
+         */
+
+        const sample_length = locations.p.length / 3
+        
+        if (this.spline_segment_index === 0) {
+            return field_point_vectorized_new(
+                this.field.elementType,
+                sample_length,
+                <IsDynamicVector<Sample, FieldPointVectorContainerStatic>>false
+            )
+        }
+        
+        const location_extra = extraFields<
+            FieldPointVector<MetaSolidLocation, FieldPointVectorContainerStatic>,
+            FieldPointVector<Location, FieldPointVectorContainerStatic>
+        >(locations, { p: true })
+
+        const { t, r, theta, phi, v } = this.spline!.intersectingPlane_vectorized(locations.p, this.spline_segment_index)
+        const figure_sample = this.spline!.figureSample_vectorized(this.spline_segment_index, t, theta, phi, <any>location_extra, context[MetaSplineSegmentSamplingContext_Figure])
+        const uv = this.uv_vectorized(t, theta, phi)
+
+        const shape_sample = {
+            // ...field_point_vectorized_new<MetaSolidParametersIn, FieldPointVectorContainerStatic>(
+            //     MetaSolidVolume.defaultFields.parametersIn.elementType,
+            //     sample_length,
+            //     <IsDynamicVector<MetaSolidParametersIn, FieldPointVectorContainerStatic>>false,
+            //     undefined,
+            //     MetaSolidVolume.defaultParameters
+            // ),
+            ...figure_sample,
+            distance: r,
+            gradient: v,
+            uv,
+        }
+
+        // shape_sample.v.normalize()
+        field_point_vector_vec3_normalize(shape_sample.gradient)
+        
+        // shape_sample = {...MetaSolidVolume.defaultParameters, ...figure_sample}
+        // field_point_vector_fill(
+        //     this.field.elementType,
+        //     MetaSolidVolume.defaultFields.parametersIn.elementType,
+        //     shape_sample,
+        //     MetaSolidVolume.defaultParameters
+        // )
+        field_point_map(
+            MetaSolidVolume.defaultFields.parametersIn.elementType,
+            leaf => leaf instanceof Function,
+            (elementType, path) => {
+                if (!hasPath(shape_sample, path)) {
+                    const default_values = field_point_vectorized_new(
+                        elementType,
+                        sample_length,
+                        <IsDynamicVector<FieldPointPrimitive, FieldPointVectorContainerStatic>>false,
+                        undefined,
+                        extract(MetaSolidVolume.defaultParameters, path)
+                    )
+                    intract(shape_sample, path, default_values)
+                }
+            }
+        )
+
+        return <FieldPointVector<Sample, FieldPointVectorContainerStatic>>shape_sample
+    }
+
     private uv(t: number, theta: number, phi: number): Vec2 {
         return new Vec2(t + (phi / PiOver2), (theta / TwoPi) + 0.5)
+    }
+
+    private uv_vectorized(
+            t: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            theta: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            phi: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>
+        ): FieldPointVector<Vec2, FieldPointVectorContainerStatic> {
+        const length = t.length
+        const uv = field_point_vectorized_new<Vec2, FieldPointVectorContainerStatic>(Vec2, length, false)
+        
+        const piOver2 = PiOver2
+        const twoPi = TwoPi
+
+        for (let i = 0, uv_offset = 0; i < length; i++) {
+            uv[uv_offset++] = t[i] + (phi[i] / piOver2)
+            uv[uv_offset++] = (theta[i] / twoPi) + 0.5
+        }
+
+        return uv
     }
 
     static defaultFields = {

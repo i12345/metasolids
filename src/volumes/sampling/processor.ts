@@ -311,7 +311,7 @@ class VolumeDomainSamplingSubdivisionProcessor<
         locations.p = positions
         if (extraLocationParameters) {
             const extraLocations_type = field_point_type_default(<FieldPoint>extraLocationParameters)
-            field_point_vector_fill(extraLocations_type, locations, <FieldPoint>extraLocationParameters, multiObjectsIDs)
+            field_point_vector_fill(locations_type, extraLocations_type, locations, <FieldPoint>extraLocationParameters, multiObjectsIDs)
         }
 
         const samples = samplingContext[VectorSampleFunction](volume, <FieldPointVector<VolumeLocationElementType, FieldPointVectorContainerStatic<Float64Array>>>locations, samplingContext)

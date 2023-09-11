@@ -1,4 +1,5 @@
 export * from './point.js'
+export * from './math.js'
 export * from './stats.js'
 export * from './fusing.js'
 export * as fuseModes from './fuse-modes/index.js'

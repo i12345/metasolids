@@ -1,9 +1,9 @@
-import { mockDOM } from "node-canvas-webgl" 
+import { mockDOM } from "node-canvas-webgl"
 import jsdomSetup from "jsdom-global"
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, beforeEach, afterEach } from "mocha"
-import { Application, Color, Entity, Vec2 } from "playcanvas-extended"
+import { Application, BasicMaterial, Color, Entity, Vec2 } from "playcanvas-extended"
 import * as textures from "../textures/index.js"
 import * as surfaces from "../surfaces/index.js"
 import * as solids from "../solids/index.js"
@@ -73,7 +73,7 @@ describe("playcanvas-node", () => {
 
             const component1 = entity1.addComponent(physicalEntity.SYSTEM_ID)! as physicalEntity.Component
             component1.volumeSamplingSettings = {
-                max_depth: 6,
+                max_depth: 7,
                 indicesType: Uint32Array,
                 recommendation_threshold: 1
             }
@@ -100,6 +100,11 @@ describe("playcanvas-node", () => {
             setup(entity1, ...components)
 
             component1.processFromRaw()
+
+            const material = new BasicMaterial()
+            material.color.set(0.8, 0.8, 0.7)
+            material.update()
+            entity1.render!.material = material
         })
     }
 

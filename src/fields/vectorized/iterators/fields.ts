@@ -139,12 +139,12 @@ export class FieldsFieldPointVectorIterator<
 
                 if (iterator.canGetSetByReference) {
                     const subresult = extract<FieldPoint>(result, path)
-                    functions.push(iterator.get_returnParam.bind(iterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot, subresult))
+                    functions.push(iterator.get_returnParam.bind(iterator, <FieldPointVector<FieldPoint, Container>>subvectorized, vectorizedRoot, subresult))
                 }
                 else {
                     const subresult_parent = extract<FieldsPoint>(result, path.slice(0, -1))
                     const lastKey = path.at(-1)!
-                    const getByValue = iterator.get_returnValue.bind(iterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot)
+                    const getByValue = iterator.get_returnValue.bind(iterator, <FieldPointVector<FieldPoint, Container>>subvectorized, vectorizedRoot)
                     functions.push((index: number) => subresult_parent[lastKey] = getByValue(index))
                 }
             }
@@ -165,12 +165,12 @@ export class FieldsFieldPointVectorIterator<
 
                 if (subiterator.canGetSetByReference) {
                     const subvalue = extract<FieldPoint>(value, path)
-                    functions.push(subiterator.set.bind(subiterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot, subvalue))
+                    functions.push(subiterator.set.bind(subiterator, <FieldPointVector<FieldPoint, Container>>subvectorized, vectorizedRoot, subvalue))
                 }
                 else {
                     const subvalue_parent = extract<FieldsPoint>(value, path.slice(0, -1))
                     const lastKey = path.at(-1)!
-                    const set = subiterator.set.bind(subiterator, <FieldPointVector<FieldPoint, FieldPointVectorContainer>>subvectorized, vectorizedRoot)
+                    const set = subiterator.set.bind(subiterator, <FieldPointVector<FieldPoint, Container>>subvectorized, vectorizedRoot)
                     functions.push((index: number) => set(subvalue_parent[lastKey], index))
                 }
             }

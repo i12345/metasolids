@@ -51,11 +51,12 @@ export type IsDynamicVector<
         ElementType extends FieldPoint = FieldPoint,
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainerStatic
     > =
-    ElementType extends FieldPointPrimitive ?
-        IsDynamicVectorContainer<Container> :
-    ElementType extends { [MultiObjectsGroupedObjectsKey]: infer InnerType extends FieldPoint } ?
-        IsDynamicVector<InnerType, Container> :
-        undefined
+    IsDynamicVectorContainer<Container>
+    // ElementType extends FieldPointPrimitive ?
+    //     IsDynamicVectorContainer<Container> :
+    // ElementType extends { [MultiObjectsGroupedObjectsKey]: infer InnerType extends FieldPoint } ?
+    //     IsDynamicVector<InnerType, Container> :
+    //     undefined
 
 export function isDynamicVector<
         ElementType extends FieldPoint = FieldPoint,
@@ -75,7 +76,7 @@ export function isDynamicVector<
                 return <IsDynamicVector<ElementType, Container>>false
             else if (vector instanceof TypedArrayList)
                 return <IsDynamicVector<ElementType, Container>>true
-            return <IsDynamicVector<ElementType, Container>>undefined
+            throw new Error("no container")
         }
         else if (MultiObjectsGroupedObjectsKey in elementType)
             return isDynamicVectorContainer(vectorRoot![ItemObjIDsKey])
@@ -426,27 +427,31 @@ export function field_point_vector_append_scattered_same<
 }
 
 export function field_point_vector_fill<
-        ElementT extends FieldPoint = FieldPoint,
-        ElementType extends FieldPoint = ElementT,
+        ItemT extends FieldPoint = FieldPoint,
+        ItemElementType extends FieldPoint = ItemT,
+        ResultElementType extends ItemElementType = ItemElementType,
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
-        Vector extends FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
+        Vector extends FieldPointVector<ResultElementType, Container> | FieldPointVectorWithMultiObjects<ResultElementType, Container, ObjIDsT, ObjIDsContainer> = FieldPointVectorWithMultiObjects<ResultElementType, Container, ObjIDsT, ObjIDsContainer>
     >(
-        resultType: FieldPointType<ElementType>,
+        resultType: FieldPointType<ResultElementType>,
+        itemType: FieldPointType<ItemElementType>,
         result: Vector,
-        item: ElementT,
+        item: ItemT,
         multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-    const isDynamic = isDynamicVector<ElementType, Container>(resultType, result)
+    const isDynamic = isDynamicVector<ResultElementType, Container>(resultType, result)
     const isMultiObjMapped = ItemObjIDsKey in result
     const isDynamicObjIDsContainer = isDynamicVectorContainer((<FieldPointVectorWithMultiObjects>result)[ItemObjIDsKey])
-    const iterator = vectorIterator(resultType, isDynamic, multiObjectIDs)
-    const indices = new Uint32Array(iterator.length(result, result)).fill(0)
+    const resultIterator = vectorIterator(resultType, isDynamic, multiObjectIDs)
+    const itemIterator = vectorIterator(itemType, isDynamic, multiObjectIDs)
+    const indices = new Uint32Array(resultIterator.length(result, result)).fill(0)
     const copy = field_point_vectorized_multi_objects_new(
         resultType, 1, isDynamic, multiObjectIDs?.IDsType,
-        <any>((!isDynamic && !isDynamicObjIDsContainer) ? field_point_type_multiObj_count(resultType, item) : undefined)
+        <any>((!isDynamic && !isDynamicObjIDsContainer) ? field_point_type_multiObj_count(itemType, item) : undefined)
     )
-    iterator.scatter(result, result, copy, copy, indices, isMultiObjMapped)
+    itemIterator.set(copy, copy, item, 0)
+    itemIterator.scatter(result, result, copy, copy, indices, isMultiObjMapped)
 }

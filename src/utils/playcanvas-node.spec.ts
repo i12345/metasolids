@@ -81,6 +81,10 @@ describe("playcanvas-node", () => {
         app.root.addChild(light1)
 
         app.tick()
+        app.tick()
+        app.tick()
+        app.tick()
+        app.tick()
         fs.writeFileSync('test-screenshot-playcanvas-node.png', (<any>canvas).toBuffer())
         app.destroy()
     })

@@ -1,5 +1,6 @@
 import { MultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldPoint } from "../point.js";
@@ -12,11 +13,11 @@ export function makeVectorSamplingContext<
         Location extends FieldPoint = FieldPoint,
         LocationElementType extends FieldPoint = Location,
         LocationFuseMode extends FieldPoint = Location,
-        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
         SampleElementType extends FieldPoint = Sample,
         SampleFuseMode extends FieldPoint = Sample,
-        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
@@ -61,7 +62,7 @@ export function makeVectorSamplingContext<
     >(
         field: Field<Sample, SampleElementType, SampleFuseMode>,
         context: Context,
-        multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>
+        multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
     const vectorSampleFunction = new FieldPointVectorFunction<
             VectorSampleDomain<
@@ -112,18 +113,19 @@ export function makeVectorSamplingContext<
         )
 
     context[VectorSampleFunction] = <any>vectorSampleFunction.call.bind(vectorSampleFunction)
-    context[MultiObjectsIDsKey] = multiObjectsIDs
+    if (multiObjectsIDs)
+        context[MultiObjectsIDsKey] = multiObjectsIDs
 }
 
 export type VectorSamplingContext<
         Location extends FieldPoint = FieldPoint,
         LocationElementType extends FieldPoint = Location,
         LocationFuseMode extends FieldPoint = Location,
-        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
         SampleElementType extends FieldPoint = Sample,
         SampleFuseMode extends FieldPoint = Sample,
-        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
@@ -169,11 +171,11 @@ export interface VectorSampleDomain<
         Location extends FieldPoint = FieldPoint,
         LocationElementType extends FieldPoint = Location,
         LocationFuseMode extends FieldPoint = Location,
-        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
         SampleElementType extends FieldPoint = Sample,
         SampleFuseMode extends FieldPoint = Sample,
-        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,

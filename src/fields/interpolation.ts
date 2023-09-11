@@ -38,7 +38,7 @@ export type VectorInterpolator<
         PointContainer extends FieldPointVectorContainer,
         LocationVector extends FieldPointVector<LocationElementType, LocationContainer> = FieldPointVector<LocationElementType, LocationContainer>,
         PointVector extends FieldPointVector<PointElementType, PointContainer> = FieldPointVector<PointElementType, PointContainer>
-    > = (locations: LocationVector) => PointVector
+    > = (locations: LocationVector, results?: PointVector) => PointVector
 
 export const makeInterpolator = Symbol('makeInterpolator')
 
@@ -199,14 +199,14 @@ export class InterpolationManager implements InterpolationType<any>, VectorField
 
         const singular = <Interpolator<Location, Point>>this[makeInterpolator](keypoints, locationField)
 
-        return locations => {
+        return (locations, results) => {
             const locations_multiObj = <FieldPointVectorWithMultiObjects<LocationElementType, LocationContainer, ObjIDsT, ObjIDsContainer>><unknown>locations
 
             const locationIterator = vectorIterator<Location, LocationContainer, Objects, ObjIDsT, LocationElementType>(locationField.elementType, isDynamicLocation, multiObjectIDs)
             const resultIterator = vectorIterator<Point, PointContainer, Objects, ObjIDsT, PointElementType>(resultType, isDynamicResult, multiObjectIDs)
             const length = locationIterator.length(locations, locations)
 
-            const result = <PointVector><unknown>field_point_vectorized_multi_objects_new(
+            results ??= <PointVector><unknown>field_point_vectorized_multi_objects_new(
                 resultType,
                 length,
                 isDynamicResult,
@@ -217,10 +217,10 @@ export class InterpolationManager implements InterpolationType<any>, VectorField
             for (let i = 0; i < length; i++) {
                 const location = locationIterator.get_returnValue(locations, locations, i)
                 const sample = singular(location)
-                resultIterator.set(result, result, sample, i)
+                resultIterator.set(results, results, sample, i)
             }
 
-            return result
+            return results
         }
     }
 
