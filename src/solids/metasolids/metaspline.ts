@@ -1,6 +1,6 @@
 import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
 import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate, extract, hasPath, intract } from "../../paradigm/trees/index.js";
-import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault, field_point_new, VectorInterpolator, field_point_map, FieldPointPrimitive, field_point_identity, field_point_add_inplace_weighted } from "../../fields/index.js";
+import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault, field_point_new, VectorInterpolator, field_point_map, FieldPointPrimitive, field_point_identity, field_point_add_inplace_weighted, FieldPointMapped } from "../../fields/index.js";
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from '../../fields/domains/index.js'
 import { FieldsField } from '../../fields/fields/fields.js'
 import { Pi, PiOver2, TwoPi } from "../../utils/pi.js";
@@ -11,11 +11,13 @@ import { MetaSolidShape, MetaSolidLocation, MetaSolidLocationExtraFields, MetaSo
 import { VolumeSurfacesKey, meshing } from "../../surfaces/index.js";
 import { VolumeSolidsKey } from "../volume-solids.js";
 import { ScalarField } from "../../fields/fields/scalar.js";
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, FuseMode, IsDynamicVector, field_point_vector_fill, field_point_vector_mat4_transformPoint, field_point_vector_mat4_transformPoint_single_multiple, field_point_vector_vec3_normalize, field_point_vectorized_new, fuseModes, fuseVectors } from "../../fields/vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, FuseMode, IsDynamicVector, PrimitiveFuseMode, field_point_vector_fill, field_point_vector_mat4_transformPoint, field_point_vector_mat4_transformPoint_single_multiple, field_point_vector_multiObjs_count, field_point_vector_vec3_normalize, field_point_vectorized_multi_objects_new, field_point_vectorized_new, fuseModes, fuseVectors } from "../../fields/vectorized/index.js";
 import { vectorized } from "vectorized-functions";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray, typedArrayClone, typedArrayConstructor } from "../../utils/typed-array.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js";
+import { equals } from "../../utils/equals.js";
 
 export type MetaSplineSegmentFigureLocation<Location extends MetaSolidLocation = MetaSolidLocation> =
     { theta: number, phi: number } //& MetaSolidLocationExtraFields<Location>
@@ -67,7 +69,8 @@ export const MetaSplineSegmentMultiObjectsInternalPreservedGroupsTemplate: MetaS
 }
 
 type MetaSplineIntersectingPlane = {
-    t: number
+    t_spline: number
+    t_local: number
     v: Vec3
     r: number
     phi: number
@@ -119,6 +122,7 @@ class MetaSpline<
 
         const t0 = this.segments[index - 1].t
         const t_m = segment.t_offset
+        const t1 = t0 + t_m
 
         const transform_interpolate = (t: number) => {
             const m = this.planeAt(t)
@@ -140,7 +144,7 @@ class MetaSpline<
         function search(iterations: number = 10) {
             let mid: number
             let cmp: ReturnType<typeof transform_interpolate>
-            let low = t0, high = t0 + t_m
+            let low = t0, high = t1
 
             do {
                 mid = (low + high) / 2
@@ -159,16 +163,16 @@ class MetaSpline<
                     return { ...cmp, t: mid, outOfBounds: false }
             } while (--iterations >= 0)
 
-            if (low === 0) {
+            if (low === t0) {
                 return {
                     ...transform_interpolate(0),
-                    t: 0,
+                    t: t0,
                     outOfBounds: true
                 }
-            } else if (high === 1) {
+            } else if (high === t1) {
                 return {
                     ...transform_interpolate(1),
-                    t: 1,
+                    t: t1,
                     outOfBounds: true
                 }
             }
@@ -183,7 +187,8 @@ class MetaSpline<
         if (closest.outOfBounds && !canResultOutOfBounds)
             return undefined
 
-        const t = closest.t
+        const t_spline = closest.t
+        const t_local = (t_spline - t0) / t_m
         const v = segment.transform_relative_root_inv.transformVector(new Vec3().sub2(p, closest.m.getTranslation()))
         const v_plane = closest.m.invert().transformPoint(p)
         const r = v_plane.length() // = v.length()
@@ -191,7 +196,8 @@ class MetaSpline<
         const theta = Math.atan2(v_plane.y, v_plane.x)
 
         return {
-            t,
+            t_spline,
+            t_local,
             v,
             r,
             phi,
@@ -234,7 +240,8 @@ class MetaSpline<
         
         if (index === 0) {
             return {
-                t: new Float64Array(length).fill(NaN),
+                t_spline: new Float64Array(length).fill(NaN),
+                t_local: new Float64Array(length).fill(NaN),
                 v: new Float64Array(3 * length).fill(NaN),
                 r: new Float64Array(length).fill(NaN),
                 phi: new Float64Array(length).fill(NaN),
@@ -252,6 +259,7 @@ class MetaSpline<
 
         const t0 = this.segments[index - 1].t
         const t_m = segment.t_offset
+        const t1 = t0 + t_m
 
         /**
          * intersecting plane status
@@ -262,7 +270,7 @@ class MetaSpline<
         const status = new Uint8Array(length).fill(0)
         const mid = new Float64Array(length)
         const low = new Float64Array(length).fill(t0)
-        const high = new Float64Array(length).fill(t0 + t_m)
+        const high = new Float64Array(length).fill(t1)
 
         const m = new Float64Array(16 * length)
         const distance = new Float64Array(length)
@@ -307,8 +315,8 @@ class MetaSpline<
             for (let i = 0, p_offset = 0, m_offset = 0;
                 i < length;
                 i++, p_offset += 3, m_offset += 16) {
-                if (low[i] === 0) {
-                    mid[i] = 0
+                if (low[i] === t0) {
+                    mid[i] = t0
                     status[i] = 2
 
                     m[m_offset + 0] = m_0[0]
@@ -337,8 +345,8 @@ class MetaSpline<
                         ((m[m_offset + 14] - p[p_offset + 2]) * m[m_offset + 10])
                     )
                 }
-                else if (high[i] === 1) {
-                    mid[i] = 1
+                else if (high[i] === t1) {
+                    mid[i] = t1
                     status[i] = 2
 
                     m[m_offset + 0] = m_1[0]
@@ -373,18 +381,19 @@ class MetaSpline<
             for (let i = 0, p_offset = 0, m_offset = 0;
                 i < length;
                 i++, p_offset += 3, m_offset += 16) {
-                if (low[i] === 0) {
+                if (low[i] === t0) {
                     mid[i] = NaN
                     status[i] = 2
                 }
-                else if (high[i] === 1) {
+                else if (high[i] === t1) {
                     mid[i] = NaN
                     status[i] = 2
                 }
             }
         }
 
-        const t = mid
+        const t_spline = mid
+        const t_local = typedArrayClone(mid)
         const v = new Float64Array(3 * length)
         const r = new Float64Array(length)
         const phi = new Float64Array(length)
@@ -402,11 +411,13 @@ class MetaSpline<
         let p_local_x: number
         let p_local_y: number
         let p_local_z: number
+        let p_local_sq_sum_xy: number
 
         if (!canResultOutOfBounds) {
             for (let i = 0; i < length; i++) {
                 if (status[i] === 2) {
-                    t[i] = NaN
+                    t_spline[i] = NaN
+                    t_local[i] = NaN
                     v[(3 * i) + 0] = v[(3 * i) + 1] = v[(3 * i) + 2] = NaN
                     r[i] = NaN
                     phi[i] = NaN
@@ -418,8 +429,9 @@ class MetaSpline<
         for (let i = 0, p_offset = 0, m_offset = 0;
             i < length;
             i++, p_offset += 3, m_offset += 16) {
-            if (status[i] === 2) continue
-            
+            t_local[i] = (t_spline[i] - t0) / t_m
+            if (!canResultOutOfBounds && status[i] === 2) continue
+
             m_i_data[0] = m[m_offset + 0]
             m_i_data[1] = m[m_offset + 1]
             m_i_data[2] = m[m_offset + 2]
@@ -442,9 +454,9 @@ class MetaSpline<
             p_i_z = p[p_offset + 2]
 
             // p_local = p[i] - m[i].getTranslation()
-            p_local_x = p_i_x - m[m_offset + 12]
-            p_local_y = p_i_y - m[m_offset + 13]
-            p_local_z = p_i_z - m[m_offset + 14]
+            p_local_x = p_i_x - m_i_data[12]
+            p_local_y = p_i_y - m_i_data[13]
+            p_local_z = p_i_z - m_i_data[14]
 
             v[p_offset + 0] = (
                 (p_local_x * transform_relative_root_inv[0]) +
@@ -484,18 +496,19 @@ class MetaSpline<
                 m_i_data[14]
             )
 
-            r[i] = Math.sqrt(
+            p_local_sq_sum_xy = (
                 (p_local_x * p_local_x) +
-                (p_local_y * p_local_y) +
+                (p_local_y * p_local_y)
+            )
+
+            r[i] = Math.sqrt(
+                p_local_sq_sum_xy +
                 (p_local_z * p_local_z)
             )
 
             phi[i] = Math.atan2(
                 p_local_z,
-                Math.sqrt(
-                    (p_local_x * p_local_x) +
-                    (p_local_y * p_local_y)
-                )
+                Math.sqrt(p_local_sq_sum_xy)
             )
 
             theta[i] = Math.atan2(p_local_y, p_local_x)
@@ -508,7 +521,8 @@ class MetaSpline<
         }
 
         return {
-            t,
+            t_local,
+            t_spline,
             v,
             r,
             phi,
@@ -518,7 +532,7 @@ class MetaSpline<
 
     figureSample(
         index: number,
-        t: number,
+        t_local: number,
         theta: number,
         phi: number,
         extraLocation: ExtraFields<Location, MetaSolidLocation>,
@@ -533,14 +547,14 @@ class MetaSpline<
         const figure_sample_1 = this.segments[index - 0].figure.sample(figure_location, context)
 
         let figure_sample = field_point_identity(figure_sample_0)
-        figure_sample = field_point_add_inplace_weighted(figure_sample, figure_sample_0, t)
-        figure_sample = field_point_add_inplace_weighted(figure_sample, figure_sample_1, 1 - t)
+        figure_sample = field_point_add_inplace_weighted(figure_sample, figure_sample_0, 1 - t_local)
+        figure_sample = field_point_add_inplace_weighted(figure_sample, figure_sample_1, t_local)
         return figure_sample
     }
 
     figureSample_vectorized(
             index: number,
-            t: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            t_local: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
             theta: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
             phi: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
             extraLocation: FieldPointVector<FieldsPoint & ExtraFields<Location, MetaSolidLocation>, FieldPointVectorContainerStatic<NumberTypedArray>>,
@@ -549,9 +563,22 @@ class MetaSpline<
         if (index === 0)
             throw new Error()
 
-        const figure_location: FieldPointVector<MetaSplineSegmentFigureLocation<Location>, FieldPointVectorContainerStatic<NumberTypedArray>> = { phi, theta, ...extraLocation }
-        const figure0 = this.segments[index - 1].figure
-        const figure1 = this.segments[index - 0].figure
+        type ObjIDsT = IndicesTypedArray
+        type ObjIDsContainer = FieldPointVectorContainerStatic<ObjIDsT>
+
+        type VectorFigureLocationT = FieldPointVectorWithMultiObjects<
+            MetaSplineSegmentFigureLocation<Location>,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            ObjIDsT,
+            ObjIDsContainer
+        >
+        
+        type VectorFigureSampleT = FieldPointVectorWithMultiObjects<
+            MetaSplineSegmentFigureSample<Sample>,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            ObjIDsT,
+            ObjIDsContainer
+        >
 
         type VectorContextT = VectorSamplingContext<
             MetaSplineSegmentFigureLocation<Location>,
@@ -563,11 +590,20 @@ class MetaSpline<
             MetaSplineSegmentFigureSample<Sample>,
             FieldPointVectorContainerStatic<NumberTypedArray>,
             MultiObjectsTemplate,
-            IndicesTypedArray,
-            FieldPointVectorContainerStatic<IndicesTypedArray>,
-            typeof context
+            ObjIDsT,
+            ObjIDsContainer,
+            typeof context,
+            VectorFigureLocationT,
+            VectorFigureSampleT
         >
+
+        const length = phi.length
+        const figure_location = <VectorFigureLocationT>{ phi, theta, ...extraLocation }
+        const figure0 = this.segments[index - 1].figure
+        const figure1 = this.segments[index - 0].figure
         
+        const figure_field = figure0.field
+
         const vectorContext = <VectorContextT>context
         makeVectorSamplingContext<
                 MetaSplineSegmentFigureLocation<Location>,
@@ -579,17 +615,71 @@ class MetaSpline<
                 MetaSplineSegmentFigureSample<Sample>,
                 FieldPointVectorContainerStatic<NumberTypedArray>,
                 MultiObjectsTemplate,
-                IndicesTypedArray,
-                FieldPointVectorContainerStatic<IndicesTypedArray>,
-                typeof context
-            >(figure0.field, vectorContext)
+                ObjIDsT,
+                ObjIDsContainer,
+                typeof context,
+                VectorFigureLocationT,
+                VectorFigureSampleT
+            >(figure_field, vectorContext)
 
         const figure_sample_0 = vectorContext[VectorSampleFunction](figure0, figure_location, vectorContext)
         const figure_sample_1 = vectorContext[VectorSampleFunction](figure1, figure_location, vectorContext)
 
-        //TODO: add weighted sum to arithmetic fusing mode and use here
+        const results = field_point_vectorized_multi_objects_new <
+                MetaSplineSegmentFigureSample<Sample>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                ObjIDsT,
+                ObjIDsContainer
+            >(
+            figure_field.elementType,
+            length,
+            <IsDynamicVector<MetaSplineSegmentFigureSample<Sample>, FieldPointVectorContainerStatic<NumberTypedArray>>>false,
+            undefined,
+            undefined
+        )
 
-        return figure_sample_0
+        const influences = Symbol()
+
+        type Influenced = FieldPointVector<{ [influences]?: number }, FieldPointVectorContainerStatic<NumberTypedArray>>
+        const figure_sample_0_influenced = <Influenced><unknown>figure_sample_0
+        const figure_sample_1_influenced = <Influenced><unknown>figure_sample_1
+
+        const s = new (typedArrayConstructor(t_local))(length)
+        for (let i = 0; i < t_local.length; i++)
+            s[i] = 1 - t_local[i]
+
+        figure_sample_0_influenced[influences] = s
+        figure_sample_1_influenced[influences] = t_local
+
+        const fuseMode = <FuseMode<MetaSplineSegmentFigureSample<Sample>>>{}
+
+        field_point_map<MetaSplineSegmentFigureSample<Sample>, PrimitiveFuseMode, void>(
+            <FieldPointMapped<MetaSplineSegmentFigureSample<Sample>, PrimitiveFuseMode<FieldPointPrimitive>>>figure_field.fuseMode,
+            leaf => equals in leaf,
+            (leaf_fuseMode, path) => {
+                if (leaf_fuseMode instanceof ArithmeticPrimitiveFuseMode)
+                    intract(fuseMode, path, new ArithmeticPrimitiveFuseMode(leaf_fuseMode.op, [influences]))
+                else intract(fuseMode, path, leaf_fuseMode)
+            }
+        )
+
+        fuseVectors(
+            figure_field.elementType,
+            figure_field.elementType,
+            fuseMode,
+            [
+                figure_sample_0,
+                figure_sample_1
+            ],
+            undefined,
+            results,
+            false
+        )
+
+        delete figure_sample_0_influenced[influences]
+        delete figure_sample_1_influenced[influences]
+
+        return results
     }
 }
 
@@ -934,9 +1024,9 @@ export class MetaSplineSegment<
         const plane_sample = this.spline!.intersectingPlane(location.p, this.spline_segment_index)
         if (!plane_sample) return this.emptySample
 
-        const { t, r, theta, phi, v } = plane_sample
-        const figure_sample = this.spline!.figureSample(this.spline_segment_index, t, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
-        const uv = this.uv(t, theta, phi)
+        const { t_spline, t_local, r, theta, phi, v } = plane_sample
+        const figure_sample = this.spline!.figureSample(this.spline_segment_index, t_local, theta, phi, location_extra, context[MetaSplineSegmentSamplingContext_Figure])
+        const uv = this.uv(t_spline, theta, phi)
 
         const shape_sample = {
             ...MetaSolidVolume.defaultParameters,
@@ -1024,9 +1114,9 @@ export class MetaSplineSegment<
             FieldPointVector<Location, FieldPointVectorContainerStatic>
         >(locations, { p: true })
 
-        const { t, r, theta, phi, v } = this.spline!.intersectingPlane_vectorized(locations.p, this.spline_segment_index)
-        const figure_sample = this.spline!.figureSample_vectorized(this.spline_segment_index, t, theta, phi, <any>location_extra, context[MetaSplineSegmentSamplingContext_Figure])
-        const uv = this.uv_vectorized(t, theta, phi)
+        const { t_spline, t_local, r, theta, phi, v } = this.spline!.intersectingPlane_vectorized(locations.p, this.spline_segment_index)
+        const figure_sample = this.spline!.figureSample_vectorized(this.spline_segment_index, t_local, theta, phi, <any>location_extra, context[MetaSplineSegmentSamplingContext_Figure])
+        const uv = this.uv_vectorized(t_spline, theta, phi)
 
         const shape_sample = {
             // ...field_point_vectorized_new<MetaSolidParametersIn, FieldPointVectorContainerStatic>(
@@ -1072,23 +1162,23 @@ export class MetaSplineSegment<
         return <FieldPointVector<Sample, FieldPointVectorContainerStatic>>shape_sample
     }
 
-    private uv(t: number, theta: number, phi: number): Vec2 {
-        return new Vec2(t + (phi / PiOver2), (theta / TwoPi) + 0.5)
+    private uv(t_spline: number, theta: number, phi: number): Vec2 {
+        return new Vec2(t_spline + (phi / PiOver2), (theta / TwoPi) + 0.5)
     }
 
     private uv_vectorized(
-            t: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            t_spline: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
             theta: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>,
             phi: FieldPointVector<number, FieldPointVectorContainerStatic<NumberTypedArray>>
         ): FieldPointVector<Vec2, FieldPointVectorContainerStatic> {
-        const length = t.length
+        const length = t_spline.length
         const uv = field_point_vectorized_new<Vec2, FieldPointVectorContainerStatic>(Vec2, length, false)
         
         const piOver2 = PiOver2
         const twoPi = TwoPi
 
         for (let i = 0, uv_offset = 0; i < length; i++) {
-            uv[uv_offset++] = t[i] + (phi[i] / piOver2)
+            uv[uv_offset++] = t_spline[i] + (phi[i] / piOver2)
             uv[uv_offset++] = (theta[i] / twoPi) + 0.5
         }
 

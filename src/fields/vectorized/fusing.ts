@@ -377,7 +377,10 @@ export function fuseVectors<
         fuseMode: FuseMode<ResultFuseMode>,
         vectors: PointVector[],
         multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
-        resultsOrResultDefaultLength?: FusingFieldPointVectorWithMultiObjects<ResultElementType, ObjIDsT, Container, ObjIDsContainer> | number,
+        resultsOrResultDefaultLength?:
+            FusingFieldPointVectorWithMultiObjects<ResultElementType, ObjIDsT, Container, ObjIDsContainer> |
+            FieldPointVectorWithMultiObjects<ResultElementType, Container, ObjIDsT, ObjIDsContainer> |
+            number,
         updateNextIndices: boolean = false
     ): ResultVector {
     if (vectors.length === 0)

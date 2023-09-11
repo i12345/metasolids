@@ -25,3 +25,17 @@ export function mat4_from_mat3(src: Mat3, dst = new Mat4()) {
 
     return dst
 }
+
+export function mat4_lerp_identity(x: Mat4, alpha: number) {
+    const t = x.getTranslation()
+    const r = new Quat().setFromMat4(x)
+    const s = x.getScale()
+
+    t.mulScalar(alpha)
+    r.slerp(Quat.IDENTITY, r, alpha)
+    s.x = s.x ** alpha
+    s.y = s.y ** alpha
+    s.z = s.z ** alpha
+
+    x.setTRS(t, r, s)
+}
