@@ -152,7 +152,7 @@ export class MetaSphere<
             location_p_x = location_p[location_p_i++]
             location_p_y = location_p[location_p_i++]
             location_p_z = location_p[location_p_i++]
-            location_p_sq_sum_xy = (location_p_x * location_p_x) + (location_p_y + location_p_y)
+            location_p_sq_sum_xy = (location_p_x * location_p_x) + (location_p_y * location_p_y)
 
             theta = Math.atan2(location_p_y, location_p_x)
             phi = Math.atan2(Math.sqrt(location_p_sq_sum_xy), location_p_z)
