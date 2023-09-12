@@ -141,7 +141,7 @@ export abstract class Component<
         this.updateRoot()
     }
 
-    protected abstract initializeProcessingFromRaw(): ProcessingPair<SharedT, ContextT>
+    protected abstract initializeProcessingFromRaw(): ProcessingPair<SharedT, ContextT> | undefined
 
     processFromRaw() {
         this.updateRoot()
@@ -158,16 +158,22 @@ export abstract class Component<
         const system = this.system as SystemT
 
         const raw = this.initializeProcessingFromRaw()
-        const graph = new GraphProcessor(system.processors)
-        const initialization = graph.init(raw.context)
-        if (!initialization.connections.inputs.every(input => pathExists(raw.item, input)))
-            throw new Error("not all inputs defined")
+        if (raw === undefined)
+            this.processing.shared = undefined
+        else {
+            const graph = new GraphProcessor(system.processors)
+            const initialization = graph.init(raw.context)
+            if (!initialization.connections.inputs.every(input => pathExists(raw.item, input)))
+                throw new Error("not all inputs defined")
 
-        graph.process(raw.item, raw.context)
-        this.processing.shared = raw
+            graph.process(raw.item, raw.context)
+            this.processing.shared = raw
 
-        if (this.processing.id)
-            system.db.save(this.processing.id, raw)
+            if (this.processing.id)
+                system.db.save(this.processing.id, raw)
+        }
+        
+        this.fire('processed')
     }
 
     /**

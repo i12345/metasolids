@@ -189,9 +189,12 @@ export class Component<ID = string> extends processing.Component<
 
         const volumeNode = VolumeNode.construct(this.entity, true)
         if (!volumeNode)
-            throw new Error()
+            return undefined
 
-        const prerendering = volumeNode.prerender(true)!
+        const prerendering = volumeNode.prerender(true)
+        if (prerendering === undefined)
+            return undefined
+            
         const { multiObjectsIDs, pathsMap } = VolumeNode.multiObjectIDs(prerendering)
         volumeNode.assignPaths(pathsMap)
 
