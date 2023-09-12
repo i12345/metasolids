@@ -1102,11 +1102,20 @@ export class MetaSplineSegment<
         const sample_length = locations.p.length / 3
         
         if (this.spline_segment_index === 0) {
-            return field_point_vectorized_new(
+            const shape_sample = field_point_vectorized_new<Sample, FieldPointVectorContainerStatic>(
                 this.field.elementType,
                 sample_length,
                 <IsDynamicVector<Sample, FieldPointVectorContainerStatic>>false
             )
+
+            shape_sample.distance.fill(NaN)
+            shape_sample.uv.fill(NaN)
+            shape_sample.gradient.fill(NaN)
+            shape_sample.falloff.rate.fill(NaN)
+            shape_sample.unit.height.fill(NaN)
+            shape_sample.unit.length.fill(NaN)
+
+            return shape_sample
         }
         
         const location_extra = extraFields<

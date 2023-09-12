@@ -760,17 +760,20 @@ export class MetaSolidVolume<
             parameter_unit_length: number,
             parameter_falloff_rate: number
         for (let i = 0; i < length; i++) {
+            surface_distance = samples_distance[i]
             parameter_unit_height = parameters_unit_height[i]
             parameter_unit_length = parameters_unit_length[i]
             parameter_falloff_rate = parameters_falloff_rate[i]
             isValid = (
                 !Number.isNaN(parameter_unit_height) &&
                 !Number.isNaN(parameter_unit_length) &&
-                !Number.isNaN(parameter_falloff_rate)
+                !Number.isNaN(parameter_falloff_rate) &&
+                !Number.isNaN(surface_distance) &&
+                !(surface_distance === Number.POSITIVE_INFINITY || surface_distance === Number.NEGATIVE_INFINITY)
             )
 
             if (isValid) {
-                surface_distance = (samples_distance[i] - parameter_unit_height) / parameter_unit_length
+                surface_distance = (surface_distance - parameter_unit_height) / parameter_unit_length
                 result_alpha[i] = ((1 - Math.min(1, Math.max(0, surface_distance))) ** parameter_falloff_rate)
             }
             else result_alpha[i] = 0
