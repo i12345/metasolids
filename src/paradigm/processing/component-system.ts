@@ -11,7 +11,7 @@ const _schema = ['enabled']
 //TODO: separate SharedT from ProcessingT
 
 export class ComponentSystem<
-        SharedT,
+        SharedT = any,
         InstanceT extends Instance<SharedT> = Instance<SharedT>,
         ContextT = any,
         ID = string,

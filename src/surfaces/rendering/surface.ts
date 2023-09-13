@@ -1,12 +1,19 @@
 import { Material_Groups_TextureContexts, Material_Groups_Textures } from "./material/material-texture.js";
-import { VolumeLocation } from "../../volumes/volume.js";
+import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "./renderer.js";
-import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/index.js";
+import { EncapsulatingKey, MultiObjectsGroupsTemplate, WithEncapsulating } from "../../paradigm/trees/index.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
-import { Surface, SurfaceInstance, SurfaceSample, UVunwrapping, VolumeProcessingWithSurfacesInstancer, texturing } from "../index.js";
-import { Instancer } from "../../paradigm/processing/instance.js";
+import { InstanceContext, Instancer } from "../../paradigm/processing/instance.js";
 import { Entity } from "playcanvas-extended";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { Surface, SurfaceInstance, SurfaceSample } from "../surface.js";
+import * as UVunwrapping from "../uv-unwrapping/index.js"
+import * as texturing from "../texturing/index.js"
+import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesInstancer, VolumeSurfaceProcessing } from "../volume-surfaces.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
+import { Component } from "../../paradigm/processing/component.js";
+import { ComponentSystem } from "../../paradigm/processing/component-system.js";
 
 export type SurfaceWithRendering_TextureGroups = {
     material: {
@@ -33,11 +40,15 @@ export interface SurfaceWithRendering_TexturesTemplated<
 
 export type SurfaceWithRendering<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
-    Surface<IndicesT, SurfaceSampleElementType> &
+    Surface<IndicesT, SurfaceSampleElementType, SurfaceSampleContainer, SurfaceSampleVector> &
     UVunwrapping.SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup> &
     SurfaceWithRendering_TexturesTemplated<VolumeLocationT> & {
     renderer: SurfaceRendererShared<VolumeLocationT>
@@ -45,16 +56,22 @@ export type SurfaceWithRendering<
 
 export type SurfaceInstanceWithRendering<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     SurfaceInstance<
         SurfaceWithRendering<
             IndicesT,
+            SurfaceUVUnwrappingGroup,
             VolumeLocationT,
             SurfaceSampleElementType,
-            SurfaceUVUnwrappingGroup
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         >
     > & {
     renderer: SurfaceRendererIndividual<VolumeLocationT>
@@ -62,8 +79,8 @@ export type SurfaceInstanceWithRendering<
 
 export interface SurfaceProcessingContextWithRendering<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
         VolumeSampleProcessingContextT = any,
-        VolumeLocationT extends VolumeLocation = VolumeLocation
     > extends
     texturing.SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup,
@@ -78,39 +95,155 @@ export interface SurfaceProcessingContextWithRendering<
 
 export class SurfaceWithRenderingInstancer<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
+        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
-        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
-        SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        VolumeLocationElementType extends VolumeLocation = VolumeLocationT,
+        VolumeLocationFuseMode extends VolumeLocation = VolumeLocationT,
+        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSampleT,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
+        VolumeSampleProcessingContextT = any,
+        VolumeSamplingContextT extends
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
+            VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT>,
+        VolumeT extends
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                > =
+            Volume<
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT
+                >,
+        SurfaceT extends
+            SurfaceWithRendering<
+                    IndicesT,
+                    SurfaceUVUnwrappingGroup,
+                    VolumeLocationT,
+                    VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector
+                > =
+            SurfaceWithRendering<
+                    IndicesT,
+                    SurfaceUVUnwrappingGroup,
+                    VolumeLocationT,
+                    VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector
+                >,
+        VolumeProcessingT extends
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                > =
+            VolumeProcessingWithSurfaces<
+                    IndicesT,
+                    VolumeLocationT,
+                    VolumeLocationElementType,
+                    VolumeLocationFuseMode,
+                    VolumeSampleT,
+                    VolumeSampleElementType,
+                    VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
+                    VolumeSampleProcessingContextT,
+                    VolumeSamplingContextT,
+                    VolumeT,
+                    SurfaceT
+                >
     >
     implements
     Instancer<
         SurfaceWithRendering<
-                IndicesT,
-                VolumeLocationT,
-                SurfaceSampleElementType,
-                SurfaceUVUnwrappingGroup
-            >,
+            IndicesT,
+            SurfaceUVUnwrappingGroup,
+            VolumeLocationT,
+            VolumeSampleElementType,
+            VolumeSampleContainer,
+            VolumeSampleVector
+        >,
         SurfaceInstanceWithRendering<
-                IndicesT,
-                VolumeLocationT,
-                SurfaceSampleElementType,
-                SurfaceUVUnwrappingGroup
-            >
+            IndicesT,
+            SurfaceUVUnwrappingGroup,
+            VolumeLocationT,
+            VolumeSampleElementType,
+            VolumeSampleContainer,
+            VolumeSampleVector
+        >,
+        VolumeSurfaceProcessing<
+            IndicesT,
+            VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
+            VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
+            VolumeSampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
+            SurfaceT
+        >
     > {
     instantiate(
-        shared: SurfaceWithRendering<
+            shared: VolumeSurfaceProcessing<
                 IndicesT,
                 VolumeLocationT,
-                SurfaceSampleElementType,
-                SurfaceUVUnwrappingGroup
+                VolumeLocationElementType,
+                VolumeLocationFuseMode,
+                VolumeSampleT,
+                VolumeSampleElementType,
+                VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
+                VolumeSampleProcessingContextT,
+                VolumeSamplingContextT,
+                VolumeT,
+                SurfaceT
             >,
-        entity: Entity
-    ): SurfaceInstanceWithRendering<
+            { entity, componentID }: InstanceContext
+        ): SurfaceInstanceWithRendering<
                 IndicesT,
+                SurfaceUVUnwrappingGroup,
                 VolumeLocationT,
-                SurfaceSampleElementType,
-                SurfaceUVUnwrappingGroup
+                VolumeSampleElementType,
+                VolumeSampleContainer,
+                VolumeSampleVector
             > {
+        const component = entity.c[componentID]
+        for (const render of entity.findComponents('render'))
+            if ((<Component>render.entity.c[componentID])?.root === component)
+            render.entity.removeComponent('render')
+        
         return {
             shared,
             entity,
@@ -121,9 +254,11 @@ export class SurfaceWithRenderingInstancer<
     set_enabled(
         instance: SurfaceInstanceWithRendering<
                 IndicesT,
+                SurfaceUVUnwrappingGroup,
                 VolumeLocationT,
-                SurfaceSampleElementType,
-                SurfaceUVUnwrappingGroup
+                VolumeSampleElementType,
+                VolumeSampleContainer,
+                VolumeSampleVector
             >,
         enabled: boolean
     ): void {

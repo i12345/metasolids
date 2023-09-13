@@ -3,13 +3,14 @@ import { VolumeSample } from "../volumes/volume.js";
 import { Instance } from "../paradigm/processing/instance.js";
 import { IndicesTypedArray } from "../utils/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/point.js";
+import { NumberTypedArray } from "../utils/typed-array.js";
 
 export type SurfaceSample = VolumeSample
 
 export interface Surface<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
-        SurfaceSampleContainer extends FieldPointVectorContainer = FieldPointVectorContainer,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
         SurfaceSampleVector extends
             FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
             FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>

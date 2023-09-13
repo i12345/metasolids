@@ -98,7 +98,7 @@ class ProcessingObjects<
 }
 
 export abstract class Component<
-        SharedT,
+        SharedT = any,
         InstanceT extends Instance<SharedT> = Instance<SharedT>,
         ContextT = any,
         ID = string,
@@ -174,7 +174,7 @@ export abstract class Component<
                 system.db.save(this.processing.id, raw)
         }
         
-        this.fire('processed')
+        this.fire('processed', this.processing.shared)
     }
 
     /**
@@ -190,10 +190,12 @@ export abstract class Component<
 
         const system = this.system as SystemT
 
-        if(this.processing.shared)
-            this.processing.instance = system.combinedInstancers.instantiate(this.processing.shared.item, this.entity)
+        if (this.processing.shared)
+            this.processing.instance = system.combinedInstancers.instantiate(this.processing.shared.item, { entity: this.entity, componentID: system.id })
         else
             this.processing.instance = undefined
+
+        this.fire('instance', this.processing.instance)
     }
 
     onEnable(): void {
@@ -267,6 +269,10 @@ export abstract class Component<
     ) {
         if (!this.isRoot && newValue !== undefined)
             throw new Error("Cannot set processing on non-root component")
+
+        for (const descendant of this.entity.findComponents((<ComponentSystem<SharedT, InstanceT, ID, RawProcessingRequest>>this.system).id))
+            if (descendant !== this && (<typeof this>descendant).root === this)
+                (<typeof this>descendant).processing.shared = undefined
 
         this.instantiate()
     }

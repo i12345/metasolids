@@ -7,9 +7,11 @@ import { VolumeProcessing, VolumeProcessingContext } from "../volumes/processor.
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volumes/volume.js"
 import { SurfaceProcessingContext } from "./processing.js"
 import { SurfaceSample, Surface, SurfaceInstance } from "./surface.js"
-import { Instancer } from "../paradigm/processing/instance.js"
-import { WithEncapsulating } from "../paradigm/trees/encapsulating.js"
+import { InstanceContext, Instancer } from "../paradigm/processing/instance.js"
+import { WithEncapsulating, encapsulated } from "../paradigm/trees/encapsulating.js"
 import { IndicesTypedArray } from "../utils/indices-array.js"
+import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js"
+import { NumberTypedArray } from "../utils/typed-array.js"
 
 export const VolumeSurfacesKey = Symbol('volume.surfaces')
 
@@ -29,6 +31,10 @@ export interface VolumeProcessingWithSurfaces<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -55,8 +61,18 @@ export interface VolumeProcessingWithSurfaces<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>
+            Surface<
+                    IndicesT,
+                    VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector
+                > =
+            Surface<
+                    IndicesT,
+                    VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector
+                >
     > extends
     VolumeProcessing<
             VolumeLocationT,
@@ -80,6 +96,10 @@ export type VolumeSurfaceProcessing<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -106,8 +126,8 @@ export type VolumeSurfaceProcessing<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         VolumeProcessingT extends
             VolumeProcessingWithSurfaces<
                     IndicesT,
@@ -117,6 +137,8 @@ export type VolumeSurfaceProcessing<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -130,6 +152,8 @@ export type VolumeSurfaceProcessing<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -147,6 +171,10 @@ export interface VolumeProcessingWithSurfacesInstance<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -173,8 +201,8 @@ export interface VolumeProcessingWithSurfacesInstance<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
@@ -187,6 +215,8 @@ export interface VolumeProcessingWithSurfacesInstance<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -200,6 +230,8 @@ export interface VolumeProcessingWithSurfacesInstance<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -229,6 +261,10 @@ export class VolumeProcessingWithSurfacesInstancer<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -255,8 +291,8 @@ export class VolumeProcessingWithSurfacesInstancer<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
@@ -269,6 +305,8 @@ export class VolumeProcessingWithSurfacesInstancer<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -282,6 +320,8 @@ export class VolumeProcessingWithSurfacesInstancer<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -307,6 +347,8 @@ export class VolumeProcessingWithSurfacesInstancer<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -315,11 +357,30 @@ export class VolumeProcessingWithSurfacesInstancer<
                 VolumeProcessingT
             >
     > {
-    constructor(public readonly instancer: Instancer<SurfaceT, SurfaceInstanceT>) { }
+    constructor(public readonly instancer: Instancer<
+        SurfaceT,
+        SurfaceInstanceT,
+        VolumeSurfaceProcessing<
+            IndicesT,
+            VolumeLocationT,
+            VolumeLocationElementType,
+            VolumeLocationFuseMode,
+            VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
+            VolumeSampleProcessingContextT,
+            VolumeSamplingContextT,
+            VolumeT,
+            SurfaceT,
+            VolumeProcessingT
+        >
+    >) { }
 
     instantiate(
             shared: VolumeProcessingT,
-            entity: Entity
+            context: InstanceContext
         ): VolumeProcessingWithSurfacesInstance<
                 IndicesT,
                 VolumeLocationT,
@@ -328,6 +389,8 @@ export class VolumeProcessingWithSurfacesInstancer<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -337,11 +400,11 @@ export class VolumeProcessingWithSurfacesInstancer<
             > {
         return {
             shared,
-            entity,
+            entity: context.entity,
             spaceTransformations: [
-                new GraphNodeWorldSpaceTransformation(entity)
+                new GraphNodeWorldSpaceTransformation(context.entity)
             ],
-            [VolumeSurfacesKey]: shared[VolumeSurfacesKey].map(surface => this.instancer.instantiate(surface, entity))
+            [VolumeSurfacesKey]: shared[VolumeSurfacesKey].map(surface => this.instancer.instantiate(encapsulated(surface, shared), context))
         }
     }
 
@@ -354,6 +417,8 @@ export class VolumeProcessingWithSurfacesInstancer<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -410,6 +475,10 @@ export interface VolumeSurfaceProcessor<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -436,8 +505,8 @@ export interface VolumeSurfaceProcessor<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<
                 VolumeSampleProcessingContextT
@@ -454,6 +523,8 @@ export interface VolumeSurfaceProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -467,6 +538,8 @@ export interface VolumeSurfaceProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -493,6 +566,8 @@ export interface VolumeSurfaceProcessor<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,

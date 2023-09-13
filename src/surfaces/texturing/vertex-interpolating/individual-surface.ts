@@ -7,7 +7,7 @@ import { SurfaceSample } from "../../surface.js";
 import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
 import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
-import { FieldPointVector, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/index.js";
 
 // type A = {
 //     a: {
@@ -78,7 +78,11 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapp
                     InterpolatingGroups,
                     InterpolatingValue,
                     InterpolatingValuesGrouped
-                >
+                >,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     // expression produces union too complex to represent
     // SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
@@ -93,7 +97,9 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapp
     SurfaceWithUVUnwrapping<
             IndicesT,
             SurfaceUVUnwrappingGroup,
-            SurfaceSampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         > &
     TexturesTemplated<InterpolatingGroups, InterpolatingValuesGrouped>
 
@@ -169,6 +175,10 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     InterpolatingValue,
                     InterpolatingValuesGrouped
                 >,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
         SurfaceSampleProcessingContextT extends
             SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                 InterpolatingGroups,
@@ -194,7 +204,9 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     InterpolatingGroups,
                     InterpolatingValue,
                     InterpolatingValuesGrouped,
-                    SurfaceSampleElementType
+                    SurfaceSampleElementType,
+                    SurfaceSampleContainer,
+                    SurfaceSampleVector
                 >,
             SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                     Objects,
@@ -262,7 +274,9 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     InterpolatingGroups,
                     InterpolatingValue,
                     InterpolatingValuesGrouped,
-                    SurfaceSampleElementType
+                    SurfaceSampleElementType,
+                    SurfaceSampleContainer,
+                    SurfaceSampleVector
                 >,
             context: SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
                     Objects,

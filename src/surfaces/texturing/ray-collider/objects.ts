@@ -14,7 +14,8 @@ import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../
 import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../uv-unwrapping/ray-collider.js";
 import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
-import { FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
+import { NumberTypedArray } from "../../../utils/typed-array.js";
 
 export interface VolumeWithSurfacesObjectsTexturesRayCollision<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -107,6 +108,10 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -133,7 +138,7 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> &
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
@@ -150,7 +155,7 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     // TexturesGrouped,
                     // SampleElementType
                 > =
-            Surface<IndicesT, VolumeSampleElementType> &
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
@@ -194,6 +199,8 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -207,6 +214,8 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -221,6 +230,8 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -236,6 +247,8 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -262,6 +275,8 @@ export interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContext<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -346,6 +361,10 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -372,7 +391,7 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> &
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
@@ -389,7 +408,7 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     // TexturesGrouped,
                     // SampleElementType
                 > =
-            Surface<IndicesT, VolumeSampleElementType> &
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
@@ -437,6 +456,8 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -450,6 +471,8 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -464,6 +487,8 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -479,6 +504,8 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -516,6 +543,8 @@ interface VolumeWithSurfacesObjectsTexturesRayColliderProcessingContextPrivate<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -628,6 +657,10 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -654,7 +687,7 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> &
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
@@ -671,7 +704,7 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     // TexturesGrouped,
                     // SampleElementType
                 > =
-            Surface<IndicesT, VolumeSampleElementType> &
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> &
             SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
                     IndicesT,
                     UVUnwrappingGroup,
@@ -719,6 +752,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -732,6 +767,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -746,6 +783,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -761,6 +800,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -792,6 +833,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
         VolumeSampleT,
         VolumeSampleElementType,
         VolumeSampleFuseMode,
+        VolumeSampleContainer,
+        VolumeSampleVector,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -806,6 +849,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -819,6 +864,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -850,6 +897,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -864,6 +913,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                         VolumeSampleT,
                         VolumeSampleElementType,
                         VolumeSampleFuseMode,
+                        VolumeSampleContainer,
+                        VolumeSampleVector,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT,
@@ -877,6 +928,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                         VolumeSampleT,
                         VolumeSampleElementType,
                         VolumeSampleFuseMode,
+                        VolumeSampleContainer,
+                        VolumeSampleVector,
                         VolumeSampleProcessingContextT,
                         VolumeSamplingContextT,
                         VolumeT,
@@ -899,6 +952,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -934,6 +989,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -966,6 +1023,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -1103,6 +1162,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -1139,6 +1200,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -1187,6 +1250,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -1223,6 +1288,8 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,

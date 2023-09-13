@@ -1,5 +1,7 @@
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
 import { OctTreeWithDualGroups, OctTreeWithDualValue, OctTreeWithDualValuesGrouped, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped } from "../../paradigm/octtree/dual.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 import { VolumeProcessingContextWithSampling, VolumeProcessingWithSampling } from "../../volumes/sampling/types.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
@@ -16,6 +18,10 @@ export type VolumeProcessingWithMeshing<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -42,8 +48,8 @@ export type VolumeProcessingWithMeshing<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
     > =
         VolumeProcessingWithSurfaces<
                 IndicesT,
@@ -53,6 +59,8 @@ export type VolumeProcessingWithMeshing<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,

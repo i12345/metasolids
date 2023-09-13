@@ -5,6 +5,8 @@ import { SurfaceProcessingContext } from "./processing.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "./volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSamplingContext } from "../volumes/volume.js";
 import { IndicesTypedArray } from "../utils/indices-array.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js";
+import { NumberTypedArray } from "../utils/typed-array.js";
 
 export interface RayCollision {
     /**
@@ -29,6 +31,10 @@ export interface VolumeWithSurfacesRayColliderProcessingContext<
         VolumeSampleT extends SurfaceSample = SurfaceSample,
         VolumeSampleElementType extends SurfaceSample = VolumeSampleT,
         VolumeSampleFuseMode extends SurfaceSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -55,8 +61,8 @@ export interface VolumeWithSurfacesRayColliderProcessingContext<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
@@ -72,6 +78,8 @@ export interface VolumeWithSurfacesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -85,6 +93,8 @@ export interface VolumeWithSurfacesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -99,6 +109,8 @@ export interface VolumeWithSurfacesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -114,6 +126,8 @@ export interface VolumeWithSurfacesRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -144,6 +158,10 @@ export interface VolumeWithSurfacesRayCollider<
         VolumeSampleT extends SurfaceSample = SurfaceSample,
         VolumeSampleElementType extends SurfaceSample = VolumeSampleT,
         VolumeSampleFuseMode extends SurfaceSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -170,8 +188,8 @@ export interface VolumeWithSurfacesRayCollider<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
@@ -187,6 +205,8 @@ export interface VolumeWithSurfacesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -200,6 +220,8 @@ export interface VolumeWithSurfacesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -214,6 +236,8 @@ export interface VolumeWithSurfacesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -229,6 +253,8 @@ export interface VolumeWithSurfacesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -254,6 +280,8 @@ export interface VolumeWithSurfacesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -272,6 +300,8 @@ export interface VolumeWithSurfacesRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -301,6 +331,10 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
         VolumeSampleT extends SurfaceSample = SurfaceSample,
         VolumeSampleElementType extends SurfaceSample = VolumeSampleT,
         VolumeSampleFuseMode extends SurfaceSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -327,8 +361,8 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
@@ -344,6 +378,8 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -357,6 +393,8 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -371,6 +409,8 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -386,6 +426,8 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -411,6 +453,8 @@ export interface VolumeWithSurfacesTriangleRayColliderProcessingContext<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -431,6 +475,10 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
         VolumeSampleT extends SurfaceSample = SurfaceSample,
         VolumeSampleElementType extends SurfaceSample = VolumeSampleT,
         VolumeSampleFuseMode extends SurfaceSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -457,8 +505,8 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
@@ -474,6 +522,8 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -487,6 +537,8 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -501,6 +553,8 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -516,6 +570,8 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -541,6 +597,8 @@ interface VolumeWithSurfacesTriangleRayColliderProcessingContextPrivate<
         VolumeSampleT,
         VolumeSampleElementType,
         VolumeSampleFuseMode,
+        VolumeSampleContainer,
+        VolumeSampleVector,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -577,6 +635,10 @@ export class VolumeWithSurfacesTriangleRayCollider<
         VolumeSampleT extends SurfaceSample = SurfaceSample,
         VolumeSampleElementType extends SurfaceSample = VolumeSampleT,
         VolumeSampleFuseMode extends SurfaceSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -603,8 +665,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceInstanceT extends
             SurfaceInstance<SurfaceT> =
             SurfaceInstance<SurfaceT>,
@@ -620,6 +682,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -633,6 +697,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -647,6 +713,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -662,6 +730,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -687,6 +757,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -705,6 +777,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -726,6 +800,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
         VolumeSampleT,
         VolumeSampleElementType,
         VolumeSampleFuseMode,
+        VolumeSampleContainer,
+        VolumeSampleVector,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -746,6 +822,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,
@@ -849,6 +927,8 @@ export class VolumeWithSurfacesTriangleRayCollider<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,

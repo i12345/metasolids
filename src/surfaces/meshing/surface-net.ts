@@ -15,9 +15,10 @@ import { OctTreeReferencesOctTreeLayersGrouped } from "../../paradigm/octtree/re
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { VolumeProcessingContextWithMeshing, VolumeProcessingWithMeshing } from "./processing.js";
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js";
-import { FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/multi-objects.js";
 import { SampleDomainLocationFieldKey } from "../../fields/domain.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 
 export class SurfaceNetMeshingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -27,6 +28,10 @@ export class SurfaceNetMeshingProcessor<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -53,8 +58,8 @@ export class SurfaceNetMeshingProcessor<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
@@ -67,6 +72,8 @@ export class SurfaceNetMeshingProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -80,6 +87,8 @@ export class SurfaceNetMeshingProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,

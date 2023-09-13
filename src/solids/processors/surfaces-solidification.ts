@@ -1,8 +1,10 @@
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js"
 import { PROPERTYKEY_ALL } from "../../paradigm/trees/path.js"
 import { SurfaceProcessingContext } from "../../surfaces/processing.js"
 import { Surface } from "../../surfaces/surface.js"
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeSurfacesKey } from "../../surfaces/volume-surfaces.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { NumberTypedArray } from "../../utils/typed-array.js"
 import { VolumeProcessor } from "../../volumes/processor.js"
 import { VolumeLocation, VolumeSample, VolumeSamplingContext, Volume } from "../../volumes/volume.js"
 import { SolidProcessingContext } from "../processor.js"
@@ -16,6 +18,10 @@ export class VolumeSurfaceSolidificationProcessor<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<
@@ -52,8 +58,8 @@ export class VolumeSurfaceSolidificationProcessor<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
@@ -69,6 +75,8 @@ export class VolumeSurfaceSolidificationProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -95,6 +103,8 @@ export class VolumeSurfaceSolidificationProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,

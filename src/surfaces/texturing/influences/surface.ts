@@ -7,6 +7,8 @@ import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 import { SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceSampleWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor } from "../vertex-interpolating/individual-surface.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js";
+import { NumberTypedArray } from "../../../utils/typed-array.js";
 
 export type SurfaceSampleWithInfluences<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -46,7 +48,11 @@ export type SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>
     > =
     SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
             IndicesT,
@@ -78,7 +84,9 @@ export type SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
                             MultiObjectsInfluencesFuseMode<Objects>
                         >
                 >,
-            SurfaceSampleT
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         >
 
 export type SurfaceProcessingContextWithInfluencesTextureUsingSurfaceUVUnwrapping<
@@ -105,9 +113,13 @@ export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         InfluencesGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceSampleT extends
+        SurfaceSampleElementType extends
             SurfaceSampleWithInfluences<Objects, InfluencesGroup> =
             SurfaceSampleWithInfluences<Objects, InfluencesGroup>,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
         SurfaceSampleProcessingContextT extends
             SurfaceSampleProcessingContextWithInfluences<Objects, InfluencesGroup> =
             SurfaceSampleProcessingContextWithInfluences<Objects, InfluencesGroup>
@@ -127,7 +139,9 @@ export class SurfaceWithInfluencesTextureUsingSurfaceUVUnwrappingProcessor<
                     InfluencesGroup,
                     MultiObjectsInfluences<Objects>
                 >,
-            SurfaceSampleT,
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector,
             SurfaceSampleProcessingContextT
         > {
     constructor(

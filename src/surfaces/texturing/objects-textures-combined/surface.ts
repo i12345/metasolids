@@ -6,7 +6,7 @@ import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/ind
 import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping } from "../index.js";
 import { SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceSampleElementTypeWithObjectsTextureLocations, SurfaceSampleFuseModeWithObjectsTextureLocations, SurfaceObjectsTextureLocationsGroupKinds } from "../types.js";
-import { FieldPointVector, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/point.js";
 import { groupKindsWithFields } from "../../../fields/index.js";
 import { MultiObjectsField } from "../../../fields/fields/multi-objects.js";
 
@@ -144,14 +144,20 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
                     InfluenceGroup,
                     ValueTextureLocationGroup,
                     ValueTextureLocationT
-                >
+                >,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
             IndicesT,
             SurfaceUVUnwrappingGroup,
             Objects,
             InfluenceGroup,
-            SurfaceSampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         > &
     SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
             IndicesT,
@@ -172,7 +178,9 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
                 >,
             ValueTextureT,
             ValueTexturesGrouped,
-            SurfaceSampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         > &
     SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
             IndicesT,

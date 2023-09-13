@@ -6,7 +6,7 @@ import { octtree } from "../paradigm/index.js";
 import { MultiObjectsField } from "../fields/fields/multi-objects.js";
 import { TypedArrayConstructor } from "../utils/typed-array.js";
 import { mergeObjects } from "../utils/merge-objects.js";
-import { FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
 import { GateGroupKindKey, GateGroupKinds, GateGroupKindsTemplate, GateProcessingContext } from "../paradigm/processing/processors/gate.js";
 
 export type IndicesT = Uint32Array
@@ -365,6 +365,9 @@ export type SampleFuseMode = volumes.VolumeSample &
         > &
     {}
 
+export type SampleContainer = FieldPointVectorContainerStatic<Float64Array>
+export type SampleVector = FieldPointVector<SampleElementType, SampleContainer>
+
 export type SampleProcessingContextT = {} &
     WithMultiObjectsIDs<Objects, ObjIDsT> &
     surfaces.texturing.SurfaceSampleProcessingContextForSurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
@@ -687,7 +690,9 @@ export type SurfaceT = surfaces.Surface<IndicesT, SampleT> &
             SurfaceCombinedTextureSampleT,
             SurfaceCombinedTextureT,
             SurfaceCombinedTexturesGrouped,
-            SampleElementType
+            SampleElementType,
+            SampleContainer,
+            SampleVector
         > &
     surfaces.texturing.SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrapping<
             IndicesT,
@@ -697,13 +702,17 @@ export type SurfaceT = surfaces.Surface<IndicesT, SampleT> &
             ObjectsOtherInterpolatingGrouped,
             OtherInterpolatingValuesT,
             OtherInterpolatingValuesGrouped,
-            SampleElementType
+            SampleElementType,
+            SampleContainer,
+            SampleVector
         > &
     surfaces.rendering.SurfaceWithRendering<
             IndicesT,
+            SurfaceUVUnwrappingGroupT,
             VolumeLocationT,
             SampleElementType,
-            SurfaceUVUnwrappingGroupT
+            SampleContainer,
+            SampleVector
         > &
     {}
 
@@ -711,9 +720,20 @@ export type SurfaceInstanceT =
     surfaces.SurfaceInstance<SurfaceT> &
     surfaces.rendering.SurfaceWithRenderingInstancer<
         IndicesT,
+        SurfaceUVUnwrappingGroupT,
         VolumeLocationT,
+        VolumeLocationElementType,
+        VolumeLocationFuseMode,
         SampleT,
-        SurfaceUVUnwrappingGroupT
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
+        SampleVector,
+        SampleProcessingContextT,
+        VolumeDomainSamplingContextT,
+        VolumeT,
+        SurfaceT,
+        VolumeProcessingT
     > &
     {}
 
@@ -764,8 +784,8 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
         > &
     surfaces.rendering.SurfaceProcessingContextWithRendering<
             SurfaceUVUnwrappingGroupT,
-            SampleProcessingContextT,
-            VolumeLocationT
+            VolumeLocationT,
+            SampleProcessingContextT
         >
 
 export type SurfaceProcessingContext_MultiObjects =
@@ -1013,6 +1033,8 @@ export type VolumeProcessingT =
             SampleT,
             SampleElementType,
             SampleFuseMode,
+            SampleContainer,
+            SampleVector,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -1026,6 +1048,8 @@ export type VolumeProcessingT =
             SampleT,
             SampleElementType,
             SampleFuseMode,
+            SampleContainer,
+            SampleVector,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -1055,6 +1079,8 @@ export type VolumeProcessingInstanceT =
         SampleT,
         SampleElementType,
         SampleFuseMode,
+        SampleContainer,
+        SampleVector,
         SampleProcessingContextT,
         VolumeDomainSamplingContextT,
         VolumeT,
@@ -1199,6 +1225,8 @@ export type VolumeSurfaceProcessorT =
             SampleT,
             SampleElementType,
             SampleFuseMode,
+            SampleContainer,
+            SampleVector,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,

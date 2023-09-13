@@ -1,6 +1,7 @@
 import { Entity } from "playcanvas-extended"
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../trees/index.js"
 import { mergeObjects } from "../../utils/index.js"
+import { Component } from "./component.js"
 
 export interface Instance<SharedT> {
     /**
@@ -15,13 +16,19 @@ export interface Instance<SharedT> {
     entity: Entity
 }
 
+export interface InstanceContext {
+    entity: Entity
+    componentID: string
+}
+
 export interface Instancer<
         SharedT,
-        InstanceT extends Instance<SharedT> = Instance<SharedT>
+        InstanceT extends Instance<SharedT> = Instance<SharedT>,
+        ProcessingT = SharedT
     > {
     instantiate(
-        shared: SharedT,
-        entity: Entity
+        processing: ProcessingT,
+        context: InstanceContext
     ): InstanceT
 
     set_enabled(instance: InstanceT, enabled: boolean): void
@@ -34,8 +41,8 @@ export class MultiInstancer<
     Instancer<SharedT, InstanceT> {
     constructor(public readonly instancers: Instancer<SharedT, InstanceT>[]) { }
 
-    instantiate(shared: SharedT, entity: Entity): InstanceT {
-        const instances = this.instancers.map(instancer => instancer.instantiate(shared, entity))
+    instantiate(shared: SharedT, context: InstanceContext): InstanceT {
+        const instances = this.instancers.map(instancer => instancer.instantiate(shared, context))
         return mergeObjects(instances)
     }
 

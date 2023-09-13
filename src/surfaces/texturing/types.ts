@@ -1,8 +1,10 @@
 import { Field } from "../../fields/index.js";
 import { MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext } from "../../fields/processing.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
 import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped, MultiObjectsTypeGrouped } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 import { SurfaceProcessingContext } from "../processing.js";
 import { Surface, SurfaceSample } from "../surface.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceWithUVUnwrapping } from "../uv-unwrapping/index.js";
@@ -190,9 +192,13 @@ export type SurfaceWithIndividualTextures<
         TexturesGrouped extends
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
-        SurfaceSampleElementType extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
-    Surface<IndicesT, SurfaceSampleElementType> &
+    Surface<IndicesT, SurfaceSampleElementType, SurfaceSampleContainer, SurfaceSampleVector> &
     TexturesGrouped
 
 export type SurfaceWithObjectsTextures<
@@ -230,9 +236,13 @@ export type SurfaceWithObjectsTextures<
         TexturesGrouped extends
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
-        SurfaceSampleElementType extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
-    Surface<IndicesT, SurfaceSampleElementType> &
+    Surface<IndicesT, SurfaceSampleElementType, SurfaceSampleContainer, SurfaceSampleVector> &
     MultiObjectsMappedAgainGrouped<Objects, ObjectsTextureGroups, TextureT, TexturesGrouped>
 
 export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
@@ -272,7 +282,11 @@ export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
         SurfaceSampleElementType extends
             SurfaceSampleElementTypeWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT> =
-            SurfaceSampleElementTypeWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT>
+            SurfaceSampleElementTypeWithIndividualTextureLocations<IndividualTextureLocationGroup, TextureLocationT>,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     SurfaceWithIndividualTextures<
             IndicesT,
@@ -286,7 +300,9 @@ export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
             TextureSamplingContextT,
             TextureT,
             TexturesGrouped,
-            SurfaceSampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         >
 
 export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
@@ -327,7 +343,11 @@ export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
         SurfaceSampleElementType extends
             SurfaceSampleElementTypeWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT> =
-            SurfaceSampleElementTypeWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT>
+            SurfaceSampleElementTypeWithIndividualTextureLocations<SharedTextureLocationGroup, TextureLocationT>,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     SurfaceWithObjectsTextures<
             IndicesT,
@@ -342,7 +362,9 @@ export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
             TextureSamplingContextT,
             TextureT,
             TexturesGrouped,
-            SurfaceSampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         >
 
 export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
@@ -383,7 +405,11 @@ export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
         SurfaceSampleElementType extends
             SurfaceSampleElementTypeWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT> =
-            SurfaceSampleElementTypeWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT>
+            SurfaceSampleElementTypeWithObjectsTextureLocations<Objects, ObjectsTextureLocationGroup, TextureLocationT>,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     SurfaceWithObjectsTextures<
             IndicesT,
@@ -398,7 +424,9 @@ export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
             TextureSamplingContextT,
             TextureT,
             TexturesGrouped,
-            SurfaceSampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         >
 
 export type SurfaceProcessingContextWithIndividualTextures<
@@ -561,12 +589,18 @@ export type SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
         TexturesGrouped extends
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<IndividualTextureGroups, TextureT>,
-        SampleElementType extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     SurfaceWithUVUnwrapping<
             IndicesT,
             SurfaceUVUnwrappingGroup,
-            SampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         > &
     TexturesGrouped
 
@@ -606,12 +640,18 @@ export type SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
         TexturesGrouped extends
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT> =
             MultiObjectsGroupsMapped<ObjectsTextureGroups, TextureT>,
-        SampleElementType extends SurfaceSample = SurfaceSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
     > =
     SurfaceWithUVUnwrapping<
             IndicesT,
             SurfaceUVUnwrappingGroup,
-            SampleElementType
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector
         > &
     MultiObjectsMappedAgainGrouped<Objects, ObjectsTextureGroups, TextureT, TexturesGrouped>
 

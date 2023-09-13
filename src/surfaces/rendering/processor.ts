@@ -16,6 +16,8 @@ import { SurfaceUVUnwrappingGroupKindsTemplate } from "../uv-unwrapping/surface.
 import { SurfaceUVUnwrapping } from "../uv-unwrapping/algorithm.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 
 export class SurfaceWithRenderingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -25,7 +27,11 @@ export class SurfaceWithRenderingProcessor<
         VolumeLocationFuseMode extends VolumeLocation = VolumeLocation,
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSample,
-        VolumeSampleFuseMOode extends VolumeSample = VolumeSample,
+        VolumeSampleFuseMode extends VolumeSample = VolumeSample,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<VolumeLocationT, VolumeLocationElementType, VolumeLocationFuseMode, VolumeSampleProcessingContextT> =
@@ -37,7 +43,7 @@ export class SurfaceWithRenderingProcessor<
                     VolumeLocationFuseMode,
                     VolumeSampleT,
                     VolumeSampleElementType,
-                    VolumeSampleFuseMOode,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT
                 > =
@@ -47,33 +53,37 @@ export class SurfaceWithRenderingProcessor<
                     VolumeLocationFuseMode,
                     VolumeSampleT,
                     VolumeSampleElementType,
-                    VolumeSampleFuseMOode,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
             SurfaceWithRendering<
                     IndicesT,
+                    SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
                     VolumeSampleElementType,
-                    SurfaceUVUnwrappingGroup
+                    VolumeSampleContainer,
+                    VolumeSampleVector
                 > =
             SurfaceWithRendering<
                     IndicesT,
+                    SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
                     VolumeSampleElementType,
-                    SurfaceUVUnwrappingGroup
+                    VolumeSampleContainer,
+                    VolumeSampleVector
                 >,
         SurfaceProcessingContextT extends
             SurfaceProcessingContextWithRendering<
                     SurfaceUVUnwrappingGroup,
-                    VolumeSampleProcessingContextT,
-                    VolumeLocationT
+                    VolumeLocationT,
+                    VolumeSampleProcessingContextT
                 > =
             SurfaceProcessingContextWithRendering<
                     SurfaceUVUnwrappingGroup,
-                    VolumeSampleProcessingContextT,
-                    VolumeLocationT
+                    VolumeLocationT,
+                    VolumeSampleProcessingContextT
                 >,
         VolumeProcessingT extends
             VolumeProcessingWithSurfaces<
@@ -83,7 +93,9 @@ export class SurfaceWithRenderingProcessor<
                     VolumeLocationFuseMode,
                     VolumeSampleT,
                     VolumeSampleElementType,
-                    VolumeSampleFuseMOode,
+                    VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -100,7 +112,7 @@ export class SurfaceWithRenderingProcessor<
                     VolumeLocationFuseMode,
                     VolumeSampleT,
                     VolumeSampleElementType,
-                    VolumeSampleFuseMOode,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -112,7 +124,9 @@ export class SurfaceWithRenderingProcessor<
                     VolumeLocationFuseMode,
                     VolumeSampleT,
                     VolumeSampleElementType,
-                    VolumeSampleFuseMOode,
+                    VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -129,7 +143,7 @@ export class SurfaceWithRenderingProcessor<
                     VolumeLocationFuseMode,
                     VolumeSampleT,
                     VolumeSampleElementType,
-                    VolumeSampleFuseMOode,
+                    VolumeSampleFuseMode,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT
@@ -151,7 +165,9 @@ export class SurfaceWithRenderingProcessor<
         VolumeLocationFuseMode,
         VolumeSampleT,
         VolumeSampleElementType,
-        VolumeSampleFuseMOode,
+        VolumeSampleFuseMode,
+        VolumeSampleContainer,
+        VolumeSampleVector,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -169,7 +185,9 @@ export class SurfaceWithRenderingProcessor<
                     VolumeLocationFuseMode,
                     VolumeSampleT,
                     VolumeSampleElementType,
-                    VolumeSampleFuseMOode,
+                    VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
