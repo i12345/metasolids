@@ -32,11 +32,60 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
 
         xAtlasAPI.createAtlas()
         xAtlasAPI.addMesh(indices_start, vertices_start)
-        const results = xAtlasAPI.generateAtlas(xAtlasAPI.defaultChartOptions(), xAtlasAPI.defaultPackOptions())
-        if (results.length !== 1)
-            throw new Error(`xatlas: ${results.length} atlases generated`)
 
-        const atlas = results[0]
+        const options = {
+            chart: xAtlasAPI.defaultChartOptions(),
+            pack: xAtlasAPI.defaultPackOptions()
+        }
+
+        function generateAtlas() {
+            const results = xAtlasAPI.generateAtlas(options.chart, options.pack)
+            if (results.length !== 1)
+                throw new Error(`xatlas: ${results.length} atlases generated`)
+            return results[0]
+        }
+
+        // function experiment(label: string) {
+        //     function trial(i_trial: number) {
+        //         const start = performance.now()
+        //         generateAtlas()
+        //         const end = performance.now()
+        //         performance.measure(`${label} (${i_trial})`, { start, end })
+        //         return end - start
+        //     }
+
+        //     const trials = []
+        //     const n_trials = 10
+        //     for (let i_trial = 0; i_trial < n_trials; i_trial++)
+        //         trials.push(trial(i_trial))
+
+        //     const trials_mean = trials.reduce((acc, trial) => acc + trial, 0) / trials.length
+        //     const trials_stdDev = Math.sqrt(trials.reduce((acc, trial) => acc + ((trial - trials_mean) ** 2), 0))    
+
+        //     console.info(`unwrap[${label}] = ${trials_mean}ms ± ${1.96*trials_stdDev}ms (95% CI)`)
+        // }
+
+        // experiment("default")
+
+        // console.info(`default maxIterations = ${options.chart.maxIterations}`)
+        // for (let iterations = 0; iterations < 25; iterations++) {
+        //     options.chart.maxIterations = iterations
+        //     experiment(`maxIterations = ${iterations}`)
+        // }
+
+        // console.info(`default maxCost = ${options.chart.maxCost}`)
+        // for (let maxCost = 1; maxCost < 5; maxCost++) {
+        //     options.chart.maxCost = maxCost
+        //     experiment(`maxCost = ${maxCost}`)
+        // }
+
+        // console.info(`default maxBoundaryLength = ${options.chart.maxBoundaryLength}`)
+        // for (let maxBoundaryLength = 1; maxBoundaryLength < 5; maxBoundaryLength++) {
+        //     options.chart.maxBoundaryLength = maxBoundaryLength
+        //     experiment(`maxBoundaryLength = ${maxBoundaryLength}`)
+        // }
+        
+        const atlas = generateAtlas()
 
         /** number of atlas vertices */
         const n_atlas = atlas.vertex.vertices.length / 3
