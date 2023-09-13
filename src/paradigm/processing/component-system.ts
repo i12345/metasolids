@@ -15,18 +15,21 @@ export class ComponentSystem<
         InstanceT extends Instance<SharedT> = Instance<SharedT>,
         ContextT = any,
         ID = string,
+        RawProcessingRequest = any,
         ComponentT extends
             Component<
                     SharedT,
                     InstanceT,
                     ContextT,
-                    ID
+                    ID,
+                    RawProcessingRequest
                 > =
             Component<
                     SharedT,
                     InstanceT,
                     ContextT,
-                    ID
+                    ID,
+                    RawProcessingRequest
                 >,
         ComponentDataT extends
             ComponentData<ID> =

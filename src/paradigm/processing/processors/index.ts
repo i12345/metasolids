@@ -1,3 +1,4 @@
+export * from './gate.js'
 export * from './graph.js'
 export * from './parallel.js'
 export * from './parallelizer-groups.js'

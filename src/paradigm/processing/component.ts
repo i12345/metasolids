@@ -101,7 +101,8 @@ export abstract class Component<
         SharedT,
         InstanceT extends Instance<SharedT> = Instance<SharedT>,
         ContextT = any,
-        ID = string
+        ID = string,
+        RawProcessingRequest = any,
     > extends pc.Component {
     readonly processing: {
         id?: ID
@@ -141,9 +142,9 @@ export abstract class Component<
         this.updateRoot()
     }
 
-    protected abstract initializeProcessingFromRaw(): ProcessingPair<SharedT, ContextT> | undefined
+    protected abstract initializeProcessingFromRaw(request?: RawProcessingRequest): ProcessingPair<SharedT, ContextT> | undefined
 
-    processFromRaw() {
+    processFromRaw(request?: RawProcessingRequest) {
         this.updateRoot()
         if (!this.isRoot)
             throw new Error("Non-root component cannot process from raw")
@@ -157,7 +158,7 @@ export abstract class Component<
 
         const system = this.system as SystemT
 
-        const raw = this.initializeProcessingFromRaw()
+        const raw = this.initializeProcessingFromRaw(request)
         if (raw === undefined)
             this.processing.shared = undefined
         else {

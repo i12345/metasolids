@@ -7,6 +7,9 @@ export type WithEncapsulating<EncapsulatingT> = {
     [EncapsulatingKey]: EncapsulatingT
 }
 
+export type EncapsulatingGroup = { [EncapsulatingKey]: MultiObjectsGroupsTemplateLeaf }
+export const EncapsulatingGroupTemplate: EncapsulatingGroup = { [EncapsulatingKey]: MultiObjectsGroupsTemplate_Leaf }
+
 export type WithoutEncapsulating<EncapsulatedT extends WithEncapsulating<any>> =
     Omit<EncapsulatedT, typeof EncapsulatingKey>
 

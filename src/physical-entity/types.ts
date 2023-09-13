@@ -1,4 +1,4 @@
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped, MultiObjectsIDs, WithMultiObjectsIDs, MultiObjectsIDsKey } from "../paradigm/trees/index.js";
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupedObjectsKey, mapGroups, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsKindsTemplateMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsTemplate, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, mergeGroups, MultiObjectsGroupsCombinedMapped, mergeGroupsInplace, groupPaths, MultiObjectsGroupsMapped, MultiObjectsIDs, WithMultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, EncapsulatingGroup } from "../paradigm/trees/index.js";
 import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext, MultiObjectsInfluencesGroupsDefault, MultiObjectsInfluencesGroupsKindsMappedGroupsDefaultTemplate, MultiObjectsInfluencesGroupsDefaultTemplate, MultiObjectsInfluencesGroupKinds, MultiObjectsWithGroupFieldsProcessingContext, GroupWithField, GroupFieldKey, Field, MultiObjectsGroupsWithFieldsProcessingContext, WithInfluenceProcessingContext } from "../fields/index.js"
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
@@ -7,8 +7,66 @@ import { MultiObjectsField } from "../fields/fields/multi-objects.js";
 import { TypedArrayConstructor } from "../utils/typed-array.js";
 import { mergeObjects } from "../utils/merge-objects.js";
 import { FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
+import { GateGroupKindKey, GateGroupKinds, GateGroupKindsTemplate, GateProcessingContext } from "../paradigm/processing/processors/gate.js";
 
 export type IndicesT = Uint32Array
+
+export enum RawProcessingMode {
+    RTMesh,
+    TexturedMesh,
+    Full,
+}
+
+export interface RawProcessingRequest {
+    /**
+     * processing mode to use
+     * RTMesh - volume sampling, surface meshing, default material
+     * TexturedMesh - uv unwrapping, texture sampling
+     * Full - influence diffusion, surface area & solid standard physical property calculation
+     */
+    mode: RawProcessingMode
+    
+    /**
+     * can override the physical entity volumeSamplingSettings
+     * 
+     * If not specified here, then sampling max_depth is divided by 2
+     * when not processing full
+     */
+    max_depth?: number
+}
+
+export type VolumeProcessingModeGate = {
+    mode: MultiObjectsGroupsTemplateLeaf
+}
+
+export const VolumeProcesingModeGateTemplate: VolumeProcessingModeGate = {
+    mode: MultiObjectsGroupsTemplate_Leaf
+}
+
+export type SurfaceProcessingModeGate = VolumeProcessingModeGate
+export const SurfaceProcessingModeGateTemplate: SurfaceProcessingModeGate = VolumeProcesingModeGateTemplate
+export type SolidProcessingModeGate = VolumeProcessingModeGate
+export const SolidProcessingModeGateTemplate: SolidProcessingModeGate = VolumeProcesingModeGateTemplate
+
+export type VolumeProcessingModeGateGroupKindsMappedGroups = MultiObjectsGroupsKindsTemplateMapped<GateGroupKinds, VolumeProcessingModeGate>
+export type SurfaceProcessingModeGateGroupKindsMappedGroups = MultiObjectsGroupsKindsTemplateMapped<GateGroupKinds, SurfaceProcessingModeGate>
+export type SolidProcessingModeGateGroupKindsMappedGroups = MultiObjectsGroupsKindsTemplateMapped<GateGroupKinds, SolidProcessingModeGate>
+
+export const VolumeProcessingModeGateGroupKindsMappedGroupsTemplate: VolumeProcessingModeGateGroupKindsMappedGroups = {
+    [GateGroupKindKey]: VolumeProcesingModeGateTemplate
+}
+
+export const SurfaceProcessingModeGateGroupKindsMappedGroupsTemplate: SurfaceProcessingModeGateGroupKindsMappedGroups = {
+    [GateGroupKindKey]: SurfaceProcessingModeGateTemplate
+}
+
+export const SolidProcessingModeGateGroupKindsMappedGroupsTemplate: SolidProcessingModeGateGroupKindsMappedGroups = {
+    [GateGroupKindKey]: SolidProcessingModeGateTemplate
+}
+
+export type VolumeProcesingContextWithGate = GateProcessingContext<VolumeProcessingModeGate, RawProcessingMode>
+export type SurfaceProcesingContextWithGate = GateProcessingContext<SurfaceProcessingModeGate, RawProcessingMode>
+export type SolidProcesingContextWithGate = GateProcessingContext<SolidProcessingModeGate, RawProcessingMode>
 
 export type VolumeLocationT = volumes.VolumeLocation
 export type VolumeLocationElementType = volumes.VolumeLocation
@@ -664,6 +722,7 @@ export type SurfaceInstanceT =
 
 export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<SampleProcessingContextT> &
     WithMultiObjectsIDs<Objects, ObjIDsT> &
+    SurfaceProcesingContextWithGate &
     // surfaces.SurfaceProcessingContextWithSurfaceArea<SampleProcessingContextT> (doesn't exist) &
     surfaces.texturing.SurfaceProcessingContextWithInfluencesTextureUsingSurfaceUVUnwrapping<
             SurfaceUVUnwrappingGroupT,
@@ -711,6 +770,10 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
 
 export type SurfaceProcessingContext_MultiObjects =
     WithMultiObjectsIDs<Objects, ObjIDsT> &
+    MultiObjectsGroupsProcessingContext<
+        SurfaceProcessingModeGate,
+        GateGroupKinds
+    > &
     MultiObjectsGroupsProcessingContext<
         SurfaceUVUnwrappingGroupT,
         surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds
@@ -774,6 +837,8 @@ export type SurfaceProcessingContext_MultiObjects =
 export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingContext_MultiObjects = {
     [MultiObjectsIDsKey]: undefined!,
 
+    ...SurfaceProcessingModeGateGroupKindsMappedGroupsTemplate,
+
     ...SurfaceUVUnwrappingGroupsKindsMappedGroupsTemplate,
 
     // influences is a feature of the sample
@@ -813,6 +878,7 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
     [MultiObjectsProcessingContextGroupKinds]: {
         // influences is a feature of the samplemplate,
         ...MultiObjectsInfluencesGroupKindsTemplate,
+        ...GateGroupKindsTemplate,
 
         ...surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindsTemplate,
 
@@ -843,7 +909,27 @@ export type SolidT =
 export type SolidProcessingContextT =
     solids.SolidProcessingContext<SampleProcessingContextT, SurfaceProcessingContextT> &
     // solids.SolidProcessingContextWithEnclosingVolume<SampleProcessingContextT, SurfaceProcessingContextT> (doesn't exist) &
+    SolidProcesingContextWithGate &
     {}
+
+export type SolidProcessingContext_MultiObjects =
+    MultiObjectsGroupsProcessingContext<{}, {}> &
+    MultiObjectsGroupsProcessingContext<
+            SolidProcessingModeGate,
+            GateGroupKinds
+        > &
+    MultiObjectsProcessingContext<Objects, {}, MultiObjectsGroupsMapped<{}, Objects>, {}>
+
+export const SolidProcessingContext_MultiObjects_Template: SolidProcessingContext_MultiObjects = {
+    ...SolidProcessingModeGateGroupKindsMappedGroupsTemplate,
+
+    [MultiObjectsProcessingContextObjectsGrouped]: {
+    },
+
+    [MultiObjectsProcessingContextGroupKinds]: {
+        ...GateGroupKindsTemplate,
+    }
+}
 
 export type VolumeProcessingT =
     volumes.VolumeProcessing<
@@ -981,6 +1067,7 @@ export type VolumeProcessingContextT =
     volumes.VolumeProcessingContext<
             SampleProcessingContextT
         > &
+    VolumeProcesingContextWithGate &
     // volumes.sampling.VolumeProcessingContextWithSampling<
     //         IndicesT,
     //         {},
@@ -1052,13 +1139,20 @@ export type VolumeProcessingContextT =
 
 export type VolumeProcessingContext_MultiObjects =
     MultiObjectsGroupsProcessingContext<{}, {}> &
+    MultiObjectsGroupsProcessingContext<
+            VolumeProcessingModeGate,
+            GateGroupKinds
+        > &
     MultiObjectsProcessingContext<Objects, {}, MultiObjectsGroupsMapped<{}, Objects>, {}>
 
 export const VolumeProcessingContext_MultiObjects_Template: VolumeProcessingContext_MultiObjects = {
+    ...VolumeProcessingModeGateGroupKindsMappedGroupsTemplate,
+
     [MultiObjectsProcessingContextObjectsGrouped]: {
     },
 
     [MultiObjectsProcessingContextGroupKinds]: {
+        ...GateGroupKindsTemplate,
     }
 }
 

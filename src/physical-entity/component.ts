@@ -2,7 +2,7 @@ import { Entity, GraphNode, Vec3 } from "playcanvas-extended";
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js";
 import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextGroupKinds, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsTemplateOrLeaf, MultiObjectsMappedOrLeaf, MultiObjectsIDs, MultiObjectsIDsKey, extract, mapGroups } from "../paradigm/trees/index.js";
-import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, VolumeDomain_SamplingContext_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template, SurfaceIndividualTextureLocationsGroupsField, SurfaceObjectsTextureLocationsGroupsField, ObjIDsT, ObjIDsType, SurfaceTextureLocationsGroupsFields, SampleElementType, SampleFuseMode, ObjIDsContainer, Volume_Sample_PreservedGroupsKindsT, Volume_Sample_PreservedGroupsT, VolumeDomain_SamplingContext_PreservedGroupsT, Volume_Context_PreservedGroupsKinds, VolumeLocationElementType, VolumeLocationFuseMode } from "./types.js";
+import { IndicesT, Objects, ObjectsOtherInterpolatingGrouped, ObjectsSurfaceObjectsTexturesGrouped, OtherInterpolatingGroupsKindsT, OtherInterpolatingGroupsKindsTemplate, OtherInterpolatingGroupsT, SampleProcessingContext_MultiObjects_Template, SampleProcessingContextT, SampleT, SolidProcessingContextT, SolidT, SurfaceObjectsTexturesGroupsT, SurfaceProcessingContext_MultiObjects_Template, SurfaceProcessingContextT, SurfaceT, VolumeDomain_SamplingContext_PreservedGroupsKindsTemplate, Volume_Sample_PreservedGroupsKindsTemplate, VolumeLocationT, VolumeProcessingContext_MultiObjects_Template, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeDomainSamplingContext_MultiObjects_Template, VolumeDomainSamplingContextT, VolumeT, VolumeSamplingContext_MultiObjects_Template, SurfaceIndividualTextureLocationsGroupsField, SurfaceObjectsTextureLocationsGroupsField, ObjIDsT, ObjIDsType, SurfaceTextureLocationsGroupsFields, SampleElementType, SampleFuseMode, ObjIDsContainer, Volume_Sample_PreservedGroupsKindsT, Volume_Sample_PreservedGroupsT, VolumeDomain_SamplingContext_PreservedGroupsT, Volume_Context_PreservedGroupsKinds, VolumeLocationElementType, VolumeLocationFuseMode, RawProcessingRequest, RawProcessingMode, SolidProcessingContext_MultiObjects_Template } from "./types.js";
 import { makeClone } from "../utils/cloneable.js";
 import { onlyOne, Reflect_entries, Reflect_fromEntries } from "../utils/index.js";
 import { ComponentSystem, SYSTEM_ID } from "./system.js";
@@ -13,7 +13,8 @@ export class Component<ID = string> extends processing.Component<
         VolumeProcessingT,
         VolumeProcessingInstanceT,
         VolumeProcessingContextT,
-        ID
+        ID,
+        RawProcessingRequest
     > {
     private _multiObjPath?: PropertyPath
 
@@ -34,9 +35,22 @@ export class Component<ID = string> extends processing.Component<
         super(system, entity)
     }
 
-    protected initializeProcessingFromRaw() {
+    protected initializeProcessingFromRaw(request: RawProcessingRequest = { mode: RawProcessingMode.Full }) {
         const surfaceLevel = this.surfaceLevel ?? 0.5
-
+        const volumeSubdivisionSettings = this.volumeSamplingSettings ?
+            { ...this.volumeSamplingSettings } : {
+                indicesType: Uint32Array,
+                max_depth: 8,
+                recommendation_threshold: 1
+            } as octtree.OctTreeSubdivisionSettings<IndicesT>
+        
+        if (request.max_depth)
+            volumeSubdivisionSettings.max_depth = request.max_depth
+        else if (request.mode !== RawProcessingMode.Full)
+            volumeSubdivisionSettings.max_depth /= 2
+        
+        const texturers = request.mode === RawProcessingMode.RTMesh ? [textures.defaultDiffuseTexturer] : (this.texturers ?? [])
+        
         const map_volume_component = new Map<VolumeT, Component<ID>>()
 
         type MultiObjPrerender = MultiObjectsMappedOrLeaf<MultiObjectsTemplateOrLeaf, symbol>
@@ -194,7 +208,7 @@ export class Component<ID = string> extends processing.Component<
         const prerendering = volumeNode.prerender(true)
         if (prerendering === undefined)
             return undefined
-            
+        
         const { multiObjectsIDs, pathsMap } = VolumeNode.multiObjectIDs(prerendering)
         volumeNode.assignPaths(pathsMap)
 
@@ -280,6 +294,7 @@ export class Component<ID = string> extends processing.Component<
 
         const sample_multiObjectsContext = makeClone(SampleProcessingContext_MultiObjects_Template)
         const surface_multiObjectsContext = makeClone(SurfaceProcessingContext_MultiObjects_Template)
+        const solid_multiObjectsContext = makeClone(SolidProcessingContext_MultiObjects_Template)
         const volume_multiObjectsContext = makeClone(VolumeProcessingContext_MultiObjects_Template)
         const volume_sampling_multiObjectsContext = makeClone(VolumeSamplingContext_MultiObjects_Template)
         const volume_domain_sampling_multiObjectsContext = makeClone(VolumeDomainSamplingContext_MultiObjects_Template)
@@ -289,6 +304,7 @@ export class Component<ID = string> extends processing.Component<
 
         multiObjectsContext_insertObjects<OtherInterpolatingGroupsT, ObjectsOtherInterpolatingGrouped, OtherInterpolatingGroupsKindsT>(sample_multiObjectsContext)
         multiObjectsContext_insertObjects<SurfaceObjectsTexturesGroupsT, ObjectsSurfaceObjectsTexturesGrouped, surfaces.texturing.SurfaceObjectsTexturesGroupKinds>(surface_multiObjectsContext)
+        multiObjectsContext_insertObjects(solid_multiObjectsContext)
         multiObjectsContext_insertObjects(volume_multiObjectsContext)
 
         const sample_context = <SampleProcessingContextT>{
@@ -303,10 +319,11 @@ export class Component<ID = string> extends processing.Component<
             ...surface_multiObjectsContext,
 
             [MultiObjectsIDsKey]: multiObjectsIDs,
+            mode: request.mode,
             samples: sample_context,
             surfaceLevel,
             [textures.TexturersKey]: {
-                texturers: (this.texturers ?? []) as any,
+                texturers,
                 outputs: [
                     ['material', 'textures']
                 ]
@@ -317,6 +334,9 @@ export class Component<ID = string> extends processing.Component<
         }
 
         const solid_context: SolidProcessingContextT = {
+            ...solid_multiObjectsContext,
+
+            mode: request.mode,
             samples: sample_context,
             surface: surface_context,
         }
@@ -343,17 +363,14 @@ export class Component<ID = string> extends processing.Component<
 
             [volumes.sampling.VolumeSamplingContextKey]: volume_domain_sampling_context as unknown as VolumeProcessingContextT[typeof volumes.sampling.SamplingKey][typeof volumes.sampling.VolumeSamplingContextKey],
 
-            [octtree.SubdivisionKey]: this.volumeSamplingSettings ?? {
-                indicesType: Uint32Array,
-                max_depth: 8,
-                recommendation_threshold: 1
-            } as octtree.OctTreeSubdivisionSettings<IndicesT>
+            [octtree.SubdivisionKey]: volumeSubdivisionSettings
         } as VolumeProcessingContextT[typeof volumes.sampling.SamplingKey]
 
         const volume_context: VolumeProcessingContextT = {
             ...volume_multiObjectsContext,
 
             [MultiObjectsIDsKey]: multiObjectsIDs,
+            mode: request.mode,
             [volumes.VolumeSampleKey]: sample_context,
             [volumes.sampling.SamplingKey]: volume_sampling_context,
             [surfaces.VolumeSurfacesKey]: surface_context,
