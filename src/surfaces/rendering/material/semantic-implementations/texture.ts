@@ -18,17 +18,21 @@ import { SampleDomainLocationFieldKey } from "../../../../fields/domain.js"
 import { IndicesTypedArray } from "../../../../utils/indices-array.js"
 
 export type MaterialSemanticImplementation_Texture_SideEffect<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > = (
-        rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>,
-        renderer: SurfaceRendererIndividual<VolumeLocationT>
-    ) => RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+        rendered: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>,
+        renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
+    ) => RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
 
 export class MaterialSemanticImplementation_Texture<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         TexelTypeT extends TextureSample = TextureSample
     > implements
-    MaterialSemanticImplementation_Immediate<VolumeLocationT> {
+    MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT> {
     readonly cost: {
         time: number
         space: Cost_Space_Texture
@@ -47,7 +51,7 @@ export class MaterialSemanticImplementation_Texture<
                 Material_Texture_Location<VolumeLocationT>,
                 TexelTypeT,
                 TexelTypeT,
-                Material_Texture_Context<VolumeLocationT>
+                Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
             >,
         public readonly stage: number,
         public readonly surface_textureGroup: GeneratorType<ReturnType<typeof groups>>,
@@ -58,7 +62,7 @@ export class MaterialSemanticImplementation_Texture<
         public readonly channels: number,
         public readonly effectiveTexelSizeUV: number,
         public readonly hdr = false,
-        public readonly sideEffects: MaterialSemanticImplementation_Texture_SideEffect<VolumeLocationT>[] = []
+        public readonly sideEffects: MaterialSemanticImplementation_Texture_SideEffect<Objects, ObjIDsT, VolumeLocationT>[] = []
     ) {
         const texels = resolution ** 2
 
@@ -83,7 +87,7 @@ export class MaterialSemanticImplementation_Texture<
         return Math.max(information_per_pixel_mean, effectiveFit) ** 2
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_Texture &&
             ///@ts-ignore
             this.texture === that.texture &&
@@ -94,11 +98,11 @@ export class MaterialSemanticImplementation_Texture<
             this.resolution === that.resolution
     }
 
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
+    implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] {
         const buffer = new (this.hdr ? Float32Array : Uint8Array)(this.channels * (this.resolution ** 2))
 
-        const texture_context = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
-        const multiObjectsIDs = (<Partial<WithMultiObjectsIDs>>texture_context)[MultiObjectsIDsKey]
+        const texture_context = this.surface_textureGroup.get<Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>>(renderer.shared.textureContexts)
+        const multiObjectsIDs = texture_context[MultiObjectsIDsKey]
         const texture_location_field = texture_context[SampleDomainLocationFieldKey]
 
         const { UVs, finalIndices } = renderer.shared.surfaceUVUnwrapping
@@ -107,7 +111,7 @@ export class MaterialSemanticImplementation_Texture<
         // for (let i = 0; i < UVs_tmp.length; i++)
         //     UVs_tmp[i] = new Vec2(UVs[(2 * i) + 0], UVs[(2 * i) + 1])
 
-        const locations = field_point_vectorized_multi_objects_new<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic>(
+        const locations = field_point_vectorized_multi_objects_new<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic, ObjIDsT>(
             texture_location_field.elementType,
             finalIndices.length / 3,
             <IsDynamicVector<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic>>false,
@@ -116,9 +120,6 @@ export class MaterialSemanticImplementation_Texture<
         );
 
         (<FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>>locations).uv = <Float64Array><unknown>UVs
-
-        type Objects = MultiObjectsTemplate
-        type ObjIDsT = IndicesTypedArray
 
         const texture_location_interpolator = new VertexInterpolatingTexture<
                 Objects,
@@ -213,7 +214,7 @@ export class MaterialSemanticImplementation_Texture<
 
         //TODO: optimizations for translating, rotating, scaling, and tiling textures
 
-        const rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT> = {
+        const rendered: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT> = {
             storageClass: MaterialSemanticImplementationStorageClass_Texture.$class,
             implementation: this,
             semantic: this.semantic,

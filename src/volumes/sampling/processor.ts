@@ -304,15 +304,16 @@ class VolumeDomainSamplingSubdivisionProcessor<
         const positions = OctTreeSpace.vectorized.positionOfVoxel.layers_same.call(space, layer, local_indices)
         space.positions.layers.push(positions)
 
-        const locations_type = samplingContext[SampleDomainLocationFieldKey].elementType
-        const locations_iterator = vectorIterator(locations_type, <any>false, multiObjectsIDs)
-        const locations = field_point_vectorized_multi_objects_new(locations_type, new_voxels, <any>false, multiObjectsIDs?.IDsType)
-
-        locations.p = positions
+        let locations: FieldPointVector<VolumeLocationElementType, FieldPointVectorContainerStatic<Float64Array>>
+        
         if (extraLocationParameters) {
             const extraLocations_type = field_point_type_default(<FieldPoint>extraLocationParameters)
-            field_point_vector_fill(locations_type, extraLocations_type, locations, <FieldPoint>extraLocationParameters, multiObjectsIDs)
+            locations = <typeof locations><unknown>field_point_vectorized_multi_objects_new<FieldPoint, FieldPointVectorContainerStatic<Float64Array>, ObjIDsT>(extraLocations_type, new_voxels, <any>false, multiObjectsIDs?.IDsType)
+            field_point_vector_fill(extraLocations_type, extraLocations_type, locations, <FieldPoint>extraLocationParameters, multiObjectsIDs)
         }
+        else locations = <typeof locations>{ }
+
+        locations.p = positions
 
         const samples = samplingContext[VectorSampleFunction](volume, <FieldPointVector<VolumeLocationElementType, FieldPointVectorContainerStatic<Float64Array>>>locations, samplingContext)
         item.samples = samples

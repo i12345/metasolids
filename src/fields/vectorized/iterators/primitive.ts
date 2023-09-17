@@ -147,7 +147,7 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
     scatter(
             dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
             src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
-            /** indices[dst_index] = src_index */
+            /** indices[dst_index] = src_index or invalid */
             indices: IndicesTypedArray,
             isMultiObjMapped?: boolean
         ): void {
@@ -162,11 +162,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
         if (isMultiObjMapped) {
             let dst_objOffset: number
-            let dst_objOffset_prev = 0
+            let dst_objOffset_prev: number
             let dst_objOffset_next: number
 
             let src_objOffset: number
-            let src_objOffset_prev = 0
+            let src_objOffset_prev: number
             let src_objOffset_next: number
 
             let objID: number
@@ -186,7 +186,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                     for (dst_item = 0; dst_item < n_items; dst_item++) {
                         src_item = indices[dst_item]
-                        if(src_item === indices_invalid) continue
+                        if (src_item === indices_invalid) continue
+                        
+                        src_objOffset_prev = src_item > 0 ? src_objOffsets[src_item - 1] : 0
+                        dst_objOffset_prev = dst_item > 0 ? dst_objOffsets[dst_item - 1] : 0
+
                         src_objOffset_next = src_objOffsets[src_item]
                         dst_objOffset_next = dst_objOffsets[dst_item]
 
@@ -214,7 +218,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                     for (dst_item = 0; dst_item < n_items; dst_item++) {
                         src_item = indices[dst_item]
-                        if(src_item === indices_invalid) continue
+                        if (src_item === indices_invalid) continue
+                        
+                        src_objOffset_prev = src_item > 0 ? src_objOffsets[src_item - 1] : 0
+                        dst_objOffset_prev = dst_item > 0 ? dst_objOffsets[dst_item - 1] : 0
+
                         src_objOffset_next = src_objOffsets[src_item]
                         dst_objOffset_next = dst_objOffsets[dst_item]
 
@@ -247,7 +255,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                     for (dst_item = 0; dst_item < n_items; dst_item++) {
                         src_item = indices[dst_item]
-                        if(src_item === indices_invalid) continue
+                        if (src_item === indices_invalid) continue
+                        
+                        src_objOffset_prev = src_item > 0 ? src_objOffsets[src_item - 1] : 0
+                        dst_objOffset_prev = dst_item > 0 ? dst_objOffsets[dst_item - 1] : 0
+
                         src_objOffset_next = src_objOffsets[src_item]
                         dst_objOffset_next = dst_objOffsets[dst_item]
 
@@ -275,7 +287,11 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
 
                     for (dst_item = 0; dst_item < n_items; dst_item++) {
                         src_item = indices[dst_item]
-                        if(src_item === indices_invalid) continue
+                        if (src_item === indices_invalid) continue
+                        
+                        src_objOffset_prev = src_item > 0 ? src_objOffsets[src_item - 1] : 0
+                        dst_objOffset_prev = dst_item > 0 ? dst_objOffsets[dst_item - 1] : 0
+
                         src_objOffset_next = src_objOffsets[src_item]
                         dst_objOffset_next = dst_objOffsets[dst_item]
 
@@ -457,6 +473,9 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
                             for (element = elementSize; element > 0; element--)
                                 dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
                         }
+
+                        src_objOffset_prev = src_objOffset_next
+                        dst_objOffset_prev = dst_objOffset_next
                     }
                 }
                 else {
@@ -485,6 +504,9 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
                             for (element = elementSize; element > 0; element--)
                                 dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
                         }
+
+                        src_objOffset_prev = src_objOffset_next
+                        dst_objOffset_prev = dst_objOffset_next
                     }
                 }
             }
@@ -518,6 +540,9 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
                             for (element = elementSize; element > 0; element--)
                                 dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
                         }
+
+                        src_objOffset_prev = src_objOffset_next
+                        dst_objOffset_prev = dst_objOffset_next
                     }
                 }
                 else {
@@ -546,6 +571,9 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
                             for (element = elementSize; element > 0; element--)
                                 dst_vectorized.set(dst_offset++, src_vectorized.get(src_offset++))
                         }
+
+                        src_objOffset_prev = src_objOffset_next
+                        dst_objOffset_prev = dst_objOffset_next
                     }
                 }
             }

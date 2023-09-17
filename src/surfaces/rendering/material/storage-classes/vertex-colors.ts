@@ -1,17 +1,20 @@
-import { onlyOne } from "../../../../utils/index.js";
+import { IndicesTypedArray, onlyOne } from "../../../../utils/index.js";
 import { Cost_Space, Cost_Space_VertexColors, MaterialSemanticImplementationStorageClass, MaterialSemanticImplementationStorageClassInstanceIndividual, MaterialSemanticImplementationStorageClassInstanceShared, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { PackedRenderedBufferForSemanticWithRefCount, pack, renderPack } from "../packer.js";
 import { colorChannelsString } from "../color-channels.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { Mesh } from "playcanvas-extended";
 import { VolumeLocation } from "../../../../volumes/volume.js";
+import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
 
 interface PackedRenderedBufferForSemanticWithMixedBuffer<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
     extends
     PackedRenderedBufferForSemanticWithRefCount<
-        RenderedBufferForSemanticWithImplementation<VolumeLocationT>
+        RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>
     > {
     quality: number
     buffer: ReturnType<typeof renderPack>
@@ -24,7 +27,10 @@ export class MaterialSemanticImplementationStorageClass_VertexColors<
     implements MaterialSemanticImplementationStorageClass<VolumeLocationT> {
     readonly $class = MaterialSemanticImplementationStorageClass_VertexColors.$class
 
-    startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT>): Cost_Space {
+    startingSpace<
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+        >(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): Cost_Space {
         return {
             // elements: renderer.mesh.decimation.numRenderVerts * 4,
             elements: renderer.shared.meshData.vertices.length * 4,
@@ -32,24 +38,29 @@ export class MaterialSemanticImplementationStorageClass_VertexColors<
         } as Cost_Space_VertexColors
     }
 
-    instance(renderer: SurfaceRendererShared<VolumeLocationT>) {
-        return new MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<VolumeLocationT>(this, renderer)
+    instance<
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+        >(renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 
     static readonly $class = Symbol("material-semantic-implementation-storage-class:vertex-colors")
 }
 
 export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT> {
-    readonly packs_stage0: PackedRenderedBufferForSemanticWithMixedBuffer<VolumeLocationT>[] = []
+    implements MaterialSemanticImplementationStorageClassInstanceShared<Objects, ObjIDsT, VolumeLocationT> {
+    readonly packs_stage0: PackedRenderedBufferForSemanticWithMixedBuffer<Objects, ObjIDsT, VolumeLocationT>[] = []
 
     constructor(
         public readonly $class: MaterialSemanticImplementationStorageClass_VertexColors<VolumeLocationT>,
-        public readonly renderer: SurfaceRendererShared<VolumeLocationT>
+        public readonly renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>
     ) {
-        const callback = (renderer: SurfaceRendererIndividual<VolumeLocationT>) => {
+        const callback = (renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>) => {
             renderer
                 .material
                 .storageClassInstances
@@ -61,27 +72,29 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_VertexColo
         renderer.material.computeBackingCallbacks.push(({ renderer }) => callback(renderer))
     }
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>) {
-        return new MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors<VolumeLocationT>(this, renderer)
+    individualize(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 }
 
 export class MaterialSemanticImplementationStorageClassInstanceIndividual_VertexColors<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT> {
-    readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] = []
-    private _renderedPacked?: PackedRenderedBufferForSemanticWithMixedBuffer<VolumeLocationT>
+    implements MaterialSemanticImplementationStorageClassInstanceIndividual<Objects, ObjIDsT, VolumeLocationT> {
+    readonly rendered: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] = []
+    private _renderedPacked?: PackedRenderedBufferForSemanticWithMixedBuffer<Objects, ObjIDsT, VolumeLocationT>
     private _hasRequestedIndividual_material = false
 
     constructor(
-        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<VolumeLocationT>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
+        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_VertexColors<Objects, ObjIDsT, VolumeLocationT>,
+        public readonly renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
     ) { }
 
     preoptimize(
-            add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-            remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+            add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+            remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
         ): void {
         const final = [...this.rendered, ...add]
         remove.forEach(remove => {
@@ -100,8 +113,8 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Vertex
     }
 
     apply(
-        add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-        remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+        add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+        remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
     ): void {
         const decimation = this.renderer.mesh.decimation
         const mesh = this.renderer.mesh.implementation

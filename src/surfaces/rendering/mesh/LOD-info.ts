@@ -2,7 +2,8 @@ import { Application, Vec2, Vec3 } from "playcanvas-extended"
 import { FieldPointRange, RANGE_MAX, RANGE_MIN, field_point_range_compute } from "../../../fields/index.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
 import { VolumeLocation } from "../../../volumes/index.js"
-import { indicesArrayType } from "../../../utils/indices-array.js"
+import { IndicesTypedArray, indicesArrayType } from "../../../utils/indices-array.js"
+import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js"
 
 type LevelOfDetailInfo_Edge_Cached = {
     absolute: {
@@ -53,15 +54,17 @@ export type LevelOfDetailInfo = {
 }
 
 export class LevelOfDetailInfoComputerShared<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     /** quality -> cache */
     private readonly cache = new Map<number, LevelOfDetailInfo_Cached>()
 
-    constructor(public readonly renderer: MeshRendererShared<VolumeLocationT>) { }
+    constructor(public readonly renderer: MeshRendererShared<Objects, ObjIDsT, VolumeLocationT>) { }
 
-    individualize(renderer: MeshRendererIndividual<VolumeLocationT>) {
-        return new LevelOfDetailInfoComputerIndividual<VolumeLocationT>(this, renderer)
+    individualize(renderer: MeshRendererIndividual<Objects, ObjIDsT, VolumeLocationT>) {
+        return new LevelOfDetailInfoComputerIndividual<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 
     cached(quality: number) {
@@ -177,6 +180,8 @@ export class LevelOfDetailInfoComputerShared<
 }
 
 export class LevelOfDetailInfoComputerIndividual<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     private _info!: LevelOfDetailInfo
@@ -186,8 +191,8 @@ export class LevelOfDetailInfoComputerIndividual<
     }
 
     constructor(
-        public readonly shared: LevelOfDetailInfoComputerShared<VolumeLocationT>,
-        public readonly renderer: MeshRendererIndividual<VolumeLocationT>
+        public readonly shared: LevelOfDetailInfoComputerShared<Objects, ObjIDsT, VolumeLocationT>,
+        public readonly renderer: MeshRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
     ) {
         this.update()
     }

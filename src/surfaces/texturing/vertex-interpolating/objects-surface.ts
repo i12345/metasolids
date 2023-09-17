@@ -405,7 +405,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSurfaceUVUnwrappin
                         multiObjectsIDs
                     )
 
-                const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, MultiObjectsMapped<Objects, InterpolatingValue>, InterpolatingValueType, InterpolatingValue, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field, multiObjectsIDs)
+                const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, MultiObjectsMapped<Objects, InterpolatingValue>, InterpolatingValueType, InterpolatingValue, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field)
                 intract(surface, objectPath, texture)
             }
         }

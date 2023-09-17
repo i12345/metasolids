@@ -4,8 +4,9 @@ import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf, Mu
 import { Reflect_entries, Reflect_fromEntries } from "../utils/reflect-entries.js"
 import { FieldPoint, FieldPointPrimitive, Vector, FieldsPoint } from "./point.js"
 import { IndicesTypedArray } from "../utils/indices-array.js"
-import { hasPath } from "../paradigm/trees/tree.js"
+import { extract, hasPath, intract } from "../paradigm/trees/tree.js"
 import { TypedArray, typedArrayConstructor } from "../utils/typed-array.js"
+import { PropertyPath } from "../paradigm/trees/path.js"
 
 export type FieldPointType<Point extends FieldPoint = FieldPoint> =
     Point extends FieldPointPrimitive ? (
@@ -45,7 +46,7 @@ export type MultiObjectsFieldPointElement<Point extends FieldPoint = FieldPoint>
 
 export function field_point_new<Point extends FieldPoint = FieldPoint>(type: FieldPointType<Point>): Point {
     if (type instanceof Function)
-        return <Point>(new (<FieldPointType<FieldPointPrimitive>>type)())
+        return (type === <FieldPointType<Point>>Number) ? <Point>0 : <Point>(new (<FieldPointType<FieldPointPrimitive>>type)())
     else {
         const result: any = {}
 
@@ -96,6 +97,14 @@ export function field_point_type_default<Point extends FieldPoint>(p: Point): Fi
             Reflect_entries(<FieldsPoint>p).map(([key, value]) =>
                 [key, <FieldPointType>field_point_type_default(value)] as [keyof FieldPointType<Point>, FieldPointType<Point>[keyof FieldPointType<Point>]]))
     }
+}
+
+export function field_point_type_singleObj(type: FieldPointType): FieldPointType {
+    if (type instanceof Function)
+        return type
+    else if (MultiObjectsGroupedObjectsKey in type)
+        return type[MultiObjectsGroupedObjectsKey]
+    else return Reflect_fromEntries<FieldPointType<FieldsPoint>>(Reflect_entries(type).map(([key, subtype]) => <[PropertyKey, FieldPointType]>[key, field_point_type_singleObj(subtype)]))
 }
 
 export function field_point_type_contains<Superset extends FieldPoint, Subset extends FieldPoint>(
@@ -162,6 +171,122 @@ export function field_point_type_multiObj_count<
         const subsizes = Reflect.ownKeys(type).map(key => field_point_type_multiObj_count(type[key], (<FieldsPoint>point)[key], multiObjectIDs)).filter(size => size !== undefined)
         return subsizes.length > 0 ? Math.max(...(<number[]>subsizes)) : undefined
     }
+}
+
+export function field_point_multiObj_extract<
+        PointT extends FieldPoint = FieldPoint,
+        PointElementType extends FieldPoint = PointT,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+    >(
+        type: FieldPointType<PointElementType>,
+        point: PointT,
+        multiObjectIDs: MultiObjectsIDs<Objects, ObjIDsT>,
+        objIDs?: ObjIDsT
+    ): [objID: number | undefined, singleObj: PointT | undefined, reduced: FieldPoint][] {
+    function* recurse<
+        PointT extends FieldPoint = FieldPoint,
+        PointElementType extends FieldPoint = PointT
+    >(
+        type: FieldPointType<PointElementType>,
+        point: PointT,
+        objPaths: PropertyPath[],
+        objID: -1 | number
+    ): Generator<[objID: number, singleObj: PointT | undefined, reduced: FieldPoint]> {
+        if (type instanceof Function)
+            yield [objID, objID !== -1 ? point : undefined, point]
+        else if (MultiObjectsGroupedObjectsKey in type) {
+            if (objID !== -1)
+                throw new Error()
+
+            const subtype = type[MultiObjectsGroupedObjectsKey]
+            
+            for (const [objID, objPath] of objPaths.entries()) {
+                if (hasPath(point, objPath)) {
+                    for (const [, , objValue] of recurse(subtype, extract<FieldPoint>(point, objPath), objPaths, objID)) {
+                        const singleObj = <FieldsPoint>{}
+                        intract(singleObj, objPath, objValue)
+                        yield [objID, <PointT>singleObj, objValue]
+                    }
+                }
+            }
+        }
+        else {
+            if (objID === -1) {
+                const values_generic = <FieldsPoint>{}
+                const values_objs_singleObj = new Array<FieldsPoint>(objPaths.length)
+                const values_objs_reduced = new Array<FieldsPoint>(objPaths.length)
+                let hasValues_generic = false
+                let hasValues_objs = false
+
+                for (const key of Reflect.ownKeys(type)) {
+                    const subtype = type[key]
+                    const subpoint = (<FieldsPoint>point)[key]
+
+                    for (const [objID, objValue_singleObj, objValue_reduced] of recurse(subtype, subpoint, objPaths, -1)) {
+                        if (objID === undefined) {
+                            values_generic[key] = objValue_reduced
+                            hasValues_generic = true
+                        }
+                        else {
+                            (values_objs_singleObj[objID] ??= {})[key] = objValue_singleObj!;
+                            (values_objs_reduced[objID] ??= {})[key] = objValue_reduced;
+                            hasValues_objs = true
+                        }
+                    }
+                }
+
+                if (!hasValues_objs)
+                    yield [-1, undefined, <PointT>values_generic]
+                else {
+                    if (hasValues_generic) {
+                        for (let objID = 0; objID < objPaths.length; objID++) {
+                            if (values_objs_reduced[objID] === undefined) continue
+                            
+                            Object.assign(values_objs_singleObj[objID], values_generic)
+                            Object.assign(values_objs_reduced[objID], values_generic)
+                        }
+                    }
+                    
+                    for (let objID = 0; objID < objPaths.length; objID++)
+                        if (values_objs_reduced[objID] !== undefined)
+                            yield [objID, <PointT>values_objs_singleObj[objID], values_objs_reduced[objID]]
+                }
+            }
+            else {
+                const values_obj = <FieldsPoint>{}
+
+                for (const key of Reflect.ownKeys(type)) {
+                    const subtype = type[key]
+                    const subpoint = (<FieldsPoint>point)[key]
+
+                    for (const [sub_objID, objValue_singleObj, objValue_reduced] of recurse(subtype, subpoint, objPaths, objID)) {
+                        if (sub_objID !== objID ||
+                            objValue_singleObj !== objValue_reduced)
+                            throw new Error()
+                        
+                        values_obj[key] = objValue_reduced
+                    }
+                }
+
+                yield [objID, <PointT>values_obj, values_obj]
+            }
+        }
+    }
+
+    const objPaths = objIDs ? [...objIDs].map(objID => multiObjectIDs.paths[objID]) : multiObjectIDs.paths
+    const results: [number, PointT | undefined, FieldPoint][] = []
+
+    for (const [relative_objID, objValue_singleObj, objValue_reduced] of recurse(type, point, objPaths, -1)) {
+        if (relative_objID === -1)
+            return [[undefined, undefined, objValue_reduced]]
+        else if (objIDs)
+            results.push([objIDs[relative_objID], objValue_singleObj, objValue_reduced])
+        else
+            results.push([relative_objID, objValue_singleObj, objValue_reduced])
+    }
+
+    return results
 }
 
 function field_point_fits_type_obj<

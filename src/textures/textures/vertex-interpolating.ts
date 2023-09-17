@@ -1,6 +1,6 @@
 import { Vec2 } from "playcanvas-extended";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_identity } from "../../fields/index.js";
+import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_identity, field_point_new } from "../../fields/index.js";
 import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
 import { IndicesArray, IndicesTypedArray } from "../../utils/indices-array.js";
 import { defaultField } from "../../fields/fields/default.js";
@@ -58,8 +58,8 @@ export class VertexInterpolatingTexture<
             FieldPointVector<VertexSampleElementType, VertexSampleContainer> =
             FieldPointVector<VertexSampleElementType, VertexSampleContainer>,
         Context extends
-            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
-            TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>
+            WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+            WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>
     > implements
     Texture<
         TextureLocationT,
@@ -78,7 +78,7 @@ export class VertexInterpolatingTexture<
         public readonly uv: FieldPointVectorStatic<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>,
         public readonly triangles: IndicesArray,
         public readonly field: Field<VertexSample, VertexSampleElementType, VertexSampleFuseMode>,
-        public readonly multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
+        public readonly defaultValue: VertexSample = <VertexSample><unknown>field_point_new(field.elementType)
     ) {
     }
 
@@ -86,7 +86,7 @@ export class VertexInterpolatingTexture<
         const collision = this.collider!.collision_first(location.uv)
 
         if (collision === undefined)
-            return undefined!
+            return this.defaultValue
 
         const { tri, w1, w2 } = collision
         return this.interpolator!.interpolate(tri, w1, w2)
@@ -95,6 +95,6 @@ export class VertexInterpolatingTexture<
     init(context: Context): void {
         const mesh = Triangles2DMesh.build(this.uv, this.triangles)
         this.collider = new Triangles2DMeshCollider(mesh)
-        this.interpolator = new Triangles2DMeshInterpolator<VertexSample, VertexSampleElementType, VertexSampleContainer, VertexSampleVector>(this.field.elementType, this.vertices, this.triangles, this.multiObjectsIDs)
+        this.interpolator = new Triangles2DMeshInterpolator<VertexSample, VertexSampleElementType, VertexSampleContainer, VertexSampleVector>(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
     }
 }

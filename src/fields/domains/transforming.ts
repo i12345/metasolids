@@ -10,6 +10,7 @@ import { FusedVectorSamplingContext, FusingVectorSampleDomain } from './fusing.j
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, FieldPointVectorWithMultiObjects, FuseMode, FusingFieldPointVectorWithMultiObjects, fuseVectors } from '../vectorized/index.js'
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsIDsKey, MultiObjectsTemplate } from '../../paradigm/trees/index.js'
 import { IndicesTypedArray } from '../../utils/indices-array.js'
+import { NumberTypedArray } from '../../utils/typed-array.js'
 
 export type TransformingDefaultInnerSamplingContext<
         OuterLocation extends FieldPoint = FieldPoint,
@@ -56,11 +57,11 @@ type TransformingFusingVectorSampleContextPrivate<
         OuterLocation extends FieldPoint = FieldPoint,
         OuterLocationElementType extends FieldPoint = OuterLocation,
         OuterLocationFuseMode extends FieldPoint = OuterLocation,
-        OuterLocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        OuterLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         OuterSample extends FieldPoint = FieldPoint,
         OuterSampleElementType extends FieldPoint = OuterSample,
         OuterSampleFuseMode extends FieldPoint = OuterSample,
-        OuterSampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        OuterSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         OuterContext extends
             SamplingContext<OuterLocation, OuterLocationElementType, OuterLocationFuseMode> =
             SamplingContext<OuterLocation, OuterLocationElementType, OuterLocationFuseMode>,
@@ -116,11 +117,11 @@ type TransformingFusingVectorSampleContextPrivate<
         InnerLocation extends FieldPoint = FieldPoint,
         InnerLocationElementType extends FieldPoint = InnerLocation,
         InnerLocationFuseMode extends FieldPoint = InnerLocation,
-        InnerLocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        InnerLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         InnerSample extends FieldPoint = FieldPoint,
         InnerSampleElementType extends FieldPoint = InnerSample,
         InnerSampleFuseMode extends FieldPoint = InnerSample,
-        InnerSampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        InnerSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         InnerContext extends
             SamplingContext<InnerLocation, InnerLocationElementType, InnerLocationFuseMode> =
             TransformingDefaultInnerSamplingContext<
@@ -251,11 +252,11 @@ export abstract class TransformingSampleDomain<
         OuterLocation extends FieldPoint = FieldPoint,
         OuterLocationElementType extends FieldPoint = OuterLocation,
         OuterLocationFuseMode extends FieldPoint = OuterLocation,
-        OuterLocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        OuterLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         OuterSample extends FieldPoint = FieldPoint,
         OuterSampleElementType extends FieldPoint = OuterSample,
         OuterSampleFuseMode extends FieldPoint = OuterSample,
-        OuterSampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        OuterSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         OuterContext extends
             SamplingContext<OuterLocation, OuterLocationElementType, OuterLocationFuseMode> =
             SamplingContext<OuterLocation, OuterLocationElementType, OuterLocationFuseMode>,
@@ -311,11 +312,11 @@ export abstract class TransformingSampleDomain<
         InnerLocation extends FieldPoint = FieldPoint,
         InnerLocationElementType extends FieldPoint = InnerLocation,
         InnerLocationFuseMode extends FieldPoint = InnerLocation,
-        InnerLocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        InnerLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         InnerSample extends FieldPoint = FieldPoint,
         InnerSampleElementType extends FieldPoint = InnerSample,
         InnerSampleFuseMode extends FieldPoint = InnerSample,
-        InnerSampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        InnerSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         InnerContext extends
             SamplingContext<InnerLocation, InnerLocationElementType, InnerLocationFuseMode> =
             TransformingDefaultInnerSamplingContext<

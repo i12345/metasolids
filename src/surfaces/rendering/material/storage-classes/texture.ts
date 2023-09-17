@@ -5,13 +5,17 @@ import { format_selector } from "../texture-formats.js";
 import { colorChannelsString } from "../color-channels.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
+import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
+import { IndicesTypedArray } from "../../../../utils/indices-array.js";
 
 interface PackedRenderedBufferForSemanticWithTexture<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
     extends
     PackedRenderedBufferForSemanticWithRefCount<
-        RenderedBufferForSemanticWithImplementation<VolumeLocationT>
+        RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>
     > {
     texture: Texture
 }
@@ -22,29 +26,37 @@ export class MaterialSemanticImplementationStorageClass_Texture<
     implements MaterialSemanticImplementationStorageClass<VolumeLocationT> {
     readonly $class = MaterialSemanticImplementationStorageClass_Texture.$class
 
-    startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT>): Cost_Space_Texture {
+    startingSpace<
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+        >(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): Cost_Space_Texture {
         return {
             // 8 textures x (4 channels/pixel * 2048*2048 pixels)
             elements: 8 * (4 * (2048 ** 2))
         }
     }
 
-    instance(renderer: SurfaceRendererShared<VolumeLocationT>) {
-        return new MaterialSemanticImplementationStorageClassInstanceShared_Texture<VolumeLocationT>(this, renderer)
+    instance<
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+        >(renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceShared_Texture<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 
     static readonly $class = Symbol("material-semantic-implementation-storage-class:texture")
 }
 
 export class MaterialSemanticImplementationStorageClassInstanceShared_Texture<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT> {
-    readonly rendered_packs_stage0: PackedRenderedBufferForSemanticWithTexture<VolumeLocationT>[] = []
+    implements MaterialSemanticImplementationStorageClassInstanceShared<Objects, ObjIDsT, VolumeLocationT> {
+    readonly rendered_packs_stage0: PackedRenderedBufferForSemanticWithTexture<Objects, ObjIDsT, VolumeLocationT>[] = []
 
     constructor(
             public readonly $class: MaterialSemanticImplementationStorageClass_Texture<VolumeLocationT>,
-            public readonly renderer: SurfaceRendererShared<VolumeLocationT>
+            public readonly renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>
         ) {
         renderer.material.computeBackingCallbacks.push(renderer => {
             renderer
@@ -53,27 +65,29 @@ export class MaterialSemanticImplementationStorageClassInstanceShared_Texture<
                 .apply([], [])
         })}
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>) {
-        return new MaterialSemanticImplementationStorageClassInstanceIndividual_Texture<VolumeLocationT>(this, renderer)
+    individualize(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceIndividual_Texture<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 }
 
 export class MaterialSemanticImplementationStorageClassInstanceIndividual_Texture<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT> {
-    readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] = []
-    private readonly rendered_packs: PackedRenderedBufferForSemanticWithTexture<VolumeLocationT>[] = []
+    implements MaterialSemanticImplementationStorageClassInstanceIndividual<Objects, ObjIDsT, VolumeLocationT> {
+    readonly rendered: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] = []
+    private readonly rendered_packs: PackedRenderedBufferForSemanticWithTexture<Objects, ObjIDsT, VolumeLocationT>[] = []
     private _hasRequestedIndividual_material = false
 
     constructor(
-        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_Texture<VolumeLocationT>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
+        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_Texture<Objects, ObjIDsT, VolumeLocationT>,
+        public readonly renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
     ) { }
 
     preoptimize(
-            add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-            remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+            add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+            remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
         ): void {
         const final = [...this.rendered, ...add]
         remove.forEach(remove => {
@@ -92,10 +106,10 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
     }
 
     apply(
-            add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-            remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+            add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+            remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
         ): void {
-        const fragmented_buffers: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] = []
+        const fragmented_buffers: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] = []
 
         this.rendered.push(...add)
         for (const remove_buffer of remove) {
@@ -156,7 +170,7 @@ export class MaterialSemanticImplementationStorageClassInstanceIndividual_Textur
                 renderPack(buffer, packed)
                 texture.unlock()
 
-                const packed_final: PackedRenderedBufferForSemanticWithTexture<VolumeLocationT> = {
+                const packed_final: PackedRenderedBufferForSemanticWithTexture<Objects, ObjIDsT, VolumeLocationT> = {
                     ...packed,
                     texture,
                     refCount: 1

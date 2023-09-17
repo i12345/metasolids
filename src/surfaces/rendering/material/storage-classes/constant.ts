@@ -1,8 +1,9 @@
-import { StandardMaterial, Color, Vec3, Vec2, Vec4, Material } from "playcanvas-extended";
+import { Color, Vec3, Vec2, Vec4, Material } from "playcanvas-extended";
 import { Cost_Space, MaterialSemanticImplementationStorageClass, MaterialSemanticImplementationStorageClassInstanceIndividual, MaterialSemanticImplementationStorageClassInstanceShared, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { VolumeLocation } from "../../../../volumes/index.js";
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/trees/index.js";
+import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
+import { IndicesTypedArray } from "../../../../utils/indices-array.js";
 
 export class MaterialSemanticImplementationStorageClass_Constant<
         VolumeLocationT extends VolumeLocation = VolumeLocation
@@ -26,20 +27,25 @@ export class MaterialSemanticImplementationStorageClass_Constant<
         return { elements: 16 }
     }
 
-    instance(renderer: SurfaceRendererShared<VolumeLocationT>) {
-        return new MaterialSemanticImplementationStorageClassInstanceShared_Constant<VolumeLocationT>(this, renderer)
+    instance<
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+        >(renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceShared_Constant<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 
     static readonly $class = Symbol("material-semantic-implementation-storage-class:constant")
 }
 
 class MaterialSemanticImplementationStorageClassInstanceShared_Constant<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT> {
+    implements MaterialSemanticImplementationStorageClassInstanceShared<Objects, ObjIDsT, VolumeLocationT> {
     constructor(
             public readonly $class: MaterialSemanticImplementationStorageClass_Constant<VolumeLocationT>,
-            public readonly renderer: SurfaceRendererShared<VolumeLocationT>
+            public readonly renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>
         ) {
         renderer.material.computeBackingCallbacks.push(renderer => {
             renderer
@@ -49,26 +55,28 @@ class MaterialSemanticImplementationStorageClassInstanceShared_Constant<
         })
     }
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>) {
-        return new MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<VolumeLocationT>(this, renderer)
+    individualize(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>) {
+        return new MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 }
 
 class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT> {
-    readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] = []
+    implements MaterialSemanticImplementationStorageClassInstanceIndividual<Objects, ObjIDsT, VolumeLocationT> {
+    readonly rendered: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] = []
     private _hasRequestedIndividual_material = false
 
     constructor(
-        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_Constant<VolumeLocationT>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
+        public readonly $class: MaterialSemanticImplementationStorageClassInstanceShared_Constant<Objects, ObjIDsT, VolumeLocationT>,
+        public readonly renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
     ) { }
 
     preoptimize(
-            add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-            remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+            add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+            remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
         ): void {
         const final = [...this.rendered, ...add]
         remove.forEach(remove => {
@@ -87,8 +95,8 @@ class MaterialSemanticImplementationStorageClassInstanceIndividual_Constant<
     }
 
     apply(
-            add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-            remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+            add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+            remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
         ): void {
         for (const { semantic } of remove)
             (this.renderer.implementation.material as any)[semantic as string] = (this.$class.$class.defaultMaterial(this.$class.renderer.material.materialType) as any)[semantic]

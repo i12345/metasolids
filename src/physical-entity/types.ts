@@ -625,7 +625,7 @@ export const SurfaceIndividualTexturesGroupsTemplate = mergeGroups<SurfaceIndivi
 export type SurfaceIndividualTexturesGrouped =
     SurfaceCombinedTexturesGrouped &
     MultiObjectsGroupsMapped<InfluenceGroup, textures.Texture<SurfaceIndividualTextureLocationT, number>> &
-    surfaces.rendering.SurfaceWithRendering_TexturesTemplated<VolumeLocationT>
+    surfaces.rendering.SurfaceWithRendering_TexturesTemplated<Objects, ObjIDsT, VolumeLocationT>
 
 export type SurfaceObjectsTexturesGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
@@ -707,6 +707,8 @@ export type SurfaceT = surfaces.Surface<IndicesT, SampleT> &
             SampleVector
         > &
     surfaces.rendering.SurfaceWithRendering<
+            Objects,
+            ObjIDsT,
             IndicesT,
             SurfaceUVUnwrappingGroupT,
             VolumeLocationT,
@@ -719,6 +721,8 @@ export type SurfaceT = surfaces.Surface<IndicesT, SampleT> &
 export type SurfaceInstanceT =
     surfaces.SurfaceInstance<SurfaceT> &
     surfaces.rendering.SurfaceWithRenderingInstancer<
+        Objects,
+        ObjIDsT,
         IndicesT,
         SurfaceUVUnwrappingGroupT,
         VolumeLocationT,
@@ -783,6 +787,8 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
             SurfaceCombinedTextureSamplingContextT
         > &
     surfaces.rendering.SurfaceProcessingContextWithRendering<
+            Objects,
+            ObjIDsT,
             SurfaceUVUnwrappingGroupT,
             VolumeLocationT,
             SampleProcessingContextT
@@ -869,7 +875,7 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
     })),
 
     material: {
-        textures: <surfaces.rendering.material.Material_Groups_TextureContexts<VolumeLocationT>>surfaces.rendering.material.Material_Groups_TextureContexts_Template
+        textures: surfaces.rendering.material.Material_Groups_TextureContexts_Template<Objects, ObjIDsT, VolumeLocationT>(undefined!)
     },
 
     ...SurfaceTexturesGroupsKindsMappedGroupsTemplate,

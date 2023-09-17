@@ -1,7 +1,7 @@
 import { vectorized } from "vectorized-functions";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { sum } from "../../utils/typed-array.js";
+import { NumberTypedArray, sum } from "../../utils/typed-array.js";
 import { SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { FieldPoint } from "../point.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, FuseMode, FusingFieldPointVectorWithMultiObjects, IsDynamicVector, ItemNextObjectIndexKey, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new, isDynamicVector } from "../vectorized/index.js";
@@ -16,11 +16,11 @@ export type FusedVectorSamplingContext<
         Location extends FieldPoint = FieldPoint,
         LocationElementType extends FieldPoint = Location,
         LocationFuseMode extends FieldPoint = Location,
-        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
         SampleElementType extends FieldPoint = Sample,
         SampleFuseMode extends FieldPoint = Sample,
-        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
@@ -68,11 +68,11 @@ export interface FusingVectorSampleDomain<
         Location extends FieldPoint = FieldPoint,
         LocationElementType extends FieldPoint = Location,
         LocationFuseMode extends FieldPoint = Location,
-        LocationContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Sample extends FieldPoint = FieldPoint,
         SampleElementType extends FieldPoint = Sample,
         SampleFuseMode extends FieldPoint = Sample,
-        SampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,

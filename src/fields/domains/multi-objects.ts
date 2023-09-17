@@ -1041,48 +1041,7 @@ export class MultiObjectsSampleDomain<
             sample: this.multiObj.sample ? [...groupKinds(this.sampleContext(context), this.multiObj.sample.groupKindsTemplate, this.multiObj.sample.groupsTemplate)] : [],
         }
 
-        const sampleMultiObjTemplate = <{ root: MultiObjectsGroupsMapped<SampleGroups, true> }>{}
-        this.groupsMemoized.sample.forEach(path => intract(sampleMultiObjTemplate, ['root', ...path.group.path], true))
-
         const multiObjectsIDs = (<WithMultiObjectsIDs<Objects, ObjIDsT>><unknown>context)[MultiObjectsIDsKey]
-
-        function multiObjField_recursive(field: Field, sampleMultiObjMapped: MultiObjectsGroupsMapped<SampleGroups, true>): Field {
-            if (sampleMultiObjMapped === true)
-                return new MultiObjectsField(field, multiObjectsIDs)
-            else if (field instanceof FieldsField) {
-                function fields_recursive(
-                    fields: FieldPointMapped<FieldPoint, Field>,
-                    sampleMultiObjMapped: MultiObjectsGroupsOrLeafMapped<MultiObjectsGroupsTemplateOrLeaf, true>
-                ): FieldPointMapped<FieldPoint, Field> {
-                    if (sampleMultiObjMapped === true) {
-                        return new MultiObjectsField(
-                            ((<Field>fields).interpolationType && (makeInterpolator in (<Field>fields).interpolationType)) ?
-                                <Field>fields :
-                                new FieldsField(<FieldPointMapped<FieldsPoint, Field>>fields),
-                            multiObjectsIDs
-                        )
-                    }
-                    else if ((<Field>fields).interpolationType && (makeInterpolator in (<Field>fields).interpolationType))
-                        return fields
-                    else {
-                        return Reflect_fromEntries(
-                            Reflect_entries(fields).map(([key, subfields]) => [
-                                key,
-                                fields_recursive(
-                                    <FieldPointMapped<FieldPoint, Field>>subfields,
-                                    sampleMultiObjMapped[key]
-                                )
-                            ] as [typeof key, FieldPointMapped<FieldPoint, Field>]))
-                    }
-                }
-
-                const mapped = fields_recursive((<FieldsField>field).fields, sampleMultiObjMapped)
-                if (mapped.interpolationType && makeInterpolator in mapped.interpolationType)
-                    return <Field>mapped
-                else return new FieldsField(<FieldsPointMapped<FieldsPoint, Field>>mapped)
-            }
-            else return field
-        }
 
         type SampleField = Field<
             MultiObjectsSample<Objects, SampleGroups, LeafSample>,
@@ -1090,7 +1049,7 @@ export class MultiObjectsSampleDomain<
             MultiObjectsSampleFuseMode<Objects, SampleGroups, LeafSample>
         >
 
-        this.field = <SampleField><unknown>multiObjField_recursive(this.childField, sampleMultiObjTemplate.root)
+        this.field = <SampleField><unknown>MultiObjectsField.multiObj(this.childField, this.groupsMemoized.sample.map(({ group }) => group.path), multiObjectsIDs)
         this.childrenFieldTypes = <typeof this.childrenFieldTypes>{}
 
         for (const key of Reflect.ownKeys(this.children)) {

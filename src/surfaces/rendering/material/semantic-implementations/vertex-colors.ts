@@ -1,5 +1,5 @@
 import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { groups, MultiObjectsGroupsTemplate } from "../../../../paradigm/trees/index.js";
+import { groups, MultiObjectsGroupsTemplate, MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
 import { RANGE_MIN, RANGE_MAX } from "../../../../fields/index.js"
 import { Texture, TextureSample } from "../../../../textures/texture.js"
 import { GeneratorType } from "../../../../utils/generator-type.js"
@@ -10,12 +10,15 @@ import { SurfaceRendererIndividual } from "../../renderer.js"
 import { Material_Texture_Context, Material_Texture_Location } from "../material-texture.js"
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
+import { IndicesTypedArray } from "../../../../utils/indices-array.js";
 
 export class MaterialSemanticImplementation_VertexColors<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         TexelTypeT extends TextureSample = TextureSample
     >
-    implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
+    implements MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT> {
     readonly cost: {
         time: number
         space: Cost_Space_VertexColors
@@ -34,7 +37,7 @@ export class MaterialSemanticImplementation_VertexColors<
                 Material_Texture_Location<VolumeLocationT>,
                 TexelTypeT,
                 TexelTypeT,
-                Material_Texture_Context<VolumeLocationT>
+                Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
             >,
         public readonly stage: number,
         public readonly surface_textureGroup: GeneratorType<ReturnType<typeof groups>>,
@@ -61,7 +64,7 @@ export class MaterialSemanticImplementation_VertexColors<
         return interpolating_fit_definite + ((1 - interpolating_fit_definite) * this.triangleMonotonicity)
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_VertexColors &&
             ///@ts-ignore
             this.texture === that.texture &&
@@ -72,13 +75,12 @@ export class MaterialSemanticImplementation_VertexColors<
             this.vertices === that.vertices
     }
 
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
-        const buffer = new Float32Array(this.channels * renderer.shared.meshData.vertices.length)
-
-        const textureContext = this.surface_textureGroup.get<Material_Texture_Context<VolumeLocationT>>(renderer.shared.textureContexts)
+    implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] {
+        const textureContext = this.surface_textureGroup.get<Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>>(renderer.shared.textureContexts)
 
         const UVs = renderer.shared.surfaceUVUnwrapping.UVs
         const n_vertices = renderer.shared.meshData.vertices.length / 3
+        const buffer = new Float32Array(this.channels * n_vertices)
 
         //TODO: vectorized sampling will let the vertex color buffer be easily automatically filled
         /** original vertices */

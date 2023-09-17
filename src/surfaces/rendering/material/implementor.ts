@@ -1,9 +1,9 @@
 import { Texture, TextureLocation, TextureSample } from "../../../textures/texture.js";
 import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from "../../../textures/index.js";
-import { GeneratorType, Reflect_entries, mergeObjects, onlyOne } from "../../../utils/index.js";
+import { GeneratorType, IndicesTypedArray, Reflect_entries, mergeObjects, onlyOne } from "../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
-import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate, MultiObjectsIDs, extract } from "../../../paradigm/trees/index.js";
+import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate, MultiObjectsIDs, extract, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { field_point_equal, field_point_add_inplace, field_point_divide, field_point_add, FieldPoint, field_point_identity, Triangles2DMeshInterpolator, field_point_new, field_point_map, FieldPointType, SampleDomainLocationFieldKey } from "../../../fields/index.js";
 import { MultiObjectsSampleDomain, ConstantSampleDomain } from "../../../fields/domains/index.js"
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Immediate, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
@@ -444,6 +444,8 @@ interface QualityMetrics<
 }
 
 function qualityMetrics_compute<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         TexelTypeT extends TextureSample = TextureSample
@@ -456,9 +458,17 @@ function qualityMetrics_compute<
                 Material_Texture_Location<VolumeLocationT>,
                 TexelTypeT,
                 TexelTypeT,
-                Material_Texture_Context<VolumeLocationT>
+                Material_Texture_Context<
+                    Objects,
+                    ObjIDsT,
+                    VolumeLocationT
+                >
             >,
-        textureContext: Material_Texture_Context<VolumeLocationT>,
+        textureContext: Material_Texture_Context<
+            Objects,
+            ObjIDsT,
+            VolumeLocationT
+        >,
         UVunwrapping: SurfaceUVUnwrapping,
         implementation: Material_Group_Implementations,
         multiObjectsIDs?: MultiObjectsIDs
@@ -754,17 +764,19 @@ function qualityMetrics_combine<
  * @returns potential ways to implement this material semantic
  */
 export function* material_group_implementations<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         TexelTypeT extends TextureSample = TextureSample
     >(
         group: GeneratorType<ReturnType<typeof groups>>,
-        textures: Material_Groups_Textures<VolumeLocationT>,
-        contexts: Material_Groups_TextureContexts<VolumeLocationT>,
+        textures: Material_Groups_Textures<Objects, ObjIDsT, VolumeLocationT>,
+        contexts: Material_Groups_TextureContexts<Objects, ObjIDsT, VolumeLocationT>,
         mesh: MeshData,
         UVunwrapping: SurfaceUVUnwrapping
-    ): Generator<MaterialSemanticImplementation<VolumeLocationT>> {
+    ): Generator<MaterialSemanticImplementation<Objects, ObjIDsT, VolumeLocationT>> {
     type TextureLocationT = Material_Texture_Location<VolumeLocationT>
-    type TextureContextT = Material_Texture_Context<VolumeLocationT>
+    type TextureContextT = Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
     type TextureT = Texture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT>
     type StageAndTextureT = StageAndTexture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT, TextureT>
 
@@ -775,9 +787,9 @@ export function* material_group_implementations<
     const texture_hdr = (implementation.effectiveTexelDiff ?? EFFECTIVE_TEXEL_DIFF_DEFAULT) < (1 / 256)
 
     ///@ts-ignore
-    const sideEffects_texture = implementation.sideEffects?.filter(sideEffect => typeof sideEffect === 'function') as unknown as MaterialSemanticImplementation_Texture_SideEffect<VolumeLocationT>[]
+    const sideEffects_texture = implementation.sideEffects?.filter(sideEffect => typeof sideEffect === 'function') as unknown as MaterialSemanticImplementation_Texture_SideEffect<Objects, ObjIDsT, VolumeLocationT>[]
     ///@ts-ignore
-    const sideEffects_general = (implementation.sideEffects?.filter(sideEffect => typeof sideEffect !== 'function') as [keyof StandardMaterial, boolean][] ?? []).map(([key, value]) => new MaterialSemanticImplementation_Setting<VolumeLocationT>(key, value, 0))
+    const sideEffects_general = (implementation.sideEffects?.filter(sideEffect => typeof sideEffect !== 'function') as [keyof StandardMaterial, boolean][] ?? []).map(([key, value]) => new MaterialSemanticImplementation_Setting<Objects, ObjIDsT, VolumeLocationT>(key, value, 0))
 
     // const texture_resolutions = [64, 128, 256, 512, 1024, 2048]
     const texture_resolutions = [1024, 2048]
@@ -875,7 +887,7 @@ export function* material_group_implementations<
 
         if (factors.length >= 2) {
             const qualityMetrics = factors.map(([, texture]) =>
-                qualityMetrics_compute<VolumeLocationT>(
+                qualityMetrics_compute<Objects, ObjIDsT, VolumeLocationT>(
                     mesh,
                     texture,
                     textureContext,
@@ -884,19 +896,19 @@ export function* material_group_implementations<
                 )
             )
 
-            const implementation_tint: MaterialSemanticImplementation_Immediate<VolumeLocationT> = (
+            const implementation_tint: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT> = (
                 implementation.mixing?.products?.tint_flag ?
                     new MaterialSemanticImplementation_Setting(
                         <keyof StandardMaterial>`${implementation.name}Tint`,
                         true,
                         Math.max(0, ...factors.map(([stage]) => stage))
                     ) :
-                    MaterialSemanticImplementation_None.instance as unknown as MaterialSemanticImplementation_None<VolumeLocationT>
+                    MaterialSemanticImplementation_None.instance as unknown as MaterialSemanticImplementation_None<Objects, ObjIDsT, VolumeLocationT>
             )
 
             if (factors.length === 3) {
                 for (const factor_index_constant of [1, 2, 3]) {
-                    const implementation_constant = new MaterialSemanticImplementation_Constant<VolumeLocationT>(
+                    const implementation_constant = new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
                         semantics.constant,
                         qualityMetrics[factor_index_constant].meanValue,
                         implementation.channels,
@@ -907,7 +919,7 @@ export function* material_group_implementations<
                     const factor_indices_vertexColor = [1, 2, 3]
                     factor_indices_vertexColor.splice(factor_index_constant, 1)
                     for (const factor_index_vertexColors of factor_indices_vertexColor) {
-                        const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<VolumeLocationT, TexelTypeT>(
+                        const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT, TexelTypeT>(
                             semantics.vertexColors,
                             factors[factor_index_vertexColors][1],
                             factors[factor_index_vertexColors][0],
@@ -920,7 +932,7 @@ export function* material_group_implementations<
                         const factor_index_texture = [1, 2, 3].find(x => !([factor_index_constant, factor_index_vertexColors].includes(x)))!
                         for (const texture_resolution of texture_resolutions) {
                             ///@ts-ignore
-                            const implementation_texture = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+                            const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                                 semantics.texture,
                                 factors[factor_index_texture][1],
                                 factors[factor_index_texture][0],
@@ -933,7 +945,7 @@ export function* material_group_implementations<
                             )
 
                             ///@ts-ignore
-                            yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
+                            yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
                                 implementation_tint,
                                 implementation_constant,
                                 implementation_vertexColors,
@@ -976,7 +988,7 @@ export function* material_group_implementations<
                         for (const factor_index_constant of [0, 1]) {
                             const factor_index_other = 1 - factor_index_constant
 
-                            const implementation_constant = new MaterialSemanticImplementation_Constant<VolumeLocationT>(
+                            const implementation_constant = new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
                                 semantics.constant,
                                 qualityMetrics[factor_index_constant].meanValue,
                                 implementation.channels,
@@ -984,7 +996,7 @@ export function* material_group_implementations<
                                 qualityMetrics[factor_index_constant].constancy
                             )
 
-                            const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<VolumeLocationT>(
+                            const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
                                 semantics.vertexColors,
                                 factors[factor_index_other][1],
                                 factors[factor_index_other][0],
@@ -994,7 +1006,7 @@ export function* material_group_implementations<
                                 qualityMetrics[factor_index_other].triangleMonotonicity
                             )
 
-                            yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
+                            yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
                                 implementation_constant,
                                 implementation_vertexColors,
                                 implementation_tint,
@@ -1002,7 +1014,7 @@ export function* material_group_implementations<
                             ])
 
                             for (const resolution of texture_resolutions) {
-                                const implementation_texture = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+                                const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                                     semantics.texture,
                                     factors[factor_index_other][1],
                                     factors[factor_index_other][0],
@@ -1026,7 +1038,7 @@ export function* material_group_implementations<
 
                     if (implementation.mixing.products?.texture_and_vertexColors) {
                         const sideEffects_tint = implementation.mixing.products.constant_required ? [
-                            new MaterialSemanticImplementation_Constant<VolumeLocationT>(
+                            new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
                                 semantics.constant,
                                 implementation.channels === 1 ? 1 : Color.WHITE,
                                 implementation.channels,
@@ -1039,7 +1051,7 @@ export function* material_group_implementations<
                         for (const factor_index_texture of [0, 1]) {
                             const factor_index_vertexColors = 1 - factor_index_texture
 
-                            const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<VolumeLocationT>(
+                            const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
                                 semantics.vertexColors,
                                 factors[factor_index_vertexColors][1],
                                 factors[factor_index_vertexColors][0],
@@ -1050,7 +1062,7 @@ export function* material_group_implementations<
                             )
 
                             for (const resolution of texture_resolutions) {
-                                const implementation_texture = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+                                const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                                     semantics.texture,
                                     factors[factor_index_texture][1],
                                     factors[factor_index_texture][0],
@@ -1062,7 +1074,7 @@ export function* material_group_implementations<
                                     sideEffects_texture
                                 )
 
-                                yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
+                                yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
                                     implementation_texture,
                                     implementation_vertexColors,
                                     ...sideEffects_tint,
@@ -1075,7 +1087,7 @@ export function* material_group_implementations<
 
                 if (implementation.mixing.detailMap && (implementation.mixing.detailMap.multiply !== false)) {
                     const sideEffects_detailMode = (implementation.mixing.detailMap.multiply || implementation.mixing.detailMap.add) ?
-                        [new MaterialSemanticImplementation_Setting<VolumeLocationT>(
+                        [new MaterialSemanticImplementation_Setting<Objects, ObjIDsT, VolumeLocationT>(
                             `${implementation.name}DetailMode` as keyof StandardMaterial,
                             DETAILMODE_MUL,
                             0 //?
@@ -1092,7 +1104,7 @@ export function* material_group_implementations<
                         throw new Error()
 
                     for (const resolution_0 of texture_resolutions) {
-                        const implementation_0 = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+                        const implementation_0 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                             semantics.texture,
                             factor_0[1],
                             factor_0[0],
@@ -1105,7 +1117,7 @@ export function* material_group_implementations<
                         )
 
                         for (const resolution_1 of texture_resolutions) {
-                            const implementation_1 = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+                            const implementation_1 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                                 <keyof StandardMaterial>`${implementation.name}DetailMap`,
                                 factor_1[1],
                                 factor_1[0],
@@ -1117,7 +1129,7 @@ export function* material_group_implementations<
                                 sideEffects_texture
                             )
 
-                            yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
+                            yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
                                 implementation_0,
                                 implementation_1,
                                 ...sideEffects_detailMode,
@@ -1143,7 +1155,7 @@ export function* material_group_implementations<
         )
 
         if (terms.length === 2) {
-            const qualityMetrics = terms.map(([, texture]) => qualityMetrics_compute<VolumeLocationT>(
+            const qualityMetrics = terms.map(([, texture]) => qualityMetrics_compute<Objects, ObjIDsT, VolumeLocationT>(
                 mesh,
                 texture,
                 textureContext,
@@ -1152,7 +1164,7 @@ export function* material_group_implementations<
             ))
 
             const sideEffect_detailMode =
-                new MaterialSemanticImplementation_Setting<VolumeLocationT>(
+                new MaterialSemanticImplementation_Setting<Objects, ObjIDsT, VolumeLocationT>(
                     `${implementation.name}DetailMode` as keyof StandardMaterial,
                     DETAILMODE_ADD,
                     0
@@ -1162,7 +1174,7 @@ export function* material_group_implementations<
                 throw new Error()
 
             for (const resolution_0 of texture_resolutions) {
-                const implementation_0 = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+                const implementation_0 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                     semantics.texture,
                     terms[0][1],
                     terms[0][0],
@@ -1175,7 +1187,7 @@ export function* material_group_implementations<
                 )
 
                 for (const resolution_1 of texture_resolutions) {
-                    const implementation_1 = new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+                    const implementation_1 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                         <keyof StandardMaterial>`${implementation.name}DetailMap`,
                         terms[1][1],
                         terms[1][0],
@@ -1187,7 +1199,7 @@ export function* material_group_implementations<
                         sideEffects_texture
                     )
 
-                    yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
+                    yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
                         implementation_0,
                         implementation_1,
                         sideEffect_detailMode,
@@ -1208,8 +1220,8 @@ export function* material_group_implementations<
             implementation
         )
 
-    yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
-        new MaterialSemanticImplementation_Constant<VolumeLocationT>(
+    yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+        new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
                 semantics.constant,
                 qualityMetrics.meanValue,
                 implementation.channels,
@@ -1219,8 +1231,8 @@ export function* material_group_implementations<
         ...sideEffects_general
     ])
 
-    yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
-        new MaterialSemanticImplementation_VertexColors<VolumeLocationT>(
+    yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+        new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
                 semantics.vertexColors,
                 texture,
                 stage,
@@ -1233,8 +1245,8 @@ export function* material_group_implementations<
     ])
 
     for (const resolution of texture_resolutions) {
-        yield new MaterialSemanticImplementation_Multi<VolumeLocationT>([
-            new MaterialSemanticImplementation_Texture<VolumeLocationT>(
+        yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+            new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                     semantics.texture,
                     texture,
                     stage,

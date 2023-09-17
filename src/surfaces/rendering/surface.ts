@@ -1,10 +1,9 @@
 import { Material_Groups_TextureContexts, Material_Groups_Textures } from "./material/material-texture.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "./renderer.js";
-import { EncapsulatingKey, MultiObjectsGroupsTemplate, WithEncapsulating } from "../../paradigm/trees/index.js";
+import { MultiObjectsGroupsTemplate, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
 import { InstanceContext, Instancer } from "../../paradigm/processing/instance.js";
-import { Entity } from "playcanvas-extended";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "../surface.js";
 import * as UVunwrapping from "../uv-unwrapping/index.js"
@@ -13,7 +12,6 @@ import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesInstancer, Vo
 import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { Component } from "../../paradigm/processing/component.js";
-import { ComponentSystem } from "../../paradigm/processing/component-system.js";
 
 export type SurfaceWithRendering_TextureGroups = {
     material: {
@@ -28,17 +26,21 @@ export const SurfaceWithRendering_TextureGroupsTemplate = {
 }
 
 export interface SurfaceWithRendering_TexturesTemplated<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     material: {
-        textures: Material_Groups_Textures<VolumeLocationT>
+        textures: Material_Groups_Textures<Objects, ObjIDsT, VolumeLocationT>
     }
     rendering?: {
-        textureContexts?: Material_Groups_TextureContexts<VolumeLocationT>
+        textureContexts?: Material_Groups_TextureContexts<Objects, ObjIDsT, VolumeLocationT>
     }
 }
 
 export type SurfaceWithRendering<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -50,11 +52,13 @@ export type SurfaceWithRendering<
     > =
     Surface<IndicesT, SurfaceSampleElementType, SurfaceSampleContainer, SurfaceSampleVector> &
     UVunwrapping.SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup> &
-    SurfaceWithRendering_TexturesTemplated<VolumeLocationT> & {
-    renderer: SurfaceRendererShared<VolumeLocationT>
+    SurfaceWithRendering_TexturesTemplated<Objects, ObjIDsT, VolumeLocationT> & {
+    renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>
 }
 
 export type SurfaceInstanceWithRendering<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -66,6 +70,8 @@ export type SurfaceInstanceWithRendering<
     > =
     SurfaceInstance<
         SurfaceWithRendering<
+            Objects,
+            ObjIDsT,
             IndicesT,
             SurfaceUVUnwrappingGroup,
             VolumeLocationT,
@@ -74,10 +80,12 @@ export type SurfaceInstanceWithRendering<
             SurfaceSampleVector
         >
     > & {
-    renderer: SurfaceRendererIndividual<VolumeLocationT>
+    renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
 }
 
 export interface SurfaceProcessingContextWithRendering<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
         VolumeSampleProcessingContextT = any,
@@ -89,11 +97,13 @@ export interface SurfaceProcessingContextWithRendering<
     > {
     material: {
         surfaceUVUnwrappingGroup?: SurfaceUVUnwrappingGroup
-        textures: Material_Groups_TextureContexts<VolumeLocationT>
+        textures: Material_Groups_TextureContexts<Objects, ObjIDsT, VolumeLocationT>
     }
 }
 
 export class SurfaceWithRenderingInstancer<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -133,6 +143,8 @@ export class SurfaceWithRenderingInstancer<
                 >,
         SurfaceT extends
             SurfaceWithRendering<
+                    Objects,
+                    ObjIDsT,
                     IndicesT,
                     SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
@@ -141,6 +153,8 @@ export class SurfaceWithRenderingInstancer<
                     VolumeSampleVector
                 > =
             SurfaceWithRendering<
+                    Objects,
+                    ObjIDsT,
                     IndicesT,
                     SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
@@ -183,6 +197,8 @@ export class SurfaceWithRenderingInstancer<
     implements
     Instancer<
         SurfaceWithRendering<
+            Objects,
+            ObjIDsT,
             IndicesT,
             SurfaceUVUnwrappingGroup,
             VolumeLocationT,
@@ -191,6 +207,8 @@ export class SurfaceWithRenderingInstancer<
             VolumeSampleVector
         >,
         SurfaceInstanceWithRendering<
+            Objects,
+            ObjIDsT,
             IndicesT,
             SurfaceUVUnwrappingGroup,
             VolumeLocationT,
@@ -232,6 +250,8 @@ export class SurfaceWithRenderingInstancer<
             >,
             { entity, componentID }: InstanceContext
         ): SurfaceInstanceWithRendering<
+            Objects,
+            ObjIDsT,
                 IndicesT,
                 SurfaceUVUnwrappingGroup,
                 VolumeLocationT,
@@ -253,6 +273,8 @@ export class SurfaceWithRenderingInstancer<
 
     set_enabled(
         instance: SurfaceInstanceWithRendering<
+                Objects,
+                ObjIDsT,
                 IndicesT,
                 SurfaceUVUnwrappingGroup,
                 VolumeLocationT,

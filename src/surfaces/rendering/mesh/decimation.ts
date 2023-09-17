@@ -1,14 +1,17 @@
-import { IndicesArray, indicesArrayType } from "../../../utils/indices-array.js"
+import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js"
+import { IndicesArray, IndicesTypedArray, indicesArrayType } from "../../../utils/indices-array.js"
 import { VolumeLocation } from "../../../volumes/index.js"
 import { MeshRendererShared } from "./renderer.js"
 
 export class MeshDecimationShared<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     /** quality -> indices */
     private readonly cache = new Map<number, MeshDecimationIndividual["indices"]>()
 
-    constructor(public readonly renderer: MeshRendererShared<VolumeLocationT>) {
+    constructor(public readonly renderer: MeshRendererShared<Objects, ObjIDsT, VolumeLocationT>) {
     }
 
     cached(quality: number) {
@@ -26,25 +29,25 @@ export class MeshDecimationShared<
         const UVunwrapping = this.renderer.renderer.surfaceUVUnwrapping
 
         if (quality === 1) {
-            const n_original = meshData.vertices.length
-            const n_unwrapped = n_original + (UVunwrapping?.duplicatedVerts.length ?? 0)
-            const n_final = n_unwrapped
+            const n_verts_original = meshData.vertices.length / 3
+            const n_verts_unwrapped = n_verts_original + (UVunwrapping?.duplicatedVerts.length ?? 0)
+            const n_verts_final = n_verts_unwrapped
 
             const indices: MeshDecimationIndividual["indices"] = {
-                vertices_final: new (indicesArrayType(n_unwrapped))(n_final),
-                vertices_original: new (indicesArrayType(n_original))(n_final),
+                vertices_final: new (indicesArrayType(n_verts_unwrapped))(n_verts_final),
+                vertices_original: new (indicesArrayType(n_verts_original))(n_verts_final),
                 triangles: UVunwrapping?.finalIndices ?? meshData.triangles
             }
 
-            for (let i = 0; i < n_original; i++) {
+            for (let i = 0; i < n_verts_original; i++) {
                 indices.vertices_final[i] = i
                 indices.vertices_original[i] = i
             }
 
             if (UVunwrapping) {
                 for (let i = 0; i < UVunwrapping.duplicatedVerts.length; i++) {
-                    indices.vertices_final[n_original + i] = n_original + i
-                    indices.vertices_original[n_original + i] = UVunwrapping.duplicatedVerts[i]
+                    indices.vertices_final[n_verts_original + i] = n_verts_original + i
+                    indices.vertices_original[n_verts_original + i] = UVunwrapping.duplicatedVerts[i]
                 }
             }
 
@@ -533,11 +536,13 @@ export class MeshDecimationShared<
     }
 
     individualize() {
-        return new MeshDecimationIndividual<VolumeLocationT>(this)
+        return new MeshDecimationIndividual<Objects, ObjIDsT, VolumeLocationT>(this)
     }
 }
 
 export class MeshDecimationIndividual<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     private _quality: number = NaN
@@ -583,7 +588,7 @@ export class MeshDecimationIndividual<
         this._indices = this.shared.cached(quality)
     }
 
-    constructor(public readonly shared: MeshDecimationShared<VolumeLocationT>) {
+    constructor(public readonly shared: MeshDecimationShared<Objects, ObjIDsT, VolumeLocationT>) {
         this.quality = 1
     }
 }

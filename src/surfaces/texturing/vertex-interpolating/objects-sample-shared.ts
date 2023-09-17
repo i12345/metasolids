@@ -145,7 +145,6 @@ export type SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTexture
 
 export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        ObjIDsT extends IndicesTypedArray = Uint32Array,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         ObjectsInterpolatingGrouped extends
@@ -169,7 +168,6 @@ export type SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSh
                     InterpolatingGroupKinds
                 >
     > =
-    WithMultiObjectsIDs<Objects, ObjIDsT> &
     SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations<
             SurfaceTextureLocationGroup,
             Objects,
@@ -243,7 +241,6 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 >,
             SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
                     Objects,
-                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
@@ -261,7 +258,6 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
 
     init(context: SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
                     Objects,
-                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
@@ -309,7 +305,6 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 >,
             context: SurfaceProcessingContextWithObjectsInterpolatingValueTexturesUsingSharedSampleTextureLocations<
                     Objects,
-                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
@@ -350,7 +345,7 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                 const objectPath = [...interpolatingGroup.path, ...objectRelativePath]
                 const values = extract<FieldPointVector<InterpolatingValue, InterpolatingContainer>>(surface.samples, objectPath)
 
-                const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValue, InterpolatingValue, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field, context[MultiObjectsIDsKey])
+                const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValue, InterpolatingValue, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field)
                 intract(surface, objectPath, texture)
             }
         }

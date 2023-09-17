@@ -6,12 +6,16 @@ import { SurfaceRendererIndividual } from "../../renderer.js"
 import { field_point_equal } from "../../../../fields/point.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"
+import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js"
+import { IndicesTypedArray } from "../../../../utils/indices-array.js"
 
 export class MaterialSemanticImplementation_Constant<
-    VolumeLocationT extends VolumeLocation = VolumeLocation,
-    TexelTypeT extends TextureSample = TextureSample
->
-    implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        VolumeLocationT extends VolumeLocation = VolumeLocation,
+        TexelTypeT extends TextureSample = TextureSample
+    >
+    implements MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT> {
     readonly cost: {
         time: 0,
         space: Cost_Space
@@ -36,7 +40,7 @@ export class MaterialSemanticImplementation_Constant<
         return this.constancy
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_Constant &&
             ///@ts-ignore
             field_point_equal(this.meanValue, that.meanValue) &&
@@ -45,7 +49,7 @@ export class MaterialSemanticImplementation_Constant<
             this.semantic === that.semantic
     }
 
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
+    implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] {
         const buffer = new Float32Array(this.channels)
 
         if (typeof this.meanValue === 'number')

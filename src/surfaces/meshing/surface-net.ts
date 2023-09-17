@@ -15,10 +15,11 @@ import { OctTreeReferencesOctTreeLayersGrouped } from "../../paradigm/octtree/re
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { VolumeProcessingContextWithMeshing, VolumeProcessingWithMeshing } from "./processing.js";
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vector_fill, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/multi-objects.js";
 import { SampleDomainLocationFieldKey } from "../../fields/domain.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
+import { FieldPoint, field_point_type_default } from "../../fields/index.js";
 
 export class SurfaceNetMeshingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
@@ -175,15 +176,23 @@ export class SurfaceNetMeshingProcessor<
             localIndices: new sampling[SubdivisionKey].typedArray(max_number_vertices_prelim) as IndicesT
         }
 
-        const number_triangles_prelim = surface_net.polygons.vertices.offsets.layers.map(offsets => {
-            let number_triangles = 0
-            let offset_prev = offsets[0]
+        const dualCellReferences_buffer_prelim_layers = dualCellReferences_buffer_prelim.layers
+        const dualCellReferences_buffer_prelim_localIndices = dualCellReferences_buffer_prelim.localIndices
 
-            for (let i = 1; i < offsets.length; i++) {
-                const offset = offsets[i]
-                const vertices_count = offset - offset_prev
+        const number_triangles_prelim = surface_net.polygons.vertices.offsets.layers.map((offsets, polygon_layer) => {
+            let number_triangles = 0
+
+            const polygon_vertices_offset = surface_net.polygons.vertices.offsets.layers[polygon_layer]
+            const polygon_vertices_references_layers = surface_net.polygons.vertices.dual_cells.layers.layers[polygon_layer]
+            const n_polygons = polygon_vertices_offset.length - 1
+
+            for (let polygon_localIndex = 0; polygon_localIndex < n_polygons; polygon_localIndex++) {
+                const vertices_offset = polygon_vertices_offset[polygon_localIndex]
+                if (polygon_vertices_references_layers[vertices_offset] === invalid_layer)
+                    continue
+            
+                const vertices_count = offsets[polygon_localIndex + 1] - offsets[polygon_localIndex]
                 number_triangles += (vertices_count - 2)
-                offset_prev = offset
             }
 
             return number_triangles
@@ -206,8 +215,8 @@ export class SurfaceNetMeshingProcessor<
             vertex_buffer_prelim[(3 * vertex) + 1] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 1]
             vertex_buffer_prelim[(3 * vertex) + 2] = surfacePoints[dual_cell_layer][(3 * dual_cell_localIndex) + 2]
 
-            dualCellReferences_buffer_prelim.layers[vertex] = dual_cell_layer
-            dualCellReferences_buffer_prelim.localIndices[vertex] = dual_cell_localIndex
+            dualCellReferences_buffer_prelim_layers[vertex] = dual_cell_layer
+            dualCellReferences_buffer_prelim_localIndices[vertex] = dual_cell_localIndex
 
             return vertex
         }
@@ -361,11 +370,14 @@ export class SurfaceNetMeshingProcessor<
                 localIndices: new sampling[SubdivisionKey].typedArray(number_vertices) as IndicesT
             }
 
+            const dualCellReferences_layers = dualCellReferences.layers
+            const dualCellReferences_localIndices = dualCellReferences.localIndices
+
             let vertex_buffer_next = 0
             for (let i_vertex = 0; i_vertex < number_vertices_prelim; i_vertex++) {
                 if (islands[i_vertex] === island_ID) {
-                    dualCellReferences.layers[vertex_buffer_next / 3] = dualCellReferences_buffer_prelim.layers[i_vertex]
-                    dualCellReferences.localIndices[vertex_buffer_next / 3] = dualCellReferences_buffer_prelim.localIndices[i_vertex]
+                    dualCellReferences_layers[vertex_buffer_next / 3] = dualCellReferences_buffer_prelim_layers[i_vertex]
+                    dualCellReferences_localIndices[vertex_buffer_next / 3] = dualCellReferences_buffer_prelim_localIndices[i_vertex]
 
                     vertex_buffer[vertex_buffer_next++] = vertex_buffer_prelim[(3 * i_vertex) + 0]
                     vertex_buffer[vertex_buffer_next++] = vertex_buffer_prelim[(3 * i_vertex) + 1]
@@ -374,7 +386,7 @@ export class SurfaceNetMeshingProcessor<
             }
 
             const indices_arrayType = indicesArrayType(number_vertices)
-            const index_buffer_to_be_cut = new indices_arrayType(3 * number_triangles_prelim)
+            const index_buffer_to_be_cut = new indices_arrayType(index_buffer_prelim_index_next)
 
             let index_buffer_to_be_cut_offset = 0
             for (let index_buffer_prelim_offset = 0; index_buffer_prelim_offset < index_buffer_to_be_cut.length;) {
@@ -399,14 +411,24 @@ export class SurfaceNetMeshingProcessor<
 
             type VolumeLocationContainerT = FieldPointVectorContainerStatic
 
-            // samples can be calculated for the precise position of each vertex
-            const locations = field_point_vectorized_multi_objects_new<VolumeLocationElementType, VolumeLocationContainerT>(
-                volumeSamplingContext[SampleDomainLocationFieldKey].elementType,
-                mesh_triangles.length / 3,
-                <IsDynamicVector<VolumeLocationT, VolumeLocationContainerT>>false,
-                multiObjectsIDs?.IDsType,
-            )
+            const extraLocationParameters = item[SamplingKey].extraLocationParameters
 
+            let locations: FieldPointVector<VolumeLocationElementType, VolumeLocationContainerT>
+            
+            if (extraLocationParameters) {
+                const extraLocations_type = field_point_type_default(<FieldPoint>extraLocationParameters)
+                locations = <typeof locations><unknown>field_point_vectorized_multi_objects_new<FieldPoint, FieldPointVectorContainerStatic<Float64Array>>(
+                    extraLocations_type,
+                    mesh_vertices.length / 3,
+                    <IsDynamicVector<VolumeLocationT, VolumeLocationContainerT>>false,
+                    multiObjectsIDs?.IDsType
+                )
+                field_point_vector_fill(extraLocations_type, extraLocations_type, locations, <FieldPoint>extraLocationParameters, multiObjectsIDs)
+            }
+            else locations = <typeof locations>{ }
+
+            locations.p = <VolumeLocationContainerT><NumberTypedArray>mesh_vertices
+            
             type VectorContextT = VectorSamplingContext<
                 VolumeLocationT,
                 VolumeLocationElementType,

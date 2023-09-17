@@ -3,36 +3,41 @@ import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js
 import { LevelOfDetailInfoComputerShared, LevelOfDetailInfoComputerIndividual } from "./LOD-info.js";
 import { MeshDecimationIndividual, MeshDecimationShared } from "./decimation.js";
 import { RANGE_MAX, RANGE_MIN } from "../../../fields/index.js";
-import { RefCount } from "../../../utils/index.js";
+import { IndicesTypedArray, RefCount } from "../../../utils/index.js";
 import { VolumeLocation } from "../../../volumes/volume.js";
+import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 
 export class MeshRendererShared<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
-    readonly decimation: MeshDecimationShared<VolumeLocationT>
-    readonly LOD: LevelOfDetailInfoComputerShared<VolumeLocationT>
+    readonly decimation: MeshDecimationShared<Objects, ObjIDsT, VolumeLocationT>
+    readonly LOD: LevelOfDetailInfoComputerShared<Objects, ObjIDsT, VolumeLocationT>
 
     /** quality -> implementation */
     readonly implementation_cache = new Map<number, Mesh>()
-    readonly computeBackingCallbacks: ((individual: MeshRendererIndividual<VolumeLocationT>) => void)[] = []
+    readonly computeBackingCallbacks: ((individual: MeshRendererIndividual<Objects, ObjIDsT, VolumeLocationT>) => void)[] = []
 
-    constructor(public readonly renderer: SurfaceRendererShared<VolumeLocationT>) {
+    constructor(public readonly renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>) {
         ///@ts-ignore
         this.decimation = new MeshDecimationShared(this)
         ///@ts-ignore
         this.LOD = new LevelOfDetailInfoComputerShared(this)
     }
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>) {
-        return new MeshRendererIndividual<VolumeLocationT>(this, renderer)
+    individualize(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>) {
+        return new MeshRendererIndividual<Objects, ObjIDsT, VolumeLocationT>(this, renderer)
     }
 }
 
 export class MeshRendererIndividual<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
-    readonly decimation: MeshDecimationIndividual<VolumeLocationT>
-    readonly LOD: LevelOfDetailInfoComputerIndividual<VolumeLocationT>
+    readonly decimation: MeshDecimationIndividual<Objects, ObjIDsT, VolumeLocationT>
+    readonly LOD: LevelOfDetailInfoComputerIndividual<Objects, ObjIDsT, VolumeLocationT>
     readonly individuality = new RefCount()
     private _implementation!: Mesh
     private _individualImplimentationQuality?: number
@@ -42,8 +47,8 @@ export class MeshRendererIndividual<
     }
 
     constructor(
-        public readonly shared: MeshRendererShared<VolumeLocationT>,
-        public readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
+        public readonly shared: MeshRendererShared<Objects, ObjIDsT, VolumeLocationT>,
+        public readonly renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
     ) {
         this.decimation = shared.decimation.individualize()
         this.LOD = shared.LOD.individualize(this)

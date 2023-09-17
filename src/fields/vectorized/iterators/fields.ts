@@ -79,8 +79,8 @@ export class FieldsFieldPointVectorIterator<
             if (!(key in dst_vectorized)) throw new Error()
 
             sub_typeIterator.scatter(
-                src_vectorized[key], src_vectorizedRoot,
                 dst_vectorized[key], dst_vectorizedRoot,
+                src_vectorized[key], src_vectorizedRoot,
                 indices,
                 isMultiObjMapped
             )

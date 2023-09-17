@@ -339,7 +339,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrap
                     multiObjectsIDs
                 )
 
-            const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field, multiObjectsIDs)
+            const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode, InterpolatingContainer, InterpolatingVector>(values_UVunwrapped, UVunwrapping.UVs, UVunwrapping.finalIndices, <any>interpolatingGroup.field)
             interpolatingGroup.set(surface, texture)
         }
     }

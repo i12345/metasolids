@@ -238,6 +238,9 @@ export function fusePoints<
             const obj_path: PropertyPath = []
 
             function traverse_multiObjPoints(value: FieldPoint, objTemplate: MultiObjectsTemplateOrLeaf, depth: number) {
+                if (value === undefined)
+                    return
+                
                 if (objTemplate === MultiObjectsTemplate_Leaf)
                     obj_points.push({
                         value: <Result>value,
@@ -367,7 +370,7 @@ export function fuseVectors<
         ResultFuseMode extends FieldPoint = Point,
         Container extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         PointVector extends FieldPointVector<PointElementType, Container> = FieldPointVector<PointElementType, Container>,
-        ResultVector extends FieldPointVector<PointElementType, Container> = FieldPointVector<PointElementType, Container>,
+        ResultVector extends FieldPointVector<ResultElementType, Container> = FieldPointVector<ResultElementType, Container>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,

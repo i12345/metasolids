@@ -1,8 +1,8 @@
 import { MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
-import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor } from "../../utils/index.js"
+import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid } from "../../utils/index.js"
 import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldPointPrimitive, FieldsPoint } from "../point.js"
-import { FieldPointType, field_point_type_multiObj_count } from "../type.js"
+import { FieldPointType, field_point_type_multiObj_count, field_point_type_singleObj } from "../type.js"
 import { FieldPointVectorIterator } from "./iterator.js"
 import { vectorIterator } from "./iterators/factory.js"
 import { PrimitiveFieldPointVectorIterator } from "./iterators/primitive.js"
@@ -123,6 +123,83 @@ export function field_point_vector_multi_objs_static_length<
     ): Vector extends FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> ? number : undefined {
     const vector_multiObj = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>vector
     return <Vector extends FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> ? number : undefined>((ItemObjValuesOffsetsKey in vector_multiObj) ? sumIndexedDeltas(vector_multiObj[ItemObjValuesOffsetsKey], objIndices) : undefined)
+}
+
+export function field_point_vector_multi_objs_extract<
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        Vector extends
+            FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> =
+            FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
+    >(
+        vector: Vector,
+        type: FieldPointType<ElementType>,
+        multiObjectIDs: MultiObjectsIDs<Objects, ObjIDsT>,
+        objIDs?: ObjIDsT
+    ): [objID: number, objVector: Vector][] {
+    const type_singleObj = field_point_type_singleObj(type)
+    const iterator = vectorIterator<ElementType, Container, Objects, ObjIDsT, ElementType, Vector>(type, isDynamicVector<ElementType, Container>(type, vector, <any>vector), multiObjectIDs, vector)
+    const length = iterator.length(vector, vector)
+
+    if (!objIDs) {
+        objIDs = <ObjIDsT>new multiObjectIDs.IDsType(multiObjectIDs.paths.length)
+        for (let objID = 0; objID < objIDs.length; objID++)
+            objIDs[objID] = objID
+    }
+
+    const obj_vectors = new Array<[objID: number, Vector]>(objIDs.length)
+
+    const objVector_objIDs = new multiObjectIDs.IDsType(length)
+    const objVector_objOffsets = new Uint32Array(length)
+    for (let i = 0; i < objVector_objOffsets.length; i++)
+        objVector_objOffsets[i] = i + 1
+
+    const indices = new Uint32Array(length)
+    const indices_invalid = <number>typedArrayInvalid(indices)
+
+    for (let objID_i = 0; objID_i < objIDs.length; objID_i++) {
+        const objID = objIDs[objID_i]
+        const obj_vector = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>field_point_vectorized_new(type_singleObj, length, false)
+        obj_vector[ItemObjIDsKey] = <ObjIDsContainer>objVector_objIDs
+        obj_vector[ItemObjValuesOffsetsKey] = objVector_objOffsets
+        objVector_objIDs.fill(objID)
+
+        const src_objOffsets = vector[ItemObjValuesOffsetsKey]
+        const src_objIDs = vector[ItemObjValuesOffsetsKey]
+        let src_objOffset_prev = 0
+        let src_objOffset_next: number
+        for (let i = 0; i < length; i++) {
+            src_objOffset_next = src_objOffsets[i]
+
+            while (src_objOffset_prev < src_objOffset_next) {
+                if (src_objIDs[src_objOffset_prev] === objID) {
+                    indices[i] = src_objOffset_prev
+                    break
+                }
+            }
+
+            if (src_objOffset_prev === src_objOffset_next) {
+                indices[i] = indices_invalid
+            }
+
+            src_objOffset_prev = src_objOffset_next
+        }
+
+        iterator.scatter(
+            obj_vector,
+            <Vector>obj_vector,
+            vector,
+            vector,
+            indices
+        )
+
+        obj_vectors[objID_i] = [objID, <Vector>obj_vector]
+    }
+
+    return obj_vectors
 }
 
 export type FieldPointVectorWithMultiObjRoot<

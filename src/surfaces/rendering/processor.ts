@@ -1,15 +1,9 @@
-import { SurfaceProcessingContext, SurfaceProcessor } from "../processing.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeSurfaceProcessing, VolumeSurfaceProcessingContext, VolumeSurfaceProcessor } from "../volume-surfaces.js"
-import { Surface, SurfaceSample } from "../surface.js";
-import { Material_Groups, Material_Groups_Template } from "./material/groups.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
-import { EncapsulatingKey, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groupKinds, groups } from "../../paradigm/trees/index.js";
-import { ExtraFields, Field, FieldsPointMapped, FieldsPoint_Omit_Leaf, SampleDomainLocationFieldKey, domains } from "../../fields/index.js";
-import { FieldsField, Vec2Field } from "../../fields/fields/index.js"
+import { EncapsulatingKey, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs, groupKinds } from "../../paradigm/trees/index.js";
+import { ExtraFields } from "../../fields/index.js";
 import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./surface.js";
 import { SurfaceRendererShared } from "./renderer.js";
-import { Material_Groups_TextureContexts, Material_Texture_Context, Material_Texture_Location } from "./material/material-texture.js";
-import { VolumeProcessingContext } from "../../volumes/processor.js";
 import { SamplingKey, VolumeProcessingWithSampling } from "../../volumes/sampling/index.js"
 import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrappingGroupKindsTemplate } from "../uv-unwrapping/surface.js";
@@ -20,6 +14,8 @@ import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vector
 import { NumberTypedArray } from "../../utils/typed-array.js";
 
 export class SurfaceWithRenderingProcessor<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         VolumeLocationT extends VolumeLocation = VolumeLocation,
@@ -59,6 +55,8 @@ export class SurfaceWithRenderingProcessor<
                 >,
         SurfaceT extends
             SurfaceWithRendering<
+                    Objects,
+                    ObjIDsT,
                     IndicesT,
                     SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
@@ -67,6 +65,8 @@ export class SurfaceWithRenderingProcessor<
                     VolumeSampleVector
                 > =
             SurfaceWithRendering<
+                    Objects,
+                    ObjIDsT,
                     IndicesT,
                     SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
@@ -76,11 +76,15 @@ export class SurfaceWithRenderingProcessor<
                 >,
         SurfaceProcessingContextT extends
             SurfaceProcessingContextWithRendering<
+                    Objects,
+                    ObjIDsT,
                     SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
                     VolumeSampleProcessingContextT
                 > =
             SurfaceProcessingContextWithRendering<
+                    Objects,
+                    ObjIDsT,
                     SurfaceUVUnwrappingGroup,
                     VolumeLocationT,
                     VolumeSampleProcessingContextT
@@ -149,10 +153,12 @@ export class SurfaceWithRenderingProcessor<
                     VolumeT
                 >,
         VolumeProcessingContextT extends
+            WithMultiObjectsIDs<Objects, ObjIDsT> &
             VolumeProcessingWithSurfacesContext<
                 VolumeSampleProcessingContextT,
                 SurfaceProcessingContextT
             > =
+            WithMultiObjectsIDs<Objects, ObjIDsT> &
             VolumeProcessingWithSurfacesContext<
                 VolumeSampleProcessingContextT,
                 SurfaceProcessingContextT
@@ -194,11 +200,13 @@ export class SurfaceWithRenderingProcessor<
                     SurfaceT,
                     VolumeProcessingT
                 >,
-            context: VolumeSurfaceProcessingContext<
-                    VolumeSampleProcessingContextT,
-                    SurfaceProcessingContextT,
-                    VolumeProcessingContextT
-                >
+            context:
+                WithMultiObjectsIDs<Objects, ObjIDsT> &
+                VolumeSurfaceProcessingContext<
+                        VolumeSampleProcessingContextT,
+                        SurfaceProcessingContextT,
+                        VolumeProcessingContextT
+                    >
         ): void {
         const extraLocationParameters = surface[EncapsulatingKey][SamplingKey].extraLocationParameters
 
@@ -208,11 +216,12 @@ export class SurfaceWithRenderingProcessor<
             context.material.surfaceUVUnwrappingGroup
         )).group.get<SurfaceUVUnwrapping>(surface)
 
-        surface.renderer = new SurfaceRendererShared<VolumeLocationT>(
+        surface.renderer = new SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>(
             surface.mesh,
             surface.material.textures,
             surfaceUVunwrapping,
-            extraLocationParameters ?? ({} as ExtraFields<VolumeLocationT, VolumeLocation>)
+            extraLocationParameters ?? ({} as ExtraFields<VolumeLocationT, VolumeLocation>),
+            context[MultiObjectsIDsKey]
         )
     }
 

@@ -2,13 +2,16 @@ import { StandardMaterial } from "playcanvas-extended";
 import { Cost, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { SurfaceRendererIndividual } from "../../renderer.js";
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js";
-import { MultiObjectsGroupsTemplate } from "../../../../paradigm/trees/index.js";
+import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
+import { IndicesTypedArray } from "../../../../utils/indices-array.js";
 
 export class MaterialSemanticImplementation_Setting<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     >
-    implements MaterialSemanticImplementation_Immediate<VolumeLocationT> {
+    implements MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT> {
     readonly cost: Cost = { space: { elements: 0 }, time: 0 }
 
     constructor(
@@ -21,14 +24,14 @@ export class MaterialSemanticImplementation_Setting<
         return 1
     }
 
-    equals(that: MaterialSemanticImplementation_Immediate<VolumeLocationT>): boolean {
+    equals(that: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT>): boolean {
         return that instanceof MaterialSemanticImplementation_Setting &&
             ///@ts-ignore
             this.key === that.key &&
             this.value === that.value
     }
 
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[] {
+    implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] {
         (renderer.material.implementation as any)[this.key] = this.value
         return []
     }

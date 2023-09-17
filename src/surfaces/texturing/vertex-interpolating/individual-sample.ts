@@ -122,8 +122,6 @@ export type SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLoc
         >
 
 export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        ObjIDsT extends IndicesTypedArray = Uint32Array,
         SurfaceTextureLocationGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         InterpolatingGroupKinds extends MultiObjectsGroupsKindsTemplate = MultiObjectsGroupsKindsTemplate,
@@ -153,7 +151,6 @@ export type SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsin
                 InterpolatingValueField
             >
     > =
-    Partial<WithMultiObjectsIDs<Objects, ObjIDsT>> &
     SurfaceProcessingContextWithIndividualTexturesUsingSampleTextureLocations<
         SurfaceTextureLocationGroup,
         InterpolatingGroups,
@@ -227,8 +224,6 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     SurfaceSampleElementType
                 >,
             SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
-                    Objects,
-                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
@@ -251,8 +246,6 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
     // integrate changes to surface with texture types
 
     init(context: SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
-            Objects,
-            ObjIDsT,
             SurfaceTextureLocationGroup,
             InterpolatingGroups,
             InterpolatingGroupKinds,
@@ -299,8 +292,6 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
                     SurfaceSampleElementType
                 >,
             context: SurfaceProcessingContextWithIndividualInterpolatingValueTexturesUsingSampleTextureLocations<
-                    Objects,
-                    ObjIDsT,
                     SurfaceTextureLocationGroup,
                     InterpolatingGroups,
                     InterpolatingGroupKinds,
@@ -338,7 +329,7 @@ export class SurfaceWithIndividualInterpolatingValueTexturesUsingSampleTextureLo
 
         for (const { group: interpolatingGroup } of interpolatingGroups) {
             const values = interpolatingGroup.get<FieldPointVector<InterpolatingValueElementType, InterpolatingContainer>>(surface.samples)
-            const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field, context[MultiObjectsIDsKey])
+            const texture = new VertexInterpolatingTexture<Objects, ObjIDsT, TextureLocation, TextureLocation, TextureLocation, InterpolatingValue, InterpolatingValueElementType, InterpolatingValueFuseMode, InterpolatingContainer>(values, UVs, surface.mesh.triangles, <any>interpolatingGroup.field)
             interpolatingGroup.set(surface, texture)
         }
     }

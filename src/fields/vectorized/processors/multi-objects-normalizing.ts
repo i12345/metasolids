@@ -126,7 +126,7 @@ export class FieldPointVectorMultiObjectsNormalizingProcessor<
                             do {
                                 for (divisor_element_i = 0; divisor_element_i < elementSize; divisor_element_i++)
                                     dividend_typed[dividend_offset++] /= divisor_typed[divisor_offset + divisor_element_i]
-                            } while (dividend_objOffset_prev++ < dividend_objOffset_next)
+                            } while (++dividend_objOffset_prev < dividend_objOffset_next)
                         }
 
                         divisor_offset += elementSize

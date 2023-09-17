@@ -62,8 +62,8 @@ export class Triangles2DMeshInterpolator<
 
         const get_vertex = iterator.get_returnValue.bind(iterator, vertices, vertices)
         const set_v0 = iterator.set.bind(iterator, this.v0, this.v0)
-        const set_v01 = iterator.set.bind(iterator, this.v0, this.v01)
-        const set_v02 = iterator.set.bind(iterator, this.v0, this.v02)
+        const set_v01 = iterator.set.bind(iterator, this.v01, this.v01)
+        const set_v02 = iterator.set.bind(iterator, this.v02, this.v02)
 
         //TODO: use non-reduced arithmetic fuse mode
         for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
@@ -141,14 +141,15 @@ export class Triangles2DMeshCollider {
         public resolution = 5
     ) {
         this.cells = new Array(resolution ** 2)
+        const cell_size = this.mesh.bounds.size.clone().divScalar(this.resolution)
         for (let x = 0; x < resolution; x++) {
             for (let y = 0; y < resolution; y++) {
                 const min = new Vec2(x, y)
-                    .mul(this.mesh.bounds.size)
                     .divScalar(resolution)
+                    .mul(this.mesh.bounds.size)
                     .add(this.mesh.bounds.origin)
 
-                const max = new Vec2(resolution, resolution).add(min)
+                const max = new Vec2().add2(min, cell_size)
 
                 this.cells[x + (y * resolution)] = new Triangles2DMeshQuad(
                     this.mesh,
@@ -161,7 +162,9 @@ export class Triangles2DMeshCollider {
     collide(p: Vec2, collisionHandler: TriangleCollisionHandler) {
         const cell = new Vec2()
             .sub2(p, this.mesh.bounds.origin)
-            .div(this.mesh.bounds.size).floor()
+            .div(this.mesh.bounds.size)
+            .mulScalar(this.resolution)
+            .floor()
 
         if (cell.x < 0 || cell.x >= this.resolution ||
             cell.y < 0 || cell.y >= this.resolution)
@@ -173,7 +176,9 @@ export class Triangles2DMeshCollider {
     collision_first(p: Vec2): TriangleCollision | undefined {
         const cell = new Vec2()
             .sub2(p, this.mesh.bounds.origin)
-            .div(this.mesh.bounds.size).floor()
+            .div(this.mesh.bounds.size)
+            .mulScalar(this.resolution)
+            .floor()
 
         if (cell.x < 0 || cell.x >= this.resolution ||
             cell.y < 0 || cell.y >= this.resolution)
@@ -236,18 +241,18 @@ export class Triangles2DMesh {
             v2_y = vertices[(2 * i2) + 1]
 
             if (v_min_x > v0_x) v_min_x = v0_x
-            if (v_max_x < v0_x) v_max_x < v0_x
+            if (v_max_x < v0_x) v_max_x = v0_x
             if (v_min_x > v1_x) v_min_x = v1_x
-            if (v_max_x < v1_x) v_max_x < v1_x
-            if (v_min_x > v2_x) v_min_x = v1_x
-            if (v_max_x < v2_x) v_max_x < v1_x
+            if (v_max_x < v1_x) v_max_x = v1_x
+            if (v_min_x > v2_x) v_min_x = v2_x
+            if (v_max_x < v2_x) v_max_x = v2_x
 
             if (v_min_y > v0_y) v_min_y = v0_y
-            if (v_max_y < v0_y) v_max_y < v0_y
+            if (v_max_y < v0_y) v_max_y = v0_y
             if (v_min_y > v1_y) v_min_y = v1_y
-            if (v_max_y < v1_y) v_max_y < v1_y
-            if (v_min_y > v2_y) v_min_y = v1_y
-            if (v_max_y < v2_y) v_max_y < v1_y
+            if (v_max_y < v1_y) v_max_y = v1_y
+            if (v_min_y > v2_y) v_min_y = v2_y
+            if (v_max_y < v2_y) v_max_y = v2_y
 
             v0[(2 * tri) + 0] = v0_x
             v0[(2 * tri) + 1] = v0_y
@@ -322,7 +327,7 @@ class Triangles2DMeshQuad {
         const margin = size.length() / (4 * 1024)
         this.margins = {
             min: -margin,
-            max: 1 + margin
+            max: 1 + (2 * margin)
         }
     }
 

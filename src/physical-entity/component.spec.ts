@@ -10,6 +10,8 @@ import * as solids from "../solids/index.js"
 import * as storage from "../storage/index.js"
 import * as physicalEntity from "./index.js"
 import { fields } from "../index.js"
+import { groupPaths } from "../paradigm/trees/index.js"
+import { onlyOne } from "../utils/only-one.js"
 
 describe("playcanvas-node", () => {
     let jsdomCleanup: Function
@@ -66,7 +68,44 @@ describe("playcanvas-node", () => {
         }).timeout(100000)
     }
 
-    function testShape(name: string, number_entities: number, setup: (entity1: Entity, ...components: physicalEntity.Component[]) => void) {
+    function defaultTexturers(): textures.Texturer[] {
+        ///@ts-ignore
+        // const texturer = new textures.CopyTexturer()
+        const texturer = new textures.ConstantTexturer(Color.GREEN)
+        // texturer.mappings.inputs.value = [fields.MultiObjectsInfluencesGroupsDefaultKey, "segment 1", "segment 2"]
+        texturer.mappings.outputs.value = ['material', 'textures', 'diffuse']
+
+        ///@ts-ignore
+        return [
+            ///@ts-ignore
+            texturer
+        ]
+    }
+
+    function copyInfluences(objID: number[]): () => textures.Texturer[] {
+        //TODO: use node-based texturer system
+        // nodes generate textures
+        // and copy links are distinct
+
+        return () => [
+            ///@ts-ignore
+            new textures.CopyTexturer({
+                inputs: {
+                    value: onlyOne(groupPaths(physicalEntity.InfluenceGroupTemplate))
+                },
+                outputs: {
+                    value: ['material', 'textures', 'diffuse']
+                }
+            })
+        ]
+    }
+
+    function testShape(
+            name: string,
+            number_entities: number,
+            setupShape: (entity1: Entity, ...components: physicalEntity.Component[]) => void,
+            setupTexturers: () => textures.Texturer[] = defaultTexturers
+        ) {
         testRender(name, entity => {
             const entity1 = entity
             entity1.name = "Entity 0"
@@ -85,19 +124,8 @@ describe("playcanvas-node", () => {
                 components.push(componentN)
             }
 
-            ///@ts-ignore
-            // const texturer = new textures.CopyTexturer()
-            const texturer = new textures.ConstantTexturer(Color.GREEN)
-            // texturer.mappings.inputs.value = [fields.MultiObjectsInfluencesGroupsDefaultKey, "segment 1", "segment 2"]
-            texturer.mappings.outputs.value = ['material', 'textures', 'diffuse']
-    
-            ///@ts-ignore
-            component1.texturers = [
-                ///@ts-ignore
-                texturer
-            ]
-
-            setup(entity1, ...components)
+            setupShape(entity1, ...components)
+            component1.texturers = setupTexturers()
 
             component1.processFromRaw()
 
@@ -123,12 +151,12 @@ describe("playcanvas-node", () => {
         
         entity1.addChild(component3.entity)
         component3.entity.setLocalPosition(1, 1, 2)
-        // component3.entity.setLocalScale(0.1, 1.4, 1.4)
+        component3.entity.setLocalScale(0.1, 1.4, 1.4)
 
         entity1.addChild(component4.entity)
         component4.entity.setLocalPosition(1, 1, 0)
-        // component4.entity.setLocalScale(0.8, 0.8, 0.6)
-    })
+        component4.entity.setLocalScale(0.8, 0.8, 0.6)
+    }, copyInfluences([]))
 
     testShape("plane", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaPlane({ offset: Vec2.ZERO, size: Vec2.ONE })) as unknown as physicalEntity.VolumeT

@@ -1,5 +1,5 @@
 import { Ray } from "playcanvas-extended";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, groupKinds, makeIntractor } from "../../../paradigm/trees/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, WithMultiObjectsIDs, groupKinds, makeIntractor } from "../../../paradigm/trees/index.js";
 import { ExtraFields, FieldPoint, FieldsPointMapped } from "../../../fields/point.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplated } from "../../../textures/texture.js";
 import { SurfaceIndividualTexturesGroupKindsTemplate, SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
@@ -948,6 +948,7 @@ export class VolumeWithSurfacesIndividualTexturesRayCollider<
         )
 
         const sharedContext = {
+            [MultiObjectsIDsKey]: (<Partial<WithMultiObjectsIDs>>context.context)[MultiObjectsIDsKey],
             [SampleDomainLocationFieldKey]: FieldsField.merge(
                 defaultField(<FieldPoint>context.extraLocationParameters) as unknown as FieldsField<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
                 new FieldsField<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>({

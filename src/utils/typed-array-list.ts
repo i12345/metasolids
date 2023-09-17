@@ -89,7 +89,7 @@ export class TypedArrayList<
         const blocks = this.blocks
         let block_i = 0
 
-        while (block_i < blocks.length && blocks[block_i].length >= i) {
+        while (block_i < blocks.length && blocks[block_i].length <= i) {
             i -= blocks[block_i].length
             block_i++
         }
@@ -113,7 +113,7 @@ export class TypedArrayList<
 
     set(i: number, value: T) {
         if (i >= this._length)
-            this.length = i
+            this.length = i + 1
 
         const { block, offset } = this.block(i)
         block[offset] = value

@@ -3,6 +3,8 @@ import { MaterialSemanticImplementation_Immediate } from "./semantic-implementat
 import { LevelOfDetailInfo } from "../mesh/LOD-info.js"
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js"
 import { VolumeLocation } from "../../../volumes/index.js"
+import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js"
+import { IndicesTypedArray } from "../../../utils/indices-array.js"
 
 export type Cost_Space = {
     /**
@@ -46,50 +48,68 @@ export interface MaterialSemanticImplementationStorageClass<
     > {
     readonly $class: symbol
 
-    startingSpace(renderer: SurfaceRendererIndividual<VolumeLocationT>): Cost_Space
+    startingSpace<
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+        >(
+            renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
+        ): Cost_Space
 
-    instance(renderer: SurfaceRendererShared<VolumeLocationT>): MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT>
+    instance<
+            Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+            ObjIDsT extends IndicesTypedArray = Uint32Array,
+        >(
+            renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>
+        ): MaterialSemanticImplementationStorageClassInstanceShared<Objects, ObjIDsT, VolumeLocationT>
 }
 
 export interface MaterialSemanticImplementationStorageClassInstanceShared<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     readonly $class: MaterialSemanticImplementationStorageClass<VolumeLocationT>
-    readonly renderer: SurfaceRendererShared<VolumeLocationT>
+    readonly renderer: SurfaceRendererShared<Objects, ObjIDsT, VolumeLocationT>
 
-    individualize(renderer: SurfaceRendererIndividual<VolumeLocationT>): MaterialSemanticImplementationStorageClassInstanceIndividual<VolumeLocationT>
+    individualize(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): MaterialSemanticImplementationStorageClassInstanceIndividual<Objects, ObjIDsT, VolumeLocationT>
 }
 
 export interface MaterialSemanticImplementationStorageClassInstanceIndividual<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
-    readonly $class: MaterialSemanticImplementationStorageClassInstanceShared<VolumeLocationT>
-    readonly rendered: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
-    readonly renderer: SurfaceRendererIndividual<VolumeLocationT>
+    readonly $class: MaterialSemanticImplementationStorageClassInstanceShared<Objects, ObjIDsT, VolumeLocationT>
+    readonly rendered: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
+    readonly renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>
 
     preoptimize(
-        add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-        remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+        add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+        remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
     ): void
 
     apply(
-        add: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[],
-        remove: RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+        add: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[],
+        remove: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
     ): void
 }
 
 export interface RenderedBufferForSemanticWithImplementation<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > extends RenderedBufferForSemantic {
-    implementation: MaterialSemanticImplementation_Immediate<VolumeLocationT>
+    implementation: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT>
     storageClass: symbol
 }
 
 export interface MaterialSemanticImplementation<
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
         VolumeLocationT extends VolumeLocation = VolumeLocation
     > {
     stage: number
     cost: Cost
     quality(info: LevelOfDetailInfo): number
-    implement(renderer: SurfaceRendererIndividual<VolumeLocationT>): RenderedBufferForSemanticWithImplementation<VolumeLocationT>[]
+    implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[]
 }

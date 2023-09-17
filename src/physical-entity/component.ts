@@ -17,9 +17,14 @@ export class Component<ID = string> extends processing.Component<
         RawProcessingRequest
     > {
     private _multiObjPath?: PropertyPath
+    private _multiObjID?: number
 
     get multiObjPath() {
         return this._multiObjPath
+    }
+
+    get multiObjID() {
+        return this._multiObjID
     }
 
     volume?: VolumeT
@@ -111,16 +116,17 @@ export class Component<ID = string> extends processing.Component<
                 return { multiObjectsIDs, pathsMap }
             }
 
-            assignPaths(pathsMap: Map<symbol, PropertyPath>) {
+            assignMultiObj(multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>, pathsMap: Map<symbol, PropertyPath>) {
                 const path = pathsMap.get(this.sym)
                 if (path !== undefined) {
                     const entity = this.node as Entity
                     const component = entity!.c[SYSTEM_ID] as Component<ID>
                     component._multiObjPath = path
+                    component._multiObjID = extract<number>(multiObjectsIDs.IDs, path)
                 }
 
                 for (const child of this.children)
-                    child.assignPaths(pathsMap)
+                    child.assignMultiObj(multiObjectsIDs, pathsMap)
             }
 
             render(
@@ -210,7 +216,7 @@ export class Component<ID = string> extends processing.Component<
             return undefined
         
         const { multiObjectsIDs, pathsMap } = VolumeNode.multiObjectIDs(prerendering)
-        volumeNode.assignPaths(pathsMap)
+        volumeNode.assignMultiObj(multiObjectsIDs, pathsMap)
 
         const volumeSampleField = fields.fields.FieldsField.merge<ChildVolumeSampleT>(
             <fields.fields.FieldsField<ChildVolumeSampleT>>defaultVolumeSampleField,
@@ -329,7 +335,7 @@ export class Component<ID = string> extends processing.Component<
                 ]
             },
             material: {
-                textures: surfaces.rendering.material.Material_Groups_TextureContexts_Template
+                textures: surfaces.rendering.material.Material_Groups_TextureContexts_Template<Objects, ObjIDsT, VolumeLocationT>(multiObjectsIDs)
             },
         }
 

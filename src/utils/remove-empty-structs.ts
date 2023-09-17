@@ -1,3 +1,4 @@
+//TODO: read code for Omit<>, Pick<>, and Exclude<>
 type IsEmptyStruct<T> = (
     T extends (boolean | number | string | symbol | bigint | Function | null | undefined) ? false :
     T extends never ? true : (
