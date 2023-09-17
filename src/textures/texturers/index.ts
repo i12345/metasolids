@@ -1,4 +1,5 @@
 export * from './copy.js'
 export * from './constant.js'
-export * from './composition.js'
+export * from './arithmetic.js'
+export * from './composing.js'
 export * from './default.js'
