@@ -15,11 +15,8 @@ export class TypedArrayList<
 
     set length(length: number) {
         this._length = length
-        if (length > this.capacity) {
-            const deficit = length - this.capacity
-            const newBlockSize = Math.max(deficit, this.defaultBlockSize)
-            this.blocks.push(<TypedArrayT>new this.type(newBlockSize))
-        }
+        if (length > this.capacity)
+            this.capacity = length
     }
 
     get capacity() {
@@ -28,10 +25,13 @@ export class TypedArrayList<
 
     set capacity(capacity) {
         if (capacity > this._capacity) {
-            const newBlock = <TypedArrayT>new this.type(capacity - this._capacity)
+            const deficit = capacity - this.capacity
+            const newBlockSize = Math.max(deficit, this.defaultBlockSize)
+            const newBlock = <TypedArrayT>new this.type(newBlockSize)
             this.blocks.push(newBlock)
             if (this.defaultValue !== undefined)
                 newBlock.fill(<never>this.defaultValue)
+            this._capacity += newBlockSize
         }
         else if (capacity < this._capacity) {
             while (capacity < this._capacity) {
@@ -41,8 +41,11 @@ export class TypedArrayList<
 
                 if (remove === currentBlock.length)
                     this.blocks.splice(this.blocks.length - 1, 1)
-                else
-                    this.blocks[this.blocks.length - 1] = <TypedArrayT>currentBlock.slice(0, currentBlock.length - remove)
+                else {
+                    const newBlock = <TypedArrayT>new this.type(currentBlock.length - remove)
+                    newBlock.set(<any>currentBlock.subarray(0, newBlock.length), 0)
+                    this.blocks[this.blocks.length - 1] = newBlock
+                }
 
                 this._capacity -= remove
             }
@@ -75,6 +78,8 @@ export class TypedArrayList<
         if (lengthUsed > block.length)
             throw new RangeError("length used must be <= length added")
 
+        this.capacity = this.length
+        
         this._capacity += block.length
         this._length += lengthUsed
         this.blocks.push(block)
@@ -93,9 +98,6 @@ export class TypedArrayList<
             i -= blocks[block_i].length
             block_i++
         }
-
-        // if (block_i === blocks.length)
-        //     this.capacity += this.defaultBlockSize
 
         return {
             block: blocks[block_i],
@@ -126,9 +128,7 @@ export class TypedArrayList<
     clone() {
         const result = new TypedArrayList<T, TypedArrayT>(this.type, 0, this.defaultBlockSize, this.defaultValue)
         const array = this.arrayView(false)
-        result.blocks.push(array)
-        result._capacity = result._length = array.length
-        return result
+        return result.appendBlock(array)
     }
 
     arrayView(canReferenceForSingleBlock: boolean = true): TypedArrayT {
