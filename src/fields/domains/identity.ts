@@ -1,25 +1,25 @@
 import { vectorized } from "vectorized-functions";
 import { SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
-import { FieldPoint, FieldPointMapped } from "../point.js";
+import { FieldPoint } from "../point.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../vectorized/point.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { FusedVectorSamplingContext, FusingVectorSampleDomain } from "./fusing.js";
-import { addDeltas } from "../../utils/typed-array.js";
+import { NumberTypedArray, addDeltas } from "../../utils/typed-array.js";
 import { FuseMode, FusingFieldPointVectorWithMultiObjects, fuseVectors } from "../vectorized/fusing.js";
 import { FieldPointType } from "../type.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
 import { Cloneable, clone } from "../../utils/cloneable.js";
 
-export class IdentityDomain<
+export class IdentitySampleDomain<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         LocationSample extends FieldPoint = FieldPoint,
         LocationSampleElementType extends FieldPoint = LocationSample,
         LocationSampleFuseMode extends FieldPoint = LocationSample,
-        LocationSampleContainer extends FieldPointVectorContainerStatic = FieldPointVectorContainerStatic,
+        LocationSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Context extends
             SamplingContext<LocationSample, LocationSampleElementType, LocationSampleFuseMode> =
             SamplingContext<LocationSample, LocationSampleElementType, LocationSampleFuseMode>,
@@ -87,7 +87,7 @@ export class IdentityDomain<
         LocationSampleVector,
         VectorContext
     >,
-    Cloneable<IdentityDomain<
+    Cloneable<IdentitySampleDomain<
         Objects,
         ObjIDsT,
         ObjIDsContainer,
@@ -108,7 +108,7 @@ export class IdentityDomain<
     constructor() { }
 
     [clone]() {
-        return new IdentityDomain<
+        return new IdentitySampleDomain<
                 Objects,
                 ObjIDsT,
                 ObjIDsContainer,
@@ -126,7 +126,7 @@ export class IdentityDomain<
         this._field = context[SampleDomainLocationFieldKey]
     }
 
-    @vectorized(IdentityDomain.sample_vectorized)
+    @vectorized(IdentitySampleDomain.sample_vectorized)
     sample(location: LocationSample, context: Context): LocationSample {
         return location
     }
@@ -247,7 +247,7 @@ export class IdentityDomain<
                     LocationSampleVector
                 >,
         >(
-            this: IdentityDomain<
+            this: IdentitySampleDomain<
                     Objects,
                     ObjIDsT,
                     ObjIDsContainer,

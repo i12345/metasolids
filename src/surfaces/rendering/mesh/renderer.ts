@@ -153,7 +153,7 @@ export class MeshRendererIndividual<
         const surface_meshData = this.renderer.shared.meshData
 
         const positions = new Float32Array(3 * n_decimated)
-        const UVs = new Float32Array(2 * n_decimated)
+        const UVs = UVunwrapping?.UVs // new Float32Array(2 * n_decimated)
         const normals = new Float32Array(3 * n_decimated)
 
         for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {
@@ -168,14 +168,14 @@ export class MeshRendererIndividual<
             normals[(3 * i_decimated) + 2] = surface_meshData.normals[(3 * i_original) + 2]
         }
 
-        if (UVunwrapping) {
-            for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {
-                const i_UVunwrapped = vertices_final[i_decimated]
+        // if (UVunwrapping) {
+        //     for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {
+        //         const i_UVunwrapped = vertices_final[i_decimated]
 
-                UVs[(2 * i_decimated) + 0] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 0]
-                UVs[(2 * i_decimated) + 1] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 1]
-            }
-        }
+        //         UVs[(2 * i_decimated) + 0] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 0]
+        //         UVs[(2 * i_decimated) + 1] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 1]
+        //     }
+        // }
 
         mesh.setPositions(positions)
         mesh.setIndices(triangles)

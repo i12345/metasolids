@@ -1,11 +1,10 @@
 import { Vec2 } from "playcanvas-extended";
-import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_identity, field_point_new } from "../../fields/index.js";
+import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
+import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_new } from "../../fields/index.js";
 import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
 import { IndicesArray, IndicesTypedArray } from "../../utils/indices-array.js";
-import { defaultField } from "../../fields/fields/default.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../fields/vectorized/point.js";
-import { NumberTypedArray, TypedArray } from "../../utils/typed-array.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../fields/vectorized/point.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 
 export type VertexInterpolatingTexturesTemplated<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

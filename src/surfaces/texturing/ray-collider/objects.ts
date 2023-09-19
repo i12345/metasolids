@@ -1091,7 +1091,7 @@ export class VolumeWithSurfacesObjectsTexturesRayCollider<
                     TextureSamplingContextT
                 >
 
-                const texture = MultiObjectsSampleDomain.build <
+                const texture = MultiObjectsSampleDomain.build<
                         Objects,
                         ObjIDsT,
                         ObjIDsContainer,

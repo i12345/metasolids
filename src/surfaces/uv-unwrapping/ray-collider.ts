@@ -537,7 +537,7 @@ export class VolumeWithSurfacesUVRayCollider<
         context_private.UVinterpolators = surfaces.map(surface => {
             const UVunwrapping = UVunwrapping_group.get<SurfaceUVUnwrapping>(surface.shared)
 
-            return new Triangles2DMeshInterpolator<Vec2, Vec2, Float32Array>(Vec2, UVunwrapping.UVs, UVunwrapping.finalIndices)
+            return new Triangles2DMeshInterpolator(Vec2, UVunwrapping.UVs, UVunwrapping.finalIndices)
         })
 
         this.triCollider.init(context)

@@ -793,7 +793,8 @@ export function* material_group_implementations<
 
     // const texture_resolutions = [64, 128, 256, 512, 1024, 2048]
     // const texture_resolutions = [1024, 2048]
-    const texture_resolutions = [128]
+    // const texture_resolutions = [1024]
+    const texture_resolutions = [512]
 
     type CompositeTextureT = Texture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT> & MultiObjectsSampleDomain
 

@@ -1,7 +1,7 @@
 import { Vec2 } from "playcanvas-extended"
 import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
 import { FieldPointType } from "./type.js"
-import { IndicesArray, IndicesTypedArray } from "../utils/indices-array.js"
+import { IndicesArray, IndicesTypedArray, indicesArrayType } from "../utils/indices-array.js"
 import { NumberArrayLike, NumberTypedArray } from "../utils/typed-array.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
@@ -277,12 +277,7 @@ export class Triangles2DMesh {
 }
 
 class Triangles2DMeshQuad {
-    private filtered_triangles: number[] = []
-
-    private readonly margins: {
-        readonly min: number
-        readonly max: number
-    }
+    private filtered_triangles: IndicesTypedArray
 
     constructor(
         public mesh: Triangles2DMesh,
@@ -297,7 +292,9 @@ class Triangles2DMeshQuad {
         let min_x: number, min_y: number,
             max_x: number, max_y: number
 
-        for (let i = 0, tri = 0; i < this.mesh.triangles.length; i += 3) {
+        const filtered_triangles: number[] = []
+
+        for (let i = 0, tri = 0; i < this.mesh.triangles.length; i += 3, tri++) {
             i0 = triangles[i + 0]
             i1 = triangles[i + 1]
             i2 = triangles[i + 2]
@@ -320,20 +317,15 @@ class Triangles2DMeshQuad {
                 max_y <= bounds.min.y)
                 continue
 
-            this.filtered_triangles.push(tri++)
+            filtered_triangles.push(tri)
         }
 
-        const size = new Vec2().sub2(this.bounds.max, this.bounds.min)
-        const margin = size.length() / (4 * 1024)
-        this.margins = {
-            min: -margin,
-            max: 1 + (2 * margin)
-        }
+        this.filtered_triangles = new (indicesArrayType(this.mesh.triangles.length / 3))(filtered_triangles)
     }
 
     collide(point: Vec2, collisionHandler: TriangleCollisionHandler) {
         const { v0, tri_vec_inv } = this.mesh
-        const { min: margin_min, max: margin_max } = this.margins
+        const margin_min = -0.08, margin_max = 1 - 2 * margin_min
 
         const p_x = point.x, p_y = point.y
         let v0_x: number, v0_y: number
@@ -342,9 +334,14 @@ class Triangles2DMeshQuad {
             tri_vec_inv_b: number,
             tri_vec_inv_c: number,
             tri_vec_inv_d: number
-        let w1: number, w2: number
 
-        for (let tri of this.filtered_triangles) {
+        let tri: number, w1: number, w2: number
+        const tri_indices = this.filtered_triangles
+        const tri_n = tri_indices.length
+
+        for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+            tri = tri_indices[tri_i]
+            
             v0_x = v0[(2 * tri) + 0]
             v0_y = v0[(2 * tri) + 1]
 
@@ -360,7 +357,7 @@ class Triangles2DMeshQuad {
             w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
             if (w1 < margin_min || w2 < margin_min ||
-                w1 + w2 >= margin_max)
+                w1 + w2 > margin_max)
                 continue
 
             collisionHandler(tri, w1, w2)
@@ -369,7 +366,7 @@ class Triangles2DMeshQuad {
 
     collision_first(point: Vec2): TriangleCollision | undefined {
         const { v0, tri_vec_inv } = this.mesh
-        const { min: margin_min, max: margin_max } = this.margins
+        const margin_min = -0.08, margin_max = 1 - 2 * margin_min
 
         const p_x = point.x, p_y = point.y
         let v0_x: number, v0_y: number
@@ -378,9 +375,14 @@ class Triangles2DMeshQuad {
             tri_vec_inv_b: number,
             tri_vec_inv_c: number,
             tri_vec_inv_d: number
-        let w1: number, w2: number
+        
+        let tri: number, w1: number, w2: number
+        const tri_indices = this.filtered_triangles
+        const tri_n = tri_indices.length
 
-        for (let tri of this.filtered_triangles) {
+        for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+            tri = tri_indices[tri_i]
+
             v0_x = v0[(2 * tri) + 0]
             v0_y = v0[(2 * tri) + 1]
 
@@ -396,7 +398,7 @@ class Triangles2DMeshQuad {
             w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
 
             if (w1 < margin_min || w2 < margin_min ||
-                w1 + w2 >= margin_max)
+                w1 + w2 > margin_max)
                 continue
 
             return { tri, w1, w2 }

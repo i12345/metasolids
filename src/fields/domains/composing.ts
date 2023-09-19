@@ -1,5 +1,5 @@
 import { vectorized } from "vectorized-functions";
-import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
+import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { SampleDomain, SamplingContext } from "../domain.js";
@@ -7,7 +7,7 @@ import { Field } from "../field.js";
 import { FieldPoint } from "../point.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../vectorized/point.js";
 import { TransformingSampleDomain } from "./transforming.js";
-import { VectorSampleFunction, VectorSamplingContext } from "./vector.js";
+import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "./vector.js";
 
 /**
  * This sample domain applies a projecting sample domain ($f_1$) to input
@@ -52,32 +52,32 @@ export class ComposingSampleDomain<
                     LocationElementType,
                     LocationFuseMode,
                     LocationContainer,
-                    IntermediateT,
-                    IntermediateElementType,
-                    IntermediateFuseMode,
-                    IntermediateContainer,
+                    SampleT,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
                     Objects,
                     ObjIDsT,
                     ObjIDsContainer,
                     Context1,
                     LocationVector,
-                    IntermediateVector
+                    SampleVector
                 > =
             VectorSamplingContext<
                     LocationT,
                     LocationElementType,
                     LocationFuseMode,
                     LocationContainer,
-                    IntermediateT,
-                    IntermediateElementType,
-                    IntermediateFuseMode,
-                    IntermediateContainer,
+                    SampleT,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
                     Objects,
                     ObjIDsT,
                     ObjIDsContainer,
                     Context1,
                     LocationVector,
-                    IntermediateVector
+                    SampleVector
                 >,
         VectorContext2 extends
             VectorSamplingContext<
@@ -123,14 +123,14 @@ export class ComposingSampleDomain<
         LocationFuseMode,
         LocationContainer,
 
-        IntermediateT,
-        IntermediateElementType,
-        IntermediateFuseMode,
-        IntermediateContainer,
+        SampleT,
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
 
         Context1,
         LocationVector,
-        IntermediateVector,
+        SampleVector,
         VectorContext1,
 
         IntermediateT,
@@ -160,14 +160,6 @@ export class ComposingSampleDomain<
     }
 
     constructor(
-            inner: SampleDomain<
-                    IntermediateT, SampleT,
-                    IntermediateElementType,
-                    IntermediateFuseMode,
-                    SampleElementType,
-                    SampleFuseMode,
-                    Context2
-                >,
             public f1: SampleDomain<
                 LocationT, IntermediateT,
                 LocationElementType,
@@ -175,9 +167,17 @@ export class ComposingSampleDomain<
                 IntermediateElementType,
                 IntermediateFuseMode,
                 Context1
-            >
+            >,
+            f2: SampleDomain<
+                IntermediateT, SampleT,
+                IntermediateElementType,
+                IntermediateFuseMode,
+                SampleElementType,
+                SampleFuseMode,
+                Context2
+            >,
         ) {
-        super(inner)
+        super(f2)
     }
 
     protected init_location_field(context: Context1): Field<IntermediateT, IntermediateElementType, IntermediateFuseMode> {
@@ -227,32 +227,32 @@ export class ComposingSampleDomain<
                         LocationElementType,
                         LocationFuseMode,
                         LocationContainer,
-                        IntermediateT,
-                        IntermediateElementType,
-                        IntermediateFuseMode,
-                        IntermediateContainer,
+                        SampleT,
+                        SampleElementType,
+                        SampleFuseMode,
+                        SampleContainer,
                         Objects,
                         ObjIDsT,
                         ObjIDsContainer,
                         Context1,
                         LocationVector,
-                        IntermediateVector
+                        SampleVector
                     > =
                 VectorSamplingContext<
                         LocationT,
                         LocationElementType,
                         LocationFuseMode,
                         LocationContainer,
-                        IntermediateT,
-                        IntermediateElementType,
-                        IntermediateFuseMode,
-                        IntermediateContainer,
+                        SampleT,
+                        SampleElementType,
+                        SampleFuseMode,
+                        SampleContainer,
                         Objects,
                         ObjIDsT,
                         ObjIDsContainer,
                         Context1,
                         LocationVector,
-                        IntermediateVector
+                        SampleVector
                     >,
             VectorContext2 extends
                 VectorSamplingContext<
@@ -315,7 +315,41 @@ export class ComposingSampleDomain<
             locations: LocationVector,
             context: { outer: VectorContext1, inner: VectorContext2 }
         ): IntermediateVector {
-        return context.outer[VectorSampleFunction](this.f1, locations, context.outer)
+        type VectorContextF1 = VectorSamplingContext<
+            LocationT,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            IntermediateT,
+            IntermediateElementType,
+            IntermediateFuseMode,
+            IntermediateContainer,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            Context1,
+            LocationVector,
+            IntermediateVector
+        >
+        const context_f1 = <VectorContextF1><unknown>{ ...context.outer }
+        makeVectorSamplingContext<
+                LocationT,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                IntermediateT,
+                IntermediateElementType,
+                IntermediateFuseMode,
+                IntermediateContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                Context1,
+                LocationVector,
+                IntermediateVector
+            >(this.f1.field, context_f1, context.outer[MultiObjectsIDsKey])
+
+        return context_f1[VectorSampleFunction](this.f1, locations, context_f1)
     }
 
     // protected transformContext(context: Context1): Context2 {

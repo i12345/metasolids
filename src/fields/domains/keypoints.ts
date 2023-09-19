@@ -8,6 +8,7 @@ import { FieldPoint } from "../point.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, IsDynamicVector } from "../vectorized/index.js";
 import { VectorSampleDomain, VectorSamplingContext } from "./vector.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
+import { defaultField } from "../fields/default.js";
 
 export class KeypointsSampleDomain<
         Location extends FieldPoint = FieldPoint,
@@ -98,7 +99,7 @@ export class KeypointsSampleDomain<
 
     constructor(
         public keypoints: FieldInterpolationKeypoint<Location, Sample>[],
-        public field: Field<Sample, SampleElementType, SampleFuseMode>
+        public field: Field<Sample, SampleElementType, SampleFuseMode> = defaultField(keypoints[0].value)
     ) {}
 
     [clone]() {

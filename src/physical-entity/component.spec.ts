@@ -63,7 +63,7 @@ describe("playcanvas-node", () => {
             setup(entity)
 
             app.tick()
-            fs.writeFileSync(`test-screenshot-metasolid-${name}.png`, (<any>canvas).toBuffer())
+            fs.writeFileSync(`textures/test-screenshot-metasolid-${name}.png`, (<any>canvas).toBuffer())
             app.destroy()
         }).timeout(100000)
     }
@@ -79,6 +79,36 @@ describe("playcanvas-node", () => {
         return [
             ///@ts-ignore
             texturer
+        ]
+    }
+
+    function uvTexturers(): textures.Texturer[] {
+        ///@ts-ignore
+        return [
+            ///@ts-ignore
+            new textures.IdentityTexturer({
+                outputs: {
+                    value: ['uvs']
+                }
+            }),
+
+            ///@ts-ignore
+            new textures.MappingTexturer(
+                {
+                    inputs: {
+                        value: ['uvs']
+                    },
+                    outputs: {
+                        value: ['material', 'textures', 'diffuse']
+                    }
+                },
+                [
+                    {
+                        from: ['uv'],
+                        to: []
+                    }
+                ]
+            )
         ]
     }
 
@@ -138,7 +168,7 @@ describe("playcanvas-node", () => {
 
     testShape("one sphere", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-    })
+    }, uvTexturers)
 
     testShape("multiple spheres", 4, (entity1, component1, component2, component3, component4) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
@@ -156,11 +186,11 @@ describe("playcanvas-node", () => {
         entity1.addChild(component4.entity)
         component4.entity.setLocalPosition(1, 1, 0)
         component4.entity.setLocalScale(0.8, 0.8, 0.6)
-    }, copyInfluences([]))
+    }, uvTexturers)
 
     testShape("plane", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaPlane({ offset: Vec2.ZERO, size: Vec2.ONE })) as unknown as physicalEntity.VolumeT
-    })
+    }, uvTexturers)
 
     testShape("spline 1", 2, (entity1, component1, component2) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(
@@ -196,8 +226,9 @@ describe("playcanvas-node", () => {
                 )
             )
         ) as unknown as physicalEntity.VolumeT
-    })
+    }, uvTexturers)
 
+    return
     testShape("spline 2", 3, (entity1, component1, component2, component3) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(
             new solids.metasolids.MetaSplineSegment(

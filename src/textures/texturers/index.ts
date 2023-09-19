@@ -1,4 +1,6 @@
 export * from './copy.js'
 export * from './constant.js'
+export * from './identity.js'
 export * from './arithmetic.js'
+export * from './mapping.js'
 export * from './default.js'

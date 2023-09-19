@@ -468,7 +468,7 @@ export abstract class TransformingSampleDomain<
         >
 
         const contextPrivate = <ContextPrivateT>context
-        contextPrivate[TransformingTransformedLocationsKey] = new Map()
+        contextPrivate[TransformingTransformedLocationsKey] ??= new Map()
 
         const inner = <InnerDomain><unknown>this.inner
         if (inner.sample_fused_objectCounts === undefined) {

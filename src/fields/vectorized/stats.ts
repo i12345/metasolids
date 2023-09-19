@@ -16,10 +16,10 @@ export function field_point_vector_mean<
         vector: FieldPointVector<Point, Container> | FieldPointVectorWithMultiObjects<Point, Container, ObjIDsT, ObjIDsContainer>,
         multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ): Point {
-    const item = { item: <Point>undefined! }
+    const item = { item: field_point_new(type) }
     const { get, length } = vectorizedIteratorGetSetLengthCurried(type, <any>vector, { obj: item, property: "item" }, multiObjectsIDs)
     if (length === 0)
-        return field_point_new(type)
+        return item.item
 
     get(0)
     let sum = field_point_clone(item.item)
@@ -44,10 +44,10 @@ export function field_point_vector_stdDev<
     ): Point {
     const mean = field_point_vector_mean(type, vector, multiObjectsIDs)
 
-    const item = { item: <Point>undefined! }
+    const item = { item: field_point_new(type) }
     const { get, length } = vectorizedIteratorGetSetLengthCurried(type, <any>vector, { obj: item, property: "item" }, multiObjectsIDs)
     if (length === 0)
-        return field_point_new(type)
+        return item.item
 
     let residuals = field_point_new(type)
     for (let i = 0; i < length; i++) {

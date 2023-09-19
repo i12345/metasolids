@@ -1,5 +1,5 @@
-import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
-import { MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs, groups } from "../../../../paradigm/trees/index.js"
+import { Vec2, StandardMaterial, BasicMaterial } from "playcanvas-extended"
+import { MultiObjectsIDsKey, MultiObjectsTemplate, groups } from "../../../../paradigm/trees/index.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../fields/range.js"
 import { textures } from "../../../../index.js"
 import { TextureLocation, TextureSample } from "../../../../textures/texture.js"
@@ -8,14 +8,15 @@ import { VolumeLocation } from "../../../../volumes/volume.js"
 import { Cost_Space_Texture, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
 import { MaterialSemanticImplementationStorageClass_Texture } from "../storage-classes/texture.js"
 import { SurfaceRendererIndividual } from "../../renderer.js"
-import { FieldPoint } from "../../../../fields/point.js"
 import { Material_Texture_Context, Material_Texture_Location } from "../material-texture.js"
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
-import { VertexInterpolatingTexture } from "../../../../textures/index.js"
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, IsDynamicVector, field_point_vectorized_multi_objects_new } from "../../../../fields/vectorized/point.js"
+import { VertexInterpolatingTexture, renderTexture } from "../../../../textures/index.js"
+import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new, field_point_vectorized_new } from "../../../../fields/vectorized/point.js"
 import { SampleDomainLocationFieldKey } from "../../../../fields/domain.js"
 import { IndicesTypedArray } from "../../../../utils/indices-array.js"
+import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../../../fields/domains/vector.js"
+import { ComposingSampleDomain } from "../../../../fields/domains/composing.js"
 
 export type MaterialSemanticImplementation_Texture_SideEffect<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -82,9 +83,9 @@ export class MaterialSemanticImplementation_Texture<
 
         // 1 = this resolution effectively samples the underlying texture
         // 0 = there's infinite more detail that this sampling misses
-        const effectiveFit = Math.min(1, this.resolution * this.effectiveTexelSizeUV)
+        const effectiveQuality = Math.max(1, this.resolution * this.effectiveTexelSizeUV)
 
-        return Math.max(information_per_pixel_mean, effectiveFit) ** 2
+        return Math.max(information_per_pixel_mean, effectiveQuality) ** 2
     }
 
     equals(that: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT>): boolean {
@@ -99,9 +100,23 @@ export class MaterialSemanticImplementation_Texture<
     }
 
     implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] {
-        const buffer = new (this.hdr ? Float32Array : Uint8Array)(this.channels * (this.resolution ** 2))
-
-        const texture_context = this.surface_textureGroup.get<Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>>(renderer.shared.textureContexts)
+        type TextureVectorSamplingContext = VectorSamplingContext<
+            TextureLocation,
+            TextureLocation,
+            TextureLocation,
+            FieldPointVectorContainerStatic,
+            TexelTypeT,
+            TexelTypeT,
+            TexelTypeT,
+            FieldPointVectorContainerStatic,
+            Objects,
+            ObjIDsT,
+            FieldPointVectorContainerStatic<ObjIDsT>,
+            Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT, TexelTypeT, TexelTypeT, TexelTypeT>
+        >
+        
+        const texture_context = <TextureVectorSamplingContext>this.surface_textureGroup.get<Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>>(renderer.shared.textureContexts)
+        
         const multiObjectsIDs = texture_context[MultiObjectsIDsKey]
         const texture_location_field = texture_context[SampleDomainLocationFieldKey]
 
@@ -140,77 +155,109 @@ export class MaterialSemanticImplementation_Texture<
             texture_location_field
         )
 
-        texture_location_interpolator.init(texture_context)
+        const texture_composing = new ComposingSampleDomain<
+                Objects,
+                ObjIDsT,
+                FieldPointVectorContainerStatic<ObjIDsT>,
+                TextureLocation,
+                TextureLocation,
+                TextureLocation,
+                FieldPointVectorContainerStatic,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                FieldPointVectorContainerStatic,
+                TexelTypeT,
+                TexelTypeT,
+                TexelTypeT,
+                FieldPointVectorContainerStatic,
+                typeof texture_context
+            >(
+                texture_location_interpolator,
+                this.texture
+            )
+        
+        const resolution = this.resolution
+        const texels = resolution ** 2
+        const sampleLocations = field_point_vectorized_new<TextureLocation, FieldPointVectorContainerStatic, Objects, ObjIDsT, FieldPointVectorContainerStatic<ObjIDsT>>({ uv: Vec2 }, texels, false)
+        const sampleLocations_uv = sampleLocations.uv
+        
+        let sampleLocations_uv_i = 0
+        for (let y = 0; y < resolution; y++) {
+            for (let x = 0; x < resolution; x++) {
+                sampleLocations_uv[sampleLocations_uv_i++] = x / resolution
+                sampleLocations_uv[sampleLocations_uv_i++] = y / resolution
+            }
+        }
+        
+        texture_composing.init(texture_context)
 
-        const sample_texture_values = new Array<FieldPoint>(this.resolution ** 2)
+        // renderTexture("textures/uv.png", texture_location_interpolator, texture_context, ['uv'])
+        // renderTexture("textures/composing.png", texture_composing, texture_context)
 
-        //TODO: use vector function
-        for (let y = this.resolution - 1; y >= 0; y--) {
-            for (let x = this.resolution - 1; x >= 0; x--) {
-                const uv = new Vec2(x, y).divScalar(this.resolution)
-                const texture_location = texture_location_interpolator.sample({ uv })
-                sample_texture_values[(y * this.resolution) + x] = this.texture.sample(texture_location, texture_context)
-            }
-        }
+        makeVectorSamplingContext<
+                TextureLocation,
+                TextureLocation,
+                TextureLocation,
+                FieldPointVectorContainerStatic,
+                TexelTypeT,
+                TexelTypeT,
+                TexelTypeT,
+                FieldPointVectorContainerStatic,
+                Objects,
+                ObjIDsT,
+                FieldPointVectorContainerStatic<ObjIDsT>,
+                Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT, TexelTypeT, TexelTypeT, TexelTypeT>,
+                FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>,
+                FieldPointVector<TexelTypeT, FieldPointVectorContainerStatic>,
+                TextureVectorSamplingContext
+            >(texture_composing.field, texture_context, multiObjectsIDs)
+        
+        const samples = texture_context[VectorSampleFunction](texture_composing, sampleLocations, texture_context)
+        const samples_container = <FieldPointVectorContainerStatic>samples
+        const samples_channels = samples_container.length / texels
+        
+        const buffer_channels = this.channels
+        const buffer = new (this.hdr ? Float32Array : Uint8Array)(buffer_channels * texels)
 
-        if (typeof sample_texture_values[0] === 'number') {
-            for (let i = 0; i < sample_texture_values.length; i++) {
-                const sample_texture_value = sample_texture_values[i] as number
-                buffer[i * this.channels] = sample_texture_value
+        const min_channels = Math.min(samples_channels, buffer_channels)
+
+        let samples_i: number
+        let buffer_i: number
+        if (buffer instanceof Uint8Array) {
+            let sample: number
+            for (let i = 0; i < texels; i++) {
+                for (let j = 0; j < min_channels; j++) {
+                    samples_i = (i * samples_channels) + j
+                    buffer_i = (i * buffer_channels) + j
+
+                    sample = Math.floor(256 * samples_container[samples_i])
+                    if (sample < 0)
+                        buffer[buffer_i] = 0
+                    else if (sample > 255)
+                        buffer[buffer_i] = 255
+                    else
+                        buffer[buffer_i] = sample
+                }
             }
         }
-        else if (sample_texture_values[0] instanceof Color) {
-            switch (this.channels) {
-                case 1:
-                    for (let i = 0; i < sample_texture_values.length; i++) {
-                        const sample_texture_value = sample_texture_values[i] as Color
-                        buffer[i] = sample_texture_value.r
-                    }
-                    break
-                case 3:
-                    for (let i = 0; i < sample_texture_values.length; i++) {
-                        const sample_texture_value = sample_texture_values[i] as Color
-                        buffer[(i * 3) + 0] = sample_texture_value.r
-                        buffer[(i * 3) + 1] = sample_texture_value.g
-                        buffer[(i * 3) + 2] = sample_texture_value.b
-                    }
-                    break
-                case 4:
-                    for (let i = 0; i < sample_texture_values.length; i++) {
-                        const sample_texture_value = sample_texture_values[i] as Color
-                        buffer[(i * 4) + 0] = sample_texture_value.r
-                        buffer[(i * 4) + 1] = sample_texture_value.g
-                        buffer[(i * 4) + 2] = sample_texture_value.b
-                        buffer[(i * 4) + 3] = sample_texture_value.a
-                    }
-                    break
+        else {
+            let sample: number
+            for (let i = 0; i < texels; i++) {
+                for (let j = 0; j < min_channels; j++) {
+                    samples_i = (i * samples_channels) + j
+                    buffer_i = (i * buffer_channels) + j
+
+                    sample = samples_container[samples_i]
+                    if (sample < 0)
+                        buffer[buffer_i] = 0
+                    else if (sample > 1)
+                        buffer[buffer_i] = 1
+                    else
+                        buffer[buffer_i] = sample
+                }
             }
         }
-        else if (sample_texture_values[0] instanceof Vec3) {
-            for (let i = 0; i < sample_texture_values.length; i++) {
-                const sample_texture_value = sample_texture_values[i] as Vec3
-                buffer[(i * this.channels) + 0] = sample_texture_value.x
-                buffer[(i * this.channels) + 1] = sample_texture_value.y
-                buffer[(i * this.channels) + 2] = sample_texture_value.z
-            }
-        }
-        else if (sample_texture_values[0] instanceof Vec2) {
-            for (let i = 0; i < sample_texture_values.length; i++) {
-                const sample_texture_value = sample_texture_values[i] as Vec2
-                buffer[(i * this.channels) + 0] = sample_texture_value.x
-                buffer[(i * this.channels) + 1] = sample_texture_value.y
-            }
-        }
-        else if (sample_texture_values[0] instanceof Vec4) {
-            for (let i = 0; i < sample_texture_values.length; i++) {
-                const sample_texture_value = sample_texture_values[i] as Vec4
-                buffer[(i * this.channels) + 0] = sample_texture_value.x
-                buffer[(i * this.channels) + 1] = sample_texture_value.y
-                buffer[(i * this.channels) + 2] = sample_texture_value.z
-                buffer[(i * this.channels) + 3] = sample_texture_value.w
-            }
-        }
-        else throw new Error("unsupported type")
 
         //TODO: optimizations for translating, rotating, scaling, and tiling textures
 

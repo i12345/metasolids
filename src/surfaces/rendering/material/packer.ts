@@ -44,14 +44,14 @@ export interface PackedRenderedBufferForSemanticWithRefCount
  *
  * @param buffer the buffer to render these packed buffers into
  * @param pack the pack to render
- * @param indices_dst an index map of length len(buffer_dst) / pack.channels,
+ * @param dst_indices an index map of length len(buffer_dst) / pack.channels,
  * each element giving the corresponding element index in the source buffers
  * @returns the rendered buffer
  */
 export function renderPack(
-        buffer_dst: Float32Array | Uint8Array,
+        dst_buffer: Float32Array | Uint8Array,
         pack: PackedRenderedBufferForSemantic,
-        indices_dst?: IndicesArray
+        dst_indices?: IndicesArray
     ) {
     // if (pack.sources.length === 1 && pack.sources[0].buffer.length === buffer_dst.length) {
     //     const buffer_src = pack.sources[0].buffer
@@ -69,36 +69,61 @@ export function renderPack(
     //             buffer_dst[i] = math.clamp(Math.floor(buffer_src[i] * 255), 0, 255)
     // }
     // else {
-        const size_dst = indices_dst?.length ?? (pack.sources[0].buffer.length / pack.sources[0].channels)
-        if (buffer_dst.length !== size_dst * pack.channels)
+        const size_dst = dst_indices?.length ?? (pack.sources[0].buffer.length / pack.sources[0].channels)
+        if (dst_buffer.length < size_dst * pack.channels)
             throw new Error()
 
+        const pack_channels = pack.channels
+    
         for (const source of pack.sources) {
             const target = pack.targets.find(target => target.source.semantic === source.semantic)!
             for (const [source_channel_index, pack_channel] of target.channels.entries()) {
-                if (buffer_dst instanceof Float32Array) {
-                    for (let i = 0; i < size_dst; i++) {
-                        const src_i = indices_dst ? indices_dst[i] : i
-                        const value = source.buffer[(src_i * source.channels) + source_channel_index]
-                        buffer_dst[(i * pack.channels) + pack_channel] = value
+                const src_buffer = source.buffer
+                const src_channels = source.channels
+                if (src_buffer instanceof Float32Array || src_buffer instanceof Float64Array) {
+                    if (dst_buffer instanceof Float32Array) {
+                        for (let i = 0; i < size_dst; i++) {
+                            const src_i = dst_indices ? dst_indices[i] : i
+                            const value = src_buffer[(src_i * src_channels) + source_channel_index]
+                            dst_buffer[(i * pack_channels) + pack_channel] = value
+                        }
                     }
-                }
-                else if (buffer_dst instanceof Uint8Array) {
-                    for (let i = 0; i < size_dst; i++) {
-                        //TODO: after debugging this code, make separate versions for with and without indices mappings
-                        const src_i = indices_dst ? indices_dst[i] : i
-                        let value = Math.floor(255 * source.buffer[(src_i * source.channels) + source_channel_index])
-                        if (value < 0) value = 0
-                        else if (value > 255) value = 255
+                    else if (dst_buffer instanceof Uint8Array) {
+                        for (let i = 0; i < size_dst; i++) {
+                            //TODO: after debugging this code, make separate versions for with and without indices mappings
+                            const src_i = dst_indices ? dst_indices[i] : i
+                            let value = Math.floor(256 * src_buffer[(src_i * src_channels) + source_channel_index])
+                            if (value < 0) value = 0
+                            else if (value > 255) value = 255
 
-                        buffer_dst[(i * pack.channels) + pack_channel] = value
+                            dst_buffer[(i * pack_channels) + pack_channel] = value
+                        }
                     }
+                    else throw new Error()
                 }
+                else if (src_buffer instanceof Uint8Array) {
+                    if (dst_buffer instanceof Float32Array) {
+                        for (let i = 0; i < size_dst; i++) {
+                            const src_i = dst_indices ? dst_indices[i] : i
+                            const value = src_buffer[(src_i * src_channels) + source_channel_index]
+                            dst_buffer[(i * pack_channels) + pack_channel] = value / 255.0
+                        }
+                    }
+                    else if (dst_buffer instanceof Uint8Array) {
+                        for (let i = 0; i < size_dst; i++) {
+                            const src_i = dst_indices ? dst_indices[i] : i
+                            const value = src_buffer[(src_i * src_channels) + source_channel_index]
+                            dst_buffer[(i * pack_channels) + pack_channel] = value
+                        }
+                    }
+                    else throw new Error()
+                }
+                else throw new Error()
             }
         }
     // }
 
-    return buffer_dst
+    return dst_buffer
 }
 
 export function* pack

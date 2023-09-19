@@ -1,3 +1,6 @@
+import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { MultiObjectsGroupedObjectsKey } from "./multi-objects-groups.js";
+import { MultiObjectsIDs, MultiObjectsTemplate, objectValuePaths } from "./multi-objects.js";
 import { PropertyPath } from "./path.js";
 import { deletePath, extract, hasPath, intract } from "./tree.js";
 
@@ -18,30 +21,61 @@ export interface PropertyMapping {
  * it, by reference where possible. If the destination was originally not by
  * reference, then the return value will be different than the dst given.
  */
-export function object_merge_mapped<Dst, Src>(
+export function object_merge_mapped<
+        Dst,
+        Src,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array
+    >(
         dst: Dst | undefined,
         src: Src | undefined,
-        mappings: PropertyMapping[]
+        mappings: PropertyMapping[],
+        multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ): Dst {
     const dstObj = { dst }
 
     for (const mapping of mappings) {
         const dstPath = ['dst', ...mapping.to]
-        if (hasPath(src, mapping.from)) {
-            const value = extract(src, mapping.from)
-            intract(dstObj, dstPath, value)
+        
+        const objIndexFrom = mapping.from.indexOf(MultiObjectsGroupedObjectsKey)
+        if (objIndexFrom === -1) {
+            if (hasPath(src, mapping.from)) {
+                const value = extract(src, mapping.from)
+                intract(dstObj, dstPath, value)
+            }
+            else deletePath(dstObj, dstPath)
         }
-        else deletePath(dstObj, dstPath)
+        else {
+            const objIndexTo = mapping.to.indexOf(MultiObjectsGroupedObjectsKey)
+
+            const pathFrom1 = mapping.from.slice(0, objIndexFrom)
+            const pathFrom2 = mapping.from.slice(objIndexFrom + 1)
+
+            const pathTo1 = ['dst', ...mapping.to.slice(0, objIndexTo)]
+            const pathTo2 = mapping.to.slice(objIndexTo + 1)
+
+            if (hasPath(src, pathFrom1)) {
+                for (const objPath of objectValuePaths(multiObjectsIDs!.template))
+                    intract(dstObj, ['dst', ...pathTo1, ...objPath, ...pathTo2], extract(src, [...pathFrom1, ...objPath, ...pathFrom2]))
+            }
+            else deletePath(dstObj, pathTo1)
+        }
     }
 
     return dstObj.dst!
 }
 
-export function object_mapped<Dst, Src>(
+export function object_mapped<
+        Dst,
+        Src,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array
+    >(
         src: Src,
-        mappings: PropertyMapping[]
+        mappings: PropertyMapping[],
+        multiObjectsIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ): Dst {
-    return object_merge_mapped<Dst, Src>(undefined, src, mappings)
+    return object_merge_mapped<Dst, Src, Objects, ObjIDsT>(undefined, src, mappings, multiObjectsIDs)
 }
 
 export function mapping_inverse(mapping: PropertyMapping): PropertyMapping {
