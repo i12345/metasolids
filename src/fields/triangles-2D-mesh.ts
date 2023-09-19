@@ -1,11 +1,12 @@
 import { Vec2 } from "playcanvas-extended"
 import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
-import { FieldPointType } from "./type.js"
+import { FieldPointType, field_point_multiObj_IDs, field_point_multiObj_count } from "./type.js"
 import { IndicesArray, IndicesTypedArray, indicesArrayType } from "../utils/indices-array.js"
-import { NumberArrayLike, NumberTypedArray } from "../utils/typed-array.js"
+import { NumberArrayLike, NumberTypedArray, TypedArrayConstructor } from "../utils/typed-array.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
+import { TypedArrayList } from "../utils/typed-array-list.js"
 
 export class Triangles2DMeshInterpolator<
         VertexPoint extends FieldPoint = FieldPoint,
@@ -19,6 +20,9 @@ export class Triangles2DMeshInterpolator<
     private readonly v0:  VertexVector
     private readonly v01: VertexVector
     private readonly v02: VertexVector
+
+    private readonly objIDs?: ObjIDsT
+    private readonly objCounts?: ObjIDsT
 
     private readonly get_v0: (index: number) => VertexPoint
     private readonly get_v01: (index: number) => VertexPoint
@@ -52,7 +56,7 @@ export class Triangles2DMeshInterpolator<
             <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
             multiObjectIDs?.IDsType
         )
-
+        
         this.get_v0 = iterator.get_returnValue.bind(iterator, this.v0, this.v0)
         this.get_v01 = iterator.get_returnValue.bind(iterator, this.v01, this.v01)
         this.get_v02 = iterator.get_returnValue.bind(iterator, this.v02, this.v02)
@@ -62,15 +66,47 @@ export class Triangles2DMeshInterpolator<
         const set_v01 = iterator.set.bind(iterator, this.v01, this.v01)
         const set_v02 = iterator.set.bind(iterator, this.v02, this.v02)
 
-        //TODO: use non-reduced arithmetic fuse mode
-        for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
-            const v0 = get_vertex(triangles[i + 0])
-            const v1 = get_vertex(triangles[i + 1])
-            const v2 = get_vertex(triangles[i + 2])
+        const hasObjIDs = ItemObjIDsKey in this.v0
+        const objIDs = hasObjIDs ? new TypedArrayList<number, ObjIDsT>(<any>multiObjectIDs!.IDsType) : undefined
+        const objCounts = this.objCounts = hasObjIDs ? <ObjIDsT>new multiObjectIDs!.IDsType(triangles.length / 3) : undefined
+        const tmp_IDs = hasObjIDs ? new multiObjectIDs!.IDsType(multiObjectIDs!.paths.length) : undefined
+        let tmp_IDs_i: number
+        let tmp_IDs_length: number
 
-            set_v0(v0, tri)
-            set_v01(field_point_subtract(v1, v0), tri)
-            set_v02(field_point_subtract(v2, v0), tri)
+        //TODO: use non-reduced arithmetic fuse mode
+
+        if (hasObjIDs) {
+            for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
+                const v0 = get_vertex(triangles[i + 0])
+                const v1 = get_vertex(triangles[i + 1])
+                const v2 = get_vertex(triangles[i + 2])
+
+                tmp_IDs_length = 0
+                tmp_IDs_length = field_point_multiObj_IDs(vertexType, v0, multiObjectIDs!, tmp_IDs!, tmp_IDs_length)
+                tmp_IDs_length = field_point_multiObj_IDs(vertexType, v1, multiObjectIDs!, tmp_IDs!, tmp_IDs_length)
+                tmp_IDs_length = field_point_multiObj_IDs(vertexType, v2, multiObjectIDs!, tmp_IDs!, tmp_IDs_length)
+
+                objCounts![tri] += tmp_IDs_length
+                for (tmp_IDs_i = 0; tmp_IDs_i < tmp_IDs_length; tmp_IDs_i++)
+                    objIDs!.set(objIDs!.length, tmp_IDs![tmp_IDs_i])
+                
+                set_v0(v0, tri)
+                set_v01(field_point_subtract(v1, v0), tri)
+                set_v02(field_point_subtract(v2, v0), tri)
+            }
+            
+            this.objIDs = objIDs!.arrayView()
+        }
+        else {
+            for (let i = 0, tri = 0; i < triangles.length; i += 3, tri++) {
+                const v0 = get_vertex(triangles[i + 0])
+                const v1 = get_vertex(triangles[i + 1])
+                const v2 = get_vertex(triangles[i + 2])
+        
+                set_v0(v0, tri)
+                set_v01(field_point_subtract(v1, v0), tri)
+                set_v02(field_point_subtract(v2, v0), tri)
+            }
         }
     }
 
@@ -97,6 +133,17 @@ export class Triangles2DMeshInterpolator<
 
         return result.value
     }
+
+    // interpolate_vectorized<
+    //         TrisContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<IndicesTypedArray>,
+    //         WeightsContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>
+    //     >(
+    //         tris: FieldPointVector<number, TrisContainer>,
+    //         w1: FieldPointVector<number, WeightsContainer>,
+    //         w2: FieldPointVector<number, WeightsContainer>,
+    //     ): VertexVector {
+    //     //TODO: implement scatter_add_weighted()
+    // }
 
     interpolate_add<ContainingFieldsPoint extends FieldsPoint>(
             result: ContainingFieldsPoint,

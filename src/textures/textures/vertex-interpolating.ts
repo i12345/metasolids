@@ -81,6 +81,12 @@ export class VertexInterpolatingTexture<
     ) {
     }
 
+    init(context: Context): void {
+        const mesh = Triangles2DMesh.build(this.uv, this.triangles)
+        this.collider = new Triangles2DMeshCollider(mesh)
+        this.interpolator = new Triangles2DMeshInterpolator<VertexSample, VertexSampleElementType, VertexSampleContainer, VertexSampleVector>(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
+    }
+
     sample(location: TextureLocation): VertexSample {
         const collision = this.collider!.collision_first(location.uv)
 
@@ -91,9 +97,39 @@ export class VertexInterpolatingTexture<
         return this.interpolator!.interpolate(tri, w1, w2)
     }
 
-    init(context: Context): void {
-        const mesh = Triangles2DMesh.build(this.uv, this.triangles)
-        this.collider = new Triangles2DMeshCollider(mesh)
-        this.interpolator = new Triangles2DMeshInterpolator<VertexSample, VertexSampleElementType, VertexSampleContainer, VertexSampleVector>(this.field.elementType, this.vertices, this.triangles, context[MultiObjectsIDsKey])
-    }
+    // private static sample_vectorized<
+    //         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+    //         ObjIDsT extends IndicesTypedArray = Uint32Array,
+    //         TextureLocationT extends TextureLocation = TextureLocation,
+    //         TextureLocationElementType extends TextureLocation = TextureLocationT,
+    //         TextureLocationFuseMode extends TextureLocation = TextureLocationT,
+    //         VertexSample extends FieldPoint = FieldPoint,
+    //         VertexSampleElementType extends FieldPoint = VertexSample,
+    //         VertexSampleFuseMode extends FieldPoint = VertexSample,
+    //         VertexSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+    //         VertexSampleVector extends
+    //             FieldPointVector<VertexSampleElementType, VertexSampleContainer> =
+    //             FieldPointVector<VertexSampleElementType, VertexSampleContainer>,
+    //         Context extends
+    //             WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
+    //             WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>
+    //     >(
+    //         this: VertexInterpolatingTexture<
+    //                 Objects,
+    //                 ObjIDsT,
+    //                 TextureLocationT,
+    //                 TextureLocationElementType,
+    //                 TextureLocationFuseMode,
+    //                 VertexSample,
+    //                 VertexSampleElementType,
+    //                 VertexSampleFuseMode,
+    //                 VertexSampleContainer,
+    //                 VertexSampleVector,
+    //                 Context
+    //             >,
+    //         locations: FieldPointVector<TextureLocationElementType, FieldPointVectorContainerStatic>,
+    //         context: Context
+    //     ): VertexSampleVector {
+    //     const result
+    // }
 }

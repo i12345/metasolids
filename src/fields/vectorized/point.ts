@@ -2,7 +2,7 @@ import { MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-object
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
 import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid } from "../../utils/index.js"
 import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldPointPrimitive, FieldsPoint } from "../point.js"
-import { FieldPointType, field_point_type_multiObj_count, field_point_type_singleObj } from "../type.js"
+import { FieldPointType, field_point_multiObj_count, field_point_type_singleObj } from "../type.js"
 import { FieldPointVectorIterator } from "./iterator.js"
 import { vectorIterator } from "./iterators/factory.js"
 import { PrimitiveFieldPointVectorIterator } from "./iterators/primitive.js"
@@ -552,7 +552,7 @@ export function field_point_vector_fill<
     const indices = new Uint32Array(resultIterator.length(result, result)).fill(0)
     const copy = field_point_vectorized_multi_objects_new(
         resultType, 1, isDynamic, multiObjectIDs?.IDsType,
-        <any>((!isDynamic && !isDynamicObjIDsContainer) ? field_point_type_multiObj_count(itemType, item) : undefined)
+        <any>((!isDynamic && !isDynamicObjIDsContainer) ? field_point_multiObj_count(itemType, item) : undefined)
     )
     itemIterator.set(copy, copy, item, 0)
     itemIterator.scatter(result, result, copy, copy, indices, isMultiObjMapped)

@@ -148,7 +148,7 @@ export function field_point_type_size<Point extends FieldPoint = FieldPoint>(typ
     else return Reflect_entries(type).reduce((sum, [, subtype]) => sum + field_point_type_size(<FieldPointType>subtype), 0)
 }
 
-export function field_point_type_multiObj_count<
+export function field_point_multiObj_count<
         PointT extends FieldPoint = FieldPoint,
         PointElementType extends FieldPoint = PointT,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -168,9 +168,52 @@ export function field_point_type_multiObj_count<
         return objs
     }
     else {
-        const subsizes = Reflect.ownKeys(type).map(key => field_point_type_multiObj_count(type[key], (<FieldsPoint>point)[key], multiObjectIDs)).filter(size => size !== undefined)
+        const subsizes = Reflect.ownKeys(type).map(key => field_point_multiObj_count(type[key], (<FieldsPoint>point)[key], multiObjectIDs)).filter(size => size !== undefined)
         return subsizes.length > 0 ? Math.max(...(<number[]>subsizes)) : undefined
     }
+}
+
+export function field_point_multiObj_IDs<
+        PointT extends FieldPoint = FieldPoint,
+        PointElementType extends FieldPoint = PointT,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = IndicesTypedArray
+    >(
+        type: FieldPointType<PointElementType>,
+        point: PointT,
+        multiObjectIDs: MultiObjectsIDs<Objects, ObjIDsT>,
+        IDs: ObjIDsT,
+        IDs_length = 0
+    ): number {
+    if (type instanceof Function)
+        return IDs_length
+    else if (MultiObjectsGroupedObjectsKey in type) {
+        let id_i: number
+        let objID: number
+        for (const path of objectValuePaths(multiObjectIDs!.template)) {
+            if (hasPath(point, path)) {
+                objID = extract<number>(multiObjectIDs!.IDs, path)
+                for (id_i = 0; id_i < IDs_length; id_i++)
+                    if (IDs[id_i] === objID)
+                        break
+                
+                if (id_i === IDs_length)
+                    IDs[IDs_length++] = objID
+            }
+        }
+    }
+    else {
+        for (const key of Reflect.ownKeys(type)) {
+            IDs_length = field_point_multiObj_IDs(
+                type[key],
+                (<FieldsPoint>point)[key],
+                multiObjectIDs,
+                IDs,
+                IDs_length
+            )
+        }
+    }
+    return IDs_length
 }
 
 export function field_point_multiObj_extract<
