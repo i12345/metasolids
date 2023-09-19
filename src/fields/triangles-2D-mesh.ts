@@ -36,24 +36,21 @@ export class Triangles2DMeshInterpolator<
             vertexType,
             triangles.length / 3,
             <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
-            multiObjectIDs?.IDsType,
-            <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
+            multiObjectIDs?.IDsType
         )
 
         this.v01 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
-            multiObjectIDs?.IDsType,
-            <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
+            multiObjectIDs?.IDsType
         )
 
         this.v02 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
-            multiObjectIDs?.IDsType,
-            <any>(<FieldPointVectorWithMultiObjects>vertices)[ItemObjIDsKey]?.length
+            multiObjectIDs?.IDsType
         )
 
         this.get_v0 = iterator.get_returnValue.bind(iterator, this.v0, this.v0)
@@ -194,7 +191,8 @@ export class Triangles2DMesh {
         public readonly triangles: NumberArrayLike,
         public readonly v0: Float64Array,
         public readonly tri_vec_inv: Float64Array,
-        public readonly bounds: { readonly origin: Vec2, readonly size: Vec2 }
+        public readonly bounds: { readonly origin: Vec2, readonly size: Vec2 },
+        public margin = 0.05
     ) {
     }
 
@@ -311,10 +309,10 @@ class Triangles2DMeshQuad {
             min_y = Math.min(v0_y, v1_y, v2_y)
             max_y = Math.max(v0_y, v1_y, v2_y)
 
-            if (min_x >= bounds.max.x ||
-                max_x <= bounds.min.x ||
-                min_y >= bounds.max.y ||
-                max_y <= bounds.min.y)
+            if (min_x > bounds.max.x ||
+                max_x < bounds.min.x ||
+                min_y > bounds.max.y ||
+                max_y < bounds.min.y)
                 continue
 
             filtered_triangles.push(tri)
@@ -324,8 +322,8 @@ class Triangles2DMeshQuad {
     }
 
     collide(point: Vec2, collisionHandler: TriangleCollisionHandler) {
-        const { v0, tri_vec_inv } = this.mesh
-        const margin_min = -0.08, margin_max = 1 - 2 * margin_min
+        const { v0, tri_vec_inv, margin } = this.mesh
+        const margin_min = -margin, margin_max = 1 + margin
 
         const p_x = point.x, p_y = point.y
         let v0_x: number, v0_y: number
@@ -365,8 +363,8 @@ class Triangles2DMeshQuad {
     }
 
     collision_first(point: Vec2): TriangleCollision | undefined {
-        const { v0, tri_vec_inv } = this.mesh
-        const margin_min = -0.08, margin_max = 1 - 2 * margin_min
+        const { v0, tri_vec_inv, margin } = this.mesh
+        const margin_min = -margin, margin_max = 1 + margin
 
         const p_x = point.x, p_y = point.y
         let v0_x: number, v0_y: number
