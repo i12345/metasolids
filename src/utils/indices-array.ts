@@ -12,6 +12,26 @@ export function invalidIndex<IndicesT extends IndicesTypedArray>(indices: Indice
     return new (typedArrayConstructor<number>(indices))([-1])[0]
 }
 
+export function sumIndexed<T extends number | bigint, TArray extends TypedArray<T> = TypedArray<T>>(array: TArray, indices: IndicesTypedArray): T {
+    let index: number
+    if (isNumberTypedArray(array)) {
+        let sum: number = 0
+        for (let i = 0; i < indices.length; i++) {
+            index = indices[i]
+            sum += <number>array[index]
+        }
+        return <T>sum
+    }
+    else {
+        let sum: bigint = 0n
+        for (let i = 0; i < indices.length; i++) {
+            index = indices[i]
+            sum += <bigint>array[index]
+        }
+        return <T>sum
+    }
+}
+
 export function sumIndexedDeltas<T extends number | bigint, OffsetsT extends TypedArray<T>>(offsets: OffsetsT, indices: IndicesTypedArray): T {
     let index: number
     if (isNumberTypedArray(offsets)) {

@@ -1,9 +1,9 @@
 import { Vec2 } from "playcanvas-extended"
 import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
 import { FieldPointType, field_point_multiObj_IDs, field_point_multiObj_count } from "./type.js"
-import { IndicesArray, IndicesTypedArray, indicesArrayType } from "../utils/indices-array.js"
-import { NumberArrayLike, NumberTypedArray, TypedArrayConstructor } from "../utils/typed-array.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
+import { IndicesArray, IndicesTypedArray, indicesArrayType, invalidIndex, sumIndexed } from "../utils/indices-array.js"
+import { NumberArrayLike, NumberTypedArray, TypedArrayConstructor, sum } from "../utils/typed-array.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, IsDynamicVectorContainer, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new, field_point_vectorized_new } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
 import { TypedArrayList } from "../utils/typed-array-list.js"
@@ -22,6 +22,7 @@ export class Triangles2DMeshInterpolator<
     private readonly v02: VertexVector
 
     private readonly objIDs?: ObjIDsT
+    private readonly objOffsets?: Uint32Array
     private readonly objCounts?: ObjIDsT
 
     private readonly get_v0: (index: number) => VertexPoint
@@ -69,9 +70,11 @@ export class Triangles2DMeshInterpolator<
         const hasObjIDs = ItemObjIDsKey in this.v0
         const objIDs = hasObjIDs ? new TypedArrayList<number, ObjIDsT>(<any>multiObjectIDs!.IDsType) : undefined
         const objCounts = this.objCounts = hasObjIDs ? <ObjIDsT>new multiObjectIDs!.IDsType(triangles.length / 3) : undefined
+        const objOffsets = this.objOffsets = hasObjIDs ? new Uint32Array(triangles.length / 3) : undefined
+        let objOffset_next = 0
         const tmp_IDs = hasObjIDs ? new multiObjectIDs!.IDsType(multiObjectIDs!.paths.length) : undefined
         let tmp_IDs_i: number
-        let tmp_IDs_length: number
+        let objCount: number
 
         //TODO: use non-reduced arithmetic fuse mode
 
@@ -81,13 +84,17 @@ export class Triangles2DMeshInterpolator<
                 const v1 = get_vertex(triangles[i + 1])
                 const v2 = get_vertex(triangles[i + 2])
 
-                tmp_IDs_length = 0
-                tmp_IDs_length = field_point_multiObj_IDs(vertexType, v0, multiObjectIDs!, tmp_IDs!, tmp_IDs_length)
-                tmp_IDs_length = field_point_multiObj_IDs(vertexType, v1, multiObjectIDs!, tmp_IDs!, tmp_IDs_length)
-                tmp_IDs_length = field_point_multiObj_IDs(vertexType, v2, multiObjectIDs!, tmp_IDs!, tmp_IDs_length)
+                objCount = 0
+                objCount = field_point_multiObj_IDs(vertexType, v0, multiObjectIDs!, tmp_IDs!, objCount)
+                objCount = field_point_multiObj_IDs(vertexType, v1, multiObjectIDs!, tmp_IDs!, objCount)
+                objCount = field_point_multiObj_IDs(vertexType, v2, multiObjectIDs!, tmp_IDs!, objCount)
 
-                objCounts![tri] += tmp_IDs_length
-                for (tmp_IDs_i = 0; tmp_IDs_i < tmp_IDs_length; tmp_IDs_i++)
+                objCounts![tri] = objCount
+                
+                objOffset_next += objCount
+                objOffsets![tri] = objOffset_next
+
+                for (tmp_IDs_i = 0; tmp_IDs_i < objCount; tmp_IDs_i++)
                     objIDs!.set(objIDs!.length, tmp_IDs![tmp_IDs_i])
                 
                 set_v0(v0, tri)
@@ -134,16 +141,87 @@ export class Triangles2DMeshInterpolator<
         return result.value
     }
 
-    // interpolate_vectorized<
-    //         TrisContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<IndicesTypedArray>,
-    //         WeightsContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>
-    //     >(
-    //         tris: FieldPointVector<number, TrisContainer>,
-    //         w1: FieldPointVector<number, WeightsContainer>,
-    //         w2: FieldPointVector<number, WeightsContainer>,
-    //     ): VertexVector {
-    //     //TODO: implement scatter_add_weighted()
-    // }
+    interpolate_vectorized<
+            TrisContainer extends FieldPointVectorContainerStatic<IndicesTypedArray> = FieldPointVectorContainerStatic<IndicesTypedArray>,
+            WeightsContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>
+        >(
+            tris: FieldPointVector<number, TrisContainer>,
+            w1: FieldPointVector<number, WeightsContainer>,
+            w2: FieldPointVector<number, WeightsContainer>,
+        ): VertexVector {
+        const iterator = vectorIterator<VertexPoint, VertexContainer, Objects, ObjIDsT, VertexPointElementType, VertexVector>(
+            this.vertexType,
+            <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
+            this.multiObjectIDs
+        )
+
+        const interpolated = <VertexVector><unknown>field_point_vectorized_multi_objects_new<
+                VertexPointElementType,
+                VertexContainer,
+                ObjIDsT,
+                FieldPointVectorContainerStatic<ObjIDsT>
+            >(
+            this.vertexType,
+            tris.length,
+            <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
+            this.objCounts ? this.multiObjectIDs?.IDsType : undefined,
+            <IsDynamicVectorContainer<VertexContainer> extends false ? IsDynamicVectorContainer<ObjIDsT> extends false ? number : never : never>(this.objCounts ? sumIndexed(this.objCounts, tris) : undefined)
+        )
+
+        if (this.objIDs) {
+            const interpolated_multiObj = <FieldPointVectorWithMultiObjects<VertexPointElementType, VertexContainer, ObjIDsT, FieldPointVectorContainerStatic<ObjIDsT>>><unknown>interpolated
+
+            const interpolated_objOffsets = interpolated_multiObj[ItemObjValuesOffsetsKey]
+            const interpolated_objIDs = interpolated_multiObj[ItemObjIDsKey]
+            let interpolated_objIDs_offset = 0
+
+            const tri_objIDs = this.objIDs!
+            const tri_objCounts = this.objCounts!
+            const tri_objOffsets = this.objOffsets!
+            let tri_objCount: number
+            let tri_objOffset: number
+            let tri_objOffset_objID: number
+            let tri_objOffset_next: number
+            let tri: number
+            const tri_invalid = invalidIndex(tris)
+
+            for (let tri_i = 0; tri_i < tris.length; tri_i++) {
+                tri = tris[tri_i]
+                if (tri === tri_invalid) continue
+
+                tri_objCount = tri_objCounts[tri]
+                tri_objOffset = tri_objOffsets[tri]
+                
+                tri_objOffset_next = tri_objOffset + tri_objCount
+                for (tri_objOffset_objID = tri_objOffset; tri_objOffset_objID < tri_objOffset_next; tri_objOffset_objID++)
+                    interpolated_objIDs[interpolated_objIDs_offset++] = tri_objIDs[tri_objOffset_objID]
+                
+                interpolated_objOffsets[tri_i] = interpolated_objIDs_offset
+            }
+        }
+
+        iterator.scatter(
+            interpolated, interpolated,
+            this.v0, this.v0,
+            tris
+        )
+
+        iterator.scatter_add_weighted(
+            interpolated, interpolated,
+            this.v01, this.v01,
+            tris,
+            w1
+        )
+
+        iterator.scatter_add_weighted(
+            interpolated, interpolated,
+            this.v02, this.v02,
+            tris,
+            w2
+        )
+
+        return interpolated
+    }
 
     interpolate_add<ContainingFieldsPoint extends FieldsPoint>(
             result: ContainingFieldsPoint,
@@ -229,6 +307,105 @@ export class Triangles2DMeshCollider {
             return undefined
 
         return this.cells[cell.x + (cell.y * this.resolution)].collision_first(p)
+    }
+
+    collide_first_vectorized(p: FieldPointVector<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>): FieldPointVectorStatic<TriangleCollision> {
+        const { v0, tri_vec_inv, margin } = this.mesh
+        const margin_min = -margin, margin_max = 1 + margin
+        const resolution = this.resolution
+
+        const bounds_origin_x = this.mesh.bounds.origin.x
+        const bounds_origin_y = this.mesh.bounds.origin.y
+        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
+        const resolution_div_bounds_size_x = resolution / this.mesh.bounds.size.x
+
+        let p_x: number, p_y: number
+        let cell_x: number, cell_y: number
+        const cells_filtered_triangles = this.cells.map(cell => cell.filtered_triangles)
+
+        let collided: boolean
+        
+        let v0_x: number, v0_y: number
+        let x: number, y: number
+        let tri_vec_inv_a: number,
+            tri_vec_inv_b: number,
+            tri_vec_inv_c: number,
+            tri_vec_inv_d: number
+        
+        let tri: number, w1: number, w2: number
+        let tri_indices: IndicesTypedArray
+        let tri_n: number
+
+        const length = p.length / 2
+
+        const result: FieldPointVectorStatic<TriangleCollision> = {
+            tri: new (indicesArrayType(this.mesh.triangles.length / 3))(length),
+            w1: new Float64Array(length),
+            w2: new Float64Array(length),
+        }
+        const result_tri = result.tri
+        const result_tri_invalid = invalidIndex(<IndicesTypedArray>result_tri)
+        const result_w1 = result.w1
+        const result_w2 = result.w2
+        
+        for (let p_i = 0; p_i < length; p_i++) {
+            p_x = p[(2 * p_i) + 0]
+            p_y = p[(2 * p_i) + 1]
+
+            cell_x = Math.floor((p_x - bounds_origin_x) * resolution_div_bounds_size_x)
+            cell_y = Math.floor((p_y - bounds_origin_y) * resolution_div_bounds_size_y)
+
+            if (cell_x < 0 || cell_x >= resolution ||
+                cell_y < 0 || cell_y >= resolution ||
+                isNaN(cell_x) || isNaN(cell_y)) {
+                result_tri[p_i] = result_tri_invalid
+                result_w1[p_i] = NaN
+                result_w2[p_i] = NaN
+                
+                continue
+            }
+            
+            tri_indices = cells_filtered_triangles[cell_x + (resolution * cell_y)]
+            tri_n = tri_indices.length
+
+            collided = false
+
+            for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+                tri = tri_indices[tri_i]
+
+                v0_x = v0[(2 * tri) + 0]
+                v0_y = v0[(2 * tri) + 1]
+
+                x = p_x - v0_x
+                y = p_y - v0_y
+
+                tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
+                tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
+                tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
+                tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+
+                w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+                w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+
+                if (w1 < margin_min || w2 < margin_min ||
+                    w1 + w2 > margin_max)
+                    continue
+
+                result_tri[p_i] = tri
+                result_w1[p_i] = w1
+                result_w2[p_i] = w2
+                collided = true
+                break
+            }
+
+            if (!collided) {
+                result_tri[p_i] = result_tri_invalid
+                result_w1[p_i] = NaN
+                result_w2[p_i] = NaN
+            }
+        }
+
+        return result
     }
 }
 
@@ -322,7 +499,7 @@ export class Triangles2DMesh {
 }
 
 class Triangles2DMeshQuad {
-    private filtered_triangles: IndicesTypedArray
+    readonly filtered_triangles: IndicesTypedArray
 
     constructor(
         public mesh: Triangles2DMesh,

@@ -87,6 +87,29 @@ export class FieldsFieldPointVectorIterator<
         }
     }
 
+    scatter_add_weighted(
+            dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
+            src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
+            /** indices[dst_index] = src_index */
+            indices: IndicesTypedArray,
+            /** weights[dst_index] = weight for src index */
+            weights: NumberTypedArray,
+            isMultiObjMapped?: boolean
+        ): void {
+        for (const [key, sub_typeIterator] of this.typeIterators) {
+            if(!(key in src_vectorized)) continue
+            if (!(key in dst_vectorized)) throw new Error()
+
+            sub_typeIterator.scatter_add_weighted(
+                dst_vectorized[key], dst_vectorizedRoot,
+                src_vectorized[key], src_vectorizedRoot,
+                indices,
+                weights,
+                isMultiObjMapped
+            )
+        }
+    }
+
     length(vectorized: FieldPointVector<Point, Container>, vectorizedRoot: VectorizedRoot): number {
         for (const [key, typeIterator] of this.typeIterators) {
             const subvectorized = vectorized[key]

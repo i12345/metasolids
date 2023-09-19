@@ -26,4 +26,14 @@ export interface FieldPointVectorIterator<
         indices: IndicesTypedArray,
         isMultiObjMapped?: boolean
     ): void
+
+    scatter_add_weighted(
+        dst_vectorized: FieldPointVector<VectorizedPoint, Container>, dst_vectorizedRoot: VectorizedRoot,
+        src_vectorized: FieldPointVector<VectorizedPoint, Container>, src_vectorizedRoot: VectorizedRoot,
+        /** indices[dst_index] = src_index */
+        indices: IndicesTypedArray,
+        /** weights[dst_index] = weight for src index */
+        weights: NumberTypedArray,
+        isMultiObjMapped?: boolean
+    ): void
 }

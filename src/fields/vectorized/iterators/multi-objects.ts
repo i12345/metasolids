@@ -6,6 +6,7 @@ import { vectorIterator } from "./factory.js"
 import { FieldPointVectorIterator } from "../iterator.js"
 import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, FieldPointVectorContainerType, FieldPointVectorContainerDynamic } from "../point.js"
 import { IndicesTypedArray, invalidIndex } from "../../../utils/indices-array.js"
+import { NumberTypedArray } from "../../../utils/typed-array.js"
 
 export class MultiObjectsFieldPointVectorIteratorStatic<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -120,6 +121,27 @@ export class MultiObjectsFieldPointVectorIteratorStatic<
             dst_vectorized, dst_vectorizedRoot,
             src_vectorized, src_vectorizedRoot,
             indices,
+            true
+        )
+    }
+
+    scatter_add_weighted(
+            dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
+            src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
+            /** indices[dst_index] = src_index */
+            indices: IndicesTypedArray,
+            /** weights[dst_index] = weight for src index */
+            weights: NumberTypedArray,
+            isMultiObjMapped?: boolean
+        ): void {
+        if (isMultiObjMapped)
+            throw new Error()
+
+        this.typeIterator.scatter_add_weighted(
+            dst_vectorized, dst_vectorizedRoot,
+            src_vectorized, src_vectorizedRoot,
+            indices,
+            weights,
             true
         )
     }
@@ -238,6 +260,27 @@ export class MultiObjectsFieldPointVectorIteratorDynamic<
             dst_vectorized, dst_vectorizedRoot,
             src_vectorized, src_vectorizedRoot,
             indices,
+            true
+        )
+    }
+
+    scatter_add_weighted(
+            dst_vectorized: FieldPointVector<Point, Container>, dst_vectorizedRoot: VectorizedRoot,
+            src_vectorized: FieldPointVector<Point, Container>, src_vectorizedRoot: VectorizedRoot,
+            /** indices[dst_index] = src_index */
+            indices: IndicesTypedArray,
+            /** weights[dst_index] = weight for src index */
+            weights: NumberTypedArray,
+            isMultiObjMapped?: boolean
+        ): void {
+        if (isMultiObjMapped)
+            throw new Error()
+
+        this.typeIterator.scatter_add_weighted(
+            dst_vectorized, dst_vectorizedRoot,
+            src_vectorized, src_vectorizedRoot,
+            indices,
+            weights,
             true
         )
     }
