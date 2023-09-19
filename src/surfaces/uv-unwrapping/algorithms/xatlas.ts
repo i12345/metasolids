@@ -20,13 +20,18 @@ export const init_XAtlasAPI = (xatlas_path: string = '/xatlasjs-esm') => new Pro
     )
 })
 
+export interface XAtlasOptions {
+    maxIterations: number
+    // maxCost: number
+}
+
 export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
     init() {
         if (!xAtlasAPI)
             throw new Error("load XAtlasAPI before using the xatlas unwrapper")
     },
 
-    unwrap(mesh) {
+    unwrap(mesh, unwrap_options?: XAtlasOptions) {
         const indices_start = mesh.triangles instanceof Uint16Array ? mesh.triangles : new Uint16Array(mesh.triangles)
         const vertices_start = mesh.vertices
         const n_vertices_start = vertices_start.length / 3
@@ -34,13 +39,18 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
         xAtlasAPI.createAtlas()
         xAtlasAPI.addMesh(indices_start, vertices_start)
 
-        const options = {
+        const xatlas_options = {
             chart: xAtlasAPI.defaultChartOptions(),
             pack: xAtlasAPI.defaultPackOptions()
         }
 
+        if (unwrap_options) {
+            xatlas_options.chart.maxIterations = unwrap_options.maxIterations
+            // xatlas_options.chart.maxCost = unwrap_options.maxCost
+        }
+
         function generateAtlas() {
-            const results = xAtlasAPI.generateAtlas(options.chart, options.pack)
+            const results = xAtlasAPI.generateAtlas(xatlas_options.chart, xatlas_options.pack)
             if (results.length !== 1)
                 throw new Error(`xatlas: ${results.length} atlases generated`)
             return results[0]

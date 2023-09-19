@@ -1,7 +1,7 @@
 import { AppBase, Entity, Component as pc_Component } from "playcanvas-extended"
 import { fields, solids, surfaces, textures, volumes } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js"
-import { InfluenceGroupTemplate, InterpolatingGroupsKindsTemplate, RawProcessingMode, RawProcessingRequest, SolidProcessingModeGate, SolidT, SurfaceProcessingContextT, SurfaceProcessingModeGate, SurfaceProcessingModeGateTemplate, SurfaceT, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessingContextT, VolumeSolidProcessorT, VolumeSurfaceProcessingContextT, VolumeSurfaceProcessorT } from "./types.js"
+import { InfluenceGroupTemplate, InterpolatingGroupsKindsTemplate, RawProcessingMode, RawProcessingRequest, SolidProcessingModeGate, SolidT, SurfaceProcessingContextT, SurfaceProcessingModeGate, SurfaceProcessingModeGateTemplate, SurfaceT, SurfaceUVUnwrappingGroupTemplate, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessingContextT, VolumeSolidProcessorT, VolumeSurfaceProcessingContextT, VolumeSurfaceProcessorT } from "./types.js"
 import { Component } from "./component.js"
 import { ComponentData } from "./data.js"
 import { StorageService } from "../storage/index.js"
@@ -42,7 +42,21 @@ const processors: VolumeProcessorT[] = [
         surfaces.VolumeSurfacesParallelizer,
         new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
                 new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
-                "xAtlas"
+                "xAtlas",
+                SurfaceUVUnwrappingGroupTemplate,
+                <surfaces.UVunwrapping.algorithms.XAtlasOptions>{
+                    maxIterations: 0
+                }
+            ) as unknown as VolumeSurfaceProcessorT,
+            [RawProcessingMode.RTMesh]
+        ),
+    ),
+    new processing.processors.ParallelizingProcessor(
+        surfaces.VolumeSurfacesParallelizer,
+        new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
+                new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
+                "xAtlas",
+                SurfaceUVUnwrappingGroupTemplate,
             ) as unknown as VolumeSurfaceProcessorT,
             [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
         ),

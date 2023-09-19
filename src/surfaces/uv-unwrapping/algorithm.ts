@@ -24,5 +24,5 @@ export interface SurfaceUVUnwrapping {
 
 export interface SurfaceUVUnwrappingAlgorithm {
     init(): void
-    unwrap(mesh: MeshData): SurfaceUVUnwrapping
+    unwrap(mesh: MeshData, options?: any): SurfaceUVUnwrapping
 }

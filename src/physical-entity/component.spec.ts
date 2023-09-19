@@ -35,7 +35,7 @@ describe("playcanvas-node", () => {
             const app = new Application(canvas)
             app.start()
 
-            await surfaces.UVunwrapping.init_XAtlasAPI("file://" + path.join(process.cwd(), "./node_modules/xatlasjs-esm/dist"))
+            await surfaces.UVunwrapping.algorithms.init_XAtlasAPI("file://" + path.join(process.cwd(), "./node_modules/xatlasjs-esm/dist"))
 
             const storageService = new storage.MemoryStorageService()
             const system = new physicalEntity.ComponentSystem(app, storageService)
