@@ -130,7 +130,7 @@ export function field_point_vector_multi_objs_extract<
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
-        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         Vector extends
             FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> =
             FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
@@ -168,24 +168,49 @@ export function field_point_vector_multi_objs_extract<
         objVector_objIDs.fill(objID)
 
         const src_objOffsets = vector[ItemObjValuesOffsetsKey]
-        const src_objIDs = vector[ItemObjValuesOffsetsKey]
+        const src_objIDs_container = vector[ItemObjIDsKey]
         let src_objOffset_prev = 0
         let src_objOffset_next: number
-        for (let i = 0; i < length; i++) {
-            src_objOffset_next = src_objOffsets[i]
 
-            while (src_objOffset_prev < src_objOffset_next) {
-                if (src_objIDs[src_objOffset_prev] === objID) {
-                    indices[i] = src_objOffset_prev
-                    break
+        if (src_objIDs_container instanceof TypedArrayList) {
+            const src_objIDs = <TypedArrayList<number, ObjIDsT>>src_objIDs_container
+
+            for (let i = 0; i < length; i++) {
+                src_objOffset_next = src_objOffsets[i]
+
+                while (src_objOffset_prev < src_objOffset_next) {
+                    if (src_objIDs.get(src_objOffset_prev) === objID) {
+                        indices[i] = src_objOffset_prev
+                        break
+                    }
                 }
-            }
 
-            if (src_objOffset_prev === src_objOffset_next) {
-                indices[i] = indices_invalid
-            }
+                if (src_objOffset_prev === src_objOffset_next) {
+                    indices[i] = indices_invalid
+                }
 
-            src_objOffset_prev = src_objOffset_next
+                src_objOffset_prev = src_objOffset_next
+            }
+        }
+        else {
+            const src_objIDs = <ObjIDsT>src_objIDs_container
+
+            for (let i = 0; i < length; i++) {
+                src_objOffset_next = src_objOffsets[i]
+
+                while (src_objOffset_prev < src_objOffset_next) {
+                    if (src_objIDs[src_objOffset_prev] === objID) {
+                        indices[i] = src_objOffset_prev
+                        break
+                    }
+                }
+
+                if (src_objOffset_prev === src_objOffset_next) {
+                    indices[i] = indices_invalid
+                }
+
+                src_objOffset_prev = src_objOffset_next
+            }
         }
 
         iterator.scatter(

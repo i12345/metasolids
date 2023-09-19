@@ -168,7 +168,8 @@ export class FieldPointVectorFunction<
             const result_iterator = vectorIterator(
                 this.returnType,
                 isDynamicVector<FieldPoint, FieldPointVectorContainer>(<FieldPointType>this.returnType, result),
-                multiObjectsIDs
+                multiObjectsIDs,
+                result
             )
 
             let result_value: FieldPoint
