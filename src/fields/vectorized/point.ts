@@ -221,7 +221,7 @@ export function field_point_vector_multi_objs_extract<
         }
 
         const objVector_objOffsets = objVector_objOffsets_reusable.subarray(0, objCount)
-        const objVector_objIDs_static = new multiObjectIDs.IDsType(objCount)
+        const objVector_objIDs_static = <ObjIDsT>(new (typedArrayConstructor(objIDs))(objCount))
         objVector_objIDs_static.fill(objID)
 
         const dst_root = <FieldPointVectorWithMultiObjects<FieldPoint, Container, ObjIDsT, ObjIDsContainer>>{
@@ -270,13 +270,13 @@ export function field_point_vector_multi_objs_extract<
                 return recurse(type[MultiObjectsGroupedObjectsKey], src_vector, true, src_root, dst_root)
             }
             else return Reflect_fromEntries<FieldPointVector<FieldsPoint>>(
-                Reflect_entries(type).map<any>(([key, subtype]) => recurse(
+                Reflect_entries(type).map<any>(([key, subtype]) => [key, recurse(
                     subtype,
                     (<FieldPointVector<FieldsPoint>>src_vector)[key],
                     isMultiObj,
                     src_root,
                     dst_root
-                ))
+                )])
             )
         }
 
