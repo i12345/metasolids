@@ -214,10 +214,13 @@ export class InterpolationManager implements InterpolationType<any>, VectorField
                 <any>(locations_multiObj[ItemObjIDsKey] ? sum(locations_multiObj[ItemObjIDsKey]) : undefined)
             )
 
+            const locations_get = locationIterator.get_returnValue.bind(locationIterator, locations, locations)
+            const results_set = resultIterator.set.bind(resultIterator, results, results)
+
             for (let i = 0; i < length; i++) {
-                const location = locationIterator.get_returnValue(locations, locations, i)
+                const location = locations_get(i)
                 const sample = singular(location)
-                resultIterator.set(results, results, sample, i)
+                results_set(sample, i)
             }
 
             return results

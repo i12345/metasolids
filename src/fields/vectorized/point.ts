@@ -1,8 +1,8 @@
 import { MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
-import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid } from "../../utils/index.js"
+import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid, typedArrayClone, Reflect_fromEntries } from "../../utils/index.js"
 import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldPointPrimitive, FieldsPoint } from "../point.js"
-import { FieldPointType, field_point_multiObj_count, field_point_type_singleObj } from "../type.js"
+import { FieldPointType, field_point_multiObj_count, field_point_type_is_multiObj, field_point_type_singleObj } from "../type.js"
 import { FieldPointVectorIterator } from "./iterator.js"
 import { vectorIterator } from "./iterators/factory.js"
 import { PrimitiveFieldPointVectorIterator } from "./iterators/primitive.js"
@@ -81,17 +81,27 @@ export function isDynamicVector<
         else if (MultiObjectsGroupedObjectsKey in elementType)
             return isDynamicVectorContainer(vectorRoot![ItemObjIDsKey])
         else {
+            let atLeastOneStatic = false
             for (const key of Reflect.ownKeys(elementType)) {
                 const isDynamic = recursive(elementType[key], (<FieldPointVector<FieldsPoint>>vector)[key], vectorRoot)
-                if (isDynamic !== undefined)
+                if (isDynamic)
                     return isDynamic
+                else atLeastOneStatic = true
             }
+
+            if (atLeastOneStatic)
+                return false
 
             return undefined
         }
     }
 
-    return <IsDynamicVector<ElementType, Container>>recursive(elementType, vector, vectorRoot ?? <any>vector)!
+    vectorRoot ??= <any>vector
+
+    if (ItemObjIDsKey in vectorRoot!)
+        return isDynamicVectorContainer<Container>((<any>vectorRoot)[ItemObjIDsKey])
+
+    return <IsDynamicVector<ElementType, Container>>recursive(elementType, vector)!
 }
 
 export type WithMultiObjects = {
@@ -138,9 +148,10 @@ export function field_point_vector_multi_objs_extract<
         vector: Vector,
         type: FieldPointType<ElementType>,
         multiObjectIDs: MultiObjectsIDs<Objects, ObjIDsT>,
-        objIDs?: ObjIDsT
+        objIDs?: ObjIDsT,
+        referenceNonMultiObjContainers: boolean = true,
+        outputMultiObjVectors: boolean = false
     ): [objID: number, objVector: Vector][] {
-    const type_singleObj = field_point_type_singleObj(type)
     const iterator = vectorIterator<ElementType, Container, Objects, ObjIDsT, ElementType, Vector>(type, isDynamicVector<ElementType, Container>(type, vector, <any>vector), multiObjectIDs, vector)
     const length = iterator.length(vector, vector)
 
@@ -152,74 +163,135 @@ export function field_point_vector_multi_objs_extract<
 
     const obj_vectors = new Array<[objID: number, Vector]>(objIDs.length)
 
-    const objVector_objIDs = new multiObjectIDs.IDsType(length)
-    const objVector_objOffsets = new Uint32Array(length)
-    for (let i = 0; i < objVector_objOffsets.length; i++)
-        objVector_objOffsets[i] = i + 1
-
+    const objVector_objOffsets_reusable = new Uint32Array(length)
+    for (let i = 0; i < objVector_objOffsets_reusable.length; i++)
+        objVector_objOffsets_reusable[i] = i + 1
+    
     const indices = new Uint32Array(length)
     const indices_invalid = <number>typedArrayInvalid(indices)
 
     for (let objID_i = 0; objID_i < objIDs.length; objID_i++) {
         const objID = objIDs[objID_i]
-        const obj_vector = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>field_point_vectorized_new(type_singleObj, length, false)
-        obj_vector[ItemObjIDsKey] = <ObjIDsContainer>objVector_objIDs
-        obj_vector[ItemObjValuesOffsetsKey] = objVector_objOffsets
-        objVector_objIDs.fill(objID)
 
         const src_objOffsets = vector[ItemObjValuesOffsetsKey]
         const src_objIDs_container = vector[ItemObjIDsKey]
         let src_objOffset_prev = 0
         let src_objOffset_next: number
+        let objCount = 0
 
         if (src_objIDs_container instanceof TypedArrayList) {
             const src_objIDs = <TypedArrayList<number, ObjIDsT>>src_objIDs_container
 
             for (let i = 0; i < length; i++) {
-                src_objOffset_next = src_objOffsets[i]
-
-                while (src_objOffset_prev < src_objOffset_next) {
+                for (src_objOffset_next = src_objOffsets[i];
+                    src_objOffset_prev < src_objOffset_next;
+                    src_objOffset_prev++) {
                     if (src_objIDs.get(src_objOffset_prev) === objID) {
                         indices[i] = src_objOffset_prev
+                        objCount++
                         break
                     }
                 }
 
-                if (src_objOffset_prev === src_objOffset_next) {
+                if (src_objOffset_prev === src_objOffset_next)
                     indices[i] = indices_invalid
-                }
-
-                src_objOffset_prev = src_objOffset_next
+                else
+                    src_objOffset_prev = src_objOffset_next
             }
         }
         else {
             const src_objIDs = <ObjIDsT>src_objIDs_container
 
             for (let i = 0; i < length; i++) {
-                src_objOffset_next = src_objOffsets[i]
-
-                while (src_objOffset_prev < src_objOffset_next) {
+                for (src_objOffset_next = src_objOffsets[i];
+                    src_objOffset_prev < src_objOffset_next;
+                    src_objOffset_prev++) {
                     if (src_objIDs[src_objOffset_prev] === objID) {
                         indices[i] = src_objOffset_prev
+                        objCount++
                         break
                     }
                 }
 
-                if (src_objOffset_prev === src_objOffset_next) {
+                if (src_objOffset_prev === src_objOffset_next)
                     indices[i] = indices_invalid
-                }
-
-                src_objOffset_prev = src_objOffset_next
+                else
+                    src_objOffset_prev = src_objOffset_next
             }
         }
 
-        iterator.scatter(
-            obj_vector,
-            <Vector>obj_vector,
+        const objVector_objOffsets = objVector_objOffsets_reusable.subarray(0, objCount)
+        const objVector_objIDs_static = new multiObjectIDs.IDsType(objCount)
+        objVector_objIDs_static.fill(objID)
+
+        const dst_root = <FieldPointVectorWithMultiObjects<FieldPoint, Container, ObjIDsT, ObjIDsContainer>>{
+            [ItemObjIDsKey]: (src_objIDs_container instanceof TypedArrayList) ? TypedArrayList.from(objVector_objIDs_static) : objVector_objIDs_static,
+            [ItemObjValuesOffsetsKey]: objVector_objOffsets
+        }
+
+        function recurse(
+                type: FieldPointType,
+                src_vector: FieldPointVector,
+                isMultiObj: boolean,
+                src_root: FieldPointVectorWithMultiObjects<FieldPoint, Container, ObjIDsT, ObjIDsContainer>,
+                dst_root: FieldPointVectorWithMultiObjects<FieldPoint, Container, ObjIDsT, ObjIDsContainer>
+            ): FieldPointVectorStatic {
+            if (type instanceof Function) {
+                if (isMultiObj) {
+                    const isDynamic = isDynamicVectorContainer(<FieldPointVectorContainer>src_vector)
+                    const dst_vector = field_point_vectorized_new(type, length, isDynamic)
+                    const iterator = vectorIterator<FieldPoint>(type, isDynamic)
+                    iterator.scatter(
+                        dst_vector,
+                        dst_root,
+                        <FieldPointVectorContainer>src_vector,
+                        src_root,
+                        indices
+                    )
+                    if (isDynamic)
+                        return iterator.copyStatic(dst_vector, dst_vector)
+                    else return <FieldPointVectorStatic>dst_vector
+                }
+                else {
+                    const isDynamic = isDynamicVectorContainer(<FieldPointVectorContainer>src_vector)
+                    if (isDynamic)
+                        return (<FieldPointVectorDynamic<FieldPointPrimitive>><unknown>src_vector).arrayView(referenceNonMultiObjContainers)
+                    else {
+                        if (referenceNonMultiObjContainers)
+                            return <FieldPointVectorStatic>dst_root
+                        else return typedArrayClone(<FieldPointVectorStatic<FieldPointPrimitive>>dst_root)
+                    }
+                }
+            }
+            else if (MultiObjectsGroupedObjectsKey in type) {
+                if (isMultiObj)
+                    throw new Error()
+
+                return recurse(type[MultiObjectsGroupedObjectsKey], src_vector, true, src_root, dst_root)
+            }
+            else return Reflect_fromEntries<FieldPointVector<FieldsPoint>>(
+                Reflect_entries(type).map<any>(([key, subtype]) => recurse(
+                    subtype,
+                    (<FieldPointVector<FieldsPoint>>src_vector)[key],
+                    isMultiObj,
+                    src_root,
+                    dst_root
+                ))
+            )
+        }
+
+        const obj_vector = recurse(
+            type,
+            <FieldPointVector>vector,
+            false,
             vector,
-            vector,
-            indices
+            dst_root
         )
+
+        if (outputMultiObjVectors) {
+            (<Partial<FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>, ObjIDsT, FieldPointVectorContainerStatic<ObjIDsT>>>>obj_vector)[ItemObjIDsKey] = <ObjIDsT>objVector_objIDs_static;
+            (<Partial<FieldPointVectorWithMultiObjects>>obj_vector)[ItemObjValuesOffsetsKey] = objVector_objOffsets
+        }
 
         obj_vectors[objID_i] = [objID, <Vector>obj_vector]
     }
@@ -307,7 +379,7 @@ export function field_point_vectorized_multi_objects_new<
     ): FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> {
     const result = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>field_point_vectorized_new(type, length, isDynamic, objectValuesStaticLength)
 
-    if (objIDsType) {
+    if (objIDsType && field_point_type_is_multiObj(type)) {
         const objID_invalid = invalidIndex(objIDsType)
         if (isDynamic || (objectValuesStaticLength === undefined)) {
             const objIDs = new TypedArrayList<number, ObjIDsT>(<any>objIDsType!)
@@ -353,6 +425,55 @@ export function field_point_vector_multiObjs_count<
 
         return sum
     }
+}
+
+export function field_point_vector_static<
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+    >(
+        elementType: FieldPointType<ElementType>,
+        src: FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>,
+        multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
+    ): FieldPointVector<ElementType, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>> {
+    if (!isDynamicVector<ElementType, Container>(elementType, src, <FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>><unknown>src))
+        return <FieldPointVector<ElementType, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>><unknown>src
+
+    const dst = <FieldPointVector<ElementType, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>>vectorIterator(elementType, true, multiObjectIDs, src).copyStatic(<any>src, src)
+
+    if (ItemObjIDsKey in src) {
+        const src_multiObj = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>src
+        const dst_multiObj = <FieldPointVectorWithMultiObjects<ElementType, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>, ObjIDsT, FieldPointVectorContainerStatic<ObjIDsT>>><unknown>dst
+        dst_multiObj[ItemObjIDsKey] = <FieldPointVector<number, FieldPointVectorContainerStatic<ObjIDsT>>>field_point_vector_static(Number, src_multiObj[ItemObjIDsKey])
+        dst_multiObj[ItemObjValuesOffsetsKey] = src_multiObj[ItemObjValuesOffsetsKey]
+    }
+
+    return dst
+}
+
+export function field_point_vector_dynamic<
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+    >(
+        elementType: FieldPointType<ElementType>,
+        src: FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>,
+        multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
+    ): FieldPointVector<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
+    const dst = <FieldPointVector<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>vectorIterator(elementType, true, multiObjectIDs, src).copyDynamic(<any>src, src)
+
+    if (ItemObjIDsKey in src) {
+        const src_multiObj = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>src
+        const dst_multiObj = <FieldPointVectorWithMultiObjects<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>, ObjIDsT, FieldPointVectorContainerDynamic<ObjIDsT>>><unknown>dst
+        dst_multiObj[ItemObjIDsKey] = <FieldPointVector<number, FieldPointVectorContainerDynamic<ObjIDsT>>>field_point_vector_dynamic(Number, src_multiObj[ItemObjIDsKey])
+        dst_multiObj[ItemObjValuesOffsetsKey] = src_multiObj[ItemObjValuesOffsetsKey]
+    }
+
+    return dst
 }
 
 function field_point_vector_append_scattered_prelim<

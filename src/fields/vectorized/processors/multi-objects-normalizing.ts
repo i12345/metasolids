@@ -92,7 +92,8 @@ export class FieldPointVectorMultiObjectsNormalizingProcessor<
                     type: FieldPointType<PointElementType>,
                     dividend: FieldPointVectorWithMultiObjRoot<PointElementType, Container>,
                     divisor: FieldPointVector<PointElementType>,
-                    isMultiObjMapped?: boolean
+                    isMultiObjMapped?: boolean,
+                    skip_na = true
                 ) {
                 if (MultiObjectsGroupedObjectsKey in type) {
                     if (isMultiObjMapped)
@@ -101,7 +102,9 @@ export class FieldPointVectorMultiObjectsNormalizingProcessor<
                     field_point_vector_divide(
                         <FieldPointType<PointElementType>>(<FieldPointType<MultiObjectsGroup<FieldPoint>>>type)[MultiObjectsGroupedObjectsKey],
                         dividend,
-                        divisor
+                        divisor,
+                        true,
+                        skip_na
                     )
                 }
                 else if (type instanceof Function) {
@@ -117,21 +120,49 @@ export class FieldPointVectorMultiObjectsNormalizingProcessor<
                         dividend_objOffset_next: number
 
                     let divisor_offset = 0,
-                        dividend_offset = 0
+                        dividend_offset = 0,
+                        divisor_value: number
                     
-                    for (let divisor_i = 0; divisor_i < length; divisor_i++) {
-                        dividend_objOffset_next = dividend_objOffsets[divisor_i]
+                    if (skip_na) {
+                        for (let divisor_i = 0; divisor_i < length; divisor_i++) {
+                            dividend_objOffset_next = dividend_objOffsets[divisor_i]
                         
-                        if (dividend_objOffset_prev !== dividend_objOffset_next) {
-                            do {
-                                for (divisor_element_i = 0; divisor_element_i < elementSize; divisor_element_i++)
-                                    dividend_typed[dividend_offset++] /= divisor_typed[divisor_offset + divisor_element_i]
-                            } while (++dividend_objOffset_prev < dividend_objOffset_next)
+                            if (dividend_objOffset_prev !== dividend_objOffset_next) {
+                                do {
+                                    for (divisor_element_i = 0; divisor_element_i < elementSize; divisor_element_i++) {
+                                        divisor_value = divisor_typed[divisor_offset + divisor_element_i]
+                                        if (divisor_value > 0)
+                                            dividend_typed[dividend_offset] /= divisor_value
+                                    
+                                        dividend_offset++
+                                    }
+                                } while (++dividend_objOffset_prev < dividend_objOffset_next)
+                            }
+
+                            divisor_offset += elementSize
+
+                            dividend_objOffset_prev = dividend_objOffset_next
                         }
+                    }
+                    else {
+                        for (let divisor_i = 0; divisor_i < length; divisor_i++) {
+                            dividend_objOffset_next = dividend_objOffsets[divisor_i]
+                        
+                            if (dividend_objOffset_prev !== dividend_objOffset_next) {
+                                do {
+                                    for (divisor_element_i = 0; divisor_element_i < elementSize; divisor_element_i++) {
+                                        divisor_value = divisor_typed[divisor_offset + divisor_element_i]
+                                        dividend_typed[dividend_offset] /= divisor_value
+                                    
+                                        dividend_offset++
+                                    }
+                                } while (++dividend_objOffset_prev < dividend_objOffset_next)
+                            }
 
-                        divisor_offset += elementSize
+                            divisor_offset += elementSize
 
-                        dividend_objOffset_prev = dividend_objOffset_next
+                            dividend_objOffset_prev = dividend_objOffset_next
+                        }
                     }
                 }
                 else {
@@ -146,13 +177,15 @@ export class FieldPointVectorMultiObjectsNormalizingProcessor<
                                 vector: subdividend,
                                 vectorizedRoot: dividend.vectorizedRoot
                             },
-                            subdivisor
+                            subdivisor,
+                            isMultiObjMapped,
+                            skip_na
                         )
                     }
                 }
             }
 
-            field_point_vector_divide(type, { vector: subvector, vectorizedRoot: <any>vector }, objSums)
+            field_point_vector_divide(type, { vector: subvector, vectorizedRoot: <any>vector }, objSums, false, true)
         }
     }
 }

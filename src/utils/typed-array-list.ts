@@ -1,4 +1,4 @@
-import { TypedArray, TypedArrayConstructor } from "./typed-array.js";
+import { TypedArray, TypedArrayConstructor, typedArrayConstructor } from "./typed-array.js";
 
 export class TypedArrayList<
         T extends number | bigint = number,
@@ -137,13 +137,27 @@ export class TypedArrayList<
 
         const result = <TypedArrayT>new this.type(this.length)
         let offset = 0
+
         for (const block of this.blocks) {
             const write = Math.min(result.length - offset, block.length)
-            const blockSource = (write === block.length) ? block : block.subarray(0, write)
+            if (write < 0)
+                throw new Error()
 
-            result.subarray(offset, write).set(<any>blockSource)
+            const block_src = (write === block.length) ? block : block.subarray(0, write)
+            const block_dst = result.subarray(offset, offset + write)
+            block_dst.set(<any>block_src)
+
+            offset += write
         }
 
         return result
+    }
+
+    static from<T extends number | bigint, TypedArrayT extends TypedArray<T>>(array: TypedArrayT): TypedArrayList<T, TypedArrayT> {
+        const list = new TypedArrayList<T, TypedArrayT>(<any>typedArrayConstructor(array))
+        list._capacity = list._length = array.length
+        list.blocks.push(array)
+
+        return list
     }
 }

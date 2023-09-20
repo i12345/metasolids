@@ -2,8 +2,8 @@ import { Vec2 } from "playcanvas-extended"
 import { FieldPoint, field_point_subtract, fields_point_add_inplace_weighted, FieldsPoint, fields_point_add_inplace } from "./point.js"
 import { FieldPointType, field_point_multiObj_IDs, field_point_multiObj_count } from "./type.js"
 import { IndicesArray, IndicesTypedArray, indicesArrayType, invalidIndex, sumIndexed } from "../utils/indices-array.js"
-import { NumberArrayLike, NumberTypedArray, TypedArrayConstructor, sum } from "../utils/typed-array.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, IsDynamicVectorContainer, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new, field_point_vectorized_new } from "./vectorized/index.js"
+import { NumberArrayLike, NumberTypedArray, TypedArrayConstructor, isTypedArray, sum } from "../utils/typed-array.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, IsDynamicVectorContainer, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vector_static, field_point_vectorized_multi_objects_new, field_point_vectorized_new, isDynamicVector } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
 import { TypedArrayList } from "../utils/typed-array-list.js"
@@ -35,39 +35,48 @@ export class Triangles2DMeshInterpolator<
         public readonly triangles: IndicesArray,
         public readonly multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ) {
-        const iterator = vectorIterator<VertexPoint, VertexContainer, Objects, ObjIDsT, VertexPointElementType, VertexVector>(vertexType, <IsDynamicVector<VertexPointElementType, VertexContainer>>false, multiObjectIDs)
-
-        this.v0 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
+        const v0 = field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
             multiObjectIDs?.IDsType
         )
 
-        this.v01 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
+        const v01 = field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
             multiObjectIDs?.IDsType
         )
 
-        this.v02 = <VertexVector><unknown>field_point_vectorized_multi_objects_new(
+        const v02 = field_point_vectorized_multi_objects_new(
             vertexType,
             triangles.length / 3,
             <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
             multiObjectIDs?.IDsType
         )
-        
-        this.get_v0 = iterator.get_returnValue.bind(iterator, this.v0, this.v0)
-        this.get_v01 = iterator.get_returnValue.bind(iterator, this.v01, this.v01)
-        this.get_v02 = iterator.get_returnValue.bind(iterator, this.v02, this.v02)
 
-        const get_vertex = iterator.get_returnValue.bind(iterator, vertices, vertices)
-        const set_v0 = iterator.set.bind(iterator, this.v0, this.v0)
-        const set_v01 = iterator.set.bind(iterator, this.v01, this.v01)
-        const set_v02 = iterator.set.bind(iterator, this.v02, this.v02)
+        const tmp_iterator = vectorIterator<VertexPoint, VertexContainer, Objects, ObjIDsT, VertexPointElementType>(
+            vertexType,
+            isDynamicVector<VertexPointElementType, VertexContainer>(vertexType, v0, v0),
+            multiObjectIDs,
+            v0
+        )
 
-        const hasObjIDs = ItemObjIDsKey in this.v0
+        const static_iterator = vectorIterator<
+                VertexPoint, VertexContainer, Objects, ObjIDsT, VertexPointElementType, VertexVector
+            >(
+                vertexType,
+                <IsDynamicVector<VertexPointElementType, VertexContainer>>false,
+                multiObjectIDs
+            )
+
+        const get_vertex = static_iterator.get_returnValue.bind(static_iterator, vertices, vertices)
+        const set_v0 = tmp_iterator.set.bind(tmp_iterator, v0, v0)
+        const set_v01 = tmp_iterator.set.bind(tmp_iterator, v01, v01)
+        const set_v02 = tmp_iterator.set.bind(tmp_iterator, v02, v02)
+
+        const hasObjIDs = ItemObjIDsKey in v0
         const objIDs = hasObjIDs ? new TypedArrayList<number, ObjIDsT>(<any>multiObjectIDs!.IDsType) : undefined
         const objCounts = this.objCounts = hasObjIDs ? <ObjIDsT>new multiObjectIDs!.IDsType(triangles.length / 3) : undefined
         const objOffsets = this.objOffsets = hasObjIDs ? new Uint32Array(triangles.length / 3) : undefined
@@ -115,6 +124,14 @@ export class Triangles2DMeshInterpolator<
                 set_v02(field_point_subtract(v2, v0), tri)
             }
         }
+        
+        this.v0 = <VertexVector><unknown>field_point_vector_static(vertexType, v0, multiObjectIDs)
+        this.v01 = <VertexVector><unknown>field_point_vector_static(vertexType, v01, multiObjectIDs)
+        this.v02 = <VertexVector><unknown>field_point_vector_static(vertexType, v02, multiObjectIDs)
+
+        this.get_v0 = static_iterator.get_returnValue.bind(static_iterator, this.v0, this.v0)
+        this.get_v01 = static_iterator.get_returnValue.bind(static_iterator, this.v01, this.v01)
+        this.get_v02 = static_iterator.get_returnValue.bind(static_iterator, this.v02, this.v02)
     }
 
     interpolate(
@@ -180,22 +197,20 @@ export class Triangles2DMeshInterpolator<
             const tri_objOffsets = this.objOffsets!
             let tri_objCount: number
             let tri_objOffset: number
-            let tri_objOffset_objID: number
             let tri_objOffset_next: number
             let tri: number
             const tri_invalid = invalidIndex(tris)
 
             for (let tri_i = 0; tri_i < tris.length; tri_i++) {
                 tri = tris[tri_i]
-                if (tri === tri_invalid) continue
+                if (tri !== tri_invalid) {
+                    tri_objCount = tri_objCounts[tri]
+                    tri_objOffset_next = tri_objOffsets[tri]
+                    
+                    for (tri_objOffset = tri_objOffset_next - tri_objCount; tri_objOffset < tri_objOffset_next; tri_objOffset++)
+                        interpolated_objIDs[interpolated_objIDs_offset++] = tri_objIDs[tri_objOffset]
+                }
 
-                tri_objCount = tri_objCounts[tri]
-                tri_objOffset = tri_objOffsets[tri]
-                
-                tri_objOffset_next = tri_objOffset + tri_objCount
-                for (tri_objOffset_objID = tri_objOffset; tri_objOffset_objID < tri_objOffset_next; tri_objOffset_objID++)
-                    interpolated_objIDs[interpolated_objIDs_offset++] = tri_objIDs[tri_objOffset_objID]
-                
                 interpolated_objOffsets[tri_i] = interpolated_objIDs_offset
             }
         }
@@ -390,6 +405,11 @@ export class Triangles2DMeshCollider {
                 if (w1 < margin_min || w2 < margin_min ||
                     w1 + w2 > margin_max)
                     continue
+                
+                if (w1 < 0) w1 = 0
+                else if (w1 + w2 >= 1) w1 = 1 - w2
+
+                if (w2 < 0) w2 = 0
 
                 result_tri[p_i] = tri
                 result_w1[p_i] = w1
@@ -581,6 +601,11 @@ class Triangles2DMeshQuad {
             if (w1 < margin_min || w2 < margin_min ||
                 w1 + w2 > margin_max)
                 continue
+            
+            if (w1 < 0) w1 = 0
+            else if (w1 + w2 >= 1) w1 = 1 - w2
+            
+            if (w2 < 0) w2 = 0
 
             collisionHandler(tri, w1, w2)
         }
@@ -623,6 +648,11 @@ class Triangles2DMeshQuad {
                 w1 + w2 > margin_max)
                 continue
 
+            if (w1 < 0) w1 = 0
+            else if (w1 + w2 >= 1) w1 = 1 - w2
+            
+            if (w2 < 0) w2 = 0
+            
             return { tri, w1, w2 }
         }
 

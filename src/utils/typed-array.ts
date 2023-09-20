@@ -149,7 +149,7 @@ export function typedArrayInvalid<T extends number | bigint, TypedArrayT extends
     if (invalid_lookup.has(type))
         return <T>invalid_lookup.get(type)!
 
-    const invalid_array = <TypedArrayT>new type()
+    const invalid_array = <TypedArrayT>new type(1)
     invalid_array[0] = isNumberTypedArray(invalid_array) ? -1 : -1n
     invalid_lookup.set(type, invalid_array[0])
     return <T>invalid_array[0]

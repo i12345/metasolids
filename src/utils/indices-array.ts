@@ -1,4 +1,4 @@
-import { TypedArray, TypedArrayConstructor, isNumberTypedArray, isTypedArray, typedArrayConstructor } from "./typed-array.js"
+import { TypedArray, TypedArrayConstructor, isNumberTypedArray, typedArrayConstructor } from "./typed-array.js"
 
 export type IndicesTypedArray = Uint8Array | Uint16Array | Uint32Array
 export type IndicesArray = IndicesTypedArray | number[]
@@ -14,10 +14,14 @@ export function invalidIndex<IndicesT extends IndicesTypedArray>(indices: Indice
 
 export function sumIndexed<T extends number | bigint, TArray extends TypedArray<T> = TypedArray<T>>(array: TArray, indices: IndicesTypedArray): T {
     let index: number
+    const index_invalid = invalidIndex(indices)
+
     if (isNumberTypedArray(array)) {
         let sum: number = 0
         for (let i = 0; i < indices.length; i++) {
             index = indices[i]
+            if (index === index_invalid) continue
+
             sum += <number>array[index]
         }
         return <T>sum
@@ -26,6 +30,8 @@ export function sumIndexed<T extends number | bigint, TArray extends TypedArray<
         let sum: bigint = 0n
         for (let i = 0; i < indices.length; i++) {
             index = indices[i]
+            if (index === index_invalid) continue
+
             sum += <bigint>array[index]
         }
         return <T>sum
@@ -34,10 +40,14 @@ export function sumIndexed<T extends number | bigint, TArray extends TypedArray<
 
 export function sumIndexedDeltas<T extends number | bigint, OffsetsT extends TypedArray<T>>(offsets: OffsetsT, indices: IndicesTypedArray): T {
     let index: number
+    const index_invalid = invalidIndex(indices)
+    
     if (isNumberTypedArray(offsets)) {
         let sum: number = 0
         for (let i = 0; i < indices.length; i++) {
             index = indices[i]
+            if (index === index_invalid) continue
+
             sum += (<number>offsets[index] - ((index > 0) ? <number>offsets[index - 1] : 0))
         }
         return <T>sum
@@ -46,6 +56,8 @@ export function sumIndexedDeltas<T extends number | bigint, OffsetsT extends Typ
         let sum: bigint = 0n
         for (let i = 0; i < indices.length; i++) {
             index = indices[i]
+            if (index === index_invalid) continue
+            
             sum += (<bigint>offsets[index] - ((index > 0) ? <bigint>offsets[index - 1] : 0n))
         }
         return <T>sum

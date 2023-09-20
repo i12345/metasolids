@@ -161,7 +161,7 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
             indices: IndicesTypedArray,
             isMultiObjMapped?: boolean
         ): void {
-        const indices_invalid = indices ? typedArrayInvalid(indices) : undefined
+        const indices_invalid = typedArrayInvalid(indices)
         const elementSize = this.elementSize
         const n_items = dst_vectorized.length / elementSize
         let dst_item: number
@@ -352,7 +352,7 @@ export abstract class PrimitiveFieldPointVectorIteratorStatic<
             weights: NumberTypedArray,
             isMultiObjMapped?: boolean
         ): void {
-        const indices_invalid = indices ? typedArrayInvalid(indices) : undefined
+        const indices_invalid = typedArrayInvalid(indices)
         const elementSize = this.elementSize
         const n_items = dst_vectorized.length / elementSize
         let dst_item: number
@@ -630,7 +630,7 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
             indices: IndicesTypedArray,
             isMultiObjMapped?: boolean
         ): void {
-        const indices_invalid = indices ? typedArrayInvalid(indices) : undefined
+        const indices_invalid = typedArrayInvalid(indices)
         const elementSize = this.elementSize
         const n_items = dst_vectorized.length / elementSize
         let dst_item: number
@@ -817,7 +817,7 @@ export abstract class PrimitiveFieldPointVectorIteratorDynamic<
             weights: NumberTypedArray,
             isMultiObjMapped?: boolean
         ): void {
-        const indices_invalid = indices ? typedArrayInvalid(indices) : undefined
+        const indices_invalid = typedArrayInvalid(indices)
         const elementSize = this.elementSize
         const n_items = dst_vectorized.length / elementSize
         let dst_item: number

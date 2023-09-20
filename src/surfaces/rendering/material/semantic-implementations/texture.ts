@@ -155,27 +155,28 @@ export class MaterialSemanticImplementation_Texture<
             texture_location_field
         )
 
-        const texture_composing = new ComposingSampleDomain<
-                Objects,
-                ObjIDsT,
-                FieldPointVectorContainerStatic<ObjIDsT>,
-                TextureLocation,
-                TextureLocation,
-                TextureLocation,
-                FieldPointVectorContainerStatic,
-                Material_Texture_Location<VolumeLocationT>,
-                Material_Texture_Location<VolumeLocationT>,
-                Material_Texture_Location<VolumeLocationT>,
-                FieldPointVectorContainerStatic,
-                TexelTypeT,
-                TexelTypeT,
-                TexelTypeT,
-                FieldPointVectorContainerStatic,
-                typeof texture_context
-            >(
-                texture_location_interpolator,
-                this.texture
-            )
+        const texture_composing = this.texture
+        // const texture_composing = new ComposingSampleDomain<
+        //         Objects,
+        //         ObjIDsT,
+        //         FieldPointVectorContainerStatic<ObjIDsT>,
+        //         TextureLocation,
+        //         TextureLocation,
+        //         TextureLocation,
+        //         FieldPointVectorContainerStatic,
+        //         Material_Texture_Location<VolumeLocationT>,
+        //         Material_Texture_Location<VolumeLocationT>,
+        //         Material_Texture_Location<VolumeLocationT>,
+        //         FieldPointVectorContainerStatic,
+        //         TexelTypeT,
+        //         TexelTypeT,
+        //         TexelTypeT,
+        //         FieldPointVectorContainerStatic,
+        //         typeof texture_context
+        //     >(
+        //         texture_location_interpolator,
+        //         this.texture
+        //     )
         
         const resolution = this.resolution
         const texels = resolution ** 2

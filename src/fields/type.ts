@@ -107,6 +107,20 @@ export function field_point_type_singleObj(type: FieldPointType): FieldPointType
     else return Reflect_fromEntries<FieldPointType<FieldsPoint>>(Reflect_entries(type).map(([key, subtype]) => <[PropertyKey, FieldPointType]>[key, field_point_type_singleObj(subtype)]))
 }
 
+export function field_point_type_is_multiObj(type: FieldPointType): boolean {
+    if (type instanceof Function)
+        return false
+    else if (MultiObjectsGroupedObjectsKey in type)
+        return true
+    else {
+        for (const key of Reflect.ownKeys(type))
+            if (field_point_type_is_multiObj(type[key]))
+                return true
+        
+        return false
+    }
+}
+
 export function field_point_type_contains<Superset extends FieldPoint, Subset extends FieldPoint>(
         superset: FieldPointType<Superset>,
         subset: FieldPointType<Subset>

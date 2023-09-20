@@ -8,7 +8,7 @@ import { SampleDomain, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { MultiObjectsField } from "../fields/multi-objects.js";
 import { FieldPoint } from "../point.js";
-import { field_point_multiObj_extract } from "../type.js";
+import { field_point_multiObj_extract, field_point_type_singleObj } from "../type.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, FuseMode, field_point_vector_multi_objs_extract, fusePoints, fuseVectors } from "../vectorized/index.js";
 import { MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate } from "./multi-objects.js";
 import { TransformingSampleDomain } from "./transforming.js";
@@ -445,7 +445,7 @@ export class ObjectsFilteredFusingSampleDomain<
         
         return fuseVectors<
                 ResultSampleT,
-                InnerSampleElementType,
+                FieldPoint,
                 ResultSampleElementType,
                 SampleFuseMode,
                 SampleContainer,
@@ -456,7 +456,7 @@ export class ObjectsFilteredFusingSampleDomain<
                 ObjIDsContainer
             >(
             this.field.elementType,
-            this.inner.field.elementType,
+            field_point_type_singleObj(this.inner.field.elementType),
             this.fuseMode ?? this.field.fuseMode,
             objVectors.map(([, objVector]) => objVector),
             context.outer[MultiObjectsIDsKey]
