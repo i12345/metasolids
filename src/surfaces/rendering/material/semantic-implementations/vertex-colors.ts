@@ -95,6 +95,7 @@ export class MaterialSemanticImplementation_VertexColors<
         }
 
         if (typeof sample_texture_values[0] === 'number') {
+            console.assert(this.channels >= 1)
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as number
                 buffer[i * this.channels] = sample_texture_value
@@ -125,9 +126,12 @@ export class MaterialSemanticImplementation_VertexColors<
                         buffer[(i * 4) + 3] = sample_texture_value.a
                     }
                     break
+                default:
+                    throw new Error()
             }
         }
         else if (sample_texture_values[0] instanceof Vec3) {
+            console.assert(this.channels >= 3)
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as Vec3
                 buffer[(i * this.channels) + 0] = sample_texture_value.x
@@ -136,6 +140,7 @@ export class MaterialSemanticImplementation_VertexColors<
             }
         }
         else if (sample_texture_values[0] instanceof Vec2) {
+            console.assert(this.channels >= 2)
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as Vec2
                 buffer[(i * this.channels) + 0] = sample_texture_value.x
@@ -143,6 +148,7 @@ export class MaterialSemanticImplementation_VertexColors<
             }
         }
         else if (sample_texture_values[0] instanceof Vec4) {
+            console.assert(this.channels >= 4)
             for (let i = 0; i < sample_texture_values.length; i++) {
                 const sample_texture_value = sample_texture_values[i] as Vec4
                 buffer[(i * this.channels) + 0] = sample_texture_value.x

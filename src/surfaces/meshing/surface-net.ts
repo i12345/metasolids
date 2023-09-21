@@ -448,6 +448,78 @@ export class SurfaceNetMeshingProcessor<
             // makeVectorSamplingContext(item[VolumeKey], vectorContext)
             const samples = vectorContext[VectorSampleFunction](item[VolumeKey], locations, vectorContext)
 
+            function ensureNoDuplicateTriangles() {
+                const indices = mesh_triangles
+                const indices_n = indices.length / 3
+                
+                let a_i: number,
+                    b_i: number
+
+                let a_0: number,
+                    a_1: number,
+                    a_2: number
+                
+                let b_0: number,
+                    b_1: number,
+                    b_2: number
+
+                let tmp: number
+                
+                for (a_i = 0; a_i < indices_n;) {
+                    a_0 = indices[a_i++]
+                    a_1 = indices[a_i++]
+                    a_2 = indices[a_i++]
+
+                    if (a_1 < a_0) {
+                        tmp = a_0
+                        a_0 = a_1
+                        a_1 = tmp
+                    }
+
+                    if (a_2 < a_1) {
+                        tmp = a_1
+                        a_1 = a_2
+                        a_2 = tmp
+
+                        if (a_1 < a_0) {
+                            tmp = a_0
+                            a_0 = a_1
+                            a_1 = tmp
+                        }
+                    }
+
+                    for (b_i = a_i; b_i < indices_n;) {
+                        b_0 = indices[b_i++]
+                        b_1 = indices[b_i++]
+                        b_2 = indices[b_i++]
+
+                        if (b_1 < b_0) {
+                            tmp = b_0
+                            b_0 = b_1
+                            b_1 = tmp
+                        }
+
+                        if (b_2 < b_1) {
+                            tmp = b_1
+                            b_1 = b_2
+                            b_2 = tmp
+                            
+                            if (b_1 < b_0) {
+                                tmp = b_0
+                                b_0 = b_1
+                                b_1 = tmp
+                            }
+                        }
+
+                        if (a_0 === b_0 && a_1 === b_1 && a_2 === b_2) {
+                            console.error("duplicate triangle")
+                        }
+                    }
+                }
+            }
+
+            ensureNoDuplicateTriangles()
+
             const surface: Surface<IndicesT, VolumeSampleElementType> = {
                 mesh: {
                     vertices: mesh_vertices,

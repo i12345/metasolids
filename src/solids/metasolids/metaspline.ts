@@ -971,7 +971,8 @@ export class MetaSplineSegment<
             sample_theta(t, m)
         }
 
-        /* if (segment_first) */ {
+        // head
+        {
             const t = t0
             const m = new Mat4().mul2(this.transform_relative_root_inv, this.spline!.planeAt(t))
 
@@ -979,7 +980,8 @@ export class MetaSplineSegment<
                 sample_theta(t, m, phi_i * -PiOver2 / resolution.phi, phi_i === resolution.phi)
         }
 
-        /* if (segment_last) */ {
+        // tail
+        {
             const t = this.t
             const m = new Mat4().mul2(this.transform_relative_root_inv, this.spline!.planeAt(t))
 
@@ -1013,9 +1015,6 @@ export class MetaSplineSegment<
                     VolumeContext
                 >
         ): Sample {
-        //TODO: consider if this is what should be returned
-        // For this and the next `return undefined!` statements,
-        // is that how transparency should be processed?
         if (this.spline_segment_index === 0)
             return this.emptySample
 
@@ -1128,13 +1127,6 @@ export class MetaSplineSegment<
         const uv = this.uv_vectorized(t_spline, theta, phi)
 
         const shape_sample = {
-            // ...field_point_vectorized_new<MetaSolidParametersIn, FieldPointVectorContainerStatic>(
-            //     MetaSolidVolume.defaultFields.parametersIn.elementType,
-            //     sample_length,
-            //     <IsDynamicVector<MetaSolidParametersIn, FieldPointVectorContainerStatic>>false,
-            //     undefined,
-            //     MetaSolidVolume.defaultParameters
-            // ),
             ...figure_sample,
             distance: r,
             gradient: v,

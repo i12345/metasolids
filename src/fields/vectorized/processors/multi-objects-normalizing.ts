@@ -128,7 +128,7 @@ export class FieldPointVectorMultiObjectsNormalizingProcessor<
                             do {
                                 for (divisor_element_i = 0; divisor_element_i < elementSize; divisor_element_i++) {
                                     divisor_value = divisor_typed[divisor_offset + divisor_element_i]
-                                    if (divisor_value > 1)
+                                    if (divisor_value > 0)
                                         dividend_typed[dividend_offset] /= divisor_value
                                 
                                     dividend_offset++
