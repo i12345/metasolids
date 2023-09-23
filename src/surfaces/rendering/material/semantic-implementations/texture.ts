@@ -193,8 +193,8 @@ export class MaterialSemanticImplementation_Texture<
         
         texture_composing.init(texture_context)
 
-        // renderTexture("textures/uv.png", texture_location_interpolator, texture_context, ['uv'])
-        // renderTexture("textures/composing.png", texture_composing, texture_context)
+        // renderTexture("output-textures/uv.png", texture_location_interpolator, texture_context, ['uv'])
+        // renderTexture("output-textures/composing.png", texture_composing, texture_context)
 
         makeVectorSamplingContext<
                 TextureLocation,

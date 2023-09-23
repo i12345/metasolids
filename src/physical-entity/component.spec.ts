@@ -63,7 +63,7 @@ describe("playcanvas-node", () => {
             setup(entity)
 
             app.tick()
-            fs.writeFileSync(`textures/test-screenshot-metasolid-${name}.png`, (<any>canvas).toBuffer())
+            fs.writeFileSync(`output-textures/test-screenshot-metasolid-${name}.png`, (<any>canvas).toBuffer())
             app.destroy()
         }).timeout(100000)
     }

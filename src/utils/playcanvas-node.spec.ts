@@ -85,7 +85,7 @@ describe("playcanvas-node", () => {
         app.tick()
         app.tick()
         app.tick()
-        fs.writeFileSync('textures/test-screenshot-playcanvas-node.png', (<any>canvas).toBuffer())
+        fs.writeFileSync('output-textures/test-screenshot-playcanvas-node.png', (<any>canvas).toBuffer())
         app.destroy()
     })
 })
