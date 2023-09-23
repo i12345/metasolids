@@ -101,14 +101,12 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
         /** number of atlas vertices */
         const n_vertices_unwrapped = atlas.vertex.vertices.length / 3
 
-        /** atlas vertex index → start surface mesh vertex index */
-        const mappings_unwrapped_start = Array<number>(n_vertices_unwrapped)
+        /** atlas vertex index → final surface mesh vertex index */
+        const mappings_unwrapped_final = Array<number>(n_vertices_unwrapped)
         /** original surface mesh vertex index → atlas vertex indices */
         const vertsUsed = new Array<boolean>(n_vertices_start).fill(false)
         /** original surface mesh vertex indices */
         const duplicatedVerts = new Array<number>()
-        /** final vertex UV's */
-        const UVs = atlas.vertex.coords1
 
         function original_vert_index(x: number, y: number, z: number) {
             //TODO: use binary list
@@ -137,19 +135,29 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
             }
 
             vertsUsed[i_original] = true
-            mappings_unwrapped_start[i_atlas] = i_final
+            mappings_unwrapped_final[i_atlas] = i_final
         }
 
         const finalIndices = new (indicesArrayType(n_vertices_unwrapped))(atlas.index.length)
         for (let i_index_atlas = 0; i_index_atlas < finalIndices.length; i_index_atlas++)
-            finalIndices[i_index_atlas] = mappings_unwrapped_start[atlas.index[i_index_atlas]]
+            finalIndices[i_index_atlas] = mappings_unwrapped_final[atlas.index[i_index_atlas]]
 
+        const UVs_tmp = atlas.vertex.coords1
+        /** final vertex UV's */
+        const UVs_final = new Float32Array(UVs_tmp.length)
+        let i_final: number
+        for (let i_atlas = 0, i_UV = 0; i_atlas < n_vertices_unwrapped; i_atlas++) {
+            i_final = mappings_unwrapped_final[i_atlas]
+            UVs_final[(2 * i_final) + 0] = UVs_tmp[i_UV++]
+            UVs_final[(2 * i_final) + 1] = UVs_tmp[i_UV++]
+        }
+        
         xAtlasAPI.destroyAtlas()
 
         return {
             duplicatedVerts: new (indicesArrayType(n_vertices_start))(duplicatedVerts),
             finalIndices,
-            UVs
+            UVs: UVs_final
         }
     }
 }
