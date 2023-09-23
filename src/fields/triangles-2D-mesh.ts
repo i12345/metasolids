@@ -294,6 +294,42 @@ export class Triangles2DMeshCollider {
                 )
             }
         }
+
+        // const overlapResolution = 512
+        // console.log(`Tri2D mesh has ${this.overlapCount(overlapResolution)} overlapping vertices out of ${overlapResolution**2} sampled locations`)
+    }
+
+    ensureNoOverlap(resolution = 256) {
+        if (this.overlapCount(resolution) > 1)
+            console.error()
+    }
+
+    overlapCount(resolution = 256) {
+        const uv = new Vec2()
+        let collidedOnce: boolean
+        let collidedTwice: boolean
+        let overlapCount = 0
+
+        for (let x = 0; x < resolution; x++) {
+            for (let y = 0; y < resolution; y++) {
+                uv.x = x / resolution
+                uv.y = y / resolution
+
+                collidedOnce = false
+                collidedTwice = false
+                this.collide(uv, () => {
+                    if (!collidedOnce)
+                        collidedOnce = true
+                    else if (!collidedTwice)
+                        collidedTwice = true
+                })
+
+                if (collidedTwice)
+                    overlapCount++
+            }
+        }
+
+        return overlapCount
     }
 
     collide(p: Vec2, collisionHandler: TriangleCollisionHandler) {
@@ -438,6 +474,41 @@ export class Triangles2DMesh {
         public readonly bounds: { readonly origin: Vec2, readonly size: Vec2 },
         public margin = 0.05
     ) {
+    }
+
+    addToDocument() {
+        const cvs = document.createElement('canvas')
+        const scale = 250
+        cvs.width = cvs.height = scale
+        document.body.appendChild(cvs)
+        cvs.style.position = 'absolute'
+        cvs.style.right = '10px'
+        cvs.style.top = '10px'
+        const ctx = cvs.getContext('2d')!
+        
+        ctx.lineWidth = 1
+
+        for (let tri_i = 0; tri_i < this.triangles.length;) {            
+            const v0_i = this.triangles[tri_i++]
+            const v1_i = this.triangles[tri_i++]
+            const v2_i = this.triangles[tri_i++]
+
+            const v0_x = scale * this.vertices[(2 * v0_i) + 0]
+            const v0_y = scale * this.vertices[(2 * v0_i) + 1]
+            const v1_x = scale * this.vertices[(2 * v1_i) + 0]
+            const v1_y = scale * this.vertices[(2 * v1_i) + 1]
+            const v2_x = scale * this.vertices[(2 * v2_i) + 0]
+            const v2_y = scale * this.vertices[(2 * v2_i) + 1]
+            
+            ctx.beginPath()
+            ctx.moveTo(v0_x, v0_y)
+            ctx.lineTo(v1_x, v1_y)
+            ctx.lineTo(v2_x, v2_y)
+            ctx.closePath()
+            ctx.fillStyle = `#${Math.floor(0xFF * Math.random()).toString(16)}${Math.floor(0xFF * Math.random()).toString(16)}${Math.floor(0xFF * Math.random()).toString(16)}20`
+            ctx.fill()
+            ctx.stroke()
+        }
     }
 
     static build(
