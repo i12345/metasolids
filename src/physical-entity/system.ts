@@ -44,19 +44,6 @@ const processors: VolumeProcessorT[] = [
                 new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
                 "xAtlas",
                 SurfaceUVUnwrappingGroupTemplate,
-                <surfaces.UVunwrapping.algorithms.XAtlasOptions>{
-                    maxIterations: 0
-                }
-            ) as unknown as VolumeSurfaceProcessorT,
-            [RawProcessingMode.RTMesh]
-        ),
-    ),
-    new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer,
-        new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
-                new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
-                "xAtlas",
-                SurfaceUVUnwrappingGroupTemplate,
             ) as unknown as VolumeSurfaceProcessorT,
             [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
         ),
