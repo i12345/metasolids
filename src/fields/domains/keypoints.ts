@@ -205,7 +205,7 @@ export class KeypointsSampleDomain<
             locations: LocationVector,
             context: VectorContext
         ): SampleVector {
-        const interpolator = InterpolationManager.makeInterpolatorVectorized <
+        const interpolator = InterpolationManager.makeInterpolatorVectorized<
                 Location,
                 LocationElementType,
                 LocationFuseMode,

@@ -228,7 +228,6 @@ describe("playcanvas-node", () => {
         ) as unknown as physicalEntity.VolumeT
     }, uvTexturers)
 
-    return
     testShape("spline 2", 3, (entity1, component1, component2, component3) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(
             new solids.metasolids.MetaSplineSegment(

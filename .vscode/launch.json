@@ -17,6 +17,7 @@
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "request": "launch",
             "sourceMaps": true,
+            "pauseForSourceMap": true,
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js",
                 "!**/node_modules/**"
@@ -25,7 +26,7 @@
                 "<node_internals>/**"
             ],
             "type": "node",
-            "preLaunchTask": "npm run pretest"
+            "preLaunchTask": "npm: pretest"
         },
 
         {

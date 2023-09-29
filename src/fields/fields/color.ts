@@ -1,11 +1,11 @@
 import { Color } from "playcanvas-extended";
 import { Field } from "../field.js";
-import { ColorRGBAClampedCurveInterpolationType } from "../interpolators/color.js";
+import { ColorRGBAInterpolationType } from "../interpolators/color.js";
 import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";
 import { clone } from "../../utils/cloneable.js";
 
 export class ColorField implements Field<Color> {
-    interpolationType = new ColorRGBAClampedCurveInterpolationType()
+    interpolationType = new ColorRGBAInterpolationType()
 
     readonly elementType = Color
 

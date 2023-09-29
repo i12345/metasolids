@@ -1,4 +1,5 @@
 export * from './constant.js'
+export * from './spline.js'
 
 export * from './scalar.js'
 export * from './vec2.js'

@@ -8,6 +8,7 @@ import { FieldPoint } from "../point.js";
 import { FieldPointType } from "../type.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorIterator, IsDynamicVector, field_point_vector_multi_objs_static_length, field_point_vectorized_multi_objects_new } from "../vectorized/index.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 
 export class ConstantInterpolationType<
         Point extends FieldPoint = FieldPoint,
@@ -31,10 +32,10 @@ export class ConstantInterpolationType<
             Location extends FieldPoint,
             LocationElementType extends FieldPoint = Location,
             LocationFuseMode extends FieldPoint = Location,
-            LocationContainer extends FieldPointVectorContainer = FieldPointVectorContainerStatic,
+            LocationContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainerStatic,
             LocationVector extends
-            FieldPointVector<LocationElementType, LocationContainer> =
-            FieldPointVector<LocationElementType, LocationContainer>
+                FieldPointVector<LocationElementType, LocationContainer> =
+                FieldPointVector<LocationElementType, LocationContainer>
         >(
             keypoints: InterpolationKeypoint<Location, Point>[],
             locationField: Field<Location, LocationElementType, LocationFuseMode>,

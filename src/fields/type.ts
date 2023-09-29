@@ -1,6 +1,6 @@
 import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended"
 import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey } from "../paradigm/trees/multi-objects-groups.js"
-import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDs, objectValuePaths } from "../paradigm/trees/multi-objects.js"
+import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDs, objectValuePaths, MultiObjectsTemplateOrLeaf } from "../paradigm/trees/multi-objects.js"
 import { Reflect_entries, Reflect_fromEntries } from "../utils/reflect-entries.js"
 import { FieldPoint, FieldPointPrimitive, Vector, FieldsPoint } from "./point.js"
 import { IndicesTypedArray } from "../utils/indices-array.js"
@@ -56,6 +56,50 @@ export function field_point_new<Point extends FieldPoint = FieldPoint>(type: Fie
 
         return result
     }
+}
+
+export function field_point_type_is<
+        Point extends FieldPoint = FieldPoint,
+        PointElementType extends FieldPoint = Point,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+    >(
+        type: FieldPointType<PointElementType>,
+        p: Point,
+        multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>,
+        strict: boolean = false
+    ): boolean {
+    if (type instanceof Function) {
+        if (<Function>type === Number)
+            return typeof p === 'number'
+        else return p instanceof <Function>type
+    }
+    else if (MultiObjectsGroupedObjectsKey in type) {
+        if (!multiObjectIDs?.template)
+            throw new Error()
+            
+        const subtype = <FieldPointType>type[MultiObjectsGroupedObjectsKey]
+        
+        function recurse(p: FieldPoint, objs: MultiObjectsTemplateOrLeaf): boolean {
+            if (objs === MultiObjectsTemplate_Leaf)
+                return field_point_type_is(subtype, p, undefined, strict)
+            else return Reflect.ownKeys(<FieldsPoint>p).every(key =>
+                (key in objs) &&
+                recurse((<FieldsPoint>p)[key], objs[key])
+            )
+        }
+
+        return recurse(p, multiObjectIDs.template)
+    }
+    else return Reflect.ownKeys(<FieldsPoint>p).every(key =>
+        (!strict || key in type) &&
+        field_point_type_is<FieldPoint, FieldPoint, Objects, ObjIDsT>(
+            (<FieldPointType<FieldsPoint>>type)[key],
+            (<FieldsPoint>p)[key],
+            multiObjectIDs,
+            strict
+        )
+    )
 }
 
 /**
