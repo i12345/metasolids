@@ -2,7 +2,7 @@ import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended"
 import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey } from "../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDs, objectValuePaths, MultiObjectsTemplateOrLeaf } from "../paradigm/trees/multi-objects.js"
 import { Reflect_entries, Reflect_fromEntries } from "../utils/reflect-entries.js"
-import { FieldPoint, FieldPointPrimitive, Vector, FieldsPoint } from "./point.js"
+import { FieldPoint, FieldPointPrimitive, Vector, FieldsPoint, FieldPointNumbers } from "./point.js"
 import { IndicesTypedArray } from "../utils/indices-array.js"
 import { extract, hasPath, intract } from "../paradigm/trees/tree.js"
 import { TypedArray, typedArrayConstructor } from "../utils/typed-array.js"
@@ -41,6 +41,24 @@ export type FieldPointType<Point extends FieldPoint = FieldPoint> =
                 FieldPointType<Point[K]>
     } :
     never
+
+export function field_point_type_isPrimitive<Point extends FieldPoint = FieldPoint>(type: FieldPointType<Point>): Point extends FieldPointPrimitive ? true : false {
+    return <Point extends FieldPointPrimitive ? true : false>(type instanceof Function)
+}
+
+const leaf_primitive_types: Map<FieldPointType<FieldPointPrimitive>, FieldPointType<FieldPointNumbers<FieldPointPrimitive>>> = new Map()
+leaf_primitive_types.set(Number, Number)
+leaf_primitive_types.set(Vec2, { x: Number, y: Number })
+leaf_primitive_types.set(Vec3, { x: Number, y: Number, z: Number })
+leaf_primitive_types.set(Vec4, { x: Number, y: Number, z: Number, w: Number })
+leaf_primitive_types.set(Quat, { x: Number, y: Number, z: Number, w: Number })
+leaf_primitive_types.set(Mat3, { r: { x: Number, y: Number, z: Number, w: Number }, s: {x: Number, y: Number, z: Number } })
+leaf_primitive_types.set(Mat4, { t: {x: Number, y: Number, z: Number }, r: { x: Number, y: Number, z: Number, w: Number }, s: {x: Number, y: Number, z: Number } })
+leaf_primitive_types.set(Color, { r: Number, g: Number, b: Number, a: Number })
+
+export function field_point_type_primitive_number_type<Point extends FieldPointPrimitive = FieldPointPrimitive>(type: FieldPointType<Point>): FieldPointType<FieldPointNumbers<Point>> {
+    return <FieldPointType<FieldPointNumbers<Point>>>leaf_primitive_types.get(type)!
+}
 
 export type MultiObjectsFieldPointElement<Point extends FieldPoint = FieldPoint> = MultiObjectsGroup<Point>
 
@@ -162,6 +180,31 @@ export function field_point_type_is_multiObj(type: FieldPointType): boolean {
                 return true
         
         return false
+    }
+}
+
+export function field_point_type_equals<Point extends FieldPoint>(a: FieldPointType<Point>, b: FieldPointType<Point>): boolean {
+    if (a instanceof Function)
+        return a === <Function>b
+    else {
+        const a_keys = Reflect.ownKeys(a)
+        const b_keys = Reflect.ownKeys(b)
+
+        for (const key of a_keys) {
+            const index = b_keys.indexOf(key)
+            if (index === -1)
+                return false
+            b_keys.splice(index, 1)
+        }
+
+        if (b_keys.length > 0)
+            return false
+
+        for (const key of a_keys)
+            if (!field_point_type_equals(a[key], (<FieldPointType<FieldsPoint>>b)[key]))
+                return false
+        
+        return true
     }
 }
 

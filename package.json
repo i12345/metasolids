@@ -31,6 +31,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@tensorflow/tfjs-node": "^4.11.0",
     "@types/chai": "^4.3.6",
     "@types/jsdom-global": "^3.0.5",
     "@types/mocha": "^10.0.2",
@@ -50,6 +51,7 @@
   },
   "dependencies": {
     "@ronomon/hash-table": "^2.0.8",
+    "@tensorflow/tfjs": "^4.11.0",
     "byte-rw": "^1.2.2",
     "curve-interpolator-vectorized": "^3.3.7",
     "playcanvas-extended": "^1.66.2-dev",

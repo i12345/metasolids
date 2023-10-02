@@ -1,0 +1,236 @@
+import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, FieldsPoint } from "../../fields/point.js";
+import * as tf from "@tensorflow/tfjs"
+import { FieldPointVectorTensor, GeneratorContext, GeneratorSystem, GeneratorValue } from "../generator.js";
+import { FieldPointType, field_point_type_equals, field_point_type_isPrimitive, field_point_type_primitive_number_type } from "../../fields/type.js";
+import { Mat3, Mat4, Quat, Vec3, Vec4 } from "playcanvas-extended";
+import { Reflect_fromEntries } from "../../utils/reflect-entries.js";
+
+export enum ArithmeticGeneratorValueOp {
+    add = "add",
+    neg = "negate",
+    sub = "subtract",
+    mul = "multiply",
+    cross = "cross product",
+    dot = "dot product",
+    div = "divide",
+    rcp = "reciprocal",
+    mod = "modulo",
+    pow = "power",
+    log = "logarithm",
+    exp = "natural exponential",
+    ln = "natural logarithm",
+
+    eq = "equal",
+    neq = "not equal",
+    lt = "less than",
+    lte = "less than or equal",
+    gt = "greater than",
+    gte = "greater than or equal",
+
+    not = "not",
+    and = "and",
+    or = "or",
+    xor = "xor",
+
+    sin = "sin",
+    cos = "cos",
+    tan = "tan",
+    asin = "asin",
+    acos = "acos",
+    atan = "atan",
+    atan2 = "atan2",
+    sinh = "sinh",
+    cosh = "cosh",
+    tanh = "tanh",
+    asinh = "asinh",
+    acosh = "acosh",
+    atanh = "atanh",
+}
+
+type opFuncType = (a: tf.Tensor, b: tf.Tensor) => tf.Tensor
+const opFuncMap = new Map<ArithmeticGeneratorValueOp, opFuncType>([
+    [ArithmeticGeneratorValueOp.add, tf.add],
+    [ArithmeticGeneratorValueOp.sub, tf.sub],
+    [ArithmeticGeneratorValueOp.neg, tf.neg],
+    [ArithmeticGeneratorValueOp.mul, tf.mul],
+    [ArithmeticGeneratorValueOp.cross, undefined!],
+    [ArithmeticGeneratorValueOp.dot, tf.dot],
+    [ArithmeticGeneratorValueOp.div, tf.div],
+    [ArithmeticGeneratorValueOp.rcp, tf.reciprocal],
+    [ArithmeticGeneratorValueOp.mod, tf.mod],
+    [ArithmeticGeneratorValueOp.pow, tf.pow],
+    [ArithmeticGeneratorValueOp.log, undefined!],
+    [ArithmeticGeneratorValueOp.exp, tf.exp],
+    [ArithmeticGeneratorValueOp.ln, tf.log],
+    [ArithmeticGeneratorValueOp.eq, tf.equal],
+    [ArithmeticGeneratorValueOp.neq, tf.notEqual],
+    [ArithmeticGeneratorValueOp.gt, tf.greater],
+    [ArithmeticGeneratorValueOp.gte, tf.greaterEqual],
+    [ArithmeticGeneratorValueOp.lt, tf.less],
+    [ArithmeticGeneratorValueOp.lte, tf.lessEqual],
+    [ArithmeticGeneratorValueOp.not, tf.logicalNot],
+    [ArithmeticGeneratorValueOp.and, tf.logicalAnd],
+    [ArithmeticGeneratorValueOp.or, tf.logicalOr],
+    [ArithmeticGeneratorValueOp.xor, tf.logicalXor],
+    [ArithmeticGeneratorValueOp.sin, tf.sin],
+    [ArithmeticGeneratorValueOp.cos, tf.cos],
+    [ArithmeticGeneratorValueOp.tan, tf.tan],
+    [ArithmeticGeneratorValueOp.asin, tf.asin],
+    [ArithmeticGeneratorValueOp.acos, tf.acos],
+    [ArithmeticGeneratorValueOp.atan, tf.atan],
+    [ArithmeticGeneratorValueOp.atan2, tf.atan2],
+    [ArithmeticGeneratorValueOp.sinh, tf.sinh],
+    [ArithmeticGeneratorValueOp.cosh, tf.cosh],
+    [ArithmeticGeneratorValueOp.tanh, tf.tanh],
+    [ArithmeticGeneratorValueOp.asinh, tf.asinh],
+    [ArithmeticGeneratorValueOp.acosh, tf.acosh],
+    [ArithmeticGeneratorValueOp.atanh, tf.atanh],
+])
+
+export class ArithmeticGeneratorValue<
+        T extends FieldPoint = FieldPoint,
+        R extends tf.Rank = tf.Rank,
+    > implements GeneratorValue<T, R> {
+    type!: FieldPointType<T>
+    rank!: R
+    
+    constructor(
+        public readonly op: ArithmeticGeneratorValueOp,
+        public readonly a: GeneratorValue,
+        public readonly b: GeneratorValue,
+    ) { }
+
+    init(context: GeneratorContext): void {
+        this.a.init(context)
+        this.b.init(context)
+
+        if (!field_point_type_equals(this.a.type, this.b.type)) {
+            if (this.a.type === Number || this.b.type === Number)
+                return
+
+            throw new Error()
+        }
+
+        throw new Error("calculate shape and type")
+    }
+    
+    eval(context: GeneratorContext): FieldPointVectorTensor<T, R> {
+        const a = this.a.eval(context)
+        const b = this.b.eval(context)
+        const op = this.op
+
+        function broadcast(
+                a: FieldPointVectorTensor,
+                b: FieldPointVectorTensor,
+                a_type: FieldPointType,
+                b_type: FieldPointType,
+            ): FieldPointVectorTensor {
+            if ((!a_type || a_type === Number) && (!b_type || b_type === Number)) {
+                switch (op) {
+                    case ArithmeticGeneratorValueOp.log:
+                        return tf.div(
+                            tf.log(<tf.Tensor>a),
+                            tf.log(<tf.Tensor>b)
+                        )
+                        
+                    default:
+                        break
+                }
+
+                return opFuncMap.get(op)!(
+                    ((a_type === Number) ? <tf.Tensor>a : tf.zerosLike(<tf.Tensor>b)),
+                    ((b_type === Number) ? <tf.Tensor>b : tf.zerosLike(<tf.Tensor>a)),
+                )
+            }
+
+            const a_isPrimitive = field_point_type_isPrimitive(a_type)
+            const b_isPrimitive = field_point_type_isPrimitive(b_type)
+            
+            if (a_isPrimitive && b_isPrimitive) {
+                switch (op) {
+                    case ArithmeticGeneratorValueOp.cross: {
+                        if (a_type !== Vec3 || b_type !== Vec3)
+                            throw new Error()
+                    
+                        const a_typed = <FieldPointVectorTensor<Vec3>>a
+                        const b_typed = <FieldPointVectorTensor<Vec3>>b
+
+                        return <FieldPointVectorTensor<Vec3>>{
+                            x: tf.sub(
+                                tf.mul(a_typed.y, b_typed.z),
+                                tf.mul(a_typed.z, b_typed.y)
+                            ),
+                            y: tf.sub(
+                                tf.mul(a_typed.z, b_typed.x),
+                                tf.mul(a_typed.x, b_typed.z)
+                            ),
+                            z: tf.sub(
+                                tf.mul(a_typed.x, b_typed.y),
+                                tf.mul(a_typed.y, b_typed.x)
+                            ),
+                        }
+                    }
+                    
+                    case ArithmeticGeneratorValueOp.mul:
+                        if (((a_type === Vec3 || a_type === Vec4) && (b_type === Mat3 || b_type === Mat4))) {
+                            throw new Error("not implemented")
+                        }
+                        else if (((b_type === Vec3 || b_type === Vec4) && (a_type === Mat3 || a_type === Mat4))) {
+                            throw new Error("not implemented")
+                        }
+                        else if ((a_type === Mat3 || a_type === Mat4) && (b_type === Mat3 || b_type === Mat4)) {
+                            throw new Error("not implemented")
+                        }
+                        else if ((a_type === Quat) && (b_type === Mat3 || b_type === Mat4)) {
+                            throw new Error("not implemented")
+                        }
+                        else if ((b_type === Quat) && (a_type === Mat3 || a_type === Mat4)) {
+                            throw new Error("not implemented")
+                        }
+                        else if (a_type === Vec3 && b_type === Quat) {
+                            throw new Error("not implemented")
+                        }
+                        else if (b_type === Vec3 && a_type === Quat) {
+                            throw new Error("not implemented")
+                        }
+                        break
+                    
+                    case ArithmeticGeneratorValueOp.div:
+                        if (b_type === Mat3 || b_type === Mat4) {
+                            throw new Error("not implemented")
+                        }
+                        break
+                    
+                    default:
+                        break
+                }
+
+                return broadcast(
+                    a,
+                    b,
+                    field_point_type_primitive_number_type(<FieldPointType<FieldPointPrimitive>>a_type),
+                    field_point_type_primitive_number_type(<FieldPointType<FieldPointPrimitive>>b_type)
+                )
+            }
+
+            const a_keys = Reflect.ownKeys(a_type)
+            const b_keys = Reflect.ownKeys(b_type)
+            const keys = a_isPrimitive ?
+                b_isPrimitive ?
+                    [...a_keys, ...b_keys] :
+                    b_keys :
+                a_keys
+            
+            return <FieldPointVectorTensor<FieldsPoint>>Reflect_fromEntries(
+                keys.map(key => <[typeof key, ReturnType<typeof broadcast>]>[key, broadcast(
+                    a_isPrimitive ? a : (<FieldPointVectorTensor<FieldsPoint>>a)[key],
+                    b_isPrimitive ? b : (<FieldPointVectorTensor<FieldsPoint>>b)[key],
+                    a_isPrimitive ? a_type : (<FieldPointType<FieldsPoint>>a_type)[key],
+                    b_isPrimitive ? b_type : (<FieldPointType<FieldsPoint>>b_type)[key],
+                )])
+            )
+        }
+
+        return <FieldPointVectorTensor<T, R>>broadcast(a, b, this.a.type, this.b.type)
+    }
+}
