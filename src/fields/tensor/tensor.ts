@@ -337,7 +337,210 @@ export function field_point_tensor_decode<
         vector: FieldPointVector<T, FieldPointVectorContainerStatic<tf.TypedArray>>,
         shape: tf.ShapeMap[R]
     } {
-    
+    let shape: tf.ShapeMap[R] | undefined = undefined
+
+    const vector = field_point_map<T, FieldPointType, FieldPointVectorStatic<FieldPointPrimitive, tf.TypedArray>>(
+        <FieldPointMapped<T, FieldPointType>>type,
+        leaf => leaf instanceof Function,
+        (leaf, path) => {
+            const subtensor = extract<FieldPointTensor<FieldPointPrimitive>>(tensor, path)
+
+            switch (<FieldPointType<FieldPointPrimitive>>leaf) {
+                case Number: {
+                    const element_tensor = <FieldPointTensor<number, R>>subtensor
+                    shape ??= element_tensor.shape
+                    return <FieldPointVectorStatic<number, tf.TypedArray>>element_tensor.dataSync()
+                }
+
+                case Boolean: {
+                    const element_tensor = <FieldPointTensor<boolean, R>>subtensor
+                    shape ??= element_tensor.shape
+                    return <FieldPointVectorStatic<boolean, tf.TypedArray>>element_tensor.dataSync()
+                }
+
+                case Vec2: {
+                    const element_tensor = <FieldPointTensor<Vec2, R>>subtensor
+                    shape ??= element_tensor.x.shape
+                    const merged = tf.stack([element_tensor.x, element_tensor.y], -1)
+                    return <FieldPointVectorStatic<Vec2, tf.TypedArray>>merged.dataSync()
+                }
+
+                case Vec3: {
+                    const element_tensor = <FieldPointTensor<Vec3, R>>subtensor
+                    shape ??= element_tensor.x.shape
+                    const merged = tf.stack([element_tensor.x, element_tensor.y, element_tensor.z], -1)
+                    return <FieldPointVectorStatic<Vec3, tf.TypedArray>>merged.dataSync()
+                }
+
+                case Vec4: {
+                    const element_tensor = <FieldPointTensor<Vec4, R>>subtensor
+                    shape ??= element_tensor.x.shape
+                    const merged = tf.stack([element_tensor.x, element_tensor.y, element_tensor.z, element_tensor.w], -1)
+                    return <FieldPointVectorStatic<Vec4, tf.TypedArray>>merged.dataSync()
+                }
+
+                case Quat: {
+                    const element_tensor = <FieldPointTensor<Quat, R>>subtensor
+                    shape ??= element_tensor.x.shape
+                    const merged = tf.stack([element_tensor.x, element_tensor.y, element_tensor.z, element_tensor.w], -1)
+                    return <FieldPointVectorStatic<Quat, tf.TypedArray>>merged.dataSync()
+                }
+
+                case Color: {
+                    const element_tensor = <FieldPointTensor<Color, R>>subtensor
+                    shape ??= element_tensor.r.shape
+                    const merged = tf.stack([element_tensor.r, element_tensor.g, element_tensor.b, element_tensor.a], -1)
+                    return <FieldPointVectorStatic<Color, tf.TypedArray>>merged.dataSync()
+                }
+
+                case Mat3: {
+                    const element_tensor = <FieldPointTensor<Mat3, R>>subtensor
+                    shape ??= element_tensor.r.x.shape
+                    
+                    //TODO: use TF to calculate
+
+                    const r_x = element_tensor.r.x.dataSync()
+                    const r_y = element_tensor.r.y.dataSync()
+                    const r_z = element_tensor.r.z.dataSync()
+                    const r_w = element_tensor.r.w.dataSync()
+
+                    const s_x = element_tensor.s.x.dataSync()
+                    const s_y = element_tensor.s.y.dataSync()
+                    const s_z = element_tensor.s.z.dataSync()
+
+                    const t = Vec3.ZERO
+                    const r = new Quat()
+                    const s = new Vec3()
+
+                    const m = new Mat4()
+                    const m_data = m.data
+
+                    const n = r_x.length
+
+                    let result_i = 0
+                    const result = new Float32Array(9 * n)
+
+                    for (let i = 0; i < n; i++) {
+                        r.x = r_x[i]
+                        r.y = r_y[i]
+                        r.z = r_z[i]
+                        r.w = r_w[i]
+
+                        s.x = s_x[i]
+                        s.y = s_y[i]
+                        s.z = s_z[i]
+
+                        m.setTRS(t, r, s)
+
+                        result[result_i++] = m_data[0x0]
+                        result[result_i++] = m_data[0x1]
+                        result[result_i++] = m_data[0x2]
+                        result[result_i++] = m_data[0x4]
+                        result[result_i++] = m_data[0x5]
+                        result[result_i++] = m_data[0x6]
+                        result[result_i++] = m_data[0x8]
+                        result[result_i++] = m_data[0x9]
+                        result[result_i++] = m_data[0xA]
+                    }
+
+                    return <FieldPointVectorStatic<Mat3, tf.TypedArray>>result
+                }
+
+                case Mat4: {
+                    const element_tensor = <FieldPointTensor<Mat4, R>>subtensor
+                    shape ??= element_tensor.r.x.shape
+                    
+                    //TODO: use TF to calculate
+
+                    const t_x = element_tensor.t.x.dataSync()
+                    const t_y = element_tensor.t.y.dataSync()
+                    const t_z = element_tensor.t.z.dataSync()
+
+                    const r_x = element_tensor.r.x.dataSync()
+                    const r_y = element_tensor.r.y.dataSync()
+                    const r_z = element_tensor.r.z.dataSync()
+                    const r_w = element_tensor.r.w.dataSync()
+
+                    const s_x = element_tensor.s.x.dataSync()
+                    const s_y = element_tensor.s.y.dataSync()
+                    const s_z = element_tensor.s.z.dataSync()
+
+                    const t = new Vec3()
+                    const r = new Quat()
+                    const s = new Vec3()
+
+                    const m = new Mat4()
+                    const m_data = m.data
+
+                    const n = r_x.length
+
+                    let result_i = 0
+                    const result = new Float32Array(9 * n)
+
+                    for (let i = 0; i < n; i++) {
+                        t.x = t_x[i]
+                        t.y = t_y[i]
+                        t.z = t_z[i]
+
+                        r.x = r_x[i]
+                        r.y = r_y[i]
+                        r.z = r_z[i]
+                        r.w = r_w[i]
+
+                        s.x = s_x[i]
+                        s.y = s_y[i]
+                        s.z = s_z[i]
+
+                        m.setTRS(t, r, s)
+
+                        result[result_i++] = m_data[0x0]
+                        result[result_i++] = m_data[0x1]
+                        result[result_i++] = m_data[0x2]
+                        result[result_i++] = m_data[0x3]
+                        result[result_i++] = m_data[0x4]
+                        result[result_i++] = m_data[0x5]
+                        result[result_i++] = m_data[0x6]
+                        result[result_i++] = m_data[0x7]
+                        result[result_i++] = m_data[0x8]
+                        result[result_i++] = m_data[0x9]
+                        result[result_i++] = m_data[0xA]
+                        result[result_i++] = m_data[0xB]
+                        result[result_i++] = m_data[0xC]
+                        result[result_i++] = m_data[0xD]
+                        result[result_i++] = m_data[0xE]
+                        result[result_i++] = m_data[0xF]
+                    }
+
+                    return <FieldPointVectorStatic<Mat4, tf.TypedArray>>result
+                }
+                
+                case Array:
+                case Uint8Array:
+                case Uint8ClampedArray:
+                case Uint16Array:
+                case Uint32Array:
+                case Int8Array:
+                case Int16Array:
+                case Int32Array: {
+                    const element_tensor = <FieldPointTensor<Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array, R>>subtensor
+                    shape ??= <tf.ShapeMap[R]>element_tensor.shape.slice(0, -1)
+                    const raw = element_tensor.dataSync()
+                    if (raw.constructor === type) return raw
+                    else if (type === Float64Array || type === Float32Array || type === Array)
+                        return new Float32Array(raw)
+                    else if (type === Uint16Array || type === Uint32Array || type === Int16Array || type === Int32Array)
+                        return new Int32Array(raw)
+                    else if (type === Uint8Array || type === Uint8ClampedArray || type === Int8Array)
+                        return new Uint8Array(raw)
+                }
+                    
+                default:
+                    throw new Error('invalid type')
+            }
+        }
+    )
+
+    return { vector, shape: shape! }
 }
 
 export function field_point_tensor_dispose<
