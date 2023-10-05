@@ -104,11 +104,14 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
         ValueTextureSampleFuseMode extends TextureSample = ValueTextureSampleT,
         ValueTextureT extends
             Texture<
-                        TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
+                        TextureLocationT & ValueTextureLocationT,
                         TextureLocationElementType & ValueTextureLocationT,
                         TextureLocationFuseMode & ValueTextureLocationT,
+                        FieldPointVectorContainerStatic<NumberTypedArray>,
+                        ValueTextureSampleT,
                         ValueTextureSampleElementType,
                         ValueTextureSampleFuseMode,
+                        FieldPointVectorContainerStatic<NumberTypedArray>,
                         TextureSamplingContextT &
                         TextureSamplingContext<
                             TextureLocationT & ValueTextureLocationT,
@@ -117,11 +120,14 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
                         >
                 > =
             Texture<
-                        TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
+                        TextureLocationT & ValueTextureLocationT,
                         TextureLocationElementType & ValueTextureLocationT,
                         TextureLocationFuseMode & ValueTextureLocationT,
+                        FieldPointVectorContainerStatic<NumberTypedArray>,
+                        ValueTextureSampleT,
                         ValueTextureSampleElementType,
                         ValueTextureSampleFuseMode,
+                        FieldPointVectorContainerStatic<NumberTypedArray>,
                         TextureSamplingContextT &
                         TextureSamplingContext<
                             TextureLocationT & ValueTextureLocationT,
@@ -201,9 +207,11 @@ export type SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrapping<
                     ValueTextureLocationT,
                     ValueTextureLocationT,
                     ValueTextureLocationT,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     ValueTextureSampleT,
                     ValueTextureSampleElementType,
                     ValueTextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT,
                     ValueTextureT
                 >
@@ -281,11 +289,14 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         ValueTextureSampleFuseMode extends TextureSample = ValueTextureSampleT,
         ValueTextureT extends
             Texture<
-                    TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
+                    TextureLocationT & ValueTextureLocationT,
                     TextureLocationElementType & ValueTextureLocationT,
                     TextureLocationFuseMode & ValueTextureLocationT,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    ValueTextureSampleT,
                     ValueTextureSampleElementType,
                     ValueTextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT &
                     TextureSamplingContext<
                         TextureLocationT & ValueTextureLocationT,
@@ -294,11 +305,14 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
                     >
                 > =
             Texture<
-                    TextureLocationT & ValueTextureLocationT, ValueTextureSampleT,
+                    TextureLocationT & ValueTextureLocationT,
                     TextureLocationElementType & ValueTextureLocationT,
                     TextureLocationFuseMode & ValueTextureLocationT,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    ValueTextureSampleT,
                     ValueTextureSampleElementType,
                     ValueTextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT &
                     TextureSamplingContext<
                         TextureLocationT & ValueTextureLocationT,

@@ -1,8 +1,11 @@
 import { iterObjects, MultiObjectsGroup, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues } from "../../paradigm/trees/index.js";
-import { Field, FieldPoint, FieldPointCombiner, FieldsPoint, SampleDomainLocationFieldKey, SamplingContext } from "../../fields/index.js";
+import { Field, FieldPoint, FieldPointCombiner, FieldsPoint, SampleDomainLocationFieldKey, tensor } from "../../fields/index.js";
 import { extract, intract } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldsField } from "../../fields/fields/fields.js";
+import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
+import { Vec2 } from "playcanvas-extended";
 
 export type ObjectsCombiningTexturesTemplated<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -36,21 +39,29 @@ export type ObjectsCombiningTexturesTemplated<
                     TextureLocationElementType & SampledTextureLocationElementType,
                     TextureLocationFuseMode & SampledTextureLocationFuseMode
                 >,
+        TextureLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
+        TextureSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
         ValueTextureT extends
             Texture<
-                    TextureLocationT & SampledTextureLocationT, TextureSampleT,
+                    TextureLocationT & SampledTextureLocationT,
                     TextureLocationElementType & SampledTextureLocationElementType,
                     TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureLocationContainer,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    TextureSampleContainer,
                     TextureSamplingContextT
                 > =
             Texture<
-                    TextureLocationT & SampledTextureLocationT, TextureSampleT,
+                    TextureLocationT & SampledTextureLocationT,
                     TextureLocationElementType & SampledTextureLocationElementType,
                     TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureLocationContainer,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    TextureSampleContainer,
                     TextureSamplingContextT
                 >,
         ValueTexturesGrouped extends
@@ -77,6 +88,8 @@ export type ObjectsCombiningTexturesTemplated<
                 TextureSampleElementTypeGrouped[K],
                 TextureSampleFuseModeGrouped[K],
                 TextureSamplingContextT,
+                TextureLocationContainer,
+                TextureSampleContainer,
                 ValueTextureT,
                 ValueTexturesGrouped[K]
             > :
@@ -84,11 +97,13 @@ export type ObjectsCombiningTexturesTemplated<
         (TextureSampleTGrouped[K] extends TextureSampleT ?
             ValueTexturesGrouped[K] extends Texture<
                     TextureLocationT & SampledTextureLocationT,
-                    TextureSampleTGrouped[K],
                     TextureLocationElementType & SampledTextureLocationElementType,
                     TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureLocationContainer,
+                    TextureSampleTGrouped[K],
                     TextureSampleElementTypeGrouped[K],
                     TextureSampleFuseModeGrouped[K],
+                    TextureSampleContainer,
                     TextureSamplingContextT
                 > ?
             ObjectsCombiningTexture<
@@ -99,9 +114,11 @@ export type ObjectsCombiningTexturesTemplated<
                 SampledTextureLocationT,
                 SampledTextureLocationElementType,
                 SampledTextureLocationFuseMode,
+                TextureLocationContainer,
                 TextureSampleTGrouped[K],
                 TextureSampleElementTypeGrouped[K],
                 TextureSampleFuseModeGrouped[K],
+                TextureSampleContainer,
                 TextureSamplingContextT,
                 ValueTexturesGrouped[K]
             > :
@@ -149,19 +166,24 @@ export class ObjectsCombiningTexture<
         SampledTextureLocationT extends TextureLocation = TextureLocation,
         SampledTextureLocationElementType extends TextureLocation = SampledTextureLocationT,
         SampledTextureLocationFuseMode extends TextureLocation = SampledTextureLocationT,
+        TextureLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
         ValueTextureSampleT extends TextureSample = TextureSample,
         ValueTextureSampleElementType extends TextureSample = ValueTextureSampleT,
         ValueTextureSampleFuseMode extends TextureSample = ValueTextureSampleT,
+        ValueTextureSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
         TextureSamplingContextT extends
             TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
             TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
         ValueTextureT extends
             Texture<
-                    TextureLocationT & SampledTextureLocationT, ValueTextureSampleT,
+                    TextureLocationT & SampledTextureLocationT,
                     TextureLocationElementType & SampledTextureLocationElementType,
                     TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureLocationContainer,
+                    ValueTextureSampleT,
                     ValueTextureSampleElementType,
                     ValueTextureSampleFuseMode,
+                    ValueTextureSampleContainer,
                     TextureSamplingContextT &
                     TextureSamplingContext<
                             TextureLocationT & SampledTextureLocationT,
@@ -170,11 +192,14 @@ export class ObjectsCombiningTexture<
                         >
                 > =
             Texture<
-                    TextureLocationT & SampledTextureLocationT, ValueTextureSampleT,
+                    TextureLocationT & SampledTextureLocationT,
                     TextureLocationElementType & SampledTextureLocationElementType,
                     TextureLocationFuseMode & SampledTextureLocationFuseMode,
+                    TextureLocationContainer,
+                    ValueTextureSampleT,
                     ValueTextureSampleElementType,
                     ValueTextureSampleFuseMode,
+                    ValueTextureSampleContainer,
                     TextureSamplingContextT &
                     TextureSamplingContext<
                             TextureLocationT & SampledTextureLocationT,
@@ -184,11 +209,14 @@ export class ObjectsCombiningTexture<
                 >,
     > implements
     Texture<
-        TextureLocationT, ValueTextureSampleT,
+        TextureLocationT,
         TextureLocationElementType,
         TextureLocationFuseMode,
+        TextureLocationContainer,
+        ValueTextureSampleT,
         ValueTextureSampleElementType,
         ValueTextureSampleFuseMode,
+        ValueTextureSampleContainer,
         TextureSamplingContextT
     > {
     field!: Field<ValueTextureSampleT, ValueTextureSampleElementType, ValueTextureSampleFuseMode>
@@ -205,19 +233,25 @@ export class ObjectsCombiningTexture<
     constructor(
         public template: Objects,
         public influences: Texture<
-                TextureLocationT, ObjectsInfluencesTextureSample<Objects>,
+                TextureLocationT,
                 TextureLocationElementType,
                 TextureLocationFuseMode,
+                TextureLocationContainer,
+                ObjectsInfluencesTextureSample<Objects>,
                 ObjectsInfluencesTextureSampleElementType<Objects>,
                 ObjectsInfluencesTextureSampleFuseMode<Objects>,
+                ValueTextureSampleContainer,
                 TextureSamplingContextT
             >,
         public locations: Texture<
-            TextureLocationT, ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>,
+            TextureLocationT,
             TextureLocationElementType,
             TextureLocationFuseMode,
+            TextureLocationContainer,
+            ObjectsTextureLocationsTextureSample<Objects, SampledTextureLocationT>,
             ObjectsTextureLocationsTextureSampleElementType<Objects, SampledTextureLocationElementType>,
             ObjectsTextureLocationsTextureSampleFuseMode<Objects, SampledTextureLocationFuseMode>,
+            ValueTextureSampleContainer,
             TextureSamplingContextT
         >,
         public values: MultiObjectsMapped<Objects, ValueTextureT>
@@ -317,5 +351,9 @@ export class ObjectsCombiningTexture<
             values,
             influences
         )
+    }
+    
+    render(resolution: Vec2, context: TextureSamplingContextT): tensor.FieldPointTensor2D<ValueTextureSampleElementType> {
+        throw new Error("Method not implemented.")
     }
 }

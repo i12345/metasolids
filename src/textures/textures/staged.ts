@@ -3,6 +3,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWith
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { Reflect_entries } from "../../utils/reflect-entries.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 
 export class StagedTexture<
@@ -106,12 +107,21 @@ export class StagedTexture<
 
     constructor(
             inner: Texture<
-                    Location, Sample,
+                    Location,
                     LocationElementType,
                     LocationFuseMode,
+                    LocationContainer,
+                    Sample,
                     SampleElementType,
                     SampleFuseMode,
-                    Context
+                    SampleContainer,
+                    Context,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    LocationVector,
+                    SampleVector,
+                    VectorContext
                 >,
             public stage = 0
         ) {
@@ -121,66 +131,85 @@ export class StagedTexture<
 
 export type StageAndTexture<
         LocationT extends TextureLocation = TextureLocation,
-        SampleT extends TextureSample = TextureSample,
         LocationElementType extends TextureLocation = LocationT,
         LocationFuseMode extends TextureLocation = LocationT,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
+        SampleT extends TextureSample = TextureSample,
         SampleElementType extends TextureSample = SampleT,
         SampleFuseMode extends TextureSample = SampleT,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
         ContextT extends
             TextureSamplingContext<LocationT, LocationElementType, LocationFuseMode> =
             TextureSamplingContext<LocationT, LocationElementType, LocationFuseMode>,
         TextureT extends
             Texture<
-                    LocationT, SampleT,
+                    LocationT,
                     LocationElementType,
                     LocationFuseMode,
+                    LocationContainer,
+                    SampleT,
                     SampleElementType,
                     SampleFuseMode,
+                    SampleContainer,
                     ContextT
                 > =
             Texture<
-                    LocationT, SampleT,
+                    LocationT,
                     LocationElementType,
                     LocationFuseMode,
+                    LocationContainer,
+                    SampleT,
                     SampleElementType,
                     SampleFuseMode,
+                    SampleContainer,
                     ContextT
                 >
     > = [stage: number, opaqueTexture: TextureT]
 
 export function opaqueStagedTexture<
         LocationT extends TextureLocation = TextureLocation,
-        SampleT extends TextureSample = TextureSample,
         LocationElementType extends TextureLocation = LocationT,
         LocationFuseMode extends TextureLocation = LocationT,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
+        SampleT extends TextureSample = TextureSample,
         SampleElementType extends TextureSample = SampleT,
         SampleFuseMode extends TextureSample = SampleT,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
         ContextT extends
             TextureSamplingContext<LocationT, LocationElementType, LocationFuseMode> =
             TextureSamplingContext<LocationT, LocationElementType, LocationFuseMode>,
         TextureT extends
             Texture<
-                    LocationT, SampleT,
+                    LocationT,
                     LocationElementType,
                     LocationFuseMode,
+                    LocationContainer,
+                    SampleT,
                     SampleElementType,
                     SampleFuseMode,
+                    SampleContainer,
                     ContextT
                 > =
             Texture<
-                    LocationT, SampleT,
+                    LocationT,
                     LocationElementType,
                     LocationFuseMode,
+                    LocationContainer,
+                    SampleT,
                     SampleElementType,
                     SampleFuseMode,
+                    SampleContainer,
                     ContextT
                 >
     >(texture: TextureT): StageAndTexture<
-        LocationT, SampleT,
+        LocationT,
         LocationElementType,
         LocationFuseMode,
+        LocationContainer,
+        SampleT,
         SampleElementType,
         SampleFuseMode,
+        SampleContainer,
         ContextT,
         TextureT
     > {

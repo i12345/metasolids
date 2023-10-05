@@ -143,6 +143,7 @@ export function typedArrayConstructor<T extends number | bigint, TArray extends 
     return <TypedArrayConstructor<T, TArray>>typedArrayOrConstructor.constructor
 }
 
+//TODO: merge with invalidIndex()
 const invalid_lookup = new Map<TypedArrayConstructor, number | bigint>()
 export function typedArrayInvalid<T extends number | bigint, TypedArrayT extends TypedArray<T>>(array: TypedArrayT | TypedArrayConstructor<T, TypedArrayT>): T {
     const type = typedArrayConstructor(array)

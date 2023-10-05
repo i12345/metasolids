@@ -23,7 +23,7 @@ export function vectorIteratorFactory<Point extends FieldPointPrimitive, IsDynam
 
 export function vectorIterator<
         Point extends FieldPoint = FieldPoint,
-        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = IndicesTypedArray,
         PointElementType extends FieldPoint = Point,

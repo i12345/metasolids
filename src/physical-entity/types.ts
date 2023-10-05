@@ -592,11 +592,14 @@ export type SurfaceCombinedTextureSamplingContextT =
 
 export type SurfaceCombinedTextureT =
     textures.Texture<
-        SurfaceCombinedTextureLocationT, OtherInterpolatingValuesT,
         SurfaceCombinedTextureLocationT,
         SurfaceCombinedTextureLocationT,
+        SurfaceCombinedTextureLocationT,
+        FieldPointVectorContainerStatic,
         OtherInterpolatingValuesT,
         OtherInterpolatingValuesT,
+        OtherInterpolatingValuesT,
+        FieldPointVectorContainerStatic,
         SurfaceCombinedTextureSamplingContextT
     > &
     {}
@@ -624,7 +627,16 @@ export const SurfaceIndividualTexturesGroupsTemplate = mergeGroups<SurfaceIndivi
 
 export type SurfaceIndividualTexturesGrouped =
     SurfaceCombinedTexturesGrouped &
-    MultiObjectsGroupsMapped<InfluenceGroup, textures.Texture<SurfaceIndividualTextureLocationT, number>> &
+    MultiObjectsGroupsMapped<
+        InfluenceGroup,
+        textures.Texture<
+            SurfaceIndividualTextureLocationT,
+            SurfaceIndividualTextureLocationT,
+            SurfaceIndividualTextureLocationT,
+            FieldPointVectorContainerStatic,
+            number
+        >
+    > &
     surfaces.rendering.SurfaceWithRendering_TexturesTemplated<Objects, ObjIDsT, VolumeLocationT>
 
 export type SurfaceObjectsTexturesGroupsKindsMappedGroupsT =

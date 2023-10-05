@@ -17,6 +17,7 @@ import { SampleDomainLocationFieldKey } from "../../../../fields/domain.js"
 import { IndicesTypedArray } from "../../../../utils/indices-array.js"
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../../../fields/domains/vector.js"
 import { ComposingSampleDomain } from "../../../../fields/domains/composing.js"
+import { NumberTypedArray } from "../../../../utils/typed-array.js"
 
 export type MaterialSemanticImplementation_Texture_SideEffect<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -47,11 +48,13 @@ export class MaterialSemanticImplementation_Texture<
         public readonly semantic: keyof StandardMaterial | keyof BasicMaterial,
         public readonly texture: textures.Texture<
                 Material_Texture_Location<VolumeLocationT>,
-                TexelTypeT,
                 Material_Texture_Location<VolumeLocationT>,
                 Material_Texture_Location<VolumeLocationT>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
                 TexelTypeT,
                 TexelTypeT,
+                TexelTypeT,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
                 Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
             >,
         public readonly stage: number,

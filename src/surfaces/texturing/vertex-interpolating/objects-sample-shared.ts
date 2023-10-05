@@ -328,7 +328,13 @@ export class SurfaceWithObjectsInterpolatingValueTexturesUsingSharedSampleTextur
                     InterpolatingGroups,
                     ObjectsInterpolatingGrouped,
                     InterpolatingGroupKinds,
-                    Texture<TextureLocation, InterpolatingValue>,
+                    Texture<
+                        TextureLocation,
+                        TextureLocation,
+                        TextureLocation,
+                        FieldPointVectorContainerStatic<NumberTypedArray>,
+                        InterpolatingValue
+                    >,
                     InterpolatingValue
                 >(
                     ///@ts-ignore

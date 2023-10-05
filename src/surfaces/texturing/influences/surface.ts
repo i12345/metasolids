@@ -7,7 +7,7 @@ import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 import { SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceSampleWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor } from "../vertex-interpolating/individual-surface.js";
-import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../../fields/vectorized/index.js";
 import { NumberTypedArray } from "../../../utils/typed-array.js";
 
 export type SurfaceSampleWithInfluences<
@@ -67,21 +67,25 @@ export type SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping<
             TextureSamplingContext,
             Texture<
                     TextureLocation,
+                    TextureLocation,
+                    TextureLocation,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     MultiObjectsInfluences<Objects>,
-                    TextureLocation,
-                    TextureLocation,
                     MultiObjectsInfluencesElementType<Objects>,
-                    MultiObjectsInfluencesFuseMode<Objects>
+                    MultiObjectsInfluencesFuseMode<Objects>,
+                    FieldPointVectorContainerStatic<NumberTypedArray>
                 >,
             MultiObjectsGroupsMapped<
                     InfluencesGroup,
                     Texture<
                             TextureLocation,
+                            TextureLocation,
+                            TextureLocation,
+                            FieldPointVectorContainerStatic<NumberTypedArray>,
                             MultiObjectsInfluences<Objects>,
-                            TextureLocation,
-                            TextureLocation,
                             MultiObjectsInfluencesElementType<Objects>,
-                            MultiObjectsInfluencesFuseMode<Objects>
+                            MultiObjectsInfluencesFuseMode<Objects>,
+                            FieldPointVectorContainerStatic<NumberTypedArray>
                         >
                 >,
             SurfaceSampleElementType,

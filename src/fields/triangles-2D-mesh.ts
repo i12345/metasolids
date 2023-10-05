@@ -269,6 +269,11 @@ export class Triangles2DMeshInterpolator<
 
 export type TriangleCollisionHandler = (tri: number, w1: number, w2: number) => void
 export type TriangleCollision = { tri: number, w1: number, w2: number }
+export type TriangleCollisionVector = {
+    tri: IndicesTypedArray
+    w1: Float64Array | Float32Array
+    w2: Float64Array | Float32Array
+}
 
 export class Triangles2DMeshCollider {
     private cells: Triangles2DMeshQuad[]
@@ -360,7 +365,7 @@ export class Triangles2DMeshCollider {
         return this.cells[cell.x + (cell.y * this.resolution)].collision_first(p)
     }
 
-    collide_first_vectorized(p: FieldPointVector<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>): FieldPointVectorStatic<TriangleCollision> {
+    collide_first_vectorized(p: FieldPointVector<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>): TriangleCollisionVector {
         const { v0, tri_vec_inv, margin } = this.mesh
         const margin_min = -margin, margin_max = 1 + margin
         const resolution = this.resolution
@@ -378,6 +383,7 @@ export class Triangles2DMeshCollider {
         
         let v0_x: number, v0_y: number
         let x: number, y: number
+        let tri_vec_inv_i: number
         let tri_vec_inv_a: number,
             tri_vec_inv_b: number,
             tri_vec_inv_c: number,
@@ -389,7 +395,7 @@ export class Triangles2DMeshCollider {
 
         const length = p.length / 2
 
-        const result: FieldPointVectorStatic<TriangleCollision> = {
+        const result: TriangleCollisionVector = {
             tri: new (indicesArrayType(this.mesh.triangles.length / 3))(length),
             w1: new Float64Array(length),
             w2: new Float64Array(length),
@@ -418,6 +424,7 @@ export class Triangles2DMeshCollider {
             
             tri_indices = cells_filtered_triangles[cell_x + (resolution * cell_y)]
             tri_n = tri_indices.length
+            tri_vec_inv_i = 0
 
             collided = false
 
@@ -430,10 +437,116 @@ export class Triangles2DMeshCollider {
                 x = p_x - v0_x
                 y = p_y - v0_y
 
-                tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
-                tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
-                tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
-                tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+                tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
+
+                w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+                w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+
+                if (w1 < margin_min || w2 < margin_min ||
+                    w1 + w2 > margin_max)
+                    continue
+                
+                if (w1 < 0) w1 = 0
+                else if (w1 + w2 >= 1) w1 = 1 - w2
+
+                if (w2 < 0) w2 = 0
+
+                result_tri[p_i] = tri
+                result_w1[p_i] = w1
+                result_w2[p_i] = w2
+                collided = true
+                break
+            }
+
+            if (!collided) {
+                result_tri[p_i] = result_tri_invalid
+                result_w1[p_i] = NaN
+                result_w2[p_i] = NaN
+            }
+        }
+
+        return result
+    }
+
+    render(render_resolution: number, outputTFtypes = true): TriangleCollisionVector {
+        const { v0, tri_vec_inv, margin } = this.mesh
+        const margin_min = -margin, margin_max = 1 + margin
+        const resolution = this.resolution
+
+        const bounds_origin_x = this.mesh.bounds.origin.x
+        const bounds_origin_y = this.mesh.bounds.origin.y
+        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
+        const resolution_div_bounds_size_x = resolution / this.mesh.bounds.size.x
+
+        let p_x: number, p_y: number
+        let cell_x: number, cell_y: number
+        const cells_filtered_triangles = this.cells.map(cell => cell.filtered_triangles)
+
+        let collided: boolean
+        
+        let v0_x: number, v0_y: number
+        let x: number, y: number
+        let tri_vec_inv_i: number
+        let tri_vec_inv_a: number,
+            tri_vec_inv_b: number,
+            tri_vec_inv_c: number,
+            tri_vec_inv_d: number
+        
+        let tri: number, w1: number, w2: number
+        let tri_indices: IndicesTypedArray
+        let tri_n: number
+
+        const length = render_resolution ** 2
+
+        const result: TriangleCollisionVector = {
+            tri: new (outputTFtypes ? Int32Array : indicesArrayType(this.mesh.triangles.length / 3))(length),
+            w1: new (outputTFtypes ? Float32Array : Float64Array)(length),
+            w2: new (outputTFtypes ? Float32Array : Float64Array)(length),
+        }
+        const result_tri = result.tri
+        const result_tri_invalid = invalidIndex(<IndicesTypedArray>result_tri)
+        const result_w1 = result.w1
+        const result_w2 = result.w2
+        
+        for (let p_i = 0; p_i < length; p_i++) {
+            p_x = p_i % render_resolution
+            p_y = Math.floor(p_i / render_resolution)
+
+            cell_x = Math.floor((p_x - bounds_origin_x) * resolution_div_bounds_size_x)
+            cell_y = Math.floor((p_y - bounds_origin_y) * resolution_div_bounds_size_y)
+
+            if (cell_x < 0 || cell_x >= resolution ||
+                cell_y < 0 || cell_y >= resolution ||
+                isNaN(cell_x) || isNaN(cell_y)) {
+                result_tri[p_i] = result_tri_invalid
+                result_w1[p_i] = NaN
+                result_w2[p_i] = NaN
+                
+                continue
+            }
+            
+            tri_indices = cells_filtered_triangles[cell_x + (resolution * cell_y)]
+            tri_n = tri_indices.length
+            tri_vec_inv_i = 0
+
+            collided = false
+
+            for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+                tri = tri_indices[tri_i]
+
+                v0_x = v0[(2 * tri) + 0]
+                v0_y = v0[(2 * tri) + 1]
+
+                x = p_x - v0_x
+                y = p_y - v0_y
+
+                tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
 
                 w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
                 w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
@@ -643,6 +756,7 @@ class Triangles2DMeshQuad {
         const p_x = point.x, p_y = point.y
         let v0_x: number, v0_y: number
         let x: number, y: number
+        let tri_vec_inv_i = 0
         let tri_vec_inv_a: number,
             tri_vec_inv_b: number,
             tri_vec_inv_c: number,
@@ -661,10 +775,10 @@ class Triangles2DMeshQuad {
             x = p_x - v0_x
             y = p_y - v0_y
 
-            tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
-            tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
-            tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
-            tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+            tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
+            tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
+            tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
+            tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
 
             w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
             w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
@@ -689,6 +803,7 @@ class Triangles2DMeshQuad {
         const p_x = point.x, p_y = point.y
         let v0_x: number, v0_y: number
         let x: number, y: number
+        let tri_vec_inv_i = 0
         let tri_vec_inv_a: number,
             tri_vec_inv_b: number,
             tri_vec_inv_c: number,
@@ -707,10 +822,10 @@ class Triangles2DMeshQuad {
             x = p_x - v0_x
             y = p_y - v0_y
 
-            tri_vec_inv_a = tri_vec_inv[(4 * tri) + 0]
-            tri_vec_inv_b = tri_vec_inv[(4 * tri) + 1]
-            tri_vec_inv_c = tri_vec_inv[(4 * tri) + 2]
-            tri_vec_inv_d = tri_vec_inv[(4 * tri) + 3]
+            tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
+            tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
+            tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
+            tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
 
             w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
             w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)

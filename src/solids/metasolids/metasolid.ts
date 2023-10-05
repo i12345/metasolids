@@ -133,11 +133,13 @@ export type MetaSolidTexture<
     > =
     Texture<
         MetaSolidTextureLocation<Location, ParametersIn>,
-        MetaSolidTextureSample<Sample, ParametersOut>,
         MetaSolidTextureLocation<Location, ParametersIn>,
         MetaSolidTextureLocation<Location, ParametersIn>,
+        FieldPointVectorContainerStatic,
         MetaSolidTextureSample<Sample, ParametersOut>,
         MetaSolidTextureSample<Sample, ParametersOut>,
+        MetaSolidTextureSample<Sample, ParametersOut>,
+        FieldPointVectorContainerStatic,
         TextureContext
     >
 
@@ -199,11 +201,14 @@ export interface MetaSolidShapeSamplingContext<
     [MetaSolidSamplingContext_Volume]: VolumeContext
     [MetaSolidSamplingContext_Texture]: {
         item: Texture<
-            MetaSolidTxLocation<Location, TxLocation>, TxSample,
             MetaSolidTxLocation<Location, TxLocation>,
             MetaSolidTxLocation<Location, TxLocation>,
+            MetaSolidTxLocation<Location, TxLocation>,
+            FieldPointVectorContainerStatic,
             TxSample,
             TxSample,
+            TxSample,
+            FieldPointVectorContainerStatic,
             TextureContext
         >
         context: TextureContext
@@ -420,11 +425,13 @@ export class MetaSolidVolume<
                 >,
             public texture?: Texture<
                     MetaSolidTxLocation<Location>,
-                    TxSample,
                     MetaSolidTxLocation<Location>,
                     MetaSolidTxLocation<Location>,
+                    FieldPointVectorContainerStatic,
                     TxSample,
                     TxSample,
+                    TxSample,
+                    FieldPointVectorContainerStatic,
                     TextureContext
                 >,
             public influenceGroup?: InfluenceGroup

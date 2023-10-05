@@ -1,6 +1,12 @@
 import { Vec2 } from "playcanvas-extended";
 import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedGrouped, MultiObjectsTemplate } from "../paradigm/trees/index.js";
-import { FieldPoint, SampleDomain, SamplingContext, fields } from "../fields/index.js";
+import { FieldPoint, FieldPointPrimitive, SampleDomain, SamplingContext, fields, tensor } from "../fields/index.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../fields/vectorized/point.js";
+import { VectorSampleDomain, VectorSamplingContext } from "../fields/domains/vector.js";
+import { NumberTypedArray } from "../utils/typed-array.js";
+import { IndicesTypedArray } from "../utils/indices-array.js";
+import * as tf from "@tensorflow/tfjs"
+import { FieldPointTensor } from "../fields/tensor/tensor.js";
 
 export type TextureUV = Vec2
 
@@ -27,14 +33,58 @@ export interface TextureSamplingContext<
 
 export interface Texture<
         Location extends TextureLocation = TextureLocation,
-        Sample extends TextureSample = TextureSample,
         LocationElementType extends TextureLocation = Location,
         LocationFuseMode extends TextureLocation = Location,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+        Sample extends TextureSample = TextureSample,
         SampleElementType extends TextureSample = Sample,
         SampleFuseMode extends TextureSample = Sample,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
         Context extends
             TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
-            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
+            FieldPointVector<SampleElementType, SampleContainer> =
+            FieldPointVector<SampleElementType, SampleContainer>,
+        VectorContext extends
+            VectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                > =
+            VectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                >
     > extends
     SampleDomain<
         Location, Sample,
@@ -43,71 +93,29 @@ export interface Texture<
         SampleElementType,
         SampleFuseMode,
         Context
+    >,
+    VectorSampleDomain<
+        Location,
+        LocationElementType,
+        LocationFuseMode,
+        LocationContainer,
+        Sample,
+        SampleElementType,
+        SampleFuseMode,
+        SampleContainer,
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        Context,
+        LocationVector,
+        SampleVector,
+        VectorContext
     > {
+    render(
+        resolution: Vec2,
+        context: Context
+    ): tensor.FieldPointTensor2D<SampleElementType>
 }
-
-export type ObjectsTextures<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        Location extends TextureLocation = TextureLocation,
-        Sample extends TextureSample = TextureSample,
-        LocationElementType extends TextureLocation = Location,
-        LocationFuseMode extends TextureLocation = Location,
-        SampleElementType extends TextureSample = Sample,
-        SampleFuseMode extends TextureSample = Sample,
-        Context extends
-            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
-            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
-        TextureT extends
-            Texture<
-                    Location, Sample,
-                    LocationElementType,
-                    LocationFuseMode,
-                    SampleElementType,
-                    SampleFuseMode,
-                    Context
-                > =
-            Texture<
-                    Location, Sample,
-                    LocationElementType,
-                    LocationFuseMode,
-                    SampleElementType,
-                    SampleFuseMode,
-                    Context
-                >
-    > =
-    MultiObjectsMapped<Objects, TextureT>
-
-export type ObjectsTexturesGrouped<
-        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        Location extends TextureLocation = TextureLocation,
-        Sample extends TextureSample = TextureSample,
-        LocationElementType extends TextureLocation = Location,
-        LocationFuseMode extends TextureLocation = Location,
-        SampleElementType extends TextureSample = Sample,
-        SampleFuseMode extends TextureSample = Sample,
-        Context extends
-            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
-            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
-        TextureT extends
-            Texture<
-                    Location, Sample,
-                    LocationElementType,
-                    LocationFuseMode,
-                    SampleElementType,
-                    SampleFuseMode,
-                    Context
-                > =
-            Texture<
-                    Location, Sample,
-                    LocationElementType,
-                    LocationFuseMode,
-                    SampleElementType,
-                    SampleFuseMode,
-                    Context
-                >
-    > =
-    MultiObjectsMappedGrouped<Objects, Groups, TextureT>
 
 export type TexturesTemplated<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
@@ -129,6 +137,54 @@ export type TexturesTemplated<
         Context extends
             TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
             TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationContainer extends
+            FieldPointVectorContainerStatic<NumberTypedArray> =
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+        SampleContainer extends
+            FieldPointVectorContainerStatic<NumberTypedArray> =
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        // SampleVector extends
+        //     FieldPointVector<SampleElementType, SampleContainer> =
+        //     FieldPointVector<SampleElementType, SampleContainer>,
+        // VectorContext extends
+        //     VectorSamplingContext<
+        //             Location,
+        //             LocationElementType,
+        //             LocationFuseMode,
+        //             LocationContainer,
+        //             Sample,
+        //             SampleElementType,
+        //             SampleFuseMode,
+        //             SampleContainer,
+        //             Objects,
+        //             ObjIDsT,
+        //             ObjIDsContainer,
+        //             Context,
+        //             LocationVector,
+        //             SampleVector
+        //         > =
+        //     VectorSamplingContext<
+        //             Location,
+        //             LocationElementType,
+        //             LocationFuseMode,
+        //             LocationContainer,
+        //             Sample,
+        //             SampleElementType,
+        //             SampleFuseMode,
+        //             SampleContainer,
+        //             Objects,
+        //             ObjIDsT,
+        //             ObjIDsContainer,
+        //             Context,
+        //             LocationVector,
+        //             SampleVector
+        //         >
     > = {
     [K in keyof Groups]:
         K extends keyof TexelTGrouped ? K extends keyof TexelElementTypeGrouped ? K extends keyof TexelFuseModeGrouped ?
@@ -145,14 +201,21 @@ export type TexturesTemplated<
                             Location,
                             LocationElementType,
                             LocationFuseMode,
-                            Context
+                            Context,
+                            LocationContainer,
+                            SampleContainer,
+                            Objects,
+                            ObjIDsT,
+                            ObjIDsContainer,
+                            LocationVector
                         > :
                     never : never : never :
                 Texture<
-                    Location, TexelTGrouped[K],
-                    LocationElementType, LocationFuseMode,
-                    TexelElementTypeGrouped[K], TexelFuseModeGrouped[K],
-                    Context
+                    Location, LocationElementType, LocationFuseMode, LocationContainer,
+                    TexelTGrouped[K], TexelElementTypeGrouped[K], TexelFuseModeGrouped[K], SampleContainer,
+                    Context,
+                    Objects, ObjIDsT, ObjIDsContainer,
+                    LocationVector
                 > :
             never : never : never
     }
@@ -181,6 +244,53 @@ export type TexturesTemplatedWithObjects<
         Context extends
             TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
             TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
+        LocationContainer extends
+            FieldPointVectorContainerStatic<NumberTypedArray> =
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+        SampleContainer extends
+            FieldPointVectorContainerStatic<NumberTypedArray> =
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        // SampleVector extends
+        //     FieldPointVector<SampleElementType, SampleContainer> =
+        //     FieldPointVector<SampleElementType, SampleContainer>,
+        // VectorContext extends
+        //     VectorSamplingContext<
+        //             Location,
+        //             LocationElementType,
+        //             LocationFuseMode,
+        //             LocationContainer,
+        //             Sample,
+        //             SampleElementType,
+        //             SampleFuseMode,
+        //             SampleContainer,
+        //             Objects,
+        //             ObjIDsT,
+        //             ObjIDsContainer,
+        //             Context,
+        //             LocationVector,
+        //             SampleVector
+        //         > =
+        //     VectorSamplingContext<
+        //             Location,
+        //             LocationElementType,
+        //             LocationFuseMode,
+        //             LocationContainer,
+        //             Sample,
+        //             SampleElementType,
+        //             SampleFuseMode,
+        //             SampleContainer,
+        //             Objects,
+        //             ObjIDsT,
+        //             ObjIDsContainer,
+        //             Context,
+        //             LocationVector,
+        //             SampleVector
+        //         >
     > = {
     [K in keyof Groups]:
         K extends keyof TexelTGrouped ? K extends keyof TexelElementTypeGrouped ? K extends keyof TexelFuseModeGrouped ?
@@ -205,10 +315,11 @@ export type TexturesTemplatedWithObjects<
                 MultiObjectsMapped<
                     Objects,
                     Texture<
-                        Location, TexelTGrouped[K],
-                        LocationElementType, LocationFuseMode,
-                        TexelElementTypeGrouped[K], TexelFuseModeGrouped[K],
-                        Context
+                        Location, LocationElementType, LocationFuseMode, LocationContainer,
+                        TexelTGrouped[K], TexelElementTypeGrouped[K], TexelFuseModeGrouped[K], SampleContainer,
+                        Context,
+                        Objects, ObjIDsT, ObjIDsContainer,
+                        LocationVector
                     >
                 > :
             never : never : never
@@ -265,7 +376,7 @@ export type TextureSamplesExtracted<
             TexturesGrouped[K] extends MultiObjectsGroupsMapped<Groups[K], TextureT> ?
                 TextureSamplesExtracted<Groups[K], TextureT, TexturesGrouped[K]> :
                 never :
-        TexturesGrouped[K] extends Texture<infer Location, infer Sample, infer Context> ?
+        TexturesGrouped[K] extends Texture<any, any, any, any, infer Sample, infer Context> ?
             Sample :
             never
     }
@@ -276,7 +387,7 @@ export type TextureSamplesExtracted1<
         MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, Texture>
     > = {
         [K in keyof TexturesGrouped]:
-        TexturesGrouped[K] extends Texture<infer L, infer Sample, infer C> ?
+        TexturesGrouped[K] extends Texture<any, any, any, any, infer Sample> ?
             Sample :
             (TexturesGrouped[K] extends MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, Texture>?
                 TextureSamplesExtracted1<TexturesGrouped[K]> :

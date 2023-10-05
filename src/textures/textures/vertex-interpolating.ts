@@ -1,11 +1,13 @@
 import { Vec2 } from "playcanvas-extended";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { Field, FieldPoint, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_new } from "../../fields/index.js";
+import { Field, FieldPoint, FieldPointMapped, FieldPointNumbers, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_new, tensor } from "../../fields/index.js";
 import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
 import { IndicesArray, IndicesTypedArray } from "../../utils/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../fields/vectorized/point.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { vectorized } from "vectorized-functions";
+import * as tf from "@tensorflow/tfjs";
+import { FieldPointTensor, field_point_tensor_encode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
 
 export type VertexInterpolatingTexturesTemplated<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -59,16 +61,27 @@ export class VertexInterpolatingTexture<
             FieldPointVector<VertexSampleElementType, VertexSampleContainer>,
         Context extends
             WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
-            WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>
+            WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
+        TextureLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+        TextureLocationVector extends
+            FieldPointVector<TextureLocationElementType, TextureLocationContainer> =
+            FieldPointVector<TextureLocationElementType, TextureLocationContainer>,
     > implements
     Texture<
         TextureLocationT,
-        VertexSample,
         TextureLocationElementType,
         TextureLocationFuseMode,
+        TextureLocationContainer,
+        VertexSample,
         VertexSampleElementType,
         VertexSampleFuseMode,
-        Context
+        VertexSampleContainer,
+        Context,
+        Objects,
+        ObjIDsT,
+        FieldPointVectorContainerStatic<ObjIDsT>,
+        TextureLocationVector,
+        VertexSampleVector
     > {
     private collider?: Triangles2DMeshCollider
     private interpolator?: Triangles2DMeshInterpolator<VertexSample, VertexSampleElementType, VertexSampleContainer, VertexSampleVector>
@@ -80,6 +93,29 @@ export class VertexInterpolatingTexture<
         public readonly field: Field<VertexSample, VertexSampleElementType, VertexSampleFuseMode>,
         public readonly defaultValue: VertexSample = <VertexSample><unknown>field_point_new(field.elementType)
     ) {
+    }
+
+    render(resolution: Vec2, context: Context): tensor.FieldPointTensor2D<VertexSampleElementType> {
+        const render_resolution = Math.max(resolution.y, resolution.x)
+        const collision = this.collider!.render(render_resolution, true)
+        const interpolated = this.interpolator!.interpolate_vectorized(collision.tri, collision.w1, collision.w2)
+        const tensor = field_point_tensor_encode(
+            this.field.elementType,
+            [render_resolution, render_resolution],
+            undefined,
+            interpolated
+        )
+        
+        if (resolution.x === resolution.y && resolution.x === render_resolution)
+            return <tensor.FieldPointTensor2D<VertexSampleElementType>>tensor
+        else return field_point_tensor_map(
+            this.field.elementType,
+            tensor,
+            raw => tf.image.resizeBilinear(
+                <tf.Tensor3D>raw.expandDims(0),
+                [resolution.y, resolution.x]
+            ).squeeze([0])
+        )
     }
 
     init(context: Context): void {
@@ -114,7 +150,11 @@ export class VertexInterpolatingTexture<
                 FieldPointVector<VertexSampleElementType, VertexSampleContainer>,
             Context extends
                 WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
-                WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>
+                WithMultiObjectsIDs<Objects, ObjIDsT> & TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>,
+            TextureLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+            TextureLocationVector extends
+                FieldPointVector<TextureLocationElementType, TextureLocationContainer> =
+                FieldPointVector<TextureLocationElementType, TextureLocationContainer>,
         >(
             this: VertexInterpolatingTexture<
                     Objects,
@@ -127,7 +167,9 @@ export class VertexInterpolatingTexture<
                     VertexSampleFuseMode,
                     VertexSampleContainer,
                     VertexSampleVector,
-                    Context
+                    Context,
+                    TextureLocationContainer,
+                    TextureLocationVector
                 >,
             locations: FieldPointVector<TextureLocationElementType, FieldPointVectorContainerStatic>,
             context: Context

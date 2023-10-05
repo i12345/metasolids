@@ -1,6 +1,6 @@
 import { Field } from "../../fields/index.js";
 import { MultiObjectsGroupsWithFieldsProcessingContext, MultiObjectsWithGroupFieldsProcessingContext } from "../../fields/processing.js";
-import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../fields/vectorized/index.js";
 import { MultiObjectsGroupsCombined, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMappedGrouped, MultiObjectsProcessingContext, MultiObjectsTemplate, MultiObjectsGroupsCombinedTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsMappedAgainGrouped, MultiObjectsTypeGrouped } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
@@ -173,20 +173,24 @@ export type SurfaceWithIndividualTextures<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TexturesGrouped extends
@@ -217,20 +221,24 @@ export type SurfaceWithObjectsTextures<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TexturesGrouped extends
@@ -261,20 +269,24 @@ export type SurfaceWithIndividualTexturesUsingSampleTextureLocations<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TexturesGrouped extends
@@ -322,20 +334,24 @@ export type SurfaceWithObjectsTexturesUsingSharedSampleTextureLocations<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TexturesGrouped extends
@@ -384,20 +400,24 @@ export type SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TexturesGrouped extends
@@ -570,20 +590,24 @@ export type SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TexturesGrouped extends
@@ -621,20 +645,24 @@ export type SurfaceWithObjectsTexturesUsingSurfaceUVUnwrapping<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TexturesGrouped extends

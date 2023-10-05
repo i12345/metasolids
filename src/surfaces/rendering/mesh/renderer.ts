@@ -177,8 +177,14 @@ export class MeshRendererIndividual<
         //     }
         // }
 
+        const triangles_typed = (triangles instanceof Uint8Array || triangles instanceof Uint16Array || triangles instanceof Uint32Array) ? triangles :
+            triangles instanceof Int8Array ? new Uint8Array(triangles.buffer) :
+            triangles instanceof Int16Array ? new Uint16Array(triangles.buffer) :
+                    triangles instanceof Int32Array ? new Uint32Array(triangles.buffer) :
+                        new Uint32Array(triangles)
+
         mesh.setPositions(positions)
-        mesh.setIndices(triangles)
+        mesh.setIndices(triangles_typed)
         mesh.setNormals(normals)
         mesh.setUvs(0, UVs)
 

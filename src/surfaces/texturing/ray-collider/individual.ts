@@ -12,7 +12,7 @@ import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../../volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../../volumes/volume.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
-import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../../fields/vectorized/index.js";
 import { NumberTypedArray } from "../../../utils/typed-array.js";
 
 export interface VolumeWithSurfacesIndividualTexturesRayCollision<
@@ -41,20 +41,24 @@ export interface VolumeWithSurfacesIndividualTexturesRayColliderProcessingContex
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TextureSamplesGrouped extends
@@ -295,20 +299,24 @@ interface VolumeWithSurfacesIndividualTexturesRayColliderProcessingContextPrivat
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TextureSamplesGrouped extends
@@ -569,20 +577,24 @@ export class VolumeWithSurfacesIndividualTexturesRayCollider<
         TextureT extends
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 > =
             Texture<
                     TextureLocationT,
-                    TextureSampleT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
+                    FieldPointVectorContainerStatic<NumberTypedArray>,
                     TextureSamplingContextT
                 >,
         TextureSamplesGrouped extends

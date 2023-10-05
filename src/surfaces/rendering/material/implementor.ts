@@ -1,6 +1,6 @@
 import { Texture, TextureLocation, TextureSample } from "../../../textures/texture.js";
 import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from "../../../textures/index.js";
-import { GeneratorType, IndicesTypedArray, Reflect_entries, mergeObjects, onlyOne } from "../../../utils/index.js";
+import { GeneratorType, IndicesTypedArray, NumberTypedArray, Reflect_entries, mergeObjects, onlyOne } from "../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
 import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate, MultiObjectsIDs, extract, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
@@ -453,11 +453,13 @@ function qualityMetrics_compute<
         mesh: MeshData,
         texture: Texture<
                 Material_Texture_Location<VolumeLocationT>,
-                TexelTypeT,
                 Material_Texture_Location<VolumeLocationT>,
                 Material_Texture_Location<VolumeLocationT>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
                 TexelTypeT,
                 TexelTypeT,
+                TexelTypeT,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
                 Material_Texture_Context<
                     Objects,
                     ObjIDsT,
@@ -777,8 +779,29 @@ export function* material_group_implementations<
     ): Generator<MaterialSemanticImplementation<Objects, ObjIDsT, VolumeLocationT>> {
     type TextureLocationT = Material_Texture_Location<VolumeLocationT>
     type TextureContextT = Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
-    type TextureT = Texture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT>
-    type StageAndTextureT = StageAndTexture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT, TextureT>
+    type TextureT = Texture<
+        TextureLocationT,
+        TextureLocationT,
+        TextureLocationT,
+        FieldPointVectorContainerStatic<NumberTypedArray>,
+        TexelTypeT,
+        TexelTypeT,
+        TexelTypeT,
+        FieldPointVectorContainerStatic<NumberTypedArray>,
+        TextureContextT
+    >
+    type StageAndTextureT = StageAndTexture<
+        TextureLocationT,
+        TextureLocationT,
+        TextureLocationT,
+        FieldPointVectorContainerStatic<NumberTypedArray>,
+        TexelTypeT,
+        TexelTypeT,
+        TexelTypeT,
+        FieldPointVectorContainerStatic<NumberTypedArray>,
+        TextureContextT,
+        TextureT
+    >
 
     const texture = group.get<TextureT>(textures)
     const textureContext = group.get<TextureContextT>(contexts)
@@ -796,7 +819,17 @@ export function* material_group_implementations<
     // const texture_resolutions = [1024]
     const texture_resolutions = [512]
 
-    type CompositeTextureT = Texture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT> & MultiObjectsSampleDomain
+    type CompositeTextureT = Texture<
+        TextureLocationT,
+        TextureLocationT,
+        TextureLocationT,
+        FieldPointVectorContainerStatic<NumberTypedArray>,
+        TexelTypeT,
+        TexelTypeT,
+        TexelTypeT,
+        FieldPointVectorContainerStatic<NumberTypedArray>,
+        TextureContextT
+    > & MultiObjectsSampleDomain
 
     function* decomposeStagedComponents(
             texture: TextureT,
@@ -819,7 +852,7 @@ export function* material_group_implementations<
             components = 2,
             isDecomposition: (composite: CompositeTextureT) => boolean,
             composition: (components: TextureT[]) => CompositeTextureT
-        ): StageAndTexture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT>[] {
+        ): StageAndTextureT[] {
         const stages_components: { [stage: number]: StageAndTextureT[] } = {}
 
         for (const [stage, component] of decomposeStagedComponents(texture, isDecomposition)) {
@@ -838,7 +871,7 @@ export function* material_group_implementations<
             ]
         }
 
-        const retval: StageAndTexture<TextureLocationT, TexelTypeT, TextureLocationT, TextureLocationT, TexelTypeT, TexelTypeT, TextureContextT>[] = []
+        const retval: StageAndTextureT[] = []
         if (sorted_stages_components.length >= components) {
             for (let i = 0; i < components - 1; i++)
                 retval[i] = componentsIntoTexture(sorted_stages_components.shift()!)

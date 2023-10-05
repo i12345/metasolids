@@ -15,7 +15,12 @@ export type FieldPointVectorContainerDynamic<TArray extends NumberTypedArray = F
 export type FieldPointVectorContainer<TArray extends NumberTypedArray = Float64Array> = FieldPointVectorContainerStatic<TArray> | FieldPointVectorContainerDynamic<TArray>
 export type FieldPointVectorContainerType<Container extends FieldPointVectorContainer<NumberTypedArray>> = Container extends FieldPointVectorContainer<infer TArray> ? TArray : never
 
-export type IsDynamicVectorContainer<Container extends FieldPointVectorContainer<NumberTypedArray>> = Container extends FieldPointVectorContainerDynamic ? true : false
+export type IsDynamicVectorContainer<Container extends FieldPointVectorContainer<NumberTypedArray>> = (
+    Container extends FieldPointVectorContainerDynamic<NumberTypedArray> ? true :
+    Container extends FieldPointVectorContainerStatic<NumberTypedArray> ? false :
+    (true | false)
+)
+
 export function isDynamicVectorContainer<Container extends FieldPointVectorContainer<NumberTypedArray>>(container: Container): IsDynamicVectorContainer<Container> {
     return <IsDynamicVectorContainer<Container>>(container instanceof TypedArrayList)
 }
@@ -240,7 +245,7 @@ export function field_point_vector_multi_objs_extract<
                 if (isMultiObj) {
                     const isDynamic = isDynamicVectorContainer(<FieldPointVectorContainer>src_vector)
                     const dst_vector = field_point_vectorized_new(type, length, isDynamic)
-                    const iterator = vectorIterator<FieldPoint>(type, isDynamic)
+                    const iterator = vectorIterator<FieldPoint, FieldPointVectorContainer<NumberTypedArray>>(type, isDynamic)
                     iterator.scatter(
                         dst_vector,
                         dst_root,
@@ -441,7 +446,7 @@ export function field_point_vector_static<
     if (!isDynamicVector<ElementType, Container>(elementType, src, <FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>><unknown>src))
         return <FieldPointVector<ElementType, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>><unknown>src
 
-    const dst = <FieldPointVector<ElementType, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>>vectorIterator(elementType, true, multiObjectIDs, src).copyStatic(<any>src, src)
+    const dst = <FieldPointVector<ElementType, FieldPointVectorContainerStatic<FieldPointVectorContainerType<Container>>>>vectorIterator(elementType, false, multiObjectIDs, src).copyStatic(<any>src, src)
 
     if (ItemObjIDsKey in src) {
         const src_multiObj = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>src
@@ -464,7 +469,7 @@ export function field_point_vector_dynamic<
         src: FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>,
         multiObjectIDs?: MultiObjectsIDs<Objects, ObjIDsT>
     ): FieldPointVector<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>> {
-    const dst = <FieldPointVector<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>vectorIterator(elementType, true, multiObjectIDs, src).copyDynamic(<any>src, src)
+    const dst = <FieldPointVector<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>><unknown>vectorIterator<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>(elementType, <IsDynamicVector<ElementType, FieldPointVectorContainerDynamic<FieldPointVectorContainerType<Container>>>>true, multiObjectIDs, src).copyDynamic(<any>src, src)
 
     if (ItemObjIDsKey in src) {
         const src_multiObj = <FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>>src

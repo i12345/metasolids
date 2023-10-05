@@ -11,6 +11,8 @@ import { Material_Texture_Context, Material_Texture_Location } from "../material
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 import { IndicesTypedArray } from "../../../../utils/indices-array.js";
+import { FieldPointVectorContainerStatic } from "../../../../fields/vectorized/point.js";
+import { NumberTypedArray } from "../../../../utils/typed-array.js";
 
 export class MaterialSemanticImplementation_VertexColors<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -32,11 +34,13 @@ export class MaterialSemanticImplementation_VertexColors<
         public readonly semantic: keyof StandardMaterial | keyof BasicMaterial,
         public readonly texture: Texture<
                 Material_Texture_Location<VolumeLocationT>,
-                TexelTypeT,
                 Material_Texture_Location<VolumeLocationT>,
                 Material_Texture_Location<VolumeLocationT>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
                 TexelTypeT,
                 TexelTypeT,
+                TexelTypeT,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
                 Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
             >,
         public readonly stage: number,

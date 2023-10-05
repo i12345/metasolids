@@ -1,6 +1,6 @@
 import { TypedArray, TypedArrayConstructor, isNumberTypedArray, typedArrayConstructor } from "./typed-array.js"
 
-export type IndicesTypedArray = Uint8Array | Uint16Array | Uint32Array
+export type IndicesTypedArray = Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array
 export type IndicesArray = IndicesTypedArray | number[]
 
 export const indicesArrayType = (rangeSize: number): TypedArrayConstructor<number, IndicesTypedArray> =>

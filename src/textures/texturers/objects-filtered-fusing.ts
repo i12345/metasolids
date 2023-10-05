@@ -48,9 +48,11 @@ export class ObjectsFilteredFusingTexturer<
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureLocationElementType extends TextureLocation = TextureLocationT,
         TextureLocationFuseMode extends TextureLocation = TextureLocationT,
+        TextureLocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
         TextureSampleFuseMode extends TextureSample = TextureSample,
         TextureSampleT extends TextureSample = TextureSampleFuseMode,
         TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>,
         TextureIntermediateT extends TextureSample = TextureSampleFuseMode,
         TextureIntermediateElementType extends TextureSample = TextureIntermediateT,
         TextureSamplingContextT extends
@@ -142,9 +144,10 @@ export class ObjectsFilteredFusingTexturer<
         ): MultiObjectsGroupsMapped<
                 OutputsT,
                 Texture<
-                    TextureLocationT, TextureSampleT,
+                    TextureLocationT,
                     TextureLocationElementType,
                     TextureLocationFuseMode,
+                    TextureSampleT,
                     TextureSampleElementType,
                     TextureSampleFuseMode,
                     TextureSamplingContextT

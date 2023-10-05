@@ -9,6 +9,9 @@ import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from 
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { field_point_type_is_multiObj } from "../../fields/type.js";
 import { vectorized } from "vectorized-functions";
+import * as tf from "@tensorflow/tfjs";
+import { tensor } from "../../fields/index.js";
+import { field_point_tensor_encode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
 
 export class BitmapTexture<
         Location extends TextureLocation = TextureLocation,
@@ -67,12 +70,21 @@ export class BitmapTexture<
     >
     implements
     Texture<
-        Location, Sample,
+        Location,
         LocationElementType,
         LocationFuseMode,
+        LocationContainer,
+        Sample,
         SampleElementType,
         SampleFuseMode,
-        SingularContext
+        SampleContainer,
+        SingularContext,
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        LocationVector,
+        SampleVector,
+        VectorContext
     >,
     VectorSampleDomain<
         Location,
@@ -94,9 +106,10 @@ export class BitmapTexture<
     private iterator!: FieldPointVectorIterator<Sample, SampleContainer, SampleVector, SampleElementType>
     
     constructor(
-        public data: SampleVector,
-        public shape: Vec2,
-        public readonly field: Field<Sample, SampleElementType, SampleFuseMode>
+        public readonly data: SampleVector,
+        public readonly shape: Vec2,
+        public readonly field: Field<Sample, SampleElementType, SampleFuseMode>,
+        public readonly dtype?: tf.NumericDataType
     ) { }
     
     init(context: SingularContext): void {
@@ -189,21 +202,21 @@ export class BitmapTexture<
                 >
         >(
             this: BitmapTexture<
-                Location,
-                LocationElementType,
-                LocationFuseMode,
-                LocationContainer,
-                Sample,
-                SampleElementType,
-                SampleFuseMode,
-                SampleContainer,
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                LocationVector,
-                SampleVector,
-                SingularContext,
-                VectorContext
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    LocationVector,
+                    SampleVector,
+                    SingularContext,
+                    VectorContext
                 >,
             locations: LocationVector,
             context: VectorContext
@@ -222,6 +235,23 @@ export class BitmapTexture<
         )
 
         return dst
+    }
+
+    render(resolution: Vec2, context: SingularContext): tensor.FieldPointTensor2D<SampleElementType> {
+        const encoded = field_point_tensor_encode<SampleElementType, tf.Rank.R2>(this.field.elementType, [this.shape.y, this.shape.x], this.dtype, this.data)
+        
+        if (resolution.equals(this.shape))
+            return encoded
+        else {
+            return field_point_tensor_map<SampleElementType, tf.Rank.R2, tf.Tensor2D>(
+                this.field.elementType,
+                encoded,
+                raw => tf.image.resizeBilinear(
+                    <tf.Tensor3D>raw.expandDims(0),
+                    [resolution.y, resolution.x]
+                ).squeeze([0])
+            )
+        }
     }
 }
 
