@@ -1,17 +1,22 @@
-import { Generator, GeneratorContext, GeneratorResult } from "../generator.js";
+import { FieldPointTensorStatement, FieldPointTensorStatementContext, FieldPointTensorStatementResult } from "../statement.js"
 
-export class ParallelGenerator implements Generator {
-    constructor(public readonly children: Generator[]) { }
+export class FieldPointTensorStatementParallel implements FieldPointTensorStatement {
+    constructor(public readonly children: FieldPointTensorStatement[]) { }
     
-    init(context: GeneratorContext): void {
+    init(context: FieldPointTensorStatementContext): void {
         for (const child of this.children)
             child.init(context)
     }
+
+    dispose(): void {
+        for (const child of this.children)
+            child.dispose()
+    }
     
-    update(context: GeneratorContext): GeneratorResult {
+    update(context: FieldPointTensorStatementContext): FieldPointTensorStatementResult {
         const childResults = this.children.map(child => child.update(context))
 
-        const result: GeneratorResult = {
+        const result: FieldPointTensorStatementResult = {
             differentials: new Map(),
             values: new Map()
         }

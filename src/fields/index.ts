@@ -21,3 +21,5 @@ export * from './multi-objects.js'
 export * from './processing.js'
 
 export * from './triangles-2D-mesh.js'
+
+export * as tensor from './tensor/index.js'

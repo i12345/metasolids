@@ -1,36 +1,43 @@
-import { FieldPoint } from "../../fields/point.js";
 import * as tf from "@tensorflow/tfjs"
-import { Generator, GeneratorBuffer, GeneratorContext, GeneratorResult } from "../generator.js";
-import { Vec2 } from "playcanvas-extended";
-import { RankNext, ScalarN } from "../../utils/tf-rank.js";
+import { FieldPointTensorStatement, FieldPointTensorStatementContext, FieldPointTensorStatementResult } from "../statement.js"
+import { FieldPointTensorVariable } from "../variable.js"
+import { RankNext, ScalarN } from "../../../utils/tf-rank.js"
 
-export class DiffusionGenerator<
+export class FieldPointTensorStatementDiffusion<
         T extends number = number,
         R extends tf.Rank.R2 = tf.Rank.R2
-    > implements Generator {
+    > implements FieldPointTensorStatement {
     private spaceStretch_x_reciprocal!: tf.Tensor<R>
     private spaceStretch_y_reciprocal!: tf.Tensor<R>
     private spaceStretch_xy_reciprocal!: tf.Tensor<R>
     
     constructor(
-        public readonly variable: GeneratorBuffer<T, R>,
-        public readonly spaceStretch: GeneratorBuffer<ScalarN<R>, R>
+        public readonly variable: FieldPointTensorVariable<T, R>,
+        public readonly spaceStretch: FieldPointTensorVariable<ScalarN<R>, R>
     ) { }
 
-    init(context: GeneratorContext): void {
-        const spaceStretch = context.buffers.get(this.spaceStretch)!
+    init(context: FieldPointTensorStatementContext): void {
+        const spaceStretch = context.variables.get(this.spaceStretch)!
         this.spaceStretch_x_reciprocal = spaceStretch.x.reciprocal()
         this.spaceStretch_y_reciprocal = spaceStretch.y.reciprocal()
         this.spaceStretch_xy_reciprocal = <tf.Tensor<R>>tf.add(spaceStretch.x.square(), spaceStretch.y.square()).sqrt().reciprocal()
     }
 
-    update(context: GeneratorContext): GeneratorResult {
-        const x = context.buffers.get(this.variable)!
+    dispose(): void {
+        this.spaceStretch_x_reciprocal.dispose()
+        this.spaceStretch_y_reciprocal.dispose()
+        this.spaceStretch_xy_reciprocal.dispose()
+    }
 
-        // this funciton makes element diffuse left to right
+    update(context: FieldPointTensorStatementContext): FieldPointTensorStatementResult {
+        const x = context.variables.get(this.variable)!
+
         function diffuse(axis: [[number, number], [number, number]], inverse_distance: tf.Tensor<R>) {
             const axis_forward = axis
             const axis_backward: typeof axis = [[axis[0][1] - axis[0][0], axis[0][0] - axis[0][1]], [axis[1][1] - axis[1][0], axis[1][0] - axis[1][1]]]
+
+            //TODO: generic for multiple ranks using tf.slice() and tf.pad()
+            // const shape = x.shape.map((shape_i, i) => shape_i - axis[i])
 
             const crop_forward = tf.layers.cropping2D({
                 cropping: axis_backward
@@ -81,7 +88,7 @@ export class DiffusionGenerator<
 
         return {
             differentials: new Map([
-                [<GeneratorBuffer>this.variable, [sum]]
+                [<FieldPointTensorVariable>this.variable, [sum]]
             ])
         }
     }

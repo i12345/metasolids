@@ -1,11 +1,12 @@
-import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, FieldsPoint } from "../../fields/point.js";
+import { FieldPoint, FieldPointPrimitive, FieldsPoint } from "../../point.js"
 import * as tf from "@tensorflow/tfjs"
-import { FieldPointVectorTensor, GeneratorContext, GeneratorSystem, GeneratorValue } from "../generator.js";
-import { FieldPointType, field_point_type_equals, field_point_type_isPrimitive, field_point_type_primitive_number_type } from "../../fields/type.js";
-import { Mat3, Mat4, Quat, Vec3, Vec4 } from "playcanvas-extended";
-import { Reflect_fromEntries } from "../../utils/reflect-entries.js";
+import { FieldPointTensor } from "../tensor.js"
+import { FieldPointTensorExpression, FieldPointTensorExpressionContext } from "../expression.js"
+import { FieldPointType, field_point_type_equals, field_point_type_isPrimitive, field_point_type_primitive_number_type } from "../../type.js"
+import { Mat3, Mat4, Quat, Vec3, Vec4 } from "playcanvas-extended"
+import { Reflect_fromEntries } from "../../../utils/reflect-entries.js"
 
-export enum ArithmeticGeneratorValueOp {
+export enum FieldPointTensorExpressionArithmeticOp {
     add = "add",
     neg = "negate",
     sub = "subtract",
@@ -48,59 +49,59 @@ export enum ArithmeticGeneratorValueOp {
 }
 
 type opFuncType = (a: tf.Tensor, b: tf.Tensor) => tf.Tensor
-const opFuncMap = new Map<ArithmeticGeneratorValueOp, opFuncType>([
-    [ArithmeticGeneratorValueOp.add, tf.add],
-    [ArithmeticGeneratorValueOp.sub, tf.sub],
-    [ArithmeticGeneratorValueOp.neg, tf.neg],
-    [ArithmeticGeneratorValueOp.mul, tf.mul],
-    [ArithmeticGeneratorValueOp.cross, undefined!],
-    [ArithmeticGeneratorValueOp.dot, tf.dot],
-    [ArithmeticGeneratorValueOp.div, tf.div],
-    [ArithmeticGeneratorValueOp.rcp, tf.reciprocal],
-    [ArithmeticGeneratorValueOp.mod, tf.mod],
-    [ArithmeticGeneratorValueOp.pow, tf.pow],
-    [ArithmeticGeneratorValueOp.log, undefined!],
-    [ArithmeticGeneratorValueOp.exp, tf.exp],
-    [ArithmeticGeneratorValueOp.ln, tf.log],
-    [ArithmeticGeneratorValueOp.eq, tf.equal],
-    [ArithmeticGeneratorValueOp.neq, tf.notEqual],
-    [ArithmeticGeneratorValueOp.gt, tf.greater],
-    [ArithmeticGeneratorValueOp.gte, tf.greaterEqual],
-    [ArithmeticGeneratorValueOp.lt, tf.less],
-    [ArithmeticGeneratorValueOp.lte, tf.lessEqual],
-    [ArithmeticGeneratorValueOp.not, tf.logicalNot],
-    [ArithmeticGeneratorValueOp.and, tf.logicalAnd],
-    [ArithmeticGeneratorValueOp.or, tf.logicalOr],
-    [ArithmeticGeneratorValueOp.xor, tf.logicalXor],
-    [ArithmeticGeneratorValueOp.sin, tf.sin],
-    [ArithmeticGeneratorValueOp.cos, tf.cos],
-    [ArithmeticGeneratorValueOp.tan, tf.tan],
-    [ArithmeticGeneratorValueOp.asin, tf.asin],
-    [ArithmeticGeneratorValueOp.acos, tf.acos],
-    [ArithmeticGeneratorValueOp.atan, tf.atan],
-    [ArithmeticGeneratorValueOp.atan2, tf.atan2],
-    [ArithmeticGeneratorValueOp.sinh, tf.sinh],
-    [ArithmeticGeneratorValueOp.cosh, tf.cosh],
-    [ArithmeticGeneratorValueOp.tanh, tf.tanh],
-    [ArithmeticGeneratorValueOp.asinh, tf.asinh],
-    [ArithmeticGeneratorValueOp.acosh, tf.acosh],
-    [ArithmeticGeneratorValueOp.atanh, tf.atanh],
+const opFuncMap = new Map<FieldPointTensorExpressionArithmeticOp, opFuncType>([
+    [FieldPointTensorExpressionArithmeticOp.add, tf.add],
+    [FieldPointTensorExpressionArithmeticOp.sub, tf.sub],
+    [FieldPointTensorExpressionArithmeticOp.neg, tf.neg],
+    [FieldPointTensorExpressionArithmeticOp.mul, tf.mul],
+    [FieldPointTensorExpressionArithmeticOp.cross, undefined!],
+    [FieldPointTensorExpressionArithmeticOp.dot, tf.dot],
+    [FieldPointTensorExpressionArithmeticOp.div, tf.div],
+    [FieldPointTensorExpressionArithmeticOp.rcp, tf.reciprocal],
+    [FieldPointTensorExpressionArithmeticOp.mod, tf.mod],
+    [FieldPointTensorExpressionArithmeticOp.pow, tf.pow],
+    [FieldPointTensorExpressionArithmeticOp.log, undefined!],
+    [FieldPointTensorExpressionArithmeticOp.exp, tf.exp],
+    [FieldPointTensorExpressionArithmeticOp.ln, tf.log],
+    [FieldPointTensorExpressionArithmeticOp.eq, tf.equal],
+    [FieldPointTensorExpressionArithmeticOp.neq, tf.notEqual],
+    [FieldPointTensorExpressionArithmeticOp.gt, tf.greater],
+    [FieldPointTensorExpressionArithmeticOp.gte, tf.greaterEqual],
+    [FieldPointTensorExpressionArithmeticOp.lt, tf.less],
+    [FieldPointTensorExpressionArithmeticOp.lte, tf.lessEqual],
+    [FieldPointTensorExpressionArithmeticOp.not, tf.logicalNot],
+    [FieldPointTensorExpressionArithmeticOp.and, tf.logicalAnd],
+    [FieldPointTensorExpressionArithmeticOp.or, tf.logicalOr],
+    [FieldPointTensorExpressionArithmeticOp.xor, tf.logicalXor],
+    [FieldPointTensorExpressionArithmeticOp.sin, tf.sin],
+    [FieldPointTensorExpressionArithmeticOp.cos, tf.cos],
+    [FieldPointTensorExpressionArithmeticOp.tan, tf.tan],
+    [FieldPointTensorExpressionArithmeticOp.asin, tf.asin],
+    [FieldPointTensorExpressionArithmeticOp.acos, tf.acos],
+    [FieldPointTensorExpressionArithmeticOp.atan, tf.atan],
+    [FieldPointTensorExpressionArithmeticOp.atan2, tf.atan2],
+    [FieldPointTensorExpressionArithmeticOp.sinh, tf.sinh],
+    [FieldPointTensorExpressionArithmeticOp.cosh, tf.cosh],
+    [FieldPointTensorExpressionArithmeticOp.tanh, tf.tanh],
+    [FieldPointTensorExpressionArithmeticOp.asinh, tf.asinh],
+    [FieldPointTensorExpressionArithmeticOp.acosh, tf.acosh],
+    [FieldPointTensorExpressionArithmeticOp.atanh, tf.atanh],
 ])
 
-export class ArithmeticGeneratorValue<
+export class FieldPointTensorExpressionArithmetic<
         T extends FieldPoint = FieldPoint,
         R extends tf.Rank = tf.Rank,
-    > implements GeneratorValue<T, R> {
+    > implements FieldPointTensorExpression<T, R> {
     type!: FieldPointType<T>
     rank!: R
     
     constructor(
-        public readonly op: ArithmeticGeneratorValueOp,
-        public readonly a: GeneratorValue,
-        public readonly b: GeneratorValue,
+        public readonly op: FieldPointTensorExpressionArithmeticOp,
+        public readonly a: FieldPointTensorExpression,
+        public readonly b: FieldPointTensorExpression,
     ) { }
 
-    init(context: GeneratorContext): void {
+    init(context: FieldPointTensorExpressionContext): void {
         this.a.init(context)
         this.b.init(context)
 
@@ -113,21 +114,26 @@ export class ArithmeticGeneratorValue<
 
         throw new Error("calculate shape and type")
     }
+
+    dispose(): void {
+        this.a.dispose()
+        this.b.dispose()
+    }
     
-    eval(context: GeneratorContext): FieldPointVectorTensor<T, R> {
+    eval(context: FieldPointTensorExpressionContext): FieldPointTensor<T, R> {
         const a = this.a.eval(context)
         const b = this.b.eval(context)
         const op = this.op
 
         function broadcast(
-                a: FieldPointVectorTensor,
-                b: FieldPointVectorTensor,
+                a: FieldPointTensor,
+                b: FieldPointTensor,
                 a_type: FieldPointType,
                 b_type: FieldPointType,
-            ): FieldPointVectorTensor {
+            ): FieldPointTensor {
             if ((!a_type || a_type === Number) && (!b_type || b_type === Number)) {
                 switch (op) {
-                    case ArithmeticGeneratorValueOp.log:
+                    case FieldPointTensorExpressionArithmeticOp.log:
                         return tf.div(
                             tf.log(<tf.Tensor>a),
                             tf.log(<tf.Tensor>b)
@@ -148,14 +154,14 @@ export class ArithmeticGeneratorValue<
             
             if (a_isPrimitive && b_isPrimitive) {
                 switch (op) {
-                    case ArithmeticGeneratorValueOp.cross: {
+                    case FieldPointTensorExpressionArithmeticOp.cross: {
                         if (a_type !== Vec3 || b_type !== Vec3)
                             throw new Error()
                     
-                        const a_typed = <FieldPointVectorTensor<Vec3>>a
-                        const b_typed = <FieldPointVectorTensor<Vec3>>b
+                        const a_typed = <FieldPointTensor<Vec3>>a
+                        const b_typed = <FieldPointTensor<Vec3>>b
 
-                        return <FieldPointVectorTensor<Vec3>>{
+                        return <FieldPointTensor<Vec3>>{
                             x: tf.sub(
                                 tf.mul(a_typed.y, b_typed.z),
                                 tf.mul(a_typed.z, b_typed.y)
@@ -171,7 +177,7 @@ export class ArithmeticGeneratorValue<
                         }
                     }
                     
-                    case ArithmeticGeneratorValueOp.mul:
+                    case FieldPointTensorExpressionArithmeticOp.mul:
                         if (((a_type === Vec3 || a_type === Vec4) && (b_type === Mat3 || b_type === Mat4))) {
                             throw new Error("not implemented")
                         }
@@ -195,7 +201,7 @@ export class ArithmeticGeneratorValue<
                         }
                         break
                     
-                    case ArithmeticGeneratorValueOp.div:
+                    case FieldPointTensorExpressionArithmeticOp.div:
                         if (b_type === Mat3 || b_type === Mat4) {
                             throw new Error("not implemented")
                         }
@@ -221,16 +227,16 @@ export class ArithmeticGeneratorValue<
                     b_keys :
                 a_keys
             
-            return <FieldPointVectorTensor<FieldsPoint>>Reflect_fromEntries(
+            return <FieldPointTensor<FieldsPoint>>Reflect_fromEntries(
                 keys.map(key => <[typeof key, ReturnType<typeof broadcast>]>[key, broadcast(
-                    a_isPrimitive ? a : (<FieldPointVectorTensor<FieldsPoint>>a)[key],
-                    b_isPrimitive ? b : (<FieldPointVectorTensor<FieldsPoint>>b)[key],
+                    a_isPrimitive ? a : (<FieldPointTensor<FieldsPoint>>a)[key],
+                    b_isPrimitive ? b : (<FieldPointTensor<FieldsPoint>>b)[key],
                     a_isPrimitive ? a_type : (<FieldPointType<FieldsPoint>>a_type)[key],
                     b_isPrimitive ? b_type : (<FieldPointType<FieldsPoint>>b_type)[key],
                 )])
             )
         }
 
-        return <FieldPointVectorTensor<T, R>>broadcast(a, b, this.a.type, this.b.type)
+        return <FieldPointTensor<T, R>>broadcast(a, b, this.a.type, this.b.type)
     }
 }
