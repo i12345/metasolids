@@ -11,6 +11,7 @@ import { PropertyPath } from "../paradigm/trees/path.js"
 export type FieldPointType<Point extends FieldPoint = FieldPoint> =
     Point extends FieldPointPrimitive ? (
         Point extends number ? typeof Number :
+        Point extends boolean ? typeof Boolean :
         Point extends Vec2 ? typeof Vec2 :
         Point extends Vec3 ? typeof Vec3 :
         Point extends Vec4 ? typeof Vec4 :
@@ -64,7 +65,11 @@ export type MultiObjectsFieldPointElement<Point extends FieldPoint = FieldPoint>
 
 export function field_point_new<Point extends FieldPoint = FieldPoint>(type: FieldPointType<Point>): Point {
     if (type instanceof Function)
-        return (type === <FieldPointType<Point>>Number) ? <Point>0 : <Point>(new (<FieldPointType<FieldPointPrimitive>>type)())
+        return (type === <FieldPointType<Point>>Number) ?
+            <Point>0 :
+            (type === <FieldPointType<Point>>Boolean) ?
+                <Point>false :
+                <Point>(new (<FieldPointType<FieldPointPrimitive>>type)())
     else {
         const result: any = {}
 
@@ -90,6 +95,8 @@ export function field_point_type_is<
     if (type instanceof Function) {
         if (<Function>type === Number)
             return typeof p === 'number'
+        else if (<Function>type === Boolean)
+            return typeof p === 'boolean'
         else return p instanceof <Function>type
     }
     else if (MultiObjectsGroupedObjectsKey in type) {
@@ -130,6 +137,8 @@ export function field_point_type_is<
 export function field_point_type_default<Point extends FieldPoint>(p: Point): FieldPointType<Point> {
     if (typeof p === 'number')
         return <FieldPointType<Point>>Number
+    else if (typeof p === 'boolean')
+        return <FieldPointType<Point>>Boolean
     else if (p instanceof Vec2)
         return <FieldPointType<Point>>Vec2
     else if (p instanceof Vec3)
@@ -231,6 +240,7 @@ export function field_point_type_contains<Superset extends FieldPoint, Subset ex
 
 const field_point_sizes = new Map<FieldPointType<FieldPointPrimitive>, number>([
     [Number, 1],
+    [Boolean, 1],
     [Vec2, 2],
     [Vec3, 3],
     [Vec4, 4],
@@ -468,6 +478,8 @@ export function field_point_fits_type<
     if (type instanceof Function) {
         if (<Function>type === Number)
             return typeof p === 'number'
+        if (<Function>type === Boolean)
+            return typeof p === 'boolean'
         else return p instanceof type
     }
     else {

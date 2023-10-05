@@ -9,6 +9,7 @@ export type Vector = Array<number>
     | Float32Array | Float64Array
 
 export type FieldPointPrimitive = number
+    | boolean
     | Vec2 | Vec3 | Vec4 | Quat | Mat3 | Mat4
     | Color
     | Vector
@@ -19,6 +20,7 @@ export interface FieldsPoint {
 
 export type FieldPointNumbers<Point extends FieldPoint> =
     Point extends number ? number :
+    Point extends boolean ? (1 | 0) :
     Point extends Vec2 ? { x: number, y: number } :
     Point extends Vec3 ? { x: number, y: number, z: number } :
     Point extends Vec4 ? { x: number, y: number, z: number, w: number } :
@@ -197,6 +199,8 @@ export function field_point_isPrimitive<Point extends FieldPoint = FieldPoint>(p
         return true as (Point extends FieldPointPrimitive ? true : false)
     else if (typeof p === 'number')
         return true as (Point extends FieldPointPrimitive ? true : false)
+    else if (typeof p === 'boolean')
+        return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Vec2)
         return true as (Point extends FieldPointPrimitive ? true : false)
     else if (p instanceof Vec4)
@@ -294,6 +298,8 @@ export function field_point_identity<Point extends FieldPoint>(p: Point): Point 
         return new Mat4().setIdentity() as Point
     else if (typeof p === 'number')
         return 0 as Point
+    else if (typeof p === 'boolean')
+        return false as Point
     else if (p instanceof Vec2)
         return new Vec2() as Point
     else if (p instanceof Vec4)
@@ -332,6 +338,8 @@ export function field_point_invalid<Point extends FieldPoint>(p: Point): Point {
         return new Mat4().set([NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN]) as Point
     else if (typeof p === 'number')
         return NaN as Point
+    else if (typeof p === 'boolean')
+        return false as Point
     else if (p instanceof Vec2)
         return new Vec2(NaN, NaN) as Point
     else if (p instanceof Vec4)
@@ -369,6 +377,8 @@ export function field_point_clone<Point extends FieldPoint>(p: Point): Point {
     else if (p instanceof Mat4)
         return p.clone() as Point
     else if (typeof p === 'number')
+        return p as Point
+    else if (typeof p === 'boolean')
         return p as Point
     else if (p instanceof Vec2)
         return p.clone() as Point
@@ -445,6 +455,8 @@ export function field_point_random<Point extends FieldPoint>(p: Point): Point {
         ) as Point
     else if (typeof p === 'number')
         return rnd() as Point
+    else if (typeof p === 'boolean')
+        return (rnd() > 0.5) as Point
     else if (p instanceof Vec2)
         return new Vec2(rnd(), rnd()) as Point
     else if (p instanceof Vec4)
@@ -524,7 +536,9 @@ export function field_point_add<Point extends FieldPoint>(a: Point, b: Point): P
     else if (a instanceof Mat4)
         return new Mat4().mul2(a, b as Mat4) as Point
     else if (typeof a === 'number')
-        return a + (b as number) as Point
+        return a + (<number>b) as Point
+    else if (typeof a === 'boolean')
+        return (a || (<boolean>b)) as Point
     else if (a instanceof Vec2)
         return new Vec2().add2(a, b as Vec2) as Point
     else if (a instanceof Vec4)
@@ -573,6 +587,8 @@ export function field_point_add_inplace<Point extends FieldPoint>(a: Point, b: P
         return a.mul(b as Mat4) as Point
     else if (typeof a === 'number')
         return a + (b as number) as Point
+    else if (typeof a === 'boolean')
+        return (a || (<boolean>b)) as Point
     else if (a instanceof Vec2)
         return a.add(b as Vec2) as Point
     else if (a instanceof Vec4)
@@ -640,6 +656,8 @@ export function field_point_add_inplace_weighted<Point extends FieldPoint>(a: Po
     }
     else if (typeof a === 'number')
         return a + ((b as number) * weight) as Point
+    else if (typeof a === 'boolean')
+        return (a || (weight > 0 && <boolean>b)) as Point
     else if (a instanceof Vec2)
         return a.add((b as Vec2).clone().mulScalar(weight)) as Point
     else if (a instanceof Vec4)
@@ -710,6 +728,17 @@ export function field_point_sum<Point extends FieldPoint = FieldPoint>(points: P
 
         return sum as Point
     }
+    else if (typeof points[0] === 'boolean') {
+        let sum = 0
+
+        //TODO: this could be a mistake
+        
+        for (let i = 0; i < points.length; i++)
+            if (<boolean>points[i])
+                sum++
+
+        return sum as Point
+    }
     else if (points[0] instanceof Vec2) {
         const sum = new Vec2()
         for (let i = 0; i < points.length; i++)
@@ -776,6 +805,8 @@ export function field_point_primitives_sum<Point extends FieldPoint = FieldPoint
         return field_point_primitives_sum(a.data)
     else if (typeof a === 'number')
         return a
+    else if (typeof a === 'boolean')
+        return a ? 1 : 0
     else if (a instanceof Vec2)
         return a.x + a.y
     else if (a instanceof Vec4)
@@ -812,6 +843,8 @@ export function field_point_subtract<Point extends FieldPoint>(a: Point, b: Poin
         return new Mat4().mul2(a, (b as Mat4).clone().invert()) as Point
     else if (typeof a === 'number')
         return a - (b as number) as Point
+    else if (typeof a === "boolean")
+        return (a && !<boolean>b) as Point
     else if (a instanceof Vec2)
         return new Vec2().sub2(a, b as Vec2) as Point
     else if (a instanceof Vec4)
@@ -864,6 +897,8 @@ export function field_point_multiply<Point extends FieldPoint>(a: Point, b: numb
     }
     else if (typeof a === 'number')
         return a * (b as number) as Point
+    else if (typeof a === "boolean")
+        return (a && (b > 0)) as Point
     else if (a instanceof Vec2)
         return a.clone().mulScalar(b) as Point
     else if (a instanceof Vec4)
@@ -909,6 +944,8 @@ export function field_point_multiply_hadamard<Point extends FieldPoint>(a: Point
         return new Mat4().mul2(a, b as Mat4) as Point
     else if (typeof a === 'number')
         return a * (b as number) as Point
+    else if (typeof a === "boolean")
+        return (a && (<boolean>b)) as Point
     else if (a instanceof Vec2)
         return new Vec2().mul2(a, b as Vec2) as Point
     else if (a instanceof Vec4)
@@ -961,6 +998,8 @@ export function field_point_divide<Point extends FieldPoint>(a: Point, b: number
     }
     else if (typeof a === 'number')
         return a / (b as number) as Point
+    else if (typeof a === "boolean")
+        return (a && (b > 0)) as Point
     else if (a instanceof Vec2)
         return a.clone().divScalar(b) as Point
     else if (a instanceof Vec4)
@@ -1013,6 +1052,8 @@ export function field_point_modulo<Point extends FieldPoint>(a: Point, b: Point)
         throw new Error("modulo of matrix makes no sense")
     else if (typeof a === 'number')
         return a % (b as number) as Point
+    else if (typeof a === "boolean")
+        return (a && (<boolean>b)) as Point
     else if (a instanceof Vec2) {
         const b_vec = b as Vec2
 
@@ -1082,6 +1123,8 @@ export function field_point_fraction<Point extends FieldPoint>(a: Point, b: Poin
         throw new Error("fraction of matrix makes no sense")
     else if (typeof a === 'number')
         return a / (b as number) as FieldPointNumbers<Point>
+    else if (typeof a === "boolean")
+        return ((a && (<boolean>b)) ? 1 : 0) as FieldPointNumbers<Point>
     else if (a instanceof Vec2)
         return new Vec2().div2(a, b as Vec2) as FieldPointNumbers<Vec2> as FieldPointNumbers<Point>
     else if (a instanceof Vec4)
@@ -1135,6 +1178,8 @@ export function field_point_pow<Point extends FieldPoint>(base: Point, exponent:
         return undefined!
     else if (typeof base === 'number')
         return <Point>(base ** exponent)
+    else if (typeof base === "boolean")
+        return base as Point
     else if (base instanceof Vec2)
         return <Point>new Vec2(base.x ** exponent, base.y ** exponent)
     else if (base instanceof Vec3)
@@ -1193,7 +1238,9 @@ export function field_point_equal<Point extends FieldPoint>(a: Point, b: Point):
         return a.equals(b_mat)
     }
     else if (typeof a === 'number')
-        return a === (b as number)
+        return a === (<number>b)
+    else if (typeof a === "boolean")
+        return a === (<boolean>b)
     else if (a instanceof Vec2) {
         const b_vec = b as Vec2
         return a.equals(b_vec)
@@ -1255,6 +1302,8 @@ export function field_point_compare_gte<Point extends FieldPoint>(a: Point, b: P
         return field_point_compare_gte(trs(a), trs(b as Mat4))
     else if (typeof a === 'number')
         return a >= (b as number)
+    else if (typeof a === 'boolean')
+        return a === true || (a === (b as boolean))
     else if (a instanceof Vec2) {
         const b_vec = b as Vec2
         return (

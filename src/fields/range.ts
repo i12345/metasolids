@@ -64,8 +64,12 @@ export function field_point_range_compute<Point extends FieldPoint = FieldPoint>
             max.setTRS(obj.range.t[1], obj.range.r[1], obj.range.s[1])
         }
         else if (typeof point === 'number') {
-            if(point < range[0]) range[0] = point
-            else if(point > range[1]) range[1] = point
+            if (point < range[0]) range[0] = point
+            else if (point > range[1]) range[1] = point
+        }
+        else if (typeof point === 'boolean') {
+            if (point === false) range[0] = point
+            else if (point === true) range[1] = point
         }
         else if (point instanceof Vec2) {
             type Type = Vec2
