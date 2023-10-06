@@ -259,6 +259,24 @@ export function field_point_type_size<Point extends FieldPoint = FieldPoint>(typ
     else return Reflect_entries(type).reduce((sum, [, subtype]) => sum + field_point_type_size(<FieldPointType>subtype), 0)
 }
 
+export function field_point_type_str<Point extends FieldPoint = FieldPoint>(type: FieldPointType<Point>, indent = '\t'): string {
+    if (type instanceof Function)
+        return type.name
+    else {
+        let str = "{\n"
+        for (const key of Reflect.ownKeys(type)) {
+            const substr = field_point_type_str(type[key], indent)
+            str += indent
+            str += typeof key === 'string' ? key : `[${key.toString}]`
+            str += ": "
+            str += substr.replace('\n', `\n${indent}`)
+            str += "\n"
+        }
+        str += "}"
+        return str
+    }
+}
+
 export function field_point_multiObj_count<
         PointT extends FieldPoint = FieldPoint,
         PointElementType extends FieldPoint = PointT,

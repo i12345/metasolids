@@ -1,4 +1,4 @@
-import { Vec2, StandardMaterial, BasicMaterial } from "playcanvas-extended"
+import { Vec2, StandardMaterial, BasicMaterial, Vec3, Vec4, Quat, Color } from "playcanvas-extended"
 import { MultiObjectsIDsKey, MultiObjectsTemplate, groups } from "../../../../paradigm/trees/index.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../fields/range.js"
 import { textures } from "../../../../index.js"
@@ -16,6 +16,8 @@ import { IndicesTypedArray } from "../../../../utils/indices-array.js"
 import { VectorSamplingContext, makeVectorSamplingContext } from "../../../../fields/domains/vector.js"
 import { NumberTypedArray, typedArrayClone } from "../../../../utils/typed-array.js"
 import * as tf from "@tensorflow/tfjs"
+import { FieldPointTensor2D } from "../../../../fields/tensor/tensor.js"
+import { field_point_type_str } from "../../../../fields/index.js"
 
 export type MaterialSemanticImplementation_Texture_SideEffect<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -148,8 +150,52 @@ export class MaterialSemanticImplementation_Texture<
             >(this.texture.field, texture_context, multiObjectsIDs)
         
         const samples = this.texture.render(resolution, <any>texture_context)
-        const samples_container = (<tf.Tensor>samples).as1D()
-        
+        let samples_channels: tf.Tensor[]
+
+        switch (this.texture.field.elementType) { 
+            case Number:
+            case Boolean: {
+                const samples_typed = <FieldPointTensor2D<number | boolean>>samples
+                samples_channels = [samples_typed]
+                break
+            }
+            
+            case Vec2: {
+                const samples_typed = <FieldPointTensor2D<Vec2>>samples
+                samples_channels = [samples_typed.x, samples_typed.y]
+                break
+            }
+            
+            case Vec3: {
+                const samples_typed = <FieldPointTensor2D<Vec3>>samples
+                samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z]
+                break
+            }
+            
+            case Vec4: {
+                const samples_typed = <FieldPointTensor2D<Vec4>>samples
+                samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z, samples_typed.w]
+                break
+            }
+            
+            case Quat: {
+                const samples_typed = <FieldPointTensor2D<Quat>>samples
+                samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z, samples_typed.w]
+                break
+            }
+            
+            case Color: {
+                const samples_typed = <FieldPointTensor2D<Color>>samples
+                samples_channels = [samples_typed.r, samples_typed.g, samples_typed.b, samples_typed.a]
+                break
+            }
+                
+            default:
+                throw new Error(`unsupported texture element type ${field_point_type_str(this.texture.field.elementType)}`)
+        }
+
+        const samples_container = tf.stack(samples_channels.slice(0, this.channels), -1).as1D()
+
         const buffer = (this.hdr === true && samples_container.dtype === 'float32') ?
             <Float32Array>samples_container.dataSync() :
             this.hdr ?

@@ -44,7 +44,7 @@ export class Component<ID = string> extends processing.Component<
         super(system, entity)
     }
 
-    protected initializeProcessingFromRaw(request: RawProcessingRequest = { mode: RawProcessingMode.Full }) {
+    protected initializeProcessingFromRaw(request: RawProcessingRequest = { mode: RawProcessingMode.Full }): processing.ProcessingPair<VolumeProcessingT, VolumeProcessingContextT> | undefined {
         const surfaceLevel = this.surfaceLevel ?? 0.5
         const volumeSubdivisionSettings = this.volumeSamplingSettings ?
             { ...this.volumeSamplingSettings } : {
@@ -319,17 +319,10 @@ export class Component<ID = string> extends processing.Component<
             [MultiObjectsIDsKey]: multiObjectsIDs,
         }
 
-        const surface_context: SurfaceProcessingContextT & processing.processors.GraphProcessorContext<SurfaceT, SurfaceProcessingContextT> = {
+        const surface_context: SurfaceProcessingContextT = {
             ...surface_multiObjectsContext,
 
             [MultiObjectsIDsKey]: multiObjectsIDs,
-            [processing.processors.ExtraProcessorsKey]:
-                this.factories?.surfaces?.map(processor =>
-                    new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
-                        processor,
-                        [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
-                    )
-                ) ?? [],
             mode: request.mode,
             samples: sample_context,
             surfaceLevel,
@@ -338,16 +331,9 @@ export class Component<ID = string> extends processing.Component<
             },
         }
 
-        const solid_context: SolidProcessingContextT & processing.processors.GraphProcessorContext<SolidT, SolidProcessingContextT> = {
+        const solid_context: SolidProcessingContextT = {
             ...solid_multiObjectsContext,
 
-            [processing.processors.ExtraProcessorsKey]:
-                this.factories?.solids?.map(processor =>
-                    new processing.processors.RangeGateProcessor<SolidProcessingModeGate, RawProcessingMode, SolidT & WithEncapsulating<VolumeProcessingT>, VolumeSolidProcessingContextT>(
-                        processor,
-                        [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
-                    )
-                ) ?? [],
             mode: request.mode,
             samples: sample_context,
             surface: surface_context,
@@ -382,13 +368,34 @@ export class Component<ID = string> extends processing.Component<
             ...volume_multiObjectsContext,
 
             [MultiObjectsIDsKey]: multiObjectsIDs,
-            [processing.processors.ExtraProcessorsKey]:
-                this.factories?.volume?.map(processor =>
+            [processing.processors.ExtraProcessorsKey]: [
+                ...(this.factories?.volume?.map(processor =>
                     new processing.processors.RangeGateProcessor<VolumeProcessingModeGate, RawProcessingMode, VolumeProcessingT, VolumeProcessingContextT>(
                         processor,
                         [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
                     )
-                ) ?? [],
+                ) ?? []),
+
+                ...(this.factories?.solids?.map(processor =>
+                    new processing.processors.ParallelizingProcessor(
+                        solids.VolumeSolidsParallelizer,
+                        new processing.processors.RangeGateProcessor<SolidProcessingModeGate, RawProcessingMode, SolidT & WithEncapsulating<VolumeProcessingT>, VolumeSolidProcessingContextT>(
+                            processor,
+                            [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
+                        )
+                    )
+                ) ?? []),
+            
+                ...(this.factories?.surfaces?.map(processor =>
+                    new processing.processors.ParallelizingProcessor(
+                        surfaces.VolumeSurfacesParallelizer,
+                        new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
+                            processor,
+                            [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
+                        )
+                    )
+                ) ?? []),
+            ],
             mode: request.mode,
             [volumes.VolumeSampleKey]: sample_context,
             [volumes.sampling.SamplingKey]: volume_sampling_context,

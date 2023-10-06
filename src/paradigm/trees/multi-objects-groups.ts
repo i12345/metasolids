@@ -2,7 +2,7 @@ import { Reflect_entries } from "../../utils/reflect-entries.js"
 import { RemoveEmptyStructs } from "../../utils/remove-empty-structs.js"
 import { MultiObjectsCombinedValue, MultiObjectsMapped, MultiObjectsMappedAndCombined, MultiObjectsTemplate } from "./multi-objects.js"
 import { PropertyPath } from "./path.js"
-import { pathsToValue, pathsToNodeWithKey, makeLeafInterface, intract, leavesByValue } from "./tree.js"
+import { pathsToValue, pathsToNodeWithKey, makeLeafInterface, intract, leavesByValue, extract } from "./tree.js"
 
 export const MultiObjectsGroupsTemplate_Leaf = Symbol("group")
 export const MultiObjectsGroupsTemplate_LeafKey = Symbol("group(leaf-key)")
@@ -227,12 +227,12 @@ export function mapByGroups<
         values: MultiObjectsGroupsOrLeafMapped<Groups, T>,
         selector: (path: PropertyPath, item: T) => R
     ): MultiObjectsGroupsOrLeafMapped<Groups, R> {
-    let result = {} as MultiObjectsGroupsOrLeafMapped<Groups, R>
+    let result: { result: MultiObjectsGroupsOrLeafMapped<Groups, R> } = { result: undefined! }
 
-    for (const { path, get, set } of groups(groupsTemplate))
-        set(result, selector(path, get(values)))
+    for (const path of groupPaths(groupsTemplate))
+        intract(result, ['result', ...path], selector(path, extract(values, path)))
 
-    return result
+    return result.result
 }
 
 export function mapGroups<
@@ -242,12 +242,12 @@ export function mapGroups<
         groupsTemplate: Groups,
         selector: (path: PropertyPath) => R
     ): MultiObjectsGroupsOrLeafMapped<Groups, R> {
-    let result = {} as MultiObjectsGroupsOrLeafMapped<Groups, R>
+    let result: { result: MultiObjectsGroupsOrLeafMapped<Groups, R> } = { result: undefined! }
 
-    for (const { path, get, set } of groups(groupsTemplate))
-        set(result, selector(path))
+    for (const path of groupPaths(groupsTemplate))
+        intract(result, ['result', ...path], selector(path))
 
-    return result
+    return result.result
 }
 
 export type MultiObjectsGroupsCombined<
@@ -469,6 +469,7 @@ export type MultiObjectsGroupedObjectsAndRegularValuesType<
     }
 
 export const MultiObjectsProcessingContextGroupKinds = Symbol('group-kinds')
+
 export type MultiObjectsGroupsProcessingContext<
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
         GroupKinds extends

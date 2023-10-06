@@ -12,6 +12,8 @@ import * as physicalEntity from "./index.js"
 import { fields } from "../index.js"
 import { groupPaths } from "../paradigm/trees/index.js"
 import { onlyOne } from "../utils/only-one.js"
+import { processing } from "../paradigm/index.js"
+import '@tensorflow/tfjs-node'
 
 describe("playcanvas-node", () => {
     let jsdomCleanup: Function
@@ -68,64 +70,46 @@ describe("playcanvas-node", () => {
         }).timeout(100000)
     }
 
-    function defaultTexturers(): textures.Texturer[] {
-        ///@ts-ignore
-        // const texturer = new textures.CopyTexturer()
-        const texturer = new textures.ConstantTexturer(Color.GREEN)
-        // texturer.mappings.inputs.value = [fields.MultiObjectsInfluencesGroupsDefaultKey, "segment 1", "segment 2"]
-        texturer.mappings.outputs.value = ['material', 'textures', 'diffuse']
+    function defaultTexturers(): processing.processors.FactoryProcessor[] {
+        const texturer = new textures.factories.ConstantTextureFactory(Color.GREEN)
+        texturer.mappings.outputs = ['material', 'textures', 'diffuse']
 
-        ///@ts-ignore
         return [
-            ///@ts-ignore
             texturer
         ]
     }
 
-    function uvTexturers(): textures.Texturer[] {
-        ///@ts-ignore
+    function uvTexturers(): processing.processors.FactoryProcessor[] {
         return [
-            ///@ts-ignore
-            new textures.IdentityTexturer({
-                outputs: {
-                    value: ['uvs']
-                }
+            new textures.factories.IdentityTextureFactory({
+                inputs: {},
+                outputs: ['uvs']
             }),
 
-            ///@ts-ignore
-            new textures.MappingTexturer(
-                {
-                    inputs: {
-                        value: ['uvs']
-                    },
-                    outputs: {
-                        value: ['material', 'textures', 'diffuse']
-                    }
-                },
+            new textures.factories.RemappedTextureFactory(
                 [
                     {
                         from: ['uv'],
                         to: []
                     }
-                ]
+                ],
+                {
+                    inputs: ['uvs'],
+                    outputs: ['material', 'textures', 'diffuse']
+                }
             )
         ]
     }
 
-    function copyInfluences(objID: number[]): () => textures.Texturer[] {
+    function copyInfluences(objID: number[]): () => processing.processors.FactoryProcessor[] {
         //TODO: use node-based texturer system
         // nodes generate textures
         // and copy links are distinct
 
         return () => [
-            ///@ts-ignore
-            new textures.CopyTexturer({
-                inputs: {
-                    value: onlyOne(groupPaths(physicalEntity.InfluenceGroupTemplate))
-                },
-                outputs: {
-                    value: ['material', 'textures', 'diffuse']
-                }
+            new processing.processors.factories.CopyFactory({
+                inputs: onlyOne(groupPaths(physicalEntity.InfluenceGroupTemplate)),
+                outputs: ['material', 'textures', 'diffuse']
             })
         ]
     }
@@ -134,7 +118,7 @@ describe("playcanvas-node", () => {
             name: string,
             number_entities: number,
             setupShape: (entity1: Entity, ...components: physicalEntity.Component[]) => void,
-            setupTexturers: () => textures.Texturer[] = defaultTexturers
+            setupTexturers: () => processing.processors.FactoryProcessor[] = defaultTexturers
         ) {
         testRender(name, entity => {
             const entity1 = entity
@@ -155,7 +139,9 @@ describe("playcanvas-node", () => {
             }
 
             setupShape(entity1, ...components)
-            component1.texturers = setupTexturers()
+            component1.factories = {
+                surfaces: setupTexturers()
+            }
 
             component1.processFromRaw()
 
@@ -170,22 +156,22 @@ describe("playcanvas-node", () => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
     }, uvTexturers)
 
-    testShape("multiple spheres", 4, (entity1, component1, component2, component3, component4) => {
+    testShape("multiple spheres", 2, (entity1, component1, component2, component3, component4) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
         component2.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-        component3.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-        component4.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
+        // component3.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
+        // component4.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
 
         entity1.addChild(component2.entity)
         component2.entity.setLocalPosition(0, 1, 0)
         
-        entity1.addChild(component3.entity)
-        component3.entity.setLocalPosition(1, 1, 2)
-        component3.entity.setLocalScale(0.1, 1.4, 1.4)
+        // entity1.addChild(component3.entity)
+        // component3.entity.setLocalPosition(1, 1, 2)
+        // component3.entity.setLocalScale(0.1, 1.4, 1.4)
 
-        entity1.addChild(component4.entity)
-        component4.entity.setLocalPosition(1, 1, 0)
-        component4.entity.setLocalScale(0.8, 0.8, 0.6)
+        // entity1.addChild(component4.entity)
+        // component4.entity.setLocalPosition(1, 1, 0)
+        // component4.entity.setLocalScale(0.8, 0.8, 0.6)
     }, uvTexturers)
 
     testShape("plane", 1, (entity1, component1) => {

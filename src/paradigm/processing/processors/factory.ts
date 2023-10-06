@@ -45,7 +45,7 @@ export abstract class FactoryProcessor<
     process(item: Item, context: Context): void {
         const inputs = <InputValues>mapGroups(
             this.template.inputs,
-            extract.bind(undefined, this.mappings)
+            path => extract(item, extract(this.mappings.inputs, path))
         )
 
         const outputs = this.factory(inputs, item, context)
@@ -54,7 +54,7 @@ export abstract class FactoryProcessor<
             this.template.outputs,
             outputs,
             (path, output) => {
-                const mapping = extract<PropertyPath>(this.mappings, path)
+                const mapping = extract<PropertyPath>(this.mappings.outputs, path)
                 intract(item, mapping, output)
             }
         )
