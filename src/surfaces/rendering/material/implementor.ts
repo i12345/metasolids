@@ -18,7 +18,7 @@ import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "../
 import { Material_Groups_Textures } from "./material-texture.js";
 import { MeshData } from "../../../surfaces/mesh-data.js";
 import { vectorIterator } from "../../../fields/vectorized/iterators/factory.js";
-import { FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new, isDynamicVector } from "../../../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new, isDynamicVector } from "../../../fields/vectorized/point.js";
 import { fusePoints } from "../../../fields/vectorized/fusing.js";
 import { ArithmeticPrimitiveFuseMode, ArithmeticPrimitiveFuseModeOp } from "../../../fields/vectorized/fuse-modes/arithmetic.js";
 import { field_point_vector_stdDev, field_point_vector_stdDev_aggregate } from "../../../fields/vectorized/index.js";
@@ -478,7 +478,21 @@ function qualityMetrics_compute<
     const location_type = textureContext[SampleDomainLocationFieldKey].elementType
     const sample_type = texture.field.elementType
 
-    function perfect_constancy(texture: Texture): FieldPoint | undefined {
+    function perfect_constancy(texture: Texture<
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                TexelTypeT,
+                TexelTypeT,
+                TexelTypeT,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                Material_Texture_Context<
+                    Objects,
+                    ObjIDsT,
+                    VolumeLocationT
+                >
+            >): FieldPoint | undefined {
         if (texture instanceof ConstantSampleDomain)
             return texture.value
         else if (texture instanceof VertexInterpolatingTexture) {
@@ -516,7 +530,21 @@ function qualityMetrics_compute<
         return undefined
     }
 
-    function perfect_triangleMonotonicity(texture: Texture): boolean {
+    function perfect_triangleMonotonicity(texture: Texture<
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                TexelTypeT,
+                TexelTypeT,
+                TexelTypeT,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                Material_Texture_Context<
+                    Objects,
+                    ObjIDsT,
+                    VolumeLocationT
+                >
+            >): boolean {
         if (texture instanceof VertexInterpolatingTexture ||
             texture instanceof ConstantSampleDomain)
             return true
@@ -828,14 +856,17 @@ export function* material_group_implementations<
         TexelTypeT,
         TexelTypeT,
         FieldPointVectorContainerStatic<NumberTypedArray>,
-        TextureContextT
+        TextureContextT,
+        Objects,
+        ObjIDsT,
+        FieldPointVectorContainerStatic<ObjIDsT>
     > & MultiObjectsSampleDomain
 
     function* decomposeStagedComponents(
             texture: TextureT,
             isDecomposition: (composite: CompositeTextureT) => boolean,
         ): Generator<StageAndTextureT> {
-        const parent = opaqueStagedTexture(texture)
+        const parent = opaqueStagedTexture(<any>texture)
         const [parentStage, parentTexture] = parent
 
         if (isNaN(parentStage) &&
@@ -1033,7 +1064,7 @@ export function* material_group_implementations<
 
                             const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
                                 semantics.vertexColors,
-                                factors[factor_index_other][1],
+                                <any>factors[factor_index_other][1],
                                 factors[factor_index_other][0],
                                 group,
                                 implementation.channels,
@@ -1051,7 +1082,7 @@ export function* material_group_implementations<
                             for (const resolution of texture_resolutions) {
                                 const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                                     semantics.texture,
-                                    factors[factor_index_other][1],
+                                    <any>factors[factor_index_other][1],
                                     factors[factor_index_other][0],
                                     group,
                                     resolution,
@@ -1088,7 +1119,7 @@ export function* material_group_implementations<
 
                             const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
                                 semantics.vertexColors,
-                                factors[factor_index_vertexColors][1],
+                                <any>factors[factor_index_vertexColors][1],
                                 factors[factor_index_vertexColors][0],
                                 group,
                                 implementation.channels,
@@ -1099,7 +1130,7 @@ export function* material_group_implementations<
                             for (const resolution of texture_resolutions) {
                                 const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                                     semantics.texture,
-                                    factors[factor_index_texture][1],
+                                    <any>factors[factor_index_texture][1],
                                     factors[factor_index_texture][0],
                                     group,
                                     resolution,
@@ -1154,7 +1185,7 @@ export function* material_group_implementations<
                         for (const resolution_1 of texture_resolutions) {
                             const implementation_1 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
                                 <keyof StandardMaterial>`${implementation.name}DetailMap`,
-                                factor_1[1],
+                                <any>factor_1[1],
                                 factor_1[0],
                                 group,
                                 resolution_1,
@@ -1245,7 +1276,7 @@ export function* material_group_implementations<
         }
     }
 
-    const [stage,] = opaqueStagedTexture(texture)
+    const [stage,] = opaqueStagedTexture(<any>texture)
 
     const qualityMetrics = qualityMetrics_compute(
             mesh,

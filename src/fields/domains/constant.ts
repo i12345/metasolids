@@ -8,6 +8,7 @@ import { MultiObjectsIDsKey, MultiObjectsTemplate } from '../../paradigm/trees/i
 import { IndicesTypedArray } from '../../utils/indices-array.js'
 import { vectorIterator } from '../vectorized/iterators/factory.js'
 import { Cloneable, clone, makeClone } from '../../utils/cloneable.js'
+import { defaultField } from '../fields/default.js'
 
 export class ConstantSampleDomain<
         Location extends FieldPoint = FieldPoint,
@@ -40,7 +41,7 @@ export class ConstantSampleDomain<
     >> {
     constructor(
         public value: Sample,
-        public field: Field<Sample, SampleElementType, SampleFuseMode>
+        public field: Field<Sample, SampleElementType, SampleFuseMode> = defaultField(value)
     ) { }
 
     [clone]() {

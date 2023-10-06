@@ -1,7 +1,7 @@
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsOmitted, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, groupKinds, mapGroups } from "../trees/index.js";
 import { ProcessingPair, Processor, ProcessorInitialization } from "../processing/processor.js";
-import { GraphProcessor } from "../processing/processors/graph.js";
+import { GraphProcessor, GraphProcessorContext } from "../processing/processors/graph.js";
 import { OctTree } from "./octtree.js";
 import { OctTreeSubdivisionSettings, SubdivisionAdviceGroups, SubdivisionAdviceLayer, SubdivisionAdviceLayerConstructor, SubdivisionAdviceOctTrees, SubdivisionAdviceT, SubdivisionReferences } from "./subdivision.js";
 import { OctTreesTemplated } from "./templated.js";
@@ -135,6 +135,7 @@ export interface OctTreeSubdividingProcessingContext<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
     > extends
+    GraphProcessorContext,
     MultiObjectsGroupsProcessingContext<Groups, OctTreeSubdividingGroupsKind> {
     [SubdivisionKey]: OctTreeSubdivisionSettings<IndicesT>
 }

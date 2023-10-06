@@ -15,7 +15,7 @@ import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext 
  * 
  * $f(x) = f_2(f_1(x))$
  */
-export class ComposingSampleDomain<
+export class ComposedSampleDomain<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
@@ -185,7 +185,7 @@ export class ComposingSampleDomain<
         return this.f1.field
     }
 
-    @vectorized(ComposingSampleDomain.transformLocation_vectorized)
+    @vectorized(ComposedSampleDomain.transformLocation_vectorized)
     protected transformLocation(location: LocationT, context: { outer: Context1; inner: Context2; }): IntermediateT {
         return this.f1.sample(location, context.outer)
     }
@@ -288,7 +288,7 @@ export class ComposingSampleDomain<
                         SampleVector
                     >
         >(
-            this: ComposingSampleDomain<
+            this: ComposedSampleDomain<
                     Objects,
                     ObjIDsT,
                     ObjIDsContainer,

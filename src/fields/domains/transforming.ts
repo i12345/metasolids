@@ -478,16 +478,6 @@ export abstract class TransformingSampleDomain<
         }
     }
 
-    private _transformVectorContext(outerContext: OuterVectorContext) {
-        const innerContext = <InnerVectorContext><unknown>this.transformContext(outerContext)
-        const context = { outer: outerContext, inner: innerContext }
-
-        if (outerContext[MultiObjectsIDsKey])
-            innerContext[MultiObjectsIDsKey] = outerContext[MultiObjectsIDsKey]
-
-        return context
-    }
-
     protected transformContext(context: OuterContext): InnerContext {
         //TODO: could use proxy
 
@@ -510,6 +500,47 @@ export abstract class TransformingSampleDomain<
         }
 
         return innerContext as any as InnerContext
+    }
+
+    protected transformContext_vectorized(outerContext: OuterVectorContext): InnerVectorContext {
+        const innerContext = <InnerVectorContext><unknown>this.transformContext(outerContext)
+
+        if (outerContext[MultiObjectsIDsKey])
+            innerContext[MultiObjectsIDsKey] = outerContext[MultiObjectsIDsKey]
+
+        makeVectorSamplingContext<
+                InnerLocation,
+                InnerLocationElementType,
+                InnerLocationFuseMode,
+                InnerLocationContainer,
+                InnerSample,
+                InnerSampleElementType,
+                InnerSampleFuseMode,
+                InnerSampleContainer,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                InnerContext,
+                InnerLocationVector,
+                InnerSampleVector,
+                InnerVectorContext
+            >(this.inner.field, innerContext, outerContext[MultiObjectsIDsKey])
+        
+        return innerContext as any as InnerVectorContext
+    }
+
+    private contextPairs(outerContext: OuterContext) {
+        const innerContext = this.transformContext(outerContext)
+        const context = { outer: outerContext, inner: innerContext }
+        
+        return context
+    }
+
+    private contextPairs_vectorized(outerContext: OuterVectorContext) {
+        const innerContext = this.transformContext_vectorized(outerContext)
+        const context = { outer: outerContext, inner: innerContext }
+        
+        return context
     }
 
     protected init_location_field(context: OuterContext): Field<InnerLocation, InnerLocationElementType, InnerLocationFuseMode> {
@@ -943,25 +974,7 @@ export abstract class TransformingSampleDomain<
 
         const contextPrivate = <ContextPrivateT><unknown>outerContext
 
-        const context = this._transformVectorContext(outerContext)
-
-        makeVectorSamplingContext<
-                InnerLocation,
-                InnerLocationElementType,
-                InnerLocationFuseMode,
-                InnerLocationContainer,
-                InnerSample,
-                InnerSampleElementType,
-                InnerSampleFuseMode,
-                InnerSampleContainer,
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                InnerContext,
-                InnerLocationVector,
-                InnerSampleVector,
-                InnerVectorContext
-            >(this.inner.field, context.inner, outerContext[MultiObjectsIDsKey])
+        const context = this.contextPairs_vectorized(outerContext)
 
         const transformLocationVectorFunction = new FieldPointVectorFunction<
                 {
@@ -1009,7 +1022,7 @@ export abstract class TransformingSampleDomain<
             fuseMode: FuseMode<OuterSampleFuseMode>,
             context: OuterVectorContext
         ): boolean {
-        return this.transformFusedSettings(sampleType, fuseMode, this._transformVectorContext(context)) !== undefined
+        return this.transformFusedSettings(sampleType, fuseMode, this.contextPairs_vectorized(context)) !== undefined
     }
 
     protected transformFusedSettings(
@@ -1108,25 +1121,7 @@ export abstract class TransformingSampleDomain<
 
         const contextPrivate = <ContextPrivateT><unknown>outerContext
 
-        const context = this._transformVectorContext(outerContext)
-
-        makeVectorSamplingContext<
-                InnerLocation,
-                InnerLocationElementType,
-                InnerLocationFuseMode,
-                InnerLocationContainer,
-                InnerSample,
-                InnerSampleElementType,
-                InnerSampleFuseMode,
-                InnerSampleContainer,
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                InnerContext,
-                InnerLocationVector,
-                InnerSampleVector,
-                InnerVectorContext
-            >(this.inner.field, context.inner, outerContext[MultiObjectsIDsKey])
+        const context = this.contextPairs_vectorized(outerContext)
 
         const innerLocations = contextPrivate[TransformingTransformedLocationsKey].get(this)!
 
@@ -1219,10 +1214,9 @@ export abstract class TransformingSampleDomain<
 
     @vectorized(TransformingSampleDomain._sample_vectorized)
     sample(outerLocation: OuterLocation, outerContext: OuterContext): OuterSample {
-        const innerContext = this.transformContext(outerContext)
-        const context = { outer: outerContext, inner: innerContext }
+        const context = this.contextPairs(outerContext)
         const innerLocation = this.transformLocation(outerLocation, context)
-        const innerSample = this.inner.sample(innerLocation, innerContext)
+        const innerSample = this.inner.sample(innerLocation, context.inner)
         return this.transformSample(innerSample, innerLocation, outerLocation, context)
     }
 
@@ -1376,27 +1370,7 @@ export abstract class TransformingSampleDomain<
             outerLocations: OuterLocationVector,
             outerContext: OuterVectorContext
         ): OuterSampleVector {
-        const innerContext = <InnerVectorContext><unknown>this.transformContext(outerContext)
-        if (outerContext[MultiObjectsIDsKey]) innerContext[MultiObjectsIDsKey] = outerContext[MultiObjectsIDsKey]
-        makeVectorSamplingContext<
-                InnerLocation,
-                InnerLocationElementType,
-                InnerLocationFuseMode,
-                InnerLocationContainer,
-                InnerSample,
-                InnerSampleElementType,
-                InnerSampleFuseMode,
-                InnerSampleContainer,
-                Objects,
-                ObjIDsT,
-                ObjIDsContainer,
-                InnerContext,
-                InnerLocationVector,
-                InnerSampleVector,
-                InnerVectorContext
-            >(this.inner.field, innerContext, outerContext[MultiObjectsIDsKey])
-
-        const context = { outer: outerContext, inner: innerContext }
+        const context = this.contextPairs_vectorized(outerContext)
 
         const transformLocationVectorFunction = new FieldPointVectorFunction<
                 {
@@ -1423,7 +1397,7 @@ export abstract class TransformingSampleDomain<
                     <OuterLocationElementType extends FieldPoint ? FieldPointType<OuterLocationElementType> : OuterLocationElementType>outerContext[SampleDomainLocationFieldKey].elementType,
                     undefined
                 ],
-                <InnerLocationElementType extends FieldPoint ? FieldPointType<InnerLocationElementType> : undefined>innerContext[SampleDomainLocationFieldKey].elementType,
+                <InnerLocationElementType extends FieldPoint ? FieldPointType<InnerLocationElementType> : undefined>context.inner[SampleDomainLocationFieldKey].elementType,
                 [1, MultiObjectsIDsKey]
             )
 
@@ -1473,7 +1447,7 @@ export abstract class TransformingSampleDomain<
             )
 
         const innerLocations = (this.transformsLocation ?? true) ? <InnerLocationVector><unknown>transformLocationVectorFunction.call(this as any, <any>outerLocations, context) : <InnerLocationVector><unknown>outerLocations
-        const innerSamples = <InnerSampleVector>innerContext[VectorSampleFunction](this.inner, innerLocations, innerContext)
+        const innerSamples = <InnerSampleVector>context.inner[VectorSampleFunction](this.inner, innerLocations, context.inner)
         return (this.transformsSample ?? true) ? <OuterSampleVector><unknown>transformSampleVectorFunction.call(this as any, <any>innerSamples, <any>innerLocations, <any>outerLocations, context) : <OuterSampleVector><unknown>innerSamples
     }
 }

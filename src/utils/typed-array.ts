@@ -83,9 +83,16 @@ export function addDeltas<T extends number | bigint, AccumulatorT extends TypedA
     }
 }
 
-export function typedArrayClone<T extends number | bigint, TypedArrayT extends TypedArray<T> = TypedArray<T>>(array: TypedArrayT): TypedArrayT {
-    const clone = <TypedArrayT>(new (typedArrayConstructor(array))(array.length))
-    clone.set(<ArrayLike<bigint> & ArrayLike<number>><unknown>array)
+export function typedArrayClone<
+        T extends number | bigint,
+        SrcT extends TypedArray<T> = TypedArray<T>,
+        DstT extends TypedArray<T> = SrcT,
+    >(
+        src: SrcT,
+        dstCtor: TypedArrayConstructor<T, DstT> = <TypedArrayConstructor<T, DstT>><unknown>typedArrayConstructor(src)
+    ): DstT {
+    const clone = <DstT>new dstCtor(src.length)
+    clone.set(<ArrayLike<bigint> & ArrayLike<number>><unknown>src)
     return clone
 }
 

@@ -6,6 +6,8 @@ import { Material_Groups, Material_Groups_Template, Material_Groups_Textures_Tex
 import { defaultField } from "../../../fields/fields/default.js";
 import { Color } from "playcanvas-extended";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
+import { NumberTypedArray } from "../../../utils/typed-array.js";
 
 export type Material_Texture_Location<
         VolumeLocationT extends VolumeLocation = VolumeLocation
@@ -34,7 +36,21 @@ export type Material_Groups_Textures<
     > =
     MultiObjectsGroupsMappedOptional<
         Material_Groups,
-        Texture,
+        Texture<
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                Material_Texture_Location<VolumeLocationT>,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                FieldPoint,
+                FieldPoint,
+                FieldPoint,
+                FieldPointVectorContainerStatic<NumberTypedArray>,
+                Material_Texture_Context<
+                    Objects,
+                    ObjIDsT,
+                    VolumeLocationT
+                >
+            >,
         TexturesTemplated<
             Material_Groups,
             FieldPoint,

@@ -1,14 +1,42 @@
-import { PropertyPath, pathExists, pathSubsumes } from "../../trees/index.js";
+import { pathExists, pathSubsumes } from "../../trees/index.js";
 import { Processor, ProcessorConnections, ProcessorInitialization } from "../processor.js";
 
 interface GraphProcessorDetails {
     processors_connections: Map<Processor, ProcessorConnections>
 }
 
+export const ExtraProcessorsKey = Symbol("extra-processors")
+export type GraphProcessorContext<
+        Object = any,
+        Context = any,
+        ProcessorInitializationT extends ProcessorInitialization = ProcessorInitialization,
+        ProcessorT extends
+            Processor<Object, Context, ProcessorInitializationT> =
+            Processor<Object, Context, ProcessorInitializationT>
+    > = {
+    [ExtraProcessorsKey]: ProcessorT[]
+}
+
 //TODO: use single [private] context section
 const GraphProcessorContextKey = Symbol("processor:graph")
-interface GraphProcessorContextPrivate {
-    [GraphProcessorContextKey]?: Map<GraphProcessor, GraphProcessorDetails>
+type GraphProcessorContextPrivate<
+        Object = any,
+        Context = any,
+        ProcessorInitializationT extends ProcessorInitialization = ProcessorInitialization,
+        ProcessorT extends
+            Processor<Object, Context, ProcessorInitializationT> =
+            Processor<Object, Context, ProcessorInitializationT>
+    > =
+    GraphProcessorContext<
+        Object,
+        Context,
+        ProcessorInitializationT,
+        ProcessorT
+    > & {
+    [GraphProcessorContextKey]?: Map<
+        GraphProcessor<Object, Context, ProcessorInitializationT, ProcessorT>,
+        GraphProcessorDetails
+    >
 }
 
 export interface GraphProcessorInitialization<
@@ -25,6 +53,7 @@ export interface GraphProcessorInitialization<
 export class GraphProcessor<
         Object = any,
         Context = any,
+        // Context extends any | Partial<GraphProcessorContext> = Partial<GraphProcessorContext>,
         ProcessorInitializationT extends ProcessorInitialization = ProcessorInitialization,
         ProcessorT extends
             Processor<Object, Context, ProcessorInitializationT> =
@@ -46,7 +75,8 @@ export class GraphProcessor<
     init(context: Context) {
         const context_private = context as GraphProcessorContextPrivate
 
-        const processors_initializations = this.processors.map(processor => [processor, processor.init(context)] as [ProcessorT, ProcessorInitializationT])
+        const processors = [...this.processors, ...((<Partial<GraphProcessorContext>>context)[ExtraProcessorsKey] ?? [])]
+        const processors_initializations = processors.map(processor => [processor, processor.init(context)] as [ProcessorT, ProcessorInitializationT])
         const processors_connections = new Map(processors_initializations.map(([processor, { connections }]) => [processor, connections] as [ProcessorT, ProcessorConnections]))
 
         const connections: ProcessorConnections = {
@@ -132,9 +162,10 @@ export class GraphProcessor<
     }
 
     process(object: Object, context: Context): void {
-        const context_private = context as GraphProcessorContextPrivate
+        const context_private = context as GraphProcessorContextPrivate<Object, Context, ProcessorInitializationT, ProcessorT>
 
-        const toProcess = [...this.processors]
+        const processors = [...this.processors, ...((<Partial<GraphProcessorContext>>context)[ExtraProcessorsKey] ?? [])]
+        const toProcess = processors
         let lastLength = 0
 
         const { processors_connections } = context_private[GraphProcessorContextKey]!.get(this)!

@@ -76,9 +76,8 @@ const processors: VolumeProcessorT[] = [
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
         new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
-            ///@ts-ignore
-            textures.TextureableProcessor.instance as VolumeSurfaceProcessorT,
-            [RawProcessingMode.RTMesh, RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
+            textures.factories.defaultMaterialFactories,
+            [RawProcessingMode.RTMesh]
         )
     ),
     new processing.processors.ParallelizingProcessor(
@@ -120,7 +119,7 @@ export class ComponentSystem<ID = string>
     initializeComponentData(component: Component<ID>, data: ComponentData<ID>, properties: any) {
         super.initializeComponentData(component, data, properties)
         component.volume = data.volume
-        component.texturers = data.texturers
+        component.factories = data.factories
         component.interpolatingGroups = data.interpolatingGroups
         component.extraLocationParameters = data.extraLocationParameters
         component.volumeSamplingSettings = data.volumeSamplingSettings
@@ -137,7 +136,7 @@ export class ComponentSystem<ID = string>
             volume: makeClone(component.volume),
 
             //TODO: these should be shared
-            texturers: component.texturers,
+            factories: component.factories,
             interpolatingGroups: component.interpolatingGroups,
             extraLocationParameters: component.extraLocationParameters,
             volumeSamplingSettings: component.volumeSamplingSettings,

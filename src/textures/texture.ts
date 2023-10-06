@@ -1,12 +1,10 @@
 import { Vec2 } from "playcanvas-extended";
-import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsMappedGrouped, MultiObjectsTemplate } from "../paradigm/trees/index.js";
-import { FieldPoint, FieldPointPrimitive, SampleDomain, SamplingContext, fields, tensor } from "../fields/index.js";
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../fields/vectorized/point.js";
-import { VectorSampleDomain, VectorSamplingContext } from "../fields/domains/vector.js";
+import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate } from "../paradigm/trees/index.js";
+import { FieldPoint, SampleDomain, SamplingContext, fields, tensor } from "../fields/index.js";
+import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
+import { VectorSampleDomain, VectorSampleFunction, VectorSamplingContext } from "../fields/domains/vector.js";
 import { NumberTypedArray } from "../utils/typed-array.js";
 import { IndicesTypedArray } from "../utils/indices-array.js";
-import * as tf from "@tensorflow/tfjs"
-import { FieldPointTensor } from "../fields/tensor/tensor.js";
 
 export type TextureUV = Vec2
 
@@ -113,8 +111,109 @@ export interface Texture<
     > {
     render(
         resolution: Vec2,
-        context: Context
+        context: VectorContext
     ): tensor.FieldPointTensor2D<SampleElementType>
+}
+
+export function textureSampleLocationsGridVector(resolution: Vec2): FieldPointVector<TextureLocation, FieldPointVectorContainerStatic> {
+    const uv = new Float64Array(2 * resolution.x * resolution.y)
+
+    let n_x = resolution.x
+    let n_y = resolution.y
+
+    let scaled_y: number
+
+    let i_uv = 0
+
+    for (let y = 0; y < n_y; y++) {
+        scaled_y = y / n_y
+        for (let x = 0; x < n_x; x++) {
+            uv[i_uv++] = x / n_x
+            uv[i_uv++] = scaled_y
+        }
+    }
+
+    return { uv }
+}
+
+export function textureTensorSampleUsingVectorSample<
+        Location extends TextureLocation = TextureLocation,
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+        Sample extends TextureSample = TextureSample,
+        SampleElementType extends TextureSample = Sample,
+        SampleFuseMode extends TextureSample = Sample,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+        Context extends
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
+            FieldPointVector<SampleElementType, SampleContainer> =
+            FieldPointVector<SampleElementType, SampleContainer>,
+        VectorContext extends
+            VectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                > =
+            VectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                >
+    >(
+        texture: Texture<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            Sample,
+            SampleElementType,
+            SampleFuseMode,
+            SampleContainer,
+            Context,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            SampleVector,
+            VectorContext
+        >,
+        resolution: Vec2,
+        context: VectorContext
+    ): tensor.FieldPointTensor2D<SampleElementType> {
+    const locations = <LocationVector>textureSampleLocationsGridVector(resolution)
+    const samples = <SampleVector>context[VectorSampleFunction](texture, locations, context)
+    return tensor.field_point_tensor_encode(texture.field.elementType, [resolution.y, resolution.x], undefined, samples)
 }
 
 export type TexturesTemplated<

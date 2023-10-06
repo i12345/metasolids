@@ -67,7 +67,6 @@ export class ObjectsFilteredFusingSampleDomain<
                     ObjIDsContainer
                 >,
         ResultVectorContext extends
-            SingularContext &
             VectorSamplingContext<
                 LocationT,
                 LocationElementType,
@@ -84,7 +83,6 @@ export class ObjectsFilteredFusingSampleDomain<
                 LocationVector,
                 ResultSampleVector
             > =
-            SingularContext &
             VectorSamplingContext<
                 LocationT,
                 LocationElementType,
@@ -102,7 +100,6 @@ export class ObjectsFilteredFusingSampleDomain<
                 ResultSampleVector
             >,
         InnerVectorContext extends
-            SingularContext &
             VectorSamplingContext<
                 LocationT,
                 LocationElementType,
@@ -119,7 +116,6 @@ export class ObjectsFilteredFusingSampleDomain<
                 LocationVector,
                 InnerSampleVector
             > =
-            SingularContext &
             VectorSamplingContext<
                 LocationT,
                 LocationElementType,
@@ -201,7 +197,7 @@ export class ObjectsFilteredFusingSampleDomain<
 
     constructor(
         inner: SampleDomain<LocationT, InnerSampleT, LocationElementType, LocationFuseMode, InnerSampleElementType, SampleFuseMode, SingularContext>,
-        public objetsFilter?: ObjIDsT,
+        public objectsFilter?: ObjIDsT,
         public multiObj: {
                 sample?: {
                     groupKindsTemplate: SampleGroupKinds,
@@ -242,7 +238,7 @@ export class ObjectsFilteredFusingSampleDomain<
                 InnerVectorContext
             >(
                 makeClone(this.inner),
-                makeClone(this.objetsFilter),
+                makeClone(this.objectsFilter),
                 makeClone(this.multiObj),
                 makeClone(this.fuseMode)
             )
@@ -266,7 +262,7 @@ export class ObjectsFilteredFusingSampleDomain<
             this.inner.field.elementType,
             sample,
             context.outer[MultiObjectsIDsKey],
-            this.objetsFilter
+            this.objectsFilter
         )
 
         return fusePoints(
@@ -440,7 +436,7 @@ export class ObjectsFilteredFusingSampleDomain<
                 samples,
                 this.inner.field.elementType,
                 context.outer[MultiObjectsIDsKey],
-                this.objetsFilter
+                this.objectsFilter
             )
         
         return fuseVectors<

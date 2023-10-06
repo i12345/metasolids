@@ -60,26 +60,30 @@ export type MultiObjectsGroupsTemplateOrLeaf = MultiObjectsGroupsTemplate | Mult
 // }
 
 export function* groupPaths<
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Groups extends MultiObjectsGroupsTemplateOrLeaf = MultiObjectsGroupsTemplate,
     >(groups: Groups): Generator<PropertyPath> {
-    for (const path of pathsToValue(groups as any, MultiObjectsGroupsTemplate_Leaf))
-        yield path
-    for (const path of pathsToNodeWithKey(groups, MultiObjectsGroupsTemplate_LeafKey))
-        yield path
+    if (groups === MultiObjectsGroupsTemplate_Leaf)
+        yield []
+    else {
+        for (const path of pathsToValue(groups as any, MultiObjectsGroupsTemplate_Leaf))
+            yield path
+        for (const path of pathsToNodeWithKey(groups, MultiObjectsGroupsTemplate_LeafKey))
+            yield path
+    }
 }
 
 export function* groups<
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
+        Groups extends MultiObjectsGroupsTemplateOrLeaf = MultiObjectsGroupsTemplate
     >(groups: Groups) {
     for (const path of groupPaths(groups))
         yield makeLeafInterface(path)
 }
 
-export function groupsFromPaths<Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate>(paths: PropertyPath[]): Groups {
-    let groups = {} as Groups
+export function groupsFromPaths<Groups extends MultiObjectsGroupsTemplateOrLeaf = MultiObjectsGroupsTemplateOrLeaf>(paths: PropertyPath[]): Groups {
+    const result: { group: Groups } = { group: undefined! }
     for (const path of paths)
-        intract(groups, path, MultiObjectsGroupsTemplate_Leaf)
-    return groups
+        intract(result, ['group', ...path], MultiObjectsGroupsTemplate_Leaf)
+    return result.group
 }
 
 // export function mergeGroups<
@@ -215,15 +219,15 @@ export type MultiObjectsGroupsMappedOptional<
 // }
 
 export function mapByGroups<
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Groups extends MultiObjectsGroupsTemplateOrLeaf = MultiObjectsGroupsTemplate,
         T = any,
         R = any,
     >(
         groupsTemplate: Groups,
-        values: MultiObjectsGroupsMapped<Groups, T>,
+        values: MultiObjectsGroupsOrLeafMapped<Groups, T>,
         selector: (path: PropertyPath, item: T) => R
-    ): MultiObjectsGroupsMapped<Groups, R> {
-    let result = {} as MultiObjectsGroupsMapped<Groups, R>
+    ): MultiObjectsGroupsOrLeafMapped<Groups, R> {
+    let result = {} as MultiObjectsGroupsOrLeafMapped<Groups, R>
 
     for (const { path, get, set } of groups(groupsTemplate))
         set(result, selector(path, get(values)))
@@ -232,13 +236,13 @@ export function mapByGroups<
 }
 
 export function mapGroups<
-        Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
+        Groups extends MultiObjectsGroupsTemplateOrLeaf = MultiObjectsGroupsTemplate,
         R = any,
     >(
         groupsTemplate: Groups,
         selector: (path: PropertyPath) => R
-    ): MultiObjectsGroupsMapped<Groups, R> {
-    let result = {} as MultiObjectsGroupsMapped<Groups, R>
+    ): MultiObjectsGroupsOrLeafMapped<Groups, R> {
+    let result = {} as MultiObjectsGroupsOrLeafMapped<Groups, R>
 
     for (const { path, get, set } of groups(groupsTemplate))
         set(result, selector(path))
@@ -257,7 +261,7 @@ export type MultiObjectsGroupsCombined<
 export const MultiObjectsGroupsCombinedTemplate = <
         Groups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate
     >(groupsTemplate: Groups): MultiObjectsGroupsCombined<Groups> =>
-    mapGroups(
+    mapGroups<Groups>(
         groupsTemplate,
         () => ({ [MultiObjectsCombinedValue]: MultiObjectsGroupsTemplate_Leaf })
     )

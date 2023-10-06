@@ -788,16 +788,6 @@ export type SurfaceProcessingContextT = surfaces.SurfaceProcessingContext<Sample
             OtherInterpolatingGroupsKindsT,
             SampleProcessingContextT
         > &
-    textures.TextureableProcessingContext<
-            SurfaceT,
-            SurfaceCombinedTextureLocationT,
-            SurfaceCombinedTextureSampleT,
-            SurfaceCombinedTextureLocationT,
-            SurfaceCombinedTextureLocationT,
-            SurfaceCombinedTextureSampleT,
-            SurfaceCombinedTextureSampleT,
-            SurfaceCombinedTextureSamplingContextT
-        > &
     surfaces.rendering.SurfaceProcessingContextWithRendering<
             Objects,
             ObjIDsT,

@@ -85,7 +85,10 @@ export class MappingSampleDomain<
     }
     
     constructor(
-        public mappings: PropertyMapping[]
+        public mappings: PropertyMapping[] = [{
+            from: [],
+            to: []
+        }]
     ) { }
 
     init(context: SingularContext): void {

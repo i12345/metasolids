@@ -11,13 +11,11 @@ import { SurfaceRendererIndividual } from "../../renderer.js"
 import { Material_Texture_Context, Material_Texture_Location } from "../material-texture.js"
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
-import { VertexInterpolatingTexture, renderTexture } from "../../../../textures/index.js"
-import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_multi_objects_new, field_point_vectorized_new } from "../../../../fields/vectorized/point.js"
-import { SampleDomainLocationFieldKey } from "../../../../fields/domain.js"
+import { FieldPointVector, FieldPointVectorContainerStatic } from "../../../../fields/vectorized/point.js"
 import { IndicesTypedArray } from "../../../../utils/indices-array.js"
-import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../../../../fields/domains/vector.js"
-import { ComposingSampleDomain } from "../../../../fields/domains/composing.js"
-import { NumberTypedArray } from "../../../../utils/typed-array.js"
+import { VectorSamplingContext, makeVectorSamplingContext } from "../../../../fields/domains/vector.js"
+import { NumberTypedArray, typedArrayClone } from "../../../../utils/typed-array.js"
+import * as tf from "@tensorflow/tfjs"
 
 export type MaterialSemanticImplementation_Texture_SideEffect<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -55,7 +53,9 @@ export class MaterialSemanticImplementation_Texture<
                 TexelTypeT,
                 TexelTypeT,
                 FieldPointVectorContainerStatic<NumberTypedArray>,
-                Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
+                Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>,
+                Objects,
+                ObjIDsT
             >,
         public readonly stage: number,
         public readonly surface_textureGroup: GeneratorType<ReturnType<typeof groups>>,
@@ -121,80 +121,10 @@ export class MaterialSemanticImplementation_Texture<
         const texture_context = <TextureVectorSamplingContext>this.surface_textureGroup.get<Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>>(renderer.shared.textureContexts)
         
         const multiObjectsIDs = texture_context[MultiObjectsIDsKey]
-        const texture_location_field = texture_context[SampleDomainLocationFieldKey]
-
-        const { UVs, finalIndices } = renderer.shared.surfaceUVUnwrapping
-
-        // const UVs_tmp = new Array<Vec2>(UVs.length / 2)
-        // for (let i = 0; i < UVs_tmp.length; i++)
-        //     UVs_tmp[i] = new Vec2(UVs[(2 * i) + 0], UVs[(2 * i) + 1])
-
-        const locations = field_point_vectorized_multi_objects_new<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic, ObjIDsT>(
-            texture_location_field.elementType,
-            finalIndices.length / 3,
-            <IsDynamicVector<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic>>false,
-            multiObjectsIDs?.IDsType,
-            undefined //TODO
-        );
-
-        (<FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>>locations).uv = <Float64Array><unknown>UVs
-
-        const texture_location_interpolator = new VertexInterpolatingTexture<
-                Objects,
-                ObjIDsT,
-                TextureLocation,
-                TextureLocation,
-                TextureLocation,
-                Material_Texture_Location<VolumeLocationT>,
-                Material_Texture_Location<VolumeLocationT>,
-                Material_Texture_Location<VolumeLocationT>
-            >(
-            //TODO: integrate other location fields
-            // UVs_tmp.map(uv => ({ uv }) as Material_Texture_Location<VolumeLocationT>),
-            // UVs_tmp,
-            locations,
-            <Float64Array><unknown>UVs,
-            finalIndices,
-            texture_location_field
-        )
-
-        const texture_composing = this.texture
-        // const texture_composing = new ComposingSampleDomain<
-        //         Objects,
-        //         ObjIDsT,
-        //         FieldPointVectorContainerStatic<ObjIDsT>,
-        //         TextureLocation,
-        //         TextureLocation,
-        //         TextureLocation,
-        //         FieldPointVectorContainerStatic,
-        //         Material_Texture_Location<VolumeLocationT>,
-        //         Material_Texture_Location<VolumeLocationT>,
-        //         Material_Texture_Location<VolumeLocationT>,
-        //         FieldPointVectorContainerStatic,
-        //         TexelTypeT,
-        //         TexelTypeT,
-        //         TexelTypeT,
-        //         FieldPointVectorContainerStatic,
-        //         typeof texture_context
-        //     >(
-        //         texture_location_interpolator,
-        //         this.texture
-        //     )
         
-        const resolution = this.resolution
-        const texels = resolution ** 2
-        const sampleLocations = field_point_vectorized_new<TextureLocation, FieldPointVectorContainerStatic, Objects, ObjIDsT, FieldPointVectorContainerStatic<ObjIDsT>>({ uv: Vec2 }, texels, false)
-        const sampleLocations_uv = sampleLocations.uv
+        const resolution = new Vec2(this.resolution, this.resolution)
         
-        let sampleLocations_uv_i = 0
-        for (let y = 0; y < resolution; y++) {
-            for (let x = 0; x < resolution; x++) {
-                sampleLocations_uv[sampleLocations_uv_i++] = x / resolution
-                sampleLocations_uv[sampleLocations_uv_i++] = y / resolution
-            }
-        }
-        
-        texture_composing.init(texture_context)
+        this.texture.init(texture_context)
 
         // renderTexture("output-textures/uv.png", texture_location_interpolator, texture_context, ['uv'])
         // renderTexture("output-textures/composing.png", texture_composing, texture_context)
@@ -215,53 +145,22 @@ export class MaterialSemanticImplementation_Texture<
                 FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>,
                 FieldPointVector<TexelTypeT, FieldPointVectorContainerStatic>,
                 TextureVectorSamplingContext
-            >(texture_composing.field, texture_context, multiObjectsIDs)
+            >(this.texture.field, texture_context, multiObjectsIDs)
         
-        const samples = texture_context[VectorSampleFunction](texture_composing, sampleLocations, texture_context)
-        const samples_container = <FieldPointVectorContainerStatic>samples
-        const samples_channels = samples_container.length / texels
+        const samples = this.texture.render(resolution, <any>texture_context)
+        const samples_container = (<tf.Tensor>samples).as1D()
         
-        const buffer_channels = this.channels
-        const buffer = new (this.hdr ? Float32Array : Uint8Array)(buffer_channels * texels)
-
-        const min_channels = Math.min(samples_channels, buffer_channels)
-
-        let samples_i: number
-        let buffer_i: number
-        if (buffer instanceof Uint8Array) {
-            let sample: number
-            for (let i = 0; i < texels; i++) {
-                for (let j = 0; j < min_channels; j++) {
-                    samples_i = (i * samples_channels) + j
-                    buffer_i = (i * buffer_channels) + j
-
-                    sample = Math.floor(256 * samples_container[samples_i])
-                    if (sample < 0)
-                        buffer[buffer_i] = 0
-                    else if (sample > 255)
-                        buffer[buffer_i] = 255
-                    else
-                        buffer[buffer_i] = sample
-                }
-            }
-        }
-        else {
-            let sample: number
-            for (let i = 0; i < texels; i++) {
-                for (let j = 0; j < min_channels; j++) {
-                    samples_i = (i * samples_channels) + j
-                    buffer_i = (i * buffer_channels) + j
-
-                    sample = samples_container[samples_i]
-                    if (sample < 0)
-                        buffer[buffer_i] = 0
-                    else if (sample > 1)
-                        buffer[buffer_i] = 1
-                    else
-                        buffer[buffer_i] = sample
-                }
-            }
-        }
+        const buffer = (this.hdr === true && samples_container.dtype === 'float32') ?
+            <Float32Array>samples_container.dataSync() :
+            this.hdr ?
+                <Float32Array>samples_container.cast('float32').dataSync() :
+                typedArrayClone<number, tf.TypedArray, Uint8Array>(
+                    (samples_container.dtype === 'bool' ?
+                        samples_container.mul(tf.scalar(0xFF, 'int32')) :
+                        samples_container
+                    ).dataSync(),
+                    Uint8Array
+                )
 
         //TODO: optimizations for translating, rotating, scaling, and tiling textures
 

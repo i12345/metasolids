@@ -2,7 +2,7 @@ import * as pc from "playcanvas-extended";
 import { ComponentSystem } from "./component-system.js";
 import { Instance } from "./instance.js";
 import { Entity, GraphNode } from "playcanvas-extended";
-import { GraphProcessor } from "./processors/graph.js";
+import { GraphProcessor, GraphProcessorContext } from "./processors/graph.js";
 import { ProcessingPair } from "./processor.js";
 import { extract, pathExists } from "../trees/index.js";
 
@@ -162,7 +162,7 @@ export abstract class Component<
         if (raw === undefined)
             this.processing.shared = undefined
         else {
-            const graph = new GraphProcessor(system.processors)
+            const graph = new GraphProcessor<SharedT, ContextT>(system.processors)
             const initialization = graph.init(raw.context)
             if (!initialization.connections.inputs.every(input => pathExists(raw.item, input)))
                 throw new Error("not all inputs defined")

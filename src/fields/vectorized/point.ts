@@ -264,7 +264,7 @@ export function field_point_vector_multi_objs_extract<
                     else {
                         if (referenceNonMultiObjContainers)
                             return <FieldPointVectorStatic>dst_root
-                        else return typedArrayClone(<FieldPointVectorStatic<FieldPointPrimitive>>dst_root)
+                        else return <FieldPointVectorContainerType<FieldPointVectorContainerStatic>>typedArrayClone(<FieldPointVectorStatic<FieldPointPrimitive>>dst_root)
                     }
                 }
             }
