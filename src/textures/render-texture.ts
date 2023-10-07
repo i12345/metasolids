@@ -5,9 +5,10 @@
 // import { PropertyPath, extract } from '../paradigm/trees/index.js';
 // import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from './texture.js';
 // import { FieldPoint, FieldPointType, field_point_type_size } from '../fields/index.js';
-// import { field_point_vectorized_new } from '../fields/vectorized/index.js';
+// import { FieldPointVectorContainerStatic, field_point_vectorized_new } from '../fields/vectorized/index.js';
 // import { vectorIterator } from '../fields/vectorized/iterators/factory.js';
 // import { Vec2 } from 'playcanvas-extended';
+// import { NumberTypedArray } from '../utils/typed-array.js';
 
 // export function renderTexture<
 //         TextureSampleT extends TextureSample = TextureSample,
@@ -17,11 +18,14 @@
 //     >(
 //         output = "img.png",
 //         texture: Texture<
-//                 TextureLocation, TextureSampleT,
 //                 TextureLocation,
 //                 TextureLocation,
+//                 TextureLocation,
+//                 FieldPointVectorContainerStatic<NumberTypedArray>,
+//                 TextureSampleT,
 //                 TextureSampleElementType,
 //                 TextureSampleFuseMode,
+//                 FieldPointVectorContainerStatic<NumberTypedArray>,
 //                 TextureSamplingContextT
 //             >,
 //         context: TextureSamplingContextT,

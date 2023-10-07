@@ -156,10 +156,10 @@ describe("playcanvas-node", () => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
     }, uvTexturers)
 
-    testShape("multiple spheres", 2, (entity1, component1, component2, component3, component4) => {
+    testShape("multiple spheres", 3, (entity1, component1, component2, component3, component4) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
         component2.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-        // component3.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
+        component3.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
         // component4.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
 
         entity1.addChild(component2.entity)

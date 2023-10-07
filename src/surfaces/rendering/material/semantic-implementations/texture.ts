@@ -128,86 +128,96 @@ export class MaterialSemanticImplementation_Texture<
         
         this.texture.init(texture_context)
 
-        // renderTexture("output-textures/uv.png", texture_location_interpolator, texture_context, ['uv'])
-        // renderTexture("output-textures/composing.png", texture_composing, texture_context)
-
         makeVectorSamplingContext<
-                TextureLocation,
-                TextureLocation,
-                TextureLocation,
-                FieldPointVectorContainerStatic,
-                TexelTypeT,
-                TexelTypeT,
-                TexelTypeT,
-                FieldPointVectorContainerStatic,
-                Objects,
-                ObjIDsT,
-                FieldPointVectorContainerStatic<ObjIDsT>,
-                Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT, TexelTypeT, TexelTypeT, TexelTypeT>,
-                FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>,
-                FieldPointVector<TexelTypeT, FieldPointVectorContainerStatic>,
-                TextureVectorSamplingContext
-            >(this.texture.field, texture_context, multiObjectsIDs)
+            TextureLocation,
+            TextureLocation,
+            TextureLocation,
+            FieldPointVectorContainerStatic,
+            TexelTypeT,
+            TexelTypeT,
+            TexelTypeT,
+            FieldPointVectorContainerStatic,
+            Objects,
+            ObjIDsT,
+            FieldPointVectorContainerStatic<ObjIDsT>,
+            Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT, TexelTypeT, TexelTypeT, TexelTypeT>,
+            FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>,
+            FieldPointVector<TexelTypeT, FieldPointVectorContainerStatic>,
+            TextureVectorSamplingContext
+        >(this.texture.field, texture_context, multiObjectsIDs)
         
-        const samples = this.texture.render(resolution, <any>texture_context)
-        let samples_channels: tf.Tensor[]
+        const buffer = tf.tidy(() => {
+            const samples = this.texture.render(resolution, <any>texture_context)
+            let samples_channels: tf.Tensor[]
 
-        switch (this.texture.field.elementType) { 
-            case Number:
-            case Boolean: {
-                const samples_typed = <FieldPointTensor2D<number | boolean>>samples
-                samples_channels = [samples_typed]
-                break
-            }
+            switch (this.texture.field.elementType) {
+                case Number:
+                case Boolean: {
+                    const samples_typed = <FieldPointTensor2D<number | boolean>>samples
+                    samples_channels = [samples_typed]
+                    break
+                }
             
-            case Vec2: {
-                const samples_typed = <FieldPointTensor2D<Vec2>>samples
-                samples_channels = [samples_typed.x, samples_typed.y]
-                break
-            }
+                case Vec2: {
+                    const samples_typed = <FieldPointTensor2D<Vec2>>samples
+                    samples_channels = [samples_typed.x, samples_typed.y]
+                    break
+                }
             
-            case Vec3: {
-                const samples_typed = <FieldPointTensor2D<Vec3>>samples
-                samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z]
-                break
-            }
+                case Vec3: {
+                    const samples_typed = <FieldPointTensor2D<Vec3>>samples
+                    samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z]
+                    break
+                }
             
-            case Vec4: {
-                const samples_typed = <FieldPointTensor2D<Vec4>>samples
-                samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z, samples_typed.w]
-                break
-            }
+                case Vec4: {
+                    const samples_typed = <FieldPointTensor2D<Vec4>>samples
+                    samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z, samples_typed.w]
+                    break
+                }
             
-            case Quat: {
-                const samples_typed = <FieldPointTensor2D<Quat>>samples
-                samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z, samples_typed.w]
-                break
-            }
+                case Quat: {
+                    const samples_typed = <FieldPointTensor2D<Quat>>samples
+                    samples_channels = [samples_typed.x, samples_typed.y, samples_typed.z, samples_typed.w]
+                    break
+                }
             
-            case Color: {
-                const samples_typed = <FieldPointTensor2D<Color>>samples
-                samples_channels = [samples_typed.r, samples_typed.g, samples_typed.b, samples_typed.a]
-                break
-            }
+                case Color: {
+                    const samples_typed = <FieldPointTensor2D<Color>>samples
+                    samples_channels = [samples_typed.r, samples_typed.g, samples_typed.b, samples_typed.a]
+                    break
+                }
                 
-            default:
-                throw new Error(`unsupported texture element type ${field_point_type_str(this.texture.field.elementType)}`)
-        }
+                default:
+                    throw new Error(`unsupported texture element type ${field_point_type_str(this.texture.field.elementType)}`)
+            }
 
-        const samples_container = tf.stack(samples_channels.slice(0, this.channels), -1).as1D()
-
-        const buffer = (this.hdr === true && samples_container.dtype === 'float32') ?
-            <Float32Array>samples_container.dataSync() :
-            this.hdr ?
-                <Float32Array>samples_container.cast('float32').dataSync() :
-                typedArrayClone<number, tf.TypedArray, Uint8Array>(
-                    (samples_container.dtype === 'bool' ?
-                        samples_container.mul(tf.scalar(0xFF, 'int32')) :
-                        samples_container
-                    ).dataSync(),
-                    Uint8Array
+            const samples_channels_sliced = samples_channels.slice(0, this.channels)
+            while (samples_channels_sliced.length < this.channels) {
+                samples_channels_sliced.push(
+                    samples_channels_sliced.length === 0 ?
+                        tf.zeros([resolution.y, resolution.x]) :
+                        tf.zerosLike(samples_channels_sliced[0])
                 )
+            }
 
+            const samples_container = tf.stack(samples_channels_sliced, -1).as1D()
+
+            const buffer = (this.hdr === true && samples_container.dtype === 'float32') ?
+                <Float32Array>samples_container.dataSync() :
+                this.hdr ?
+                    <Float32Array>samples_container.cast('float32').dataSync() :
+                    typedArrayClone<number, tf.TypedArray, Uint8Array>(
+                        (samples_container.dtype === 'int32' ?
+                            samples_container :
+                            samples_container.mul(tf.scalar(0xFF, 'int32'))
+                        ).dataSync(),
+                        Uint8Array
+                    )
+
+            return buffer
+        })
+        
         //TODO: optimizations for translating, rotating, scaling, and tiling textures
 
         const rendered: RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT> = {

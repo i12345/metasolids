@@ -17,7 +17,7 @@
     "build:tsc:release": "tsc -p tsconfig.json",
     "build:tsc:debug": "tsc -p tsconfig.dbg.json",
     "pretest": "npm run clean:textures && npm run build:debug",
-    "clean:textures": "rm -rf textures && mkdir textures",
+    "clean:textures": "rm -rf output-textures && mkdir output-textures",
     "test": "mocha -u tdd --colors -p src/tsconfig.json 'dist/**/*.spec.js'"
   },
   "keywords": [
