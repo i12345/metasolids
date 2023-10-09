@@ -6,15 +6,33 @@ import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js";
 import * as algorithms from './algorithms/index.js'
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 
 export class SurfaceUVUnwrappingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         SurfaceUVUnwrappingGroup extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,
-        SurfaceSampleT extends SurfaceSample = SurfaceSample,
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
         VolumeSampleProcessingContextT = any,
         SurfaceT extends
-            SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup, SurfaceSampleT> =
-            SurfaceWithUVUnwrapping<IndicesT, SurfaceUVUnwrappingGroup, SurfaceSampleT>,
+            SurfaceWithUVUnwrapping<
+                    IndicesT,
+                    SurfaceUVUnwrappingGroup,
+                    SurfaceSampleElementType,
+                    SurfaceSampleContainer,
+                    SurfaceSampleVector
+                > =
+            SurfaceWithUVUnwrapping<
+                    IndicesT,
+                    SurfaceUVUnwrappingGroup,
+                    SurfaceSampleElementType,
+                    SurfaceSampleContainer,
+                    SurfaceSampleVector
+                >,
         SurfaceProcessingContextT extends
             SurfaceProcessingContextWithUVUnwrapping<
                     SurfaceUVUnwrappingGroup,
@@ -27,7 +45,9 @@ export class SurfaceUVUnwrappingProcessor<
     > implements
     SurfaceProcessor<
             IndicesT,
-            SurfaceSampleT,
+            SurfaceSampleElementType,
+            SurfaceSampleContainer,
+            SurfaceSampleVector,
             VolumeSampleProcessingContextT,
             SurfaceT,
             SurfaceProcessingContextT

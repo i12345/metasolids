@@ -197,7 +197,7 @@ export class MaterialSemanticImplementation_Texture<
                 samples_channels_sliced.push(
                     samples_channels_sliced.length === 0 ?
                         tf.zeros([resolution.y, resolution.x]) :
-                        tf.zerosLike(samples_channels_sliced[0])
+                        samples_channels_sliced[0]
                 )
             }
 

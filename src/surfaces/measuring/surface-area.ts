@@ -1,31 +1,48 @@
-import { Vec3 } from "playcanvas-extended"
-import { VolumeSample } from "../../volumes/volume.js"
 import { SurfaceProcessingContext, SurfaceProcessor } from "../processing.js"
-import { Surface } from "../surface.js"
+import { Surface, SurfaceSample } from "../surface.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js"
+import { NumberTypedArray } from "../../utils/typed-array.js"
+
+export const SurfaceAreaKey = "surfaceArea"
 
 export interface SurfaceWithSurfaceArea<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
-        VolumeSampleT extends VolumeSample = VolumeSample
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>
     >
-    extends Surface<IndicesT, VolumeSampleT> {
-    surfaceArea: number
+    extends Surface<
+        IndicesT,
+        SurfaceSampleElementType,
+        SurfaceSampleContainer,
+        SurfaceSampleVector
+    > {
+    [SurfaceAreaKey]: number
 }
 
 export class SurfaceWithSurfaceAreaProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
-        SurfaceSampleT extends VolumeSample = VolumeSample,
+        SurfaceSampleElementType extends SurfaceSample = SurfaceSample,
+        SurfaceSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        SurfaceSampleVector extends
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer> =
+            FieldPointVector<SurfaceSampleElementType, SurfaceSampleContainer>,
         SampleProcessingContextT = any,
         SurfaceT extends
-            SurfaceWithSurfaceArea<IndicesT, SurfaceSampleT> =
-            SurfaceWithSurfaceArea<IndicesT, SurfaceSampleT>,
+            SurfaceWithSurfaceArea<IndicesT, SurfaceSampleElementType, SurfaceSampleContainer, SurfaceSampleVector> =
+            SurfaceWithSurfaceArea<IndicesT, SurfaceSampleElementType, SurfaceSampleContainer, SurfaceSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<SampleProcessingContextT> =
             SurfaceProcessingContext<SampleProcessingContextT>
     >
     implements SurfaceProcessor<
         IndicesT,
-        SurfaceSampleT,
+        SurfaceSampleElementType,
+        SurfaceSampleContainer,
+        SurfaceSampleVector,
         SampleProcessingContextT,
         SurfaceT,
         SurfaceProcessingContextT
@@ -36,14 +53,14 @@ export class SurfaceWithSurfaceAreaProcessor<
                 ['mesh']
             ],
             outputs: [
-                ['surfaceArea']
+                [SurfaceAreaKey]
             ]
         }
 
-        return { connections}
+        return { connections }
     }
 
-    process(surface: SurfaceWithSurfaceArea<IndicesT, SurfaceSampleT>): void {
+    process(surface: SurfaceWithSurfaceArea<IndicesT, SurfaceSampleElementType, SurfaceSampleContainer, SurfaceSampleVector>): void {
         let surfaceArea = 0
 
         const { vertices, triangles } = surface.mesh
@@ -81,7 +98,7 @@ export class SurfaceWithSurfaceAreaProcessor<
             surfaceArea += area
         }
 
-        surface.surfaceArea = surfaceArea / 2
+        surface[SurfaceAreaKey] = surfaceArea / 2
     }
 
     private constructor() { }

@@ -2,14 +2,15 @@ import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensorStatement, FieldPointTensorStatementContext, FieldPointTensorStatementResult } from "../statement.js"
 import { FieldPointTensorVariable } from "../variable.js"
 import { RankNext, ScalarN } from "../../../utils/tf-rank.js"
+import { FieldPointTensor } from "../tensor.js"
 
 export class FieldPointTensorStatementDiffusion<
         T extends number = number,
         R extends tf.Rank.R2 = tf.Rank.R2
     > implements FieldPointTensorStatement {
-    private spaceStretch_x_reciprocal!: tf.Tensor<R>
-    private spaceStretch_y_reciprocal!: tf.Tensor<R>
-    private spaceStretch_xy_reciprocal!: tf.Tensor<R>
+    private spaceStretch_0_reciprocal!: tf.Tensor<R>
+    private spaceStretch_1_reciprocal!: tf.Tensor<R>
+    private spaceStretch_01_reciprocal!: tf.Tensor<R>
     
     constructor(
         public readonly variable: FieldPointTensorVariable<T, R>,
@@ -17,16 +18,16 @@ export class FieldPointTensorStatementDiffusion<
     ) { }
 
     init(context: FieldPointTensorStatementContext): void {
-        const spaceStretch = context.variables.get(this.spaceStretch)!
-        this.spaceStretch_x_reciprocal = spaceStretch.x.reciprocal()
-        this.spaceStretch_y_reciprocal = spaceStretch.y.reciprocal()
-        this.spaceStretch_xy_reciprocal = <tf.Tensor<R>>tf.add(spaceStretch.x.square(), spaceStretch.y.square()).sqrt().reciprocal()
+        const spaceStretch = <FieldPointTensor<ScalarN<R>, R>>context.variables.get(this.spaceStretch)!
+        this.spaceStretch_0_reciprocal = spaceStretch[0].reciprocal()
+        this.spaceStretch_1_reciprocal = spaceStretch[1].reciprocal()
+        this.spaceStretch_01_reciprocal = <tf.Tensor<R>>tf.add(spaceStretch[0].square(), spaceStretch[1].square()).sqrt().reciprocal()
     }
 
     dispose(): void {
-        this.spaceStretch_x_reciprocal.dispose()
-        this.spaceStretch_y_reciprocal.dispose()
-        this.spaceStretch_xy_reciprocal.dispose()
+        this.spaceStretch_0_reciprocal.dispose()
+        this.spaceStretch_1_reciprocal.dispose()
+        this.spaceStretch_01_reciprocal.dispose()
     }
 
     update(context: FieldPointTensorStatementContext): FieldPointTensorStatementResult {
@@ -80,10 +81,10 @@ export class FieldPointTensorStatementDiffusion<
         }
 
         const sum = <tf.Tensor<R>>tf.addN([
-            diffuse([[0, 0], [0, 1]], this.spaceStretch_x_reciprocal),
-            diffuse([[0, 1], [0, 0]], this.spaceStretch_y_reciprocal),
-            diffuse([[0, 1], [0, 1]], this.spaceStretch_xy_reciprocal),
-            diffuse([[1, 0], [0, 1]], this.spaceStretch_xy_reciprocal),
+            diffuse([[0, 0], [0, 1]], this.spaceStretch_1_reciprocal),
+            diffuse([[0, 1], [0, 0]], this.spaceStretch_0_reciprocal),
+            diffuse([[0, 1], [0, 1]], this.spaceStretch_01_reciprocal),
+            diffuse([[1, 0], [0, 1]], this.spaceStretch_01_reciprocal),
         ])
 
         return {

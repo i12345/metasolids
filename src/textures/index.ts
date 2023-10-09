@@ -1,4 +1,5 @@
 export * from './texture.js'
+export * from './tensor-factory.js'
 export * from './render-texture.js'
 export * from './textures/index.js'
 export * as factories from './factories/index.js'

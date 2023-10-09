@@ -107,7 +107,7 @@ export class BitmapTexture<
     
     constructor(
         public readonly data: SampleVector,
-        public readonly shape: Vec2,
+        public readonly resolution: Vec2,
         public readonly field: Field<Sample, SampleElementType, SampleFuseMode>,
         public readonly dtype?: tf.NumericDataType
     ) { }
@@ -115,24 +115,24 @@ export class BitmapTexture<
     init(context: SingularContext): void {
         this.iterator = vectorIterator(this.field.elementType, isDynamicVector(this.field.elementType, this.data), context[MultiObjectsIDsKey])
         
-        if (!Number.isInteger(this.shape.x) || !Number.isInteger(this.shape.y))
+        if (!Number.isInteger(this.resolution.x) || !Number.isInteger(this.resolution.y))
             throw new Error("shape lengths must be integers")
 
-        if (this.shape.x * this.shape.y !== this.iterator.length(this.data, this.data))
+        if (this.resolution.x * this.resolution.y !== this.iterator.length(this.data, this.data))
             throw new Error("shape does not match data resolution")
     }
 
     @vectorized(BitmapTexture.prototype.indexOf_vectorized)
     indexOf(uv: Vec2) {
-        return Math.floor(uv.x * this.shape.x) + (this.shape.x * Math.floor(uv.y * this.shape.y))
+        return Math.floor(uv.x * this.resolution.x) + (this.resolution.x * Math.floor(uv.y * this.resolution.y))
     }
 
     indexOf_vectorized(uvs: FieldPointVectorStatic<Vec2>): FieldPointVectorStatic<number, IndicesTypedArray> {
         const n = uvs.length / 2
         const indices = new Uint32Array(n)
 
-        const w = this.shape.x
-        const h = this.shape.y
+        const w = this.resolution.x
+        const h = this.resolution.y
         
         let i_uv = 0
         for (let i = 0; i < n; i++)
@@ -238,9 +238,9 @@ export class BitmapTexture<
     }
 
     render(resolution: Vec2, context: SingularContext): tensor.FieldPointTensor2D<SampleElementType> {
-        const encoded = field_point_tensor_encode<SampleElementType, tf.Rank.R2>(this.field.elementType, [this.shape.y, this.shape.x], this.dtype, this.data)
+        const encoded = field_point_tensor_encode<SampleElementType, tf.Rank.R2>(this.field.elementType, [this.resolution.y, this.resolution.x], this.dtype, this.data)
         
-        if (resolution.equals(this.shape))
+        if (resolution.equals(this.resolution))
             return encoded
         else {
             return field_point_tensor_map<SampleElementType, tf.Rank.R2, tf.Tensor2D>(
@@ -327,15 +327,29 @@ export class IntegerCoordBitmapTexture<
         SingularContext,
         VectorContext
     > {
+    constructor(
+            data: SampleVector,
+            resolution: Vec2,
+            field: Field<Sample, SampleElementType, SampleFuseMode>,
+            dtype?: tf.NumericDataType
+        ) {
+        super(
+            data,
+            resolution,
+            field,
+            dtype
+        )
+    }
+    
     indexOf(uv: Vec2): number {
-        return uv.x + (this.shape.x * uv.y)
+        return uv.x + (this.resolution.x * uv.y)
     }
 
     indexOf_vectorized(uvs: FieldPointVectorStatic<Vec2>): FieldPointVectorStatic<number, IndicesTypedArray> {
         const n = uvs.length / 2
         const indices = new Uint32Array(n)
 
-        const w = this.shape.x
+        const w = this.resolution.x
         
         let i_uv = 0
         for (let i = 0; i < n; i++)

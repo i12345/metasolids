@@ -7,6 +7,8 @@ import { VolumeSample, VolumeLocation, Volume, VolumeSamplingContext } from "../
 import { SolidProcessingContext } from "./processor.js"
 import { Solid } from "./solid.js"
 import { IndicesTypedArray } from "../utils/indices-array.js"
+import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js"
+import { NumberTypedArray } from "../utils/typed-array.js"
 
 export const VolumeSolidsKey = Symbol('volume.solids')
 
@@ -26,6 +28,10 @@ export interface VolumeProcessingWithSolids<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<
@@ -62,11 +68,11 @@ export interface VolumeProcessingWithSolids<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SolidT extends
-            Solid<IndicesT, VolumeSampleElementType, SurfaceT> =
-            Solid<IndicesT, VolumeSampleElementType, SurfaceT>
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT> =
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT>
     > extends
     VolumeProcessing<
             VolumeLocationT,
@@ -90,6 +96,10 @@ export type VolumeSolidProcessing<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<
@@ -126,11 +136,11 @@ export type VolumeSolidProcessing<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SolidT extends
-            Solid<IndicesT, VolumeSampleElementType, SurfaceT> =
-            Solid<IndicesT, VolumeSampleElementType, SurfaceT>,
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT> =
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT>,
         VolumeProcessingT extends
             VolumeProcessingWithSolids<
                     IndicesT,
@@ -140,6 +150,8 @@ export type VolumeSolidProcessing<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -154,6 +166,8 @@ export type VolumeSolidProcessing<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -226,6 +240,10 @@ export interface VolumeSolidProcessor<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<
@@ -262,14 +280,14 @@ export interface VolumeSolidProcessor<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         SolidT extends
-            Solid<IndicesT, VolumeSampleElementType, SurfaceT> =
-            Solid<IndicesT, VolumeSampleElementType, SurfaceT>,
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT> =
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT>,
         SolidProcessingContextT extends
             SolidProcessingContext<
                     VolumeSampleProcessingContextT,
@@ -288,6 +306,8 @@ export interface VolumeSolidProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -302,6 +322,8 @@ export interface VolumeSolidProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -331,6 +353,8 @@ export interface VolumeSolidProcessor<
                 VolumeSampleT,
                 VolumeSampleElementType,
                 VolumeSampleFuseMode,
+                VolumeSampleContainer,
+                VolumeSampleVector,
                 VolumeSampleProcessingContextT,
                 VolumeSamplingContextT,
                 VolumeT,

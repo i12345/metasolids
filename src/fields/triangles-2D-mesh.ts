@@ -271,8 +271,15 @@ export type TriangleCollisionHandler = (tri: number, w1: number, w2: number) => 
 export type TriangleCollision = { tri: number, w1: number, w2: number }
 export type TriangleCollisionVector = {
     tri: IndicesTypedArray
-    w1: Float64Array | Float32Array
-    w2: Float64Array | Float32Array
+    w1: Float64Array
+    w2: Float64Array
+}
+
+export type TriangleCollisionVectorTF = {
+    invalid: Uint8Array
+    tri: Int32Array
+    w1: Float32Array
+    w2: Float32Array
 }
 
 export class Triangles2DMeshCollider {
@@ -363,6 +370,116 @@ export class Triangles2DMeshCollider {
             return undefined
 
         return this.cells[cell.x + (cell.y * this.resolution)].collision_first(p)
+    }
+
+    collide_first_vectorized_tensor(p: FieldPointVector<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>): TriangleCollisionVectorTF {
+        const { v0, tri_vec_inv, margin } = this.mesh
+        const margin_min = -margin, margin_max = 1 + margin
+        const resolution = this.resolution
+
+        const bounds_origin_x = this.mesh.bounds.origin.x
+        const bounds_origin_y = this.mesh.bounds.origin.y
+        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
+        const resolution_div_bounds_size_x = resolution / this.mesh.bounds.size.x
+
+        let p_x: number, p_y: number
+        let cell_x: number, cell_y: number
+        const cells_filtered_triangles = this.cells.map(cell => cell.filtered_triangles)
+
+        let collided: boolean
+        
+        let v0_x: number, v0_y: number
+        let x: number, y: number
+        let tri_vec_inv_i: number
+        let tri_vec_inv_a: number,
+            tri_vec_inv_b: number,
+            tri_vec_inv_c: number,
+            tri_vec_inv_d: number
+        
+        let tri: number, w1: number, w2: number
+        let tri_indices: IndicesTypedArray
+        let tri_n: number
+
+        const length = p.length / 2
+
+        const result: TriangleCollisionVectorTF = {
+            invalid: new Uint8Array(length),
+            tri: new Int32Array(length),
+            w1: new Float32Array(length),
+            w2: new Float32Array(length),
+        }
+        const result_invalid = result.invalid
+        const result_tri = result.tri
+        const result_tri_invalid = 0
+        const result_w1 = result.w1
+        const result_w2 = result.w2
+        
+        for (let p_i = 0; p_i < length; p_i++) {
+            p_x = p[(2 * p_i) + 0]
+            p_y = p[(2 * p_i) + 1]
+
+            cell_x = Math.floor((p_x - bounds_origin_x) * resolution_div_bounds_size_x)
+            cell_y = Math.floor((p_y - bounds_origin_y) * resolution_div_bounds_size_y)
+
+            if (cell_x < 0 || cell_x >= resolution ||
+                cell_y < 0 || cell_y >= resolution ||
+                isNaN(cell_x) || isNaN(cell_y)) {
+                result_invalid[p_i] = 0xFF
+                result_tri[p_i] = result_tri_invalid
+                result_w1[p_i] = NaN
+                result_w2[p_i] = NaN
+                
+                continue
+            }
+
+            tri_indices = cells_filtered_triangles[cell_x + (resolution * cell_y)]
+            tri_n = tri_indices.length
+            tri_vec_inv_i = 0
+
+            collided = false
+
+            for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+                tri = tri_indices[tri_i]
+
+                v0_x = v0[(2 * tri) + 0]
+                v0_y = v0[(2 * tri) + 1]
+
+                x = p_x - v0_x
+                y = p_y - v0_y
+
+                tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
+
+                w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+                w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+
+                if (w1 < margin_min || w2 < margin_min ||
+                    w1 + w2 > margin_max)
+                    continue
+                
+                if (w1 < 0) w1 = 0
+                else if (w1 + w2 >= 1) w1 = 1 - w2
+
+                if (w2 < 0) w2 = 0
+
+                result_tri[p_i] = tri
+                result_w1[p_i] = w1
+                result_w2[p_i] = w2
+                collided = true
+                break
+            }
+
+            if (!collided) {
+                result_invalid[p_i] = 0xFF
+                result_tri[p_i] = result_tri_invalid
+                result_w1[p_i] = NaN
+                result_w2[p_i] = NaN
+            }
+        }
+
+        return result
     }
 
     collide_first_vectorized(p: FieldPointVector<Vec2, FieldPointVectorContainerStatic<NumberTypedArray>>): TriangleCollisionVector {
@@ -471,15 +588,15 @@ export class Triangles2DMeshCollider {
         return result
     }
 
-    render(render_resolution: number, outputTFtypes = true): TriangleCollisionVector {
+    render<OutputTF extends boolean = true>(render_resolution: Vec2, outputTFtypes: OutputTF = <OutputTF>true): OutputTF extends true ? TriangleCollisionVectorTF : TriangleCollisionVector {
         const { v0, tri_vec_inv, margin } = this.mesh
         const margin_min = -margin, margin_max = 1 + margin
         const resolution = this.resolution
 
         const bounds_origin_x = this.mesh.bounds.origin.x
         const bounds_origin_y = this.mesh.bounds.origin.y
-        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
-        const resolution_div_bounds_size_x = resolution / this.mesh.bounds.size.x
+        const bounds_size_y = this.mesh.bounds.size.y
+        const bounds_size_x = this.mesh.bounds.size.x
 
         let p_x: number, p_y: number
         let cell_x: number, cell_y: number
@@ -499,28 +616,46 @@ export class Triangles2DMeshCollider {
         let tri_indices: IndicesTypedArray
         let tri_n: number
 
-        const length = render_resolution ** 2
+        const render_resolution_x = render_resolution.x
+        const render_resolution_y = render_resolution.y
+        const length = render_resolution_x * render_resolution_y
 
-        const result: TriangleCollisionVector = {
-            tri: new (outputTFtypes ? Int32Array : indicesArrayType(this.mesh.triangles.length / 3))(length),
-            w1: new (outputTFtypes ? Float32Array : Float64Array)(length),
-            w2: new (outputTFtypes ? Float32Array : Float64Array)(length),
-        }
+        const result_invalid = new Uint8Array(length)
+
+        const result = <OutputTF extends true ? TriangleCollisionVectorTF : TriangleCollisionVector>(outputTFtypes ?
+            {
+                invalid: result_invalid,
+                tri: new Int32Array(length),
+                w1: new Float32Array(length),
+                w2: new Float32Array(length),
+            } : {
+                tri: new (indicesArrayType(this.mesh.triangles.length / 3))(length),
+                w1: new Float64Array(length),
+                w2: new Float64Array(length),
+            }
+        )
         const result_tri = result.tri
-        const result_tri_invalid = invalidIndex(<IndicesTypedArray>result_tri)
+        const result_tri_invalid = outputTFtypes ? 0 : invalidIndex(<IndicesTypedArray>result_tri)
         const result_w1 = result.w1
         const result_w2 = result.w2
         
-        for (let p_i = 0; p_i < length; p_i++) {
-            p_x = p_i % render_resolution
-            p_y = Math.floor(p_i / render_resolution)
+        const bounds_size_x_div_render_resolution_x = bounds_size_x / render_resolution_x
+        const bounds_size_y_div_render_resolution_y = bounds_size_y / render_resolution_y
 
-            cell_x = Math.floor((p_x - bounds_origin_x) * resolution_div_bounds_size_x)
-            cell_y = Math.floor((p_y - bounds_origin_y) * resolution_div_bounds_size_y)
+        const resolution_div_render_resolution_x = resolution / render_resolution_x
+        const resolution_div_render_resolution_y = resolution / render_resolution_y
+
+        for (let p_i = 0; p_i < length; p_i++) {
+            p_x = ((p_i % render_resolution_x) * bounds_size_x_div_render_resolution_x) + bounds_origin_x
+            p_y = (Math.floor(p_i / render_resolution_x) * bounds_size_y_div_render_resolution_y) + bounds_origin_y
+
+            cell_x = Math.floor((p_i % render_resolution_x) * resolution_div_render_resolution_x)
+            cell_y = Math.floor(Math.floor(p_i / render_resolution_x) * resolution_div_render_resolution_y)
 
             if (cell_x < 0 || cell_x >= resolution ||
                 cell_y < 0 || cell_y >= resolution ||
                 isNaN(cell_x) || isNaN(cell_y)) {
+                result_invalid[p_i] = 0xFF
                 result_tri[p_i] = result_tri_invalid
                 result_w1[p_i] = NaN
                 result_w2[p_i] = NaN
@@ -568,6 +703,7 @@ export class Triangles2DMeshCollider {
             }
 
             if (!collided) {
+                result_invalid[p_i] = 0xFF
                 result_tri[p_i] = result_tri_invalid
                 result_w1[p_i] = NaN
                 result_w2[p_i] = NaN

@@ -48,14 +48,16 @@ export interface PerRankLookup<T> {
 
 export type PerRank<T, R extends tf.Rank> = PerRankLookup<T>[R]
 
-export interface ScalarNLookup {
-    [tf.Rank.R0]: never
-    [tf.Rank.R1]: number
-    [tf.Rank.R2]: Vec2
-    [tf.Rank.R3]: Vec3
-    [tf.Rank.R4]: Vec4
-    [tf.Rank.R5]: never
-    [tf.Rank.R6]: never
+export interface PerRankLookupArtificialObject<T> {
+    [tf.Rank.R0]: {}
+    [tf.Rank.R1]: { [0]: T }
+    [tf.Rank.R2]: { [0]: T, [1]: T }
+    [tf.Rank.R3]: { [0]: T, [1]: T, [2]: T }
+    [tf.Rank.R4]: { [0]: T, [1]: T, [2]: T, [3]: T }
+    [tf.Rank.R5]: { [0]: T, [1]: T, [2]: T, [3]: T, [4]: T }
+    [tf.Rank.R6]: { [0]: T, [1]: T, [2]: T, [3]: T, [4]: T, [5]: T }
 }
 
-export type ScalarN<R extends tf.Rank> = ScalarNLookup[R]
+export type PerRankArtificialObject<T, R extends tf.Rank> = PerRankLookupArtificialObject<T>[R]
+
+export type ScalarN<R extends tf.Rank> = PerRankArtificialObject<number, R>

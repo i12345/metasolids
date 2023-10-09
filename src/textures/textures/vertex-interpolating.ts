@@ -96,25 +96,13 @@ export class VertexInterpolatingTexture<
     }
 
     render(resolution: Vec2, context: Context): tensor.FieldPointTensor2D<VertexSampleElementType> {
-        const render_resolution = Math.max(resolution.y, resolution.x)
-        const collision = this.collider!.render(render_resolution, true)
+        const collision = this.collider!.render(resolution, false)
         const interpolated = this.interpolator!.interpolate_vectorized(collision.tri, collision.w1, collision.w2)
-        const tensor = field_point_tensor_encode(
+        return field_point_tensor_encode(
             this.field.elementType,
-            [render_resolution, render_resolution],
+            [resolution.y, resolution.x],
             undefined,
             interpolated
-        )
-        
-        if (resolution.x === resolution.y && resolution.x === render_resolution)
-            return <tensor.FieldPointTensor2D<VertexSampleElementType>>tensor
-        else return field_point_tensor_map(
-            this.field.elementType,
-            tensor,
-            raw => tf.image.resizeBilinear(
-                <tf.Tensor3D>raw.expandDims(0),
-                [resolution.y, resolution.x]
-            ).squeeze([0])
         )
     }
 

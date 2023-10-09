@@ -23,8 +23,8 @@ export abstract class FactoryProcessor<
         Context = any,
     > implements Processor<Item, Context> {
     constructor(
-        public readonly template: FactoryTemplate<Inputs, Outputs>,
-        public readonly mappings: FactoryMappings<Inputs, Outputs> = {
+        public template: FactoryTemplate<Inputs, Outputs>,
+        public mappings: FactoryMappings<Inputs, Outputs> = {
             inputs: mapGroups(template.inputs, () => <PropertyPath>undefined!),
             outputs: mapGroups(template.outputs, () => <PropertyPath>undefined!),
         }

@@ -23,10 +23,10 @@ describe(fullname(VolumeWithSurfacesTriangleRayCollider), () => {
                 1, 1, 0,
                 0, 1, 0,
             ]),
-            triangles: [
+            triangles: new Uint32Array([
                 0, 1, 2,
                 0, 2, 3,
-            ],
+            ]),
             dualCellReferences: {
                 layers: undefined!,
                 localIndices: undefined!

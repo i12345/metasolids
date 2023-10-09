@@ -14,6 +14,8 @@ import { groupPaths } from "../paradigm/trees/index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { processing } from "../paradigm/index.js"
 import '@tensorflow/tfjs-node'
+import { tensor } from "../fields/index.js"
+import { FieldPointVectorContainerStatic } from "../fields/vectorized/point.js"
 
 describe("playcanvas-node", () => {
     let jsdomCleanup: Function
@@ -114,6 +116,71 @@ describe("playcanvas-node", () => {
         ]
     }
 
+    function spaceStretchTexturer(): processing.processors.FactoryProcessor[] {
+        return [
+            new textures.factories.RemappedTextureFactory(
+                [
+                    {
+                        from: [0],
+                        to: []
+                    }
+                ],
+                {
+                    inputs: [surfaces.texturing.SpaceStretchKey],
+                    outputs: ['material', 'textures', 'color']
+                }
+            )
+        ]
+    }
+
+    function RDtexturer1(): processing.processors.FactoryProcessor[] {
+        const [width, height] = [256, 256]
+        const resolution = new Vec2(width, height)
+
+        const a = new tensor.FieldPointTensorVariable(
+            Number,
+            [["width"], ["height"]]
+        )
+
+        const b = new tensor.FieldPointTensorVariable(
+            Number,
+            [["width"], ["height"]]
+        )
+
+        function a_initial() {
+            const data = new Float32Array(width * height)
+            data.fill(0.1)
+
+            for (let i = 0; i < 10; i++) {
+                const x = (width / 2) + 3 * i
+                const y = (height / 2) + 5 * Math.cos(0.1 * i)
+                data[x + (width * y)] = 0.5
+            }
+                
+            return data
+        }
+
+        const a_texture = new textures.BitmapTexture<
+                textures.TextureLocation,
+                textures.TextureLocation,
+                textures.TextureLocation,
+                Float32Array,
+                number,
+                number,
+                number,
+                Float32Array
+            >(a_initial(), resolution, fields.fields.ScalarField.instance)
+        
+        // const system = new tensor.FieldPointTensorSystem(
+        //     [a, b],
+        //     new tensor.FieldPointTensorStatementDiffusion(a, )
+        // )
+        
+        return [
+
+        ]
+    }
+
     function testShape(
             name: string,
             number_entities: number,
@@ -152,9 +219,11 @@ describe("playcanvas-node", () => {
         })
     }
 
+    const texturers = spaceStretchTexturer
+
     testShape("one sphere", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
-    }, uvTexturers)
+    }, texturers)
 
     testShape("multiple spheres", 3, (entity1, component1, component2, component3, component4) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
@@ -172,11 +241,11 @@ describe("playcanvas-node", () => {
         // entity1.addChild(component4.entity)
         // component4.entity.setLocalPosition(1, 1, 0)
         // component4.entity.setLocalScale(0.8, 0.8, 0.6)
-    }, uvTexturers)
+    }, texturers)
 
     testShape("plane", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaPlane({ offset: Vec2.ZERO, size: Vec2.ONE })) as unknown as physicalEntity.VolumeT
-    }, uvTexturers)
+    }, texturers)
 
     testShape("spline 1", 2, (entity1, component1, component2) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(
@@ -212,7 +281,7 @@ describe("playcanvas-node", () => {
                 )
             )
         ) as unknown as physicalEntity.VolumeT
-    }, uvTexturers)
+    }, texturers)
 
     testShape("spline 2", 3, (entity1, component1, component2, component3) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(
@@ -266,7 +335,7 @@ describe("playcanvas-node", () => {
                 )
             )
         ) as unknown as physicalEntity.VolumeT
-    })
+    }, texturers)
 
     testShape("spline 3", 4, (entity1, component1, component2, component3, component4) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(
@@ -338,5 +407,5 @@ describe("playcanvas-node", () => {
                 )
             )
         ) as unknown as physicalEntity.VolumeT
-    })
+    }, texturers)
 })

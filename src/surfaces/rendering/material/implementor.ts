@@ -932,349 +932,349 @@ export function* material_group_implementations<
         vertexColors: <keyof StandardMaterial | keyof BasicMaterial>((implementation.semantics?.vertexColors === MaterialGroup_ImplementationType_NotSupported ? undefined : implementation.semantics?.vertexColors) ?? `${implementation.name}VertexColor`),
     }
 
-    if (implementation.mixing?.products ||
-        (implementation.mixing?.detailMap &&
-            (implementation.mixing.detailMap.multiply !== false))) {
-        const canUse3factors =
-            semantics.constant &&
-            semantics.texture &&
-            semantics.vertexColors
+    // if (implementation.mixing?.products ||
+    //     (implementation.mixing?.detailMap &&
+    //         (implementation.mixing.detailMap.multiply !== false))) {
+    //     const canUse3factors =
+    //         semantics.constant &&
+    //         semantics.texture &&
+    //         semantics.vertexColors
 
-        const factors = bestDecomposition(
-            texture,
-            canUse3factors ? 3 : 2,
-            composite => composite.isCompositeArithmetic(ArithmeticPrimitiveFuseModeOp.multiply),
-            components => <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
-                ArithmeticPrimitiveFuseModeOp.multiply,
-                texture.field,
-                ...(<any[]>components)
-            )
-        )
+    //     const factors = bestDecomposition(
+    //         texture,
+    //         canUse3factors ? 3 : 2,
+    //         composite => composite.isCompositeArithmetic(ArithmeticPrimitiveFuseModeOp.multiply),
+    //         components => <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
+    //             ArithmeticPrimitiveFuseModeOp.multiply,
+    //             texture.field,
+    //             ...(<any[]>components)
+    //         )
+    //     )
 
-        if (factors.length >= 2) {
-            const qualityMetrics = factors.map(([, texture]) =>
-                qualityMetrics_compute<Objects, ObjIDsT, VolumeLocationT>(
-                    mesh,
-                    texture,
-                    textureContext,
-                    UVunwrapping,
-                    implementation
-                )
-            )
+    //     if (factors.length >= 2) {
+    //         const qualityMetrics = factors.map(([, texture]) =>
+    //             qualityMetrics_compute<Objects, ObjIDsT, VolumeLocationT>(
+    //                 mesh,
+    //                 texture,
+    //                 textureContext,
+    //                 UVunwrapping,
+    //                 implementation
+    //             )
+    //         )
 
-            const implementation_tint: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT> = (
-                implementation.mixing?.products?.tint_flag ?
-                    new MaterialSemanticImplementation_Setting(
-                        <keyof StandardMaterial>`${implementation.name}Tint`,
-                        true,
-                        Math.max(0, ...factors.map(([stage]) => stage))
-                    ) :
-                    MaterialSemanticImplementation_None.instance as unknown as MaterialSemanticImplementation_None<Objects, ObjIDsT, VolumeLocationT>
-            )
+    //         const implementation_tint: MaterialSemanticImplementation_Immediate<Objects, ObjIDsT, VolumeLocationT> = (
+    //             implementation.mixing?.products?.tint_flag ?
+    //                 new MaterialSemanticImplementation_Setting(
+    //                     <keyof StandardMaterial>`${implementation.name}Tint`,
+    //                     true,
+    //                     Math.max(0, ...factors.map(([stage]) => stage))
+    //                 ) :
+    //                 MaterialSemanticImplementation_None.instance as unknown as MaterialSemanticImplementation_None<Objects, ObjIDsT, VolumeLocationT>
+    //         )
 
-            if (factors.length === 3) {
-                for (const factor_index_constant of [1, 2, 3]) {
-                    const implementation_constant = new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
-                        semantics.constant,
-                        qualityMetrics[factor_index_constant].meanValue,
-                        implementation.channels,
-                        factors[factor_index_constant][0],
-                        qualityMetrics[factor_index_constant].constancy
-                    )
+    //         if (factors.length === 3) {
+    //             for (const factor_index_constant of [1, 2, 3]) {
+    //                 const implementation_constant = new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
+    //                     semantics.constant,
+    //                     qualityMetrics[factor_index_constant].meanValue,
+    //                     implementation.channels,
+    //                     factors[factor_index_constant][0],
+    //                     qualityMetrics[factor_index_constant].constancy
+    //                 )
 
-                    const factor_indices_vertexColor = [1, 2, 3]
-                    factor_indices_vertexColor.splice(factor_index_constant, 1)
-                    for (const factor_index_vertexColors of factor_indices_vertexColor) {
-                        const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT, TexelTypeT>(
-                            semantics.vertexColors,
-                            factors[factor_index_vertexColors][1],
-                            factors[factor_index_vertexColors][0],
-                            group,
-                            implementation.channels,
-                            mesh.vertices.length,
-                            qualityMetrics[factor_index_vertexColors].triangleMonotonicity
-                        )
+    //                 const factor_indices_vertexColor = [1, 2, 3]
+    //                 factor_indices_vertexColor.splice(factor_index_constant, 1)
+    //                 for (const factor_index_vertexColors of factor_indices_vertexColor) {
+    //                     const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT, TexelTypeT>(
+    //                         semantics.vertexColors,
+    //                         factors[factor_index_vertexColors][1],
+    //                         factors[factor_index_vertexColors][0],
+    //                         group,
+    //                         implementation.channels,
+    //                         mesh.vertices.length,
+    //                         qualityMetrics[factor_index_vertexColors].triangleMonotonicity
+    //                     )
 
-                        const factor_index_texture = [1, 2, 3].find(x => !([factor_index_constant, factor_index_vertexColors].includes(x)))!
-                        for (const texture_resolution of texture_resolutions) {
-                            ///@ts-ignore
-                            const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
-                                semantics.texture,
-                                factors[factor_index_texture][1],
-                                factors[factor_index_texture][0],
-                                group,
-                                texture_resolution,
-                                implementation.channels,
-                                qualityMetrics[factor_index_texture].effectiveTexelSizeUV,
-                                texture_hdr,
-                                sideEffects_texture
-                            )
+    //                     const factor_index_texture = [1, 2, 3].find(x => !([factor_index_constant, factor_index_vertexColors].includes(x)))!
+    //                     for (const texture_resolution of texture_resolutions) {
+    //                         ///@ts-ignore
+    //                         const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
+    //                             semantics.texture,
+    //                             factors[factor_index_texture][1],
+    //                             factors[factor_index_texture][0],
+    //                             group,
+    //                             texture_resolution,
+    //                             implementation.channels,
+    //                             qualityMetrics[factor_index_texture].effectiveTexelSizeUV,
+    //                             texture_hdr,
+    //                             sideEffects_texture
+    //                         )
 
-                            ///@ts-ignore
-                            yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
-                                implementation_tint,
-                                implementation_constant,
-                                implementation_vertexColors,
-                                implementation_texture,
-                                ...sideEffects_general
-                            ])
-                        }
-                    }
-                }
-            }
+    //                         ///@ts-ignore
+    //                         yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+    //                             implementation_tint,
+    //                             implementation_constant,
+    //                             implementation_vertexColors,
+    //                             implementation_texture,
+    //                             ...sideEffects_general
+    //                         ])
+    //                     }
+    //                 }
+    //             }
+    //         }
 
-            if (implementation.mixing.products?.texture_and_vertexColors ||
-                implementation.mixing.products?.constant_and_texture_or_vertexColors ||
-                (implementation.mixing.detailMap &&
-                    (implementation.mixing.detailMap.multiply !== false))) {
+    //         if (implementation.mixing.products?.texture_and_vertexColors ||
+    //             implementation.mixing.products?.constant_and_texture_or_vertexColors ||
+    //             (implementation.mixing.detailMap &&
+    //                 (implementation.mixing.detailMap.multiply !== false))) {
 
-                const factor_0 = factors[0]
-                const factor_1 = factors.length === 2 ?
-                    factors[1] :
-                    [
-                        Math.max(factors[1][0], factors[2][0]),
-                        <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
-                            ArithmeticPrimitiveFuseModeOp.multiply,
-                            <any>factors[1][1],
-                            <any>factors[2][1]
-                        )
-                    ] as StageAndTexture
+    //             const factor_0 = factors[0]
+    //             const factor_1 = factors.length === 2 ?
+    //                 factors[1] :
+    //                 [
+    //                     Math.max(factors[1][0], factors[2][0]),
+    //                     <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
+    //                         ArithmeticPrimitiveFuseModeOp.multiply,
+    //                         <any>factors[1][1],
+    //                         <any>factors[2][1]
+    //                     )
+    //                 ] as StageAndTexture
 
-                const qualityMetrics_0 = qualityMetrics[0]
-                const qualityMetrics_1 = factors.length === 2 ?
-                    qualityMetrics[1] : qualityMetrics_combine(qualityMetrics[1], qualityMetrics[2])
+    //             const qualityMetrics_0 = qualityMetrics[0]
+    //             const qualityMetrics_1 = factors.length === 2 ?
+    //                 qualityMetrics[1] : qualityMetrics_combine(qualityMetrics[1], qualityMetrics[2])
 
-                if (implementation.mixing.products?.constant_and_texture_or_vertexColors ||
-                    implementation.mixing.products?.texture_and_vertexColors) {
+    //             if (implementation.mixing.products?.constant_and_texture_or_vertexColors ||
+    //                 implementation.mixing.products?.texture_and_vertexColors) {
 
-                    const factors = [factor_0, factor_1]
-                    const qualityMetrics = [qualityMetrics_0, qualityMetrics_1]
+    //                 const factors = [factor_0, factor_1]
+    //                 const qualityMetrics = [qualityMetrics_0, qualityMetrics_1]
 
-                    if (implementation.mixing.products?.constant_and_texture_or_vertexColors) {
-                        for (const factor_index_constant of [0, 1]) {
-                            const factor_index_other = 1 - factor_index_constant
+    //                 if (implementation.mixing.products?.constant_and_texture_or_vertexColors) {
+    //                     for (const factor_index_constant of [0, 1]) {
+    //                         const factor_index_other = 1 - factor_index_constant
 
-                            const implementation_constant = new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
-                                semantics.constant,
-                                qualityMetrics[factor_index_constant].meanValue,
-                                implementation.channels,
-                                factors[factor_index_constant][0],
-                                qualityMetrics[factor_index_constant].constancy
-                            )
+    //                         const implementation_constant = new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
+    //                             semantics.constant,
+    //                             qualityMetrics[factor_index_constant].meanValue,
+    //                             implementation.channels,
+    //                             factors[factor_index_constant][0],
+    //                             qualityMetrics[factor_index_constant].constancy
+    //                         )
 
-                            const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
-                                semantics.vertexColors,
-                                <any>factors[factor_index_other][1],
-                                factors[factor_index_other][0],
-                                group,
-                                implementation.channels,
-                                mesh.vertices.length,
-                                qualityMetrics[factor_index_other].triangleMonotonicity
-                            )
+    //                         const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
+    //                             semantics.vertexColors,
+    //                             <any>factors[factor_index_other][1],
+    //                             factors[factor_index_other][0],
+    //                             group,
+    //                             implementation.channels,
+    //                             mesh.vertices.length,
+    //                             qualityMetrics[factor_index_other].triangleMonotonicity
+    //                         )
 
-                            yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
-                                implementation_constant,
-                                implementation_vertexColors,
-                                implementation_tint,
-                                ...sideEffects_general
-                            ])
+    //                         yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+    //                             implementation_constant,
+    //                             implementation_vertexColors,
+    //                             implementation_tint,
+    //                             ...sideEffects_general
+    //                         ])
 
-                            for (const resolution of texture_resolutions) {
-                                const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
-                                    semantics.texture,
-                                    <any>factors[factor_index_other][1],
-                                    factors[factor_index_other][0],
-                                    group,
-                                    resolution,
-                                    implementation.channels,
-                                    qualityMetrics[factor_index_other].effectiveTexelSizeUV,
-                                    texture_hdr,
-                                    sideEffects_texture
-                                )
+    //                         for (const resolution of texture_resolutions) {
+    //                             const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
+    //                                 semantics.texture,
+    //                                 <any>factors[factor_index_other][1],
+    //                                 factors[factor_index_other][0],
+    //                                 group,
+    //                                 resolution,
+    //                                 implementation.channels,
+    //                                 qualityMetrics[factor_index_other].effectiveTexelSizeUV,
+    //                                 texture_hdr,
+    //                                 sideEffects_texture
+    //                             )
 
-                                yield new MaterialSemanticImplementation_Multi([
-                                    implementation_constant,
-                                    implementation_texture,
-                                    implementation_tint,
-                                    ...sideEffects_general
-                                ])
-                            }
-                        }
-                    }
+    //                             yield new MaterialSemanticImplementation_Multi([
+    //                                 implementation_constant,
+    //                                 implementation_texture,
+    //                                 implementation_tint,
+    //                                 ...sideEffects_general
+    //                             ])
+    //                         }
+    //                     }
+    //                 }
 
-                    if (implementation.mixing.products?.texture_and_vertexColors) {
-                        const sideEffects_tint = implementation.mixing.products.constant_required ? [
-                            new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
-                                semantics.constant,
-                                implementation.channels === 1 ? 1 : Color.WHITE,
-                                implementation.channels,
-                                Math.max(factor_0[0], factor_1[0]),
-                                1
-                            ),
-                            implementation_tint
-                        ] : []
+    //                 if (implementation.mixing.products?.texture_and_vertexColors) {
+    //                     const sideEffects_tint = implementation.mixing.products.constant_required ? [
+    //                         new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
+    //                             semantics.constant,
+    //                             implementation.channels === 1 ? 1 : Color.WHITE,
+    //                             implementation.channels,
+    //                             Math.max(factor_0[0], factor_1[0]),
+    //                             1
+    //                         ),
+    //                         implementation_tint
+    //                     ] : []
 
-                        for (const factor_index_texture of [0, 1]) {
-                            const factor_index_vertexColors = 1 - factor_index_texture
+    //                     for (const factor_index_texture of [0, 1]) {
+    //                         const factor_index_vertexColors = 1 - factor_index_texture
 
-                            const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
-                                semantics.vertexColors,
-                                <any>factors[factor_index_vertexColors][1],
-                                factors[factor_index_vertexColors][0],
-                                group,
-                                implementation.channels,
-                                mesh.vertices.length,
-                                qualityMetrics[factor_index_vertexColors].triangleMonotonicity
-                            )
+    //                         const implementation_vertexColors = new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
+    //                             semantics.vertexColors,
+    //                             <any>factors[factor_index_vertexColors][1],
+    //                             factors[factor_index_vertexColors][0],
+    //                             group,
+    //                             implementation.channels,
+    //                             mesh.vertices.length,
+    //                             qualityMetrics[factor_index_vertexColors].triangleMonotonicity
+    //                         )
 
-                            for (const resolution of texture_resolutions) {
-                                const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
-                                    semantics.texture,
-                                    <any>factors[factor_index_texture][1],
-                                    factors[factor_index_texture][0],
-                                    group,
-                                    resolution,
-                                    implementation.channels,
-                                    qualityMetrics[factor_index_texture].effectiveTexelSizeUV,
-                                    texture_hdr,
-                                    sideEffects_texture
-                                )
+    //                         for (const resolution of texture_resolutions) {
+    //                             const implementation_texture = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
+    //                                 semantics.texture,
+    //                                 <any>factors[factor_index_texture][1],
+    //                                 factors[factor_index_texture][0],
+    //                                 group,
+    //                                 resolution,
+    //                                 implementation.channels,
+    //                                 qualityMetrics[factor_index_texture].effectiveTexelSizeUV,
+    //                                 texture_hdr,
+    //                                 sideEffects_texture
+    //                             )
 
-                                yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
-                                    implementation_texture,
-                                    implementation_vertexColors,
-                                    ...sideEffects_tint,
-                                    ...sideEffects_general
-                                ])
-                            }
-                        }
-                    }
-                }
+    //                             yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+    //                                 implementation_texture,
+    //                                 implementation_vertexColors,
+    //                                 ...sideEffects_tint,
+    //                                 ...sideEffects_general
+    //                             ])
+    //                         }
+    //                     }
+    //                 }
+    //             }
 
-                if (implementation.mixing.detailMap && (implementation.mixing.detailMap.multiply !== false)) {
-                    const sideEffects_detailMode = (implementation.mixing.detailMap.multiply || implementation.mixing.detailMap.add) ?
-                        [new MaterialSemanticImplementation_Setting<Objects, ObjIDsT, VolumeLocationT>(
-                            `${implementation.name}DetailMode` as keyof StandardMaterial,
-                            DETAILMODE_MUL,
-                            0 //?
-                        )] : []
+    //             if (implementation.mixing.detailMap && (implementation.mixing.detailMap.multiply !== false)) {
+    //                 const sideEffects_detailMode = (implementation.mixing.detailMap.multiply || implementation.mixing.detailMap.add) ?
+    //                     [new MaterialSemanticImplementation_Setting<Objects, ObjIDsT, VolumeLocationT>(
+    //                         `${implementation.name}DetailMode` as keyof StandardMaterial,
+    //                         DETAILMODE_MUL,
+    //                         0 //?
+    //                     )] : []
 
-                    // Although, with the normal map, it can be decomposed into
-                    // the sum of two (scalar * texture) products, since the
-                    // normal map is generated from the height map, the height
-                    // map has no optimizations like this, and no other texture
-                    // can be decomposed like this, this kind of decomposition
-                    // won't be supported.
+    //                 // Although, with the normal map, it can be decomposed into
+    //                 // the sum of two (scalar * texture) products, since the
+    //                 // normal map is generated from the height map, the height
+    //                 // map has no optimizations like this, and no other texture
+    //                 // can be decomposed like this, this kind of decomposition
+    //                 // won't be supported.
 
-                    if (sideEffects_texture?.length > 0)
-                        throw new Error()
+    //                 if (sideEffects_texture?.length > 0)
+    //                     throw new Error()
 
-                    for (const resolution_0 of texture_resolutions) {
-                        const implementation_0 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
-                            semantics.texture,
-                            factor_0[1],
-                            factor_0[0],
-                            group,
-                            resolution_0,
-                            implementation.channels,
-                            qualityMetrics_0.effectiveTexelSizeUV,
-                            texture_hdr,
-                            sideEffects_texture
-                        )
+    //                 for (const resolution_0 of texture_resolutions) {
+    //                     const implementation_0 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
+    //                         semantics.texture,
+    //                         factor_0[1],
+    //                         factor_0[0],
+    //                         group,
+    //                         resolution_0,
+    //                         implementation.channels,
+    //                         qualityMetrics_0.effectiveTexelSizeUV,
+    //                         texture_hdr,
+    //                         sideEffects_texture
+    //                     )
 
-                        for (const resolution_1 of texture_resolutions) {
-                            const implementation_1 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
-                                <keyof StandardMaterial>`${implementation.name}DetailMap`,
-                                <any>factor_1[1],
-                                factor_1[0],
-                                group,
-                                resolution_1,
-                                implementation.channels,
-                                qualityMetrics_1.effectiveTexelSizeUV,
-                                texture_hdr,
-                                sideEffects_texture
-                            )
+    //                     for (const resolution_1 of texture_resolutions) {
+    //                         const implementation_1 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
+    //                             <keyof StandardMaterial>`${implementation.name}DetailMap`,
+    //                             <any>factor_1[1],
+    //                             factor_1[0],
+    //                             group,
+    //                             resolution_1,
+    //                             implementation.channels,
+    //                             qualityMetrics_1.effectiveTexelSizeUV,
+    //                             texture_hdr,
+    //                             sideEffects_texture
+    //                         )
 
-                            yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
-                                implementation_0,
-                                implementation_1,
-                                ...sideEffects_detailMode,
-                                ...sideEffects_general
-                            ])
-                        }
-                    }
-                }
-            }
-        }
-    }
+    //                         yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+    //                             implementation_0,
+    //                             implementation_1,
+    //                             ...sideEffects_detailMode,
+    //                             ...sideEffects_general
+    //                         ])
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
-    if (implementation.mixing?.detailMap?.add) {
-        const terms = bestDecomposition(
-            texture,
-            2,
-            composite => composite.isCompositeArithmetic(ArithmeticPrimitiveFuseModeOp.multiply),
-            components => <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
-                ArithmeticPrimitiveFuseModeOp.multiply,
-                texture.field,
-                ...(<any[]>components)
-            )
-        )
+    // if (implementation.mixing?.detailMap?.add) {
+    //     const terms = bestDecomposition(
+    //         texture,
+    //         2,
+    //         composite => composite.isCompositeArithmetic(ArithmeticPrimitiveFuseModeOp.multiply),
+    //         components => <CompositeTextureT><unknown>MultiObjectsSampleDomain.compositeArithmetic(
+    //             ArithmeticPrimitiveFuseModeOp.multiply,
+    //             texture.field,
+    //             ...(<any[]>components)
+    //         )
+    //     )
 
-        if (terms.length === 2) {
-            const qualityMetrics = terms.map(([, texture]) => qualityMetrics_compute<Objects, ObjIDsT, VolumeLocationT>(
-                mesh,
-                texture,
-                textureContext,
-                UVunwrapping,
-                implementation
-            ))
+    //     if (terms.length === 2) {
+    //         const qualityMetrics = terms.map(([, texture]) => qualityMetrics_compute<Objects, ObjIDsT, VolumeLocationT>(
+    //             mesh,
+    //             texture,
+    //             textureContext,
+    //             UVunwrapping,
+    //             implementation
+    //         ))
 
-            const sideEffect_detailMode =
-                new MaterialSemanticImplementation_Setting<Objects, ObjIDsT, VolumeLocationT>(
-                    `${implementation.name}DetailMode` as keyof StandardMaterial,
-                    DETAILMODE_ADD,
-                    0
-                )
+    //         const sideEffect_detailMode =
+    //             new MaterialSemanticImplementation_Setting<Objects, ObjIDsT, VolumeLocationT>(
+    //                 `${implementation.name}DetailMode` as keyof StandardMaterial,
+    //                 DETAILMODE_ADD,
+    //                 0
+    //             )
 
-            if (sideEffects_texture?.length > 0)
-                throw new Error()
+    //         if (sideEffects_texture?.length > 0)
+    //             throw new Error()
 
-            for (const resolution_0 of texture_resolutions) {
-                const implementation_0 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
-                    semantics.texture,
-                    terms[0][1],
-                    terms[0][0],
-                    group,
-                    resolution_0,
-                    implementation.channels,
-                    qualityMetrics[0].effectiveTexelSizeUV,
-                    texture_hdr,
-                    sideEffects_texture
-                )
+    //         for (const resolution_0 of texture_resolutions) {
+    //             const implementation_0 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
+    //                 semantics.texture,
+    //                 terms[0][1],
+    //                 terms[0][0],
+    //                 group,
+    //                 resolution_0,
+    //                 implementation.channels,
+    //                 qualityMetrics[0].effectiveTexelSizeUV,
+    //                 texture_hdr,
+    //                 sideEffects_texture
+    //             )
 
-                for (const resolution_1 of texture_resolutions) {
-                    const implementation_1 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
-                        <keyof StandardMaterial>`${implementation.name}DetailMap`,
-                        terms[1][1],
-                        terms[1][0],
-                        group,
-                        resolution_1,
-                        implementation.channels,
-                        qualityMetrics[1].effectiveTexelSizeUV,
-                        texture_hdr,
-                        sideEffects_texture
-                    )
+    //             for (const resolution_1 of texture_resolutions) {
+    //                 const implementation_1 = new MaterialSemanticImplementation_Texture<Objects, ObjIDsT, VolumeLocationT>(
+    //                     <keyof StandardMaterial>`${implementation.name}DetailMap`,
+    //                     terms[1][1],
+    //                     terms[1][0],
+    //                     group,
+    //                     resolution_1,
+    //                     implementation.channels,
+    //                     qualityMetrics[1].effectiveTexelSizeUV,
+    //                     texture_hdr,
+    //                     sideEffects_texture
+    //                 )
 
-                    yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
-                        implementation_0,
-                        implementation_1,
-                        sideEffect_detailMode,
-                        ...sideEffects_general
-                    ])
-                }
-            }
-        }
-    }
+    //                 yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+    //                     implementation_0,
+    //                     implementation_1,
+    //                     sideEffect_detailMode,
+    //                     ...sideEffects_general
+    //                 ])
+    //             }
+    //         }
+    //     }
+    // }
 
     const [stage,] = opaqueStagedTexture(<any>texture)
 
@@ -1286,29 +1286,29 @@ export function* material_group_implementations<
             implementation
         )
 
-    yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
-        new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
-                semantics.constant,
-                qualityMetrics.meanValue,
-                implementation.channels,
-                stage,
-                qualityMetrics.constancy
-            ),
-        ...sideEffects_general
-    ])
+    // yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+    //     new MaterialSemanticImplementation_Constant<Objects, ObjIDsT, VolumeLocationT>(
+    //             semantics.constant,
+    //             qualityMetrics.meanValue,
+    //             implementation.channels,
+    //             stage,
+    //             qualityMetrics.constancy
+    //         ),
+    //     ...sideEffects_general
+    // ])
 
-    yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
-        new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
-                semantics.vertexColors,
-                texture,
-                stage,
-                group,
-                implementation.channels,
-                mesh.vertices.length,
-                qualityMetrics.triangleMonotonicity,
-            ),
-        ...sideEffects_general
-    ])
+    // yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([
+    //     new MaterialSemanticImplementation_VertexColors<Objects, ObjIDsT, VolumeLocationT>(
+    //             semantics.vertexColors,
+    //             texture,
+    //             stage,
+    //             group,
+    //             implementation.channels,
+    //             mesh.vertices.length,
+    //             qualityMetrics.triangleMonotonicity,
+    //         ),
+    //     ...sideEffects_general
+    // ])
 
     for (const resolution of texture_resolutions) {
         yield new MaterialSemanticImplementation_Multi<Objects, ObjIDsT, VolumeLocationT>([

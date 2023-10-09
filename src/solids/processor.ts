@@ -1,9 +1,11 @@
 import { Processor } from "../paradigm/processing/index.js"
-import { Surface } from "../surfaces/surface.js"
+import { Surface, SurfaceSample } from "../surfaces/surface.js"
 import { SurfaceProcessingContext, SurfaceProcessor } from "../surfaces/processing.js"
 import { VolumeSample } from "../volumes/volume.js"
 import { Solid } from "./solid.js"
 import { IndicesTypedArray } from "../utils/indices-array.js"
+import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js"
+import { NumberTypedArray } from "../utils/typed-array.js"
 
 export interface SolidProcessingContext<
         SampleProcessingContextT = any,
@@ -17,15 +19,21 @@ export interface SolidProcessingContext<
 
 export interface SolidProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
-        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends VolumeSample = VolumeSample,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         VolumeSampleProcessingContextT = any,
-        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         SolidT extends
-            Solid<IndicesT, VolumeSampleT, SurfaceT> =
-            Solid<IndicesT, VolumeSampleT, SurfaceT>,
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT> =
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT>,
         SolidProcessingContextT extends
             SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> =
             SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT>
@@ -35,31 +43,41 @@ export interface SolidProcessor<
 
 export class SolidSurfaceProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
-        VolumeSampleT extends VolumeSample = VolumeSample,
+        VolumeSampleElementType extends SurfaceSample = SurfaceSample,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
-        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         SolidT extends
-            Solid<IndicesT, VolumeSampleT, SurfaceT> =
-            Solid<IndicesT, VolumeSampleT, SurfaceT>,
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT> =
+            Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT>,
         SolidProcessingContextT extends
             SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT> =
             SolidProcessingContext<VolumeSampleProcessingContextT, SurfaceProcessingContextT>
     > implements
     SolidProcessor<
         IndicesT,
-        VolumeSampleT,
-        VolumeSampleProcessingContextT,
+        VolumeSampleElementType,
+        VolumeSampleContainer,
+        VolumeSampleVector,
         SurfaceT,
+        VolumeSampleProcessingContextT,
         SurfaceProcessingContextT,
         SolidT,
         SolidProcessingContextT
     > {
     constructor(public processor: SurfaceProcessor<
             IndicesT,
-            VolumeSampleT,
+            VolumeSampleElementType,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             SurfaceT,
             SurfaceProcessingContextT

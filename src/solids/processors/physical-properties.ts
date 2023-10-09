@@ -8,8 +8,8 @@ import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { VolumeProcessingWithSolids, VolumeProcessingWithSolidsContext, VolumeSolidProcessing, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../volume-solids.js"
 import { SamplesKey, SamplingKey, SpaceKey, VolumeProcessingWithSampling, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from "../../volumes/sampling/types.js"
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js"
-import { OctTree } from "../../utils/index.js"
-import { FieldPointVectorContainerStatic, FieldPointVectorStatic, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../../fields/vectorized/point.js"
+import { NumberTypedArray, OctTree } from "../../utils/index.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../../fields/vectorized/point.js"
 import { FieldPointType, field_point_new } from "../../fields/type.js"
 import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js"
 import { vectorizedIteratorGetSetLengthCurried } from "../../fields/vectorized/iterators/factory.js"
@@ -40,10 +40,22 @@ export type SolidWithPhysicalProperties<
         PhysicalPropertiesTemplateT extends PhysicalPropertiesTemplate<PhysicalPropertiesTemplateT>,
         PhysicalPropertiesValueT extends FieldPoint = FieldPoint,
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
-        VolumeSampleT extends VolumeSample = VolumeSample,
-        SurfaceT extends Surface<IndicesT, VolumeSampleT> = Surface<IndicesT, VolumeSampleT>
+        VolumeSampleElementType extends VolumeSample = VolumeSample,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
+        SurfaceT extends
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>
     > =
-    SolidWithEnclosingVolume<IndicesT, VolumeSampleT, SurfaceT> &
+    SolidWithEnclosingVolume<
+        IndicesT,
+        VolumeSampleElementType,
+        VolumeSampleContainer,
+        VolumeSampleVector,
+        SurfaceT
+    > &
     TreeByValueMapped<
         PhysicalPropertiesTemplate_Leaf_T,
         PhysicalPropertiesTemplateT,
@@ -71,6 +83,10 @@ export class SolidWithPhysicalPropertiesProcessor<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<
@@ -107,8 +123,8 @@ export class SolidWithPhysicalPropertiesProcessor<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<
                 VolumeSampleProcessingContextT
@@ -122,6 +138,8 @@ export class SolidWithPhysicalPropertiesProcessor<
                     PhysicalPropertiesValueT,
                     IndicesT,
                     VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     SurfaceT
                 > =
             SolidWithPhysicalProperties<
@@ -129,6 +147,8 @@ export class SolidWithPhysicalPropertiesProcessor<
                     PhysicalPropertiesValueT,
                     IndicesT,
                     VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     SurfaceT
                 >,
         SolidProcessingContextT extends
@@ -149,6 +169,8 @@ export class SolidWithPhysicalPropertiesProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -179,6 +201,8 @@ export class SolidWithPhysicalPropertiesProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -221,6 +245,8 @@ export class SolidWithPhysicalPropertiesProcessor<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -259,6 +285,8 @@ export class SolidWithPhysicalPropertiesProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -421,6 +449,10 @@ export class StandardPhysicalPropertiesSolidProcessor<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<
@@ -457,8 +489,8 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<
                 VolumeSampleProcessingContextT
@@ -472,6 +504,8 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     number,
                     IndicesT,
                     VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     SurfaceT
                 > =
             SolidWithPhysicalProperties<
@@ -479,6 +513,8 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     number,
                     IndicesT,
                     VolumeSampleElementType,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     SurfaceT
                 >,
         SolidProcessingContextT extends
@@ -499,6 +535,8 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -529,6 +567,8 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -573,6 +613,8 @@ export class StandardPhysicalPropertiesSolidProcessor<
         VolumeSampleT,
         VolumeSampleElementType,
         VolumeSampleFuseMode,
+        VolumeSampleContainer,
+        VolumeSampleVector,
         VolumeSampleProcessingContextT,
         VolumeSamplingContextT,
         VolumeT,
@@ -609,6 +651,8 @@ export class StandardPhysicalPropertiesSolidProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,

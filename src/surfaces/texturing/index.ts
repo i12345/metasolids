@@ -1,5 +1,6 @@
 export * from './types.js'
 export * from './influences/index.js'
+export * from './space-stretch.js'
 export * from './objects-textures-combined/index.js'
 export * from './vertex-interpolating/index.js'
 export * from './ray-collider/index.js'

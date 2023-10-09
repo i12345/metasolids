@@ -1,24 +1,21 @@
 import { vectorized } from "vectorized-functions";
 import { VectorSamplingContext } from "../../fields/domains/vector.js";
 import { Field } from "../../fields/field.js";
-import { defaultField } from "../../fields/fields/default.js";
-import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldPointNumbers, FieldPointPrimitive, field_point_map } from "../../fields/point.js";
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_new } from "../../fields/vectorized/point.js";
+import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, field_point_map } from "../../fields/point.js";
+import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
 import { MultiObjectsTemplate, extract } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { RankAtOrBelow } from "../../utils/tf-rank.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
-import { field_point_tensor_decode, field_point_tensor_encode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
+import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
+import { field_point_tensor_decode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
 import { FieldPointTensorVariable } from "../../fields/tensor/variable.js";
 import { FieldPointTensorSystemRunner } from "../../fields/tensor/system.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 import * as tf from "@tensorflow/tfjs"
 import { FieldPointType } from "../../fields/type.js";
 import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended";
-import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { tensor } from "../../fields/index.js";
 
-export class GeneratedTexture<
+export class TensorTexture<
         Location extends TextureLocation = TextureLocation,
         LocationElementType extends TextureLocation = Location,
         LocationFuseMode extends TextureLocation = Location,
@@ -99,7 +96,7 @@ export class GeneratedTexture<
     init(context: Context): void {
     }
 
-    @vectorized(GeneratedTexture.sample_vectorized)
+    @vectorized(TensorTexture.sample_vectorized)
     sample(location: Location, context: Context): Sample {
         const variable_tensor = this.runner.context.variables.get(this.variable)!
 
@@ -107,13 +104,13 @@ export class GeneratedTexture<
             this.variable.type,
             variable_tensor,
             raw => {
-                const [width, height] = <[number, number]>raw.shape
-                const i = (
-                    Math.floor(width * location.uv.x) +
-                    (width * Math.floor(height * location.uv.y))
-                )
+                const [height, width] = <[number, number]>raw.shape
+                const i = [
+                    Math.floor(height * location.uv.y),
+                    Math.floor(width * location.uv.x)
+                ]
 
-                return <number>raw.dataSync()[i]
+                return <number>raw.gather(i).dataSync()[0]
             }
         )
 
@@ -236,7 +233,7 @@ export class GeneratedTexture<
                         SampleVector
                     >
         >(
-            this: GeneratedTexture<
+            this: TensorTexture<
                     Location,
                     LocationElementType,
                     LocationFuseMode,
@@ -256,26 +253,20 @@ export class GeneratedTexture<
         ): SampleVector {
         const tensor = this.runner.context.variables.get(this.variable)!
         
-        const [width, height] = this.variable.realShape(this.runner.parameters)
+        const [height, width] = this.variable.realShape(this.runner.parameters)
         
         const uvs = locations.uv
         const n = uvs.length / 2
 
-        const indices = new Int32Array(n)
-
-        for (let i = 0, i_uv = 0; i < n; i++) {
-            indices[i] = (
-                Math.floor(width! * uvs[i_uv++]) +
-                width! * Math.floor(height! * uvs[i_uv++])
-            )
-        }
-
-        const tf_indices = tf.tensor1d(indices, 'int32')
+        const uvs_float32 = uvs instanceof Float32Array ? uvs : typedArrayClone<number, typeof uvs, Float32Array>(uvs, Float32Array)
+        const indices_tf_unstacked = tf.tensor2d(uvs_float32, [n, 2], 'float32').unstack(1)
+        const indices_tf_restacked = tf.stack([indices_tf_unstacked[1], indices_tf_unstacked[0]], 1) // [[y1,x1],
+        const tf_indices = indices_tf_restacked.mul(tf.tensor2d([[height!, width!]], [1, 2], 'int32')).floor().cast('int32')
 
         const extracted = field_point_tensor_map(
             this.field.elementType,
             tensor,
-            raw => raw.flatten().gather(tf_indices)
+            raw => raw.gather(tf_indices)
         )
 
         return <SampleVector>field_point_tensor_decode(

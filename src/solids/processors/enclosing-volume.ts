@@ -11,6 +11,8 @@ import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import HashTable from "@ronomon/hash-table"
+import { NumberTypedArray } from "../../utils/typed-array.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
 
 export const VolumeVoxelsKey = Symbol("voxels")
 export const TotalVolumeKey = "totalVolume"
@@ -18,11 +20,15 @@ export const TotalVolumeKey = "totalVolume"
 export interface SolidWithEnclosingVolume<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,
         VolumeSampleElementType extends VolumeSample = VolumeSample,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> 
     >
-    extends Solid<IndicesT, VolumeSampleElementType, SurfaceT> {
+    extends Solid<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT> {
     [VolumeVoxelsKey]: OctTreeReferencesOctTreeLayersGrouped<IndicesT>
     [TotalVolumeKey]: number
 }
@@ -43,6 +49,10 @@ export class SolidWithEnclosingVolumeProcessor<
         VolumeSampleT extends VolumeSample = VolumeSample,
         VolumeSampleElementType extends VolumeSample = VolumeSampleT,
         VolumeSampleFuseMode extends VolumeSample = VolumeSampleT,
+        VolumeSampleContainer extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer<NumberTypedArray>,
+        VolumeSampleVector extends
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer> =
+            FieldPointVector<VolumeSampleElementType, VolumeSampleContainer>,
         VolumeSampleProcessingContextT = any,
         VolumeSamplingContextT extends
             VolumeSamplingContext<
@@ -79,14 +89,14 @@ export class SolidWithEnclosingVolumeProcessor<
                     VolumeSamplingContextT
                 >,
         SurfaceT extends
-            Surface<IndicesT, VolumeSampleElementType> =
-            Surface<IndicesT, VolumeSampleElementType>,
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector> =
+            Surface<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector>,
         SurfaceProcessingContextT extends
             SurfaceProcessingContext<VolumeSampleProcessingContextT> =
             SurfaceProcessingContext<VolumeSampleProcessingContextT>,
         SolidT extends
-            SolidWithEnclosingVolume<IndicesT, VolumeSampleElementType, SurfaceT> =
-            SolidWithEnclosingVolume<IndicesT, VolumeSampleElementType, SurfaceT>
+            SolidWithEnclosingVolume<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT> =
+            SolidWithEnclosingVolume<IndicesT, VolumeSampleElementType, VolumeSampleContainer, VolumeSampleVector, SurfaceT>
     > implements
     VolumeSolidProcessor<
             IndicesT,
@@ -96,6 +106,8 @@ export class SolidWithEnclosingVolumeProcessor<
             VolumeSampleT,
             VolumeSampleElementType,
             VolumeSampleFuseMode,
+            VolumeSampleContainer,
+            VolumeSampleVector,
             VolumeSampleProcessingContextT,
             VolumeSamplingContextT,
             VolumeT,
@@ -114,6 +126,8 @@ export class SolidWithEnclosingVolumeProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -163,6 +177,8 @@ export class SolidWithEnclosingVolumeProcessor<
                     VolumeSampleT,
                     VolumeSampleElementType,
                     VolumeSampleFuseMode,
+                    VolumeSampleContainer,
+                    VolumeSampleVector,
                     VolumeSampleProcessingContextT,
                     VolumeSamplingContextT,
                     VolumeT,
@@ -176,6 +192,8 @@ export class SolidWithEnclosingVolumeProcessor<
                             VolumeSampleT,
                             VolumeSampleElementType,
                             VolumeSampleFuseMode,
+                            VolumeSampleContainer,
+                            VolumeSampleVector,
                             VolumeSampleProcessingContextT,
                             VolumeSamplingContextT,
                             VolumeT,

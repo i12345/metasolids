@@ -930,8 +930,8 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
 // s2 = s1 // error, missing "sample"
 
 export type SolidT =
-    solids.Solid<IndicesT, SampleT, SurfaceT> &
-    solids.processors.SolidWithEnclosingVolume<IndicesT, SampleT, SurfaceT> &
+    solids.Solid<IndicesT, SampleElementType, SampleContainer, SampleVector, SurfaceT> &
+    solids.processors.SolidWithEnclosingVolume<IndicesT, SampleElementType, SampleContainer, SampleVector, SurfaceT> &
     {}
 
 export type SolidProcessingContextT =
@@ -1071,6 +1071,8 @@ export type VolumeProcessingT =
             SampleT,
             SampleElementType,
             SampleFuseMode,
+            SampleContainer,
+            SampleVector,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,
@@ -1261,6 +1263,8 @@ export type VolumeSolidProcessorT =
             SampleT,
             SampleElementType,
             SampleFuseMode,
+            SampleContainer,
+            SampleVector,
             SampleProcessingContextT,
             VolumeDomainSamplingContextT,
             VolumeT,

@@ -1,17 +1,39 @@
-import { FieldPoint } from "../point.js"
 import * as tf from '@tensorflow/tfjs'
-import { extract } from "../../paradigm/trees/index.js"
+import { extract, intract } from "../../paradigm/trees/index.js"
 import { FieldPointTensorStatement, FieldPointTensorStatementContext } from "./statement.js"
 import { FieldPointTensor, field_point_tensor_map } from "./tensor.js"
 import { FieldPointTensorExpression } from "./expression.js"
 import { FieldPointTensorVariable, FieldPointTensorVariableInitializationContext, FieldPointTensorVariableMap } from "./variable.js"
+import { FieldPointType } from "../type.js"
+import { FieldPointTensorFactory } from "./factory.js"
+
+export type FieldPointTensorSystemParameters = {
+    dt: number
+}
 
 export class FieldPointTensorSystem {
     constructor(
         public variables: FieldPointTensorVariable[],
         public statement: FieldPointTensorStatement,
-        public end: FieldPointTensorExpression<number, tf.Rank.R0>
+        public end: FieldPointTensorExpression<boolean, tf.Rank.R0>
     ) { }
+
+    get parametersType(): FieldPointType<FieldPointTensorSystemParameters> {
+        const types: FieldPointType<FieldPointTensorSystemParameters> = {
+            dt: Number,
+        }
+
+        for (const variable of this.variables)
+            for (const parameter of variable.shape.values())
+                if (parameter instanceof Array)
+                    intract(types, parameter, Number)
+        
+        return types
+    }
+
+    instance(parameters: FieldPointTensorSystemParameters, initializers: Map<FieldPointTensorVariable, FieldPointTensorFactory>): FieldPointTensorSystemRunner {
+        return new FieldPointTensorSystemRunner(this, parameters, initializers)
+    }
 }
 
 export interface FieldPointTensorSystemRunnerContext
@@ -26,13 +48,13 @@ export class FieldPointTensorSystemRunner {
 
     constructor(
         public readonly system: FieldPointTensorSystem,
-        public readonly parameters: FieldPoint,
-        public readonly dt: number = 0.1
+        public readonly parameters: FieldPointTensorSystemParameters,
+        public readonly initializers: Map<FieldPointTensorVariable, FieldPointTensorFactory>
     ) {
         this.context = {
             parameters,
             runner: this,
-            variables: new FieldPointTensorVariableMap(system.variables.map(variable => variable.instance()))
+            variables: new FieldPointTensorVariableMap(system.variables.map(variable => variable.instance(initializers.get(variable))))
         }
     }
 
@@ -46,7 +68,7 @@ export class FieldPointTensorSystemRunner {
         return tf.tidy(() => {
             const result = this.system.statement.update(this.context)
 
-            const dt = this.dt
+            const dt = tf.scalar(this.parameters.dt)
 
             if (result.differentials) {
                 for (const [buffer, differential] of result.differentials) {
@@ -64,7 +86,11 @@ export class FieldPointTensorSystemRunner {
                 for (const [buffer, value] of result.values)
                     this.context.variables.set(buffer, value)
 
-            return this.system.end.eval(this.context)
+            const complete = this.system.end.eval(this.context).dataSync()[0] !== 0
+
+            return {
+                complete,
+            }
         })
     }
 

@@ -59,6 +59,14 @@ const processors: VolumeProcessorT[] = [
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
         new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
+            new surfaces.texturing.SurfaceWithSpaceStretchProcessor(
+            ) as unknown as VolumeSurfaceProcessorT,
+            [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
+        ),
+    ),
+    new processing.processors.ParallelizingProcessor(
+        surfaces.VolumeSurfacesParallelizer,
+        new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
             new surfaces.texturing.SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
                 InterpolatingGroupsKindsTemplate
             ) as unknown as VolumeSurfaceProcessorT,
