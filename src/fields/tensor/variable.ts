@@ -1,4 +1,4 @@
-import { FieldPoint } from "../point.js"
+import { FieldPoint, FieldsPoint } from "../point.js"
 import { FieldPointType } from "../type.js"
 import * as tf from '@tensorflow/tfjs'
 import { PerRank } from "../../utils/tf-rank.js"
@@ -7,27 +7,21 @@ import { extract } from "../../paradigm/trees/index.js"
 import { FieldPointTensor, field_point_tensor_encode, field_point_tensor_map } from "./tensor.js"
 import { FieldPointTensorFactory } from "./factory.js"
 import { field_point_vectorized_new } from "../vectorized/point.js"
+import { FieldPointTensorTopology, FieldPointTensorTopologyInstance, FieldPointTensorTopologyProjectorInstance, field_point_tensor_topology_instance } from "./topology.js"
 
 export class FieldPointTensorVariable<
         T extends FieldPoint = FieldPoint,
         R extends tf.Rank = tf.Rank,
     > {
     get rank() {
-        return <R>[tf.Rank.R0, tf.Rank.R1, tf.Rank.R2, tf.Rank.R3, tf.Rank.R4, tf.Rank.R5, tf.Rank.R6][this.shape.length]
+        return <R>[tf.Rank.R0, tf.Rank.R1, tf.Rank.R2, tf.Rank.R3, tf.Rank.R4, tf.Rank.R5, tf.Rank.R6][this.topology.shape.length]
     }
     
     constructor(
         public type: FieldPointType<T>,
-        public shape: PerRank<number | PropertyPath, R>,
+        public topology: FieldPointTensorTopology<R>,
         public name?: string
     ) { }
-
-    realShape(parameters: FieldPoint): PerRank<number, R> {
-        return <PerRank<number, R>>this.shape.map(semantic => typeof semantic === 'number' ?
-            semantic :
-            extract<number>(parameters, semantic)
-        )
-    }
 
     instance(factory?: FieldPointTensorFactory<T, R>) {
         return new FieldPointTensorVariableInstance(this, factory)
@@ -35,16 +29,17 @@ export class FieldPointTensorVariable<
 }
 
 export interface FieldPointTensorVariableInitializationContext {
-    parameters: FieldPoint
+    parameters: FieldsPoint
+    toplogies: Map<FieldPointTensorTopology, FieldPointTensorTopologyInstance>
 }
 
 export class FieldPointTensorVariableInstance<
         T extends FieldPoint = FieldPoint,
         R extends tf.Rank = tf.Rank,
-        Item = any,
-        Context = any,
     > {
     register!: FieldPointTensor<T, R, tf.Variable<R>>
+
+    topology!: FieldPointTensorTopologyInstance<R>
 
     constructor(
         public readonly definition: FieldPointTensorVariable<T, R>,
@@ -52,20 +47,22 @@ export class FieldPointTensorVariableInstance<
     ) {}
 
     init(context: FieldPointTensorVariableInitializationContext) {
-        const shape = this.definition.realShape(context.parameters)
+        this.topology = <FieldPointTensorTopologyInstance<R>>context.toplogies.get(this.definition.topology) ?? field_point_tensor_topology_instance(this.definition.topology, context.parameters)
+        context.toplogies.set(this.definition.topology, this.topology)
+
         const initialData =
             this.factory ?
                 this.factory.factory(
                         this.definition.type,
-                        shape
+                        this.topology.shape
                     ) :
                 field_point_tensor_encode(
                         this.definition.type,
-                        shape,
+                        this.topology.shape,
                         undefined,
                         field_point_vectorized_new(
                             this.definition.type,
-                            shape.reduce((acc, value) => acc * value, 1),
+                            this.topology.shape.reduce((acc, value) => acc * value, 1),
                             false
                         )
                     )

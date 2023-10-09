@@ -2,6 +2,7 @@ import { FieldPoint } from "../point.js";
 import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensor } from "./tensor.js";
 import { FieldPointType } from "../type.js";
+import { TensorShape } from "../../utils/tf-rank.js";
 
 export interface FieldPointTensorFactory<
         T extends FieldPoint = FieldPoint,
@@ -11,6 +12,6 @@ export interface FieldPointTensorFactory<
     > {
     factory(
         type: FieldPointType<T>,
-        shape: tf.ShapeMap[R]
+        shape: TensorShape<R>
     ): FieldPointTensorT
 }

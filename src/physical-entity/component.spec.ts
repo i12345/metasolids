@@ -137,14 +137,18 @@ describe("playcanvas-node", () => {
         const [width, height] = [256, 256]
         const resolution = new Vec2(width, height)
 
+        const topology: tensor.FieldPointTensorTopology = {
+            shape: [["width"], ["height"]]
+        }
+
         const a = new tensor.FieldPointTensorVariable(
             Number,
-            [["width"], ["height"]]
+            topology
         )
 
         const b = new tensor.FieldPointTensorVariable(
             Number,
-            [["width"], ["height"]]
+            topology
         )
 
         function a_initial() {

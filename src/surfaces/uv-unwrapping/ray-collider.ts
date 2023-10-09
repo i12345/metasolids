@@ -2,7 +2,7 @@ import { Ray, Vec2 } from "playcanvas-extended";
 import { SurfaceInstance, SurfaceSample } from "../surface.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
 import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/trees/index.js";
-import { Triangles2DMeshInterpolator } from "../../fields/triangles-2D-mesh.js";
+import { Triangles2DMeshInterpolator } from "../../fields/triangle-2D-mesh/index.js";
 import { onlyOne } from "../../utils/only-one.js";
 import { SurfaceUVUnwrapping } from "./algorithm.js";
 import { VolumeWithSurfacesRayCollider, VolumeWithSurfacesTriangleRayCollider, VolumeWithSurfacesTriangleRayColliderProcessingContext, VolumeWithSurfacesTriangleRayCollision } from "../ray-collider.js";

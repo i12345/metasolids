@@ -20,6 +20,6 @@ export * from './object-algebra.js'
 export * from './multi-objects.js'
 export * from './processing.js'
 
-export * from './triangles-2D-mesh.js'
+export * from './triangle-2D-mesh/index.js'
 
 export * as tensor from './tensor/index.js'

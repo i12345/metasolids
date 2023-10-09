@@ -24,7 +24,7 @@ export class FieldPointTensorSystem {
         }
 
         for (const variable of this.variables)
-            for (const parameter of variable.shape.values())
+            for (const parameter of variable.topology.shape.values())
                 if (parameter instanceof Array)
                     intract(types, parameter, Number)
         
@@ -53,6 +53,7 @@ export class FieldPointTensorSystemRunner {
     ) {
         this.context = {
             parameters,
+            toplogies: new Map(),
             runner: this,
             variables: new FieldPointTensorVariableMap(system.variables.map(variable => variable.instance(initializers.get(variable))))
         }

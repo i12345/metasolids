@@ -2,7 +2,7 @@ import { FieldPoint, field_point_add_inplace_weighted, field_point_clone, field_
 import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { Vec2 } from "playcanvas-extended";
 import { makeExtractor } from "../../paradigm/trees/index.js";
-import { Triangles2DMesh, Triangles2DMeshCollider } from "../triangles-2D-mesh.js";
+import { Triangles2DMesh, Triangles2DMeshCollider } from "../triangle-2D-mesh/index.js";
 import { Pi, TwoPi } from "../../utils/pi.js";
 
 // based on paper "Generalized Barycentric Coordinates on Irregular Polygons"

@@ -4,7 +4,7 @@ import { FieldPointVector } from "../../vectorized/point.js";
 import { FieldPointTensorExpression, FieldPointTensorExpressionContext } from "../expression.js";
 import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensor, field_point_tensor_dispose, field_point_tensor_encode } from "../tensor.js";
-import { rankOfShape } from "../../../utils/tf-rank.js";
+import { TensorShape, rankOfShape } from "../../../utils/tf-rank.js";
 
 export class FieldPointTensorExpressionConstant<
         T extends FieldPoint = FieldPoint,
@@ -19,7 +19,7 @@ export class FieldPointTensorExpressionConstant<
     
     constructor(
         public readonly type: FieldPointType<T>,
-        public readonly shape: tf.ShapeMap[R],
+        public readonly shape: TensorShape<R>,
         public readonly data: FieldPointVector<T>,
         public readonly dtype?: tf.NumericDataType
     ) { }

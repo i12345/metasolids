@@ -2,7 +2,7 @@ import { vectorized } from "vectorized-functions";
 import { VectorSamplingContext } from "../../fields/domains/vector.js";
 import { Field } from "../../fields/field.js";
 import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, field_point_map } from "../../fields/point.js";
-import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vector_fill, field_point_vectorized_new } from "../../fields/vectorized/point.js";
 import { MultiObjectsTemplate, extract } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
@@ -14,6 +14,8 @@ import * as tf from "@tensorflow/tfjs"
 import { FieldPointType } from "../../fields/type.js";
 import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended";
 import { tensor } from "../../fields/index.js";
+import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
+import { PerRank, TensorShape } from "../../utils/tf-rank.js";
 
 export class TensorTexture<
         Location extends TextureLocation = TextureLocation,
@@ -252,11 +254,34 @@ export class TensorTexture<
             context: VectorSamplingContext
         ): SampleVector {
         const tensor = this.runner.context.variables.get(this.variable)!
-        
-        const [height, width] = this.variable.realShape(this.runner.parameters)
+        const tensor_shape = <PerRank<number, tf.Rank.R0 | tf.Rank.R2>>this.runner.context.toplogies.get(this.variable.topology)!.shape
         
         const uvs = locations.uv
         const n = uvs.length / 2
+
+        if (tensor_shape.length === 0) {
+            const { vector } = field_point_tensor_decode(
+                this.field.elementType,
+                tensor
+            )
+
+            const item = vectorIterator(
+                this.field.elementType,
+                false,
+                undefined,
+                vector
+            ).get_returnValue(vector, vector, 0)
+
+            return <SampleVector>field_point_vectorized_new(
+                this.field.elementType,
+                n,
+                <IsDynamicVector<Sample, SampleContainer>>false,
+                undefined,
+                item
+            )
+        }
+
+        const [height, width] = tensor_shape
 
         const uvs_float32 = uvs instanceof Float32Array ? uvs : typedArrayClone<number, typeof uvs, Float32Array>(uvs, Float32Array)
         const indices_tf_unstacked = tf.tensor2d(uvs_float32, [n, 2], 'float32').unstack(1)
@@ -277,7 +302,7 @@ export class TensorTexture<
 
     render(resolution: Vec2, context: Context): tensor.FieldPointTensor2D<Sample> {
         const tensor = this.runner.context.variables.get(this.variable)!
-        const tensor_shape = this.variable.realShape(this.runner.parameters)
+        const tensor_shape = <TensorShape<tf.Rank.R0 | tf.Rank.R2>>this.runner.context.toplogies.get(this.variable.topology)!.shape
 
         if (tensor_shape.length === 0) {
             return field_point_tensor_map(

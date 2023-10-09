@@ -1,6 +1,6 @@
 import { Ray, Vec3 } from "playcanvas-extended";
 import { Surface, SurfaceInstance, SurfaceSample } from "./surface.js";
-import { TriangleCollision } from "../fields/triangles-2D-mesh.js";
+import { TriangleCollision } from "../fields/triangle-2D-mesh/index.js";
 import { SurfaceProcessingContext } from "./processing.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "./volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSamplingContext } from "../volumes/volume.js";

@@ -6,6 +6,7 @@ import { extract } from "../../paradigm/trees/index.js"
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../vectorized/point.js"
 import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended"
 import { Reflect_entries, Reflect_fromEntries } from "../../utils/reflect-entries.js"
+import { TensorShape } from "../../utils/tf-rank.js"
 
 export type FieldPointTensor<
         T extends FieldPoint = FieldPoint,
@@ -53,7 +54,7 @@ export function field_point_tensor_encode<
         R extends tf.Rank = tf.Rank,
     >(
         type: FieldPointType<T>,
-        shape: tf.ShapeMap[R],
+        shape: TensorShape<R>,
         dtype?: tf.NumericDataType,
         inititialData?: FieldPointVector<T>
     ) {
@@ -335,7 +336,7 @@ export function field_point_tensor_decode<
         tensor: FieldPointTensor<T, R>
     ): {
         vector: FieldPointVector<T, FieldPointVectorContainerStatic<tf.TypedArray>>,
-        shape: tf.ShapeMap[R]
+        shape: TensorShape<R>
     } {
     let shape: tf.ShapeMap[R] | undefined = undefined
 
@@ -523,7 +524,7 @@ export function field_point_tensor_decode<
                 case Int16Array:
                 case Int32Array: {
                     const element_tensor = <FieldPointTensor<Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array | Int8Array | Int16Array | Int32Array, R>>subtensor
-                    shape ??= <tf.ShapeMap[R]>element_tensor.shape.slice(0, -1)
+                    shape ??= <TensorShape<R>>element_tensor.shape.slice(0, -1)
                     const raw = element_tensor.dataSync()
                     if (raw.constructor === type) return raw
                     else if (type === Float64Array || type === Float32Array || type === Array)
@@ -540,7 +541,7 @@ export function field_point_tensor_decode<
         }
     )
 
-    return { vector, shape: shape! }
+    return { vector, shape: <TensorShape<R>>shape! }
 }
 
 export function field_point_tensor_dispose<
