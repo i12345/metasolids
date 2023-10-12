@@ -3,6 +3,7 @@ import { FieldPointTensorStatement, FieldPointTensorStatementContext, FieldPoint
 import { FieldPointTensorVariable } from "../variable.js"
 import { RankNext, ScalarN } from "../../../utils/tf-rank.js"
 import { FieldPointTensor } from "../tensor.js"
+import { FieldPointTensorExpression } from "../expression.js"
 
 export class FieldPointTensorStatementDiffusion<
         T extends number = number,
@@ -14,7 +15,8 @@ export class FieldPointTensorStatementDiffusion<
     
     constructor(
         public readonly variable: FieldPointTensorVariable<T, R>,
-        public readonly spaceStretch: FieldPointTensorVariable<ScalarN<R>, R>
+        public readonly spaceStretch: FieldPointTensorVariable<ScalarN<R>, R>,
+        public readonly rate: FieldPointTensorExpression<boolean, R>,
     ) { }
 
     init(context: FieldPointTensorStatementContext): void {

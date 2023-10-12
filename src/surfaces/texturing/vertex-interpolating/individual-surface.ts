@@ -4,8 +4,7 @@ import { Field, FieldPoint, MultiObjectsGroupsWithFieldsProcessingContext, group
 import { TextureLocation, TexturesTemplated, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/index.js";
 import { SurfaceSample } from "../../surface.js";
-import { SurfaceUVUnwrapping } from "../../uv-unwrapping/algorithm.js";
-import { SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/surface.js";
+import { SurfaceUVUnwrapping, SurfaceWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../unwrapping/uv/index.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/index.js";
 

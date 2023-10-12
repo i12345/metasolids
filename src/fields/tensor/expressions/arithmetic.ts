@@ -2,7 +2,8 @@ import { FieldPoint, FieldPointPrimitive, FieldsPoint } from "../../point.js"
 import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensor } from "../tensor.js"
 import { FieldPointTensorExpression, FieldPointTensorExpressionContext } from "../expression.js"
-import { FieldPointType, field_point_type_equals, field_point_type_isPrimitive, field_point_type_primitive_number_type } from "../../type.js"
+import { FieldPointType, field_point_type_equals, field_point_type_isPrimitive } from "../../type.js"
+import { field_point_numbers_type } from "../../numbers.js"
 import { Mat3, Mat4, Quat, Vec3, Vec4 } from "playcanvas-extended"
 import { Reflect_fromEntries } from "../../../utils/reflect-entries.js"
 
@@ -214,8 +215,8 @@ export class FieldPointTensorExpressionArithmetic<
                 return broadcast(
                     a,
                     b,
-                    field_point_type_primitive_number_type(<FieldPointType<FieldPointPrimitive>>a_type),
-                    field_point_type_primitive_number_type(<FieldPointType<FieldPointPrimitive>>b_type)
+                    field_point_numbers_type(<FieldPointType<FieldPointPrimitive>>a_type),
+                    field_point_numbers_type(<FieldPointType<FieldPointPrimitive>>b_type)
                 )
             }
 

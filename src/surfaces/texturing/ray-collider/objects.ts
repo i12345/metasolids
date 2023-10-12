@@ -11,7 +11,7 @@ import { Surface, SurfaceInstance, SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContext } from "../../processing.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../../volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../../volumes/volume.js";
-import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../uv-unwrapping/ray-collider.js";
+import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../unwrapping/uv/ray-collider.js";
 import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";

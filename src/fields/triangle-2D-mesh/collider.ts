@@ -392,7 +392,7 @@ export class Triangles2DMeshCollider {
             if (cell_x < 0 || cell_x >= resolution ||
                 cell_y < 0 || cell_y >= resolution ||
                 isNaN(cell_x) || isNaN(cell_y)) {
-                result_invalid[p_i] = 0xFF
+                result_invalid[p_i] = 1
                 result_tri[p_i] = result_tri_invalid
                 result_w1[p_i] = NaN
                 result_w2[p_i] = NaN
@@ -440,7 +440,7 @@ export class Triangles2DMeshCollider {
             }
 
             if (!collided) {
-                result_invalid[p_i] = 0xFF
+                result_invalid[p_i] = 1
                 result_tri[p_i] = result_tri_invalid
                 result_w1[p_i] = NaN
                 result_w2[p_i] = NaN

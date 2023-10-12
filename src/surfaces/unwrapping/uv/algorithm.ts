@@ -1,5 +1,5 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { MeshData } from "../mesh-data.js";
+import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { MeshData } from "../../mesh-data.js";
 
 export interface SurfaceUVUnwrapping {
     /**

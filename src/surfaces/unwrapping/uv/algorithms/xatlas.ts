@@ -1,6 +1,6 @@
 import type { XAtlasAPI } from 'xatlasjs-esm'
 import { SurfaceUVUnwrappingAlgorithm } from '../algorithm.js';
-import { indicesArrayType } from '../../../utils/indices-array.js';
+import { indicesArrayType } from '../../../../utils/indices-array.js';
 
 let xAtlasAPI: XAtlasAPI
 

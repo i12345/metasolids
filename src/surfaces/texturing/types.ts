@@ -7,7 +7,7 @@ import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { SurfaceProcessingContext } from "../processing.js";
 import { Surface, SurfaceSample } from "../surface.js";
-import { SurfaceProcessingContextWithUVUnwrapping, SurfaceWithUVUnwrapping } from "../uv-unwrapping/index.js";
+import { SurfaceProcessingContextWithUVUnwrapping, SurfaceWithUVUnwrapping } from "../unwrapping/uv/index.js";
 
 //TODO: this could be abstracted to be more generic and usable for solids
 

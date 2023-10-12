@@ -132,18 +132,18 @@ export const SurfaceObjectsTextureLocationsGroupsKindsMappedGroupsTemplate: Surf
     [surfaces.texturing.SurfaceTextureLocationsGroupKindKey]: SurfaceObjectsTextureLocationsGroupsTemplate
 }
 
-export type SurfaceUVUnwrappingGroupT = surfaces.UVunwrapping.SurfaceUVUnwrappingGroupsDefault
-export const SurfaceUVUnwrappingGroupTemplate: SurfaceUVUnwrappingGroupT = surfaces.UVunwrapping.SurfaceUVUnwrappingGroupsDefaultTemplate
+export type SurfaceUVUnwrappingGroupT = surfaces.unwrapping.uv.SurfaceUVUnwrappingGroupsDefault
+export const SurfaceUVUnwrappingGroupTemplate: SurfaceUVUnwrappingGroupT = surfaces.unwrapping.uv.SurfaceUVUnwrappingGroupsDefaultTemplate
 export const SurfaceUVUnwrappingGroup_Path = onlyOne(groupPaths(SurfaceUVUnwrappingGroupTemplate))
 
 export type SurfaceUVUnwrappingGroupsKindsMappedGroupsT =
     MultiObjectsGroupsKindsTemplateMapped<
-        surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds,
+        surfaces.unwrapping.uv.SurfaceUVUnwrappingGroupKinds,
         SurfaceUVUnwrappingGroupT
     >
 
 export const SurfaceUVUnwrappingGroupsKindsMappedGroupsTemplate: SurfaceUVUnwrappingGroupsKindsMappedGroupsT = {
-    [surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindKey]: SurfaceUVUnwrappingGroupTemplate
+    [surfaces.unwrapping.uv.SurfaceUVUnwrappingGroupKindKey]: SurfaceUVUnwrappingGroupTemplate
 }
 
 /**
@@ -616,12 +616,14 @@ export type SurfaceCombinedTexturesGrouped =
 export type SurfaceIndividualTexturesGroupsT =
     SurfaceCombinedTexturesGroupsT &
     InfluenceGroup &
+    surfaces.unwrapping.spaceStretch.SpaceStretchTextureGroup &
     surfaces.rendering.SurfaceWithRendering_TextureGroups &
     {}
 
 export const SurfaceIndividualTexturesGroupsTemplate = mergeGroups<SurfaceIndividualTexturesGroupsT>(
     SurfaceCombinedTexturesGroupsTemplate,
     InfluenceGroupTemplate,
+    surfaces.unwrapping.spaceStretch.SpaceStretchTextureGroupTemplate,
     surfaces.rendering.SurfaceWithRendering_TextureGroupsTemplate,
 )
 
@@ -804,7 +806,7 @@ export type SurfaceProcessingContext_MultiObjects =
     > &
     MultiObjectsGroupsProcessingContext<
         SurfaceUVUnwrappingGroupT,
-        surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKinds
+        surfaces.unwrapping.uv.SurfaceUVUnwrappingGroupKinds
     > &
     MultiObjectsGroupsWithFieldsProcessingContext<
         InfluenceGroup,
@@ -876,6 +878,10 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
         [GroupFieldKey]: new fields.fields.MultiObjectsField(fields.fields.ScalarField.instance, undefined!),
     })),
 
+    ...mapGroups(surfaces.unwrapping.spaceStretch.SpaceStretchTextureGroupTemplate, () => ({
+        [GroupFieldKey]: surfaces.unwrapping.spaceStretch.SpaceStretchField
+    })),
+
     material: {
         textures: surfaces.rendering.material.Material_Groups_TextureContexts_Template<Objects, ObjIDsT, VolumeLocationT>(undefined!)
     },
@@ -908,7 +914,7 @@ export const SurfaceProcessingContext_MultiObjects_Template: SurfaceProcessingCo
         ...MultiObjectsInfluencesGroupKindsTemplate,
         ...GateGroupKindsTemplate,
 
-        ...surfaces.UVunwrapping.SurfaceUVUnwrappingGroupKindsTemplate,
+        ...surfaces.unwrapping.uv.SurfaceUVUnwrappingGroupKindsTemplate,
 
         ...surfaces.texturing.SurfaceObjectsTexturesGroupKindsTemplate,
         ...surfaces.texturing.SurfaceIndividualTexturesGroupKindsTemplate,

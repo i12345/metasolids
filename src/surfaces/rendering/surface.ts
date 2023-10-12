@@ -6,7 +6,7 @@ import { Material_Groups, Material_Groups_Template } from "./material/groups.js"
 import { InstanceContext, Instancer } from "../../paradigm/processing/instance.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "../surface.js";
-import * as UVunwrapping from "../uv-unwrapping/index.js"
+import * as UVunwrapping from "../unwrapping/uv/index.js"
 import * as texturing from "../texturing/index.js"
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesInstancer, VolumeSurfaceProcessing } from "../volume-surfaces.js";
 import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";

@@ -1,9 +1,9 @@
-import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/point.js";
-import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
-import { SurfaceProcessingContext } from "../processing.js";
-import { Surface, SurfaceSample } from "../surface.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/point.js";
+import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../paradigm/trees/index.js";
+import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { SurfaceProcessingContext } from "../../processing.js";
+import { Surface, SurfaceSample } from "../../surface.js";
 import { SurfaceUVUnwrapping } from "./algorithm.js";
 
 export const SurfaceUVUnwrappingGroupKindKey = Symbol('group-kind:surface:uv-unwrapping')

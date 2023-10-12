@@ -2,6 +2,7 @@ import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
 import { mat4_from_mat3, trs } from "../utils/matrix.js";
 import { MultiObjectsGroup, MultiObjectsGrouped, MultiObjectsGroupedObjectsKey, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, PropertyPath, iterObjects } from "../paradigm/trees/index.js";
 import { Reflect_entries, Reflect_fromEntries, RemoveEmptyStructs } from "../utils/index.js";
+import { FieldPointNumbers } from "./numbers.js";
 
 export type Vector = Array<number>
     | Uint8Array | Uint8ClampedArray | Uint16Array | Uint32Array
@@ -17,20 +18,6 @@ export type FieldPointPrimitive = number
 export interface FieldsPoint {
     [field: PropertyKey]: FieldPoint
 }
-
-export type FieldPointNumbers<Point extends FieldPoint> =
-    Point extends number ? number :
-    Point extends boolean ? (1 | 0) :
-    Point extends Vec2 ? { x: number, y: number } :
-    Point extends Vec3 ? { x: number, y: number, z: number } :
-    Point extends Vec4 ? { x: number, y: number, z: number, w: number } :
-    Point extends Quat ? { x: number, y: number, z: number, w: number } :
-    Point extends Mat3 ? { r: FieldPointNumbers<Quat>, s: FieldPointNumbers<Vec3> } :
-    Point extends Mat4 ? { t: FieldPointNumbers<Vec3>, r: FieldPointNumbers<Quat>, s: FieldPointNumbers<Vec3> } :
-    Point extends Color ? { r: number, g: number, b: number, a: number } :
-    Point extends Vector ? Vector :
-    Point extends FieldsPoint ? { [K in keyof Point]: FieldPointNumbers<Point[K]> } :
-    never
 
 export type FieldPointMapped<Point extends FieldPoint, T> =
     Point extends FieldPointPrimitive ? T :

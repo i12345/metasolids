@@ -1,16 +1,16 @@
 import { Ray, Vec2 } from "playcanvas-extended";
-import { SurfaceInstance, SurfaceSample } from "../surface.js";
+import { SurfaceInstance, SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
-import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/trees/index.js";
-import { Triangles2DMeshInterpolator } from "../../fields/triangle-2D-mesh/index.js";
-import { onlyOne } from "../../utils/only-one.js";
+import { MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/trees/index.js";
+import { Triangles2DMeshInterpolator } from "../../../fields/triangle-2D-mesh/index.js";
+import { onlyOne } from "../../../utils/only-one.js";
 import { SurfaceUVUnwrapping } from "./algorithm.js";
-import { VolumeWithSurfacesRayCollider, VolumeWithSurfacesTriangleRayCollider, VolumeWithSurfacesTriangleRayColliderProcessingContext, VolumeWithSurfacesTriangleRayCollision } from "../ray-collider.js";
-import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../volume-surfaces.js";
-import { Volume, VolumeLocation, VolumeSamplingContext } from "../../volumes/volume.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray, TypedArray } from "../../utils/typed-array.js";
-import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
+import { VolumeWithSurfacesRayCollider, VolumeWithSurfacesTriangleRayCollider, VolumeWithSurfacesTriangleRayColliderProcessingContext, VolumeWithSurfacesTriangleRayCollision } from "../../ray-collider.js";
+import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../../volume-surfaces.js";
+import { Volume, VolumeLocation, VolumeSamplingContext } from "../../../volumes/volume.js";
+import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { NumberTypedArray, TypedArray } from "../../../utils/typed-array.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js";
 
 export interface VolumeWithSurfacesUVRayCollision extends VolumeWithSurfacesTriangleRayCollision {
     uv: Vec2

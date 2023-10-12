@@ -40,5 +40,6 @@ export interface FieldPointTensorTopologyProjectorInstance<R extends tf.Rank = t
     shape: TensorShape<R>
     projector: FieldPointTensorTopologyProjector<R>
 
-    project(t: tf.Tensor<R>): tf.Tensor<R>
+    project_delta(t: tf.Tensor<R>): tf.Tensor<R>
+    project_update(t: tf.Tensor<R>): tf.Tensor<R>
 }

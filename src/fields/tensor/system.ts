@@ -3,9 +3,9 @@ import { extract, intract } from "../../paradigm/trees/index.js"
 import { FieldPointTensorStatement, FieldPointTensorStatementContext } from "./statement.js"
 import { FieldPointTensor, field_point_tensor_map } from "./tensor.js"
 import { FieldPointTensorExpression } from "./expression.js"
-import { FieldPointTensorVariable, FieldPointTensorVariableInitializationContext, FieldPointTensorVariableMap } from "./variable.js"
+import { FieldPointTensorVariable, FieldPointTensorVariableInitializationContext, FieldPointTensorVariableInstance, FieldPointTensorVariableMap } from "./variable.js"
 import { FieldPointType } from "../type.js"
-import { FieldPointTensorFactory } from "./factory.js"
+import { FieldPointTensorFactory } from "./tensor-factory.js"
 
 export type FieldPointTensorSystemParameters = {
     dt: number
@@ -45,17 +45,21 @@ export interface FieldPointTensorSystemRunnerContext
 
 export class FieldPointTensorSystemRunner {
     readonly context: FieldPointTensorSystemRunnerContext
+    readonly variables = new Map<FieldPointTensorVariable, FieldPointTensorVariableInstance>()
 
     constructor(
         public readonly system: FieldPointTensorSystem,
         public readonly parameters: FieldPointTensorSystemParameters,
         public readonly initializers: Map<FieldPointTensorVariable, FieldPointTensorFactory>
     ) {
+        for (const variable of system.variables)
+            this.variables.set(variable, variable.instance(initializers.get(variable)))
+
         this.context = {
             parameters,
             toplogies: new Map(),
             runner: this,
-            variables: new FieldPointTensorVariableMap(system.variables.map(variable => variable.instance(initializers.get(variable))))
+            variables: new FieldPointTensorVariableMap(this.variables)
         }
     }
 
@@ -72,14 +76,31 @@ export class FieldPointTensorSystemRunner {
             const dt = tf.scalar(this.parameters.dt)
 
             if (result.differentials) {
-                for (const [buffer, differential] of result.differentials) {
-                    const currentValue = this.context.variables.get(buffer)!
-                    const newValue = <FieldPointTensor>field_point_tensor_map(
-                        buffer.type,
-                        currentValue,
-                        (raw, path) => <any>tf.add(raw, extract<tf.Tensor>(differential, path).mul(dt))
+                for (const [variable, differential] of result.differentials) {
+                    if(differential.length === 0) continue
+                    const differential_sum = field_point_tensor_map(
+                        variable.type,
+                        differential[0],
+                        (_, path) => tf.addN(differential.map(differential => extract(differential, path)))
                     )
-                    this.context.variables.set(buffer, newValue)
+                    
+                    const projector = this.context.toplogies.get(variable.topology)!.projector
+
+                    const differential_projected = projector ? field_point_tensor_map(
+                        variable.type,
+                        differential_sum,
+                        raw => projector.project_delta(raw)
+                    ) : differential_sum
+
+                    const currentValue = this.context.variables.get(variable)!
+                    
+                    const newValue = field_point_tensor_map(
+                        variable.type,
+                        currentValue,
+                        (raw, path) => tf.add(raw, tf.mul(dt, extract<tf.Tensor>(differential_projected, path)))
+                    )
+
+                    this.context.variables.set(variable, newValue)
                 }
             }
 

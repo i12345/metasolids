@@ -1,5 +1,7 @@
 export * from './point.js'
 export * from './type.js'
+export * from './numbers.js'
+
 export * as vectorized from './vectorized/index.js'
 export * from './stats.js'
 

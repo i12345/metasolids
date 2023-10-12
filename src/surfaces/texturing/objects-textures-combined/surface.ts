@@ -3,7 +3,7 @@ import { Processor } from "../../../paradigm/processing/processor.js";
 import { MultiObjectsInfluences, MultiObjectsInfluencesElementType, MultiObjectsInfluencesFuseMode, MultiObjectsInfluencesGrouped, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesProcessingContext } from "../../../fields/multi-objects.js";
 import { ObjectsCombiningTexture, Texture, TextureLocation, TextureSample, TextureSamplingContext, VertexInterpolatingTexture } from "../../../textures/index.js";
 import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/index.js";
-import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../uv-unwrapping/index.js";
+import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../../unwrapping/uv/index.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithInfluencesTextureUsingSurfaceUVUnwrapping } from "../index.js";
 import { SurfaceSampleProcessingContextWithObjectsTextureLocations, SurfaceSampleWithObjectsTextureLocations, SurfaceObjectsTexturesGroupKindsTemplate, SurfaceObjectsTextureLocationsGroupKindsTemplate, SurfaceWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceProcessingContextWithObjectsTexturesUsingObjectsSampleTextureLocations, SurfaceSampleElementTypeWithObjectsTextureLocations, SurfaceSampleFuseModeWithObjectsTextureLocations, SurfaceObjectsTextureLocationsGroupKinds } from "../types.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, field_point_vector_append_scattered_same } from "../../../fields/vectorized/point.js";

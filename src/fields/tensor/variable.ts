@@ -5,9 +5,11 @@ import { PerRank } from "../../utils/tf-rank.js"
 import { PropertyPath } from "../../paradigm/trees/path.js"
 import { extract } from "../../paradigm/trees/index.js"
 import { FieldPointTensor, field_point_tensor_encode, field_point_tensor_map } from "./tensor.js"
-import { FieldPointTensorFactory } from "./factory.js"
+import { FieldPointTensorFactory } from "./tensor-factory.js"
 import { field_point_vectorized_new } from "../vectorized/point.js"
 import { FieldPointTensorTopology, FieldPointTensorTopologyInstance, FieldPointTensorTopologyProjectorInstance, field_point_tensor_topology_instance } from "./topology.js"
+import { ProcessingPair } from "../../paradigm/processing/processor.js"
+import { mapFirst } from "../../utils/map-first.js"
 
 export class FieldPointTensorVariable<
         T extends FieldPoint = FieldPoint,
@@ -52,10 +54,10 @@ export class FieldPointTensorVariableInstance<
 
         const initialData =
             this.factory ?
-                this.factory.factory(
-                        this.definition.type,
-                        this.topology.shape
-                    ) :
+                this.factory.init(
+                    this.definition.type,
+                    this.topology.shape
+                ) :
                 field_point_tensor_encode(
                         this.definition.type,
                         this.topology.shape,
@@ -77,13 +79,13 @@ export class FieldPointTensorVariableInstance<
 
 export class FieldPointTensorVariableMap extends Map<FieldPointTensorVariable, FieldPointTensor> {
     constructor(
-            public readonly variableInstances: FieldPointTensorVariableInstance[]
+            public readonly variableInstances: Map<FieldPointTensorVariable, FieldPointTensorVariableInstance>
         ) {
         super()
     }
     
     init(context: FieldPointTensorVariableInitializationContext) {
-        for (const variableInstance of this.variableInstances) {
+        for (const variableInstance of this.variableInstances.values()) {
             variableInstance.init(context)
             super.set(variableInstance.definition, variableInstance.register)
         }
@@ -105,14 +107,18 @@ export class FieldPointTensorVariableMap extends Map<FieldPointTensorVariable, F
         ): this {
         if (!this.has(variable))
             throw new Error()
+        
+        const variableInstance = <FieldPointTensorVariableInstance<T, R>>this.variableInstances.get(variable)!
+        const projector = variableInstance.topology.projector
 
         field_point_tensor_map(
             variable.type,
             this.get(variable)!,
             (raw, path) => {
                 const variable = <tf.Variable<R>>raw
-                const change_value = extract<tf.Tensor<R>>(value, path)
-                variable.assign(change_value)
+                const newValue = extract<tf.Tensor<R>>(value, path)
+                const newValue_projected = projector ? projector.project_update(newValue) : newValue
+                variable.assign(newValue_projected)
             }
         )
         return this
@@ -131,7 +137,7 @@ export class FieldPointTensorVariableMap extends Map<FieldPointTensorVariable, F
         >(variable: FieldPointTensorVariable<T, R>): boolean {
         const register = this.get(variable)
         if (register) {
-            this.variableInstances.splice(this.variableInstances.findIndex(variableInstance => variableInstance.definition === variable), 1)
+            this.variableInstances.delete(variable)
 
             field_point_tensor_map(
                 variable.type,
@@ -147,7 +153,7 @@ export class FieldPointTensorVariableMap extends Map<FieldPointTensorVariable, F
     }
 
     dispose() {
-        for (const variableInstance of this.variableInstances)
-            this.delete(variableInstance.definition)
+        for (const variable of this.variableInstances.keys())
+            this.delete(variable)
     }
 }

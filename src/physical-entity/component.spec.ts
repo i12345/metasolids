@@ -14,8 +14,9 @@ import { groupPaths } from "../paradigm/trees/index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { processing } from "../paradigm/index.js"
 import '@tensorflow/tfjs-node'
+import * as tf from "@tensorflow/tfjs"
 import { tensor } from "../fields/index.js"
-import { FieldPointVectorContainerStatic } from "../fields/vectorized/point.js"
+import { PerRank, ScalarN } from "../utils/tf-rank.js"
 
 describe("playcanvas-node", () => {
     let jsdomCleanup: Function
@@ -39,7 +40,7 @@ describe("playcanvas-node", () => {
             const app = new Application(canvas)
             app.start()
 
-            await surfaces.UVunwrapping.algorithms.init_XAtlasAPI("file://" + path.join(process.cwd(), "./node_modules/xatlasjs-esm/dist"))
+            await surfaces.unwrapping.uv.algorithms.init_XAtlasAPI("file://" + path.join(process.cwd(), "./node_modules/xatlasjs-esm/dist"))
 
             const storageService = new storage.MemoryStorageService()
             const system = new physicalEntity.ComponentSystem(app, storageService)
@@ -126,7 +127,7 @@ describe("playcanvas-node", () => {
                     }
                 ],
                 {
-                    inputs: [surfaces.texturing.SpaceStretchKey],
+                    inputs: [surfaces.unwrapping.spaceStretch.SpaceStretchKey],
                     outputs: ['material', 'textures', 'color']
                 }
             )
@@ -137,51 +138,88 @@ describe("playcanvas-node", () => {
         const [width, height] = [256, 256]
         const resolution = new Vec2(width, height)
 
-        const topology: tensor.FieldPointTensorTopology = {
-            shape: [["width"], ["height"]]
+        const topology: tensor.FieldPointTensorTopology<tf.Rank.R2> = {
+            shape: [["resolution", "y"], ["resolution", "x"]]
         }
 
-        const a = new tensor.FieldPointTensorVariable(
+        const a = new tensor.FieldPointTensorVariable<number, tf.Rank.R2>(
             Number,
             topology
         )
 
-        const b = new tensor.FieldPointTensorVariable(
+        const b = new tensor.FieldPointTensorVariable<number, tf.Rank.R2>(
             Number,
             topology
         )
+ 
+        const spaceStretch = new tensor.FieldPointTensorVariable<ScalarN<tf.Rank.R2>, tf.Rank.R2>(
+            { [0]: Number, [1]: Number },
+            topology,
+            surfaces.unwrapping.spaceStretch.SpaceStretchKey
+        )
 
-        function a_initial() {
-            const data = new Float32Array(width * height)
-            data.fill(0.1)
+        // function a_initial() {
+        //     const data = new Float32Array(width * height)
+        //     data.fill(0.1)
 
-            for (let i = 0; i < 10; i++) {
-                const x = (width / 2) + 3 * i
-                const y = (height / 2) + 5 * Math.cos(0.1 * i)
-                data[x + (width * y)] = 0.5
-            }
+        //     for (let i = 0; i < 10; i++) {
+        //         const x = (width / 2) + 3 * i
+        //         const y = (height / 2) + 5 * Math.cos(0.1 * i)
+        //         data[x + (width * y)] = 0.5
+        //     }
                 
-            return data
-        }
+        //     return data
+        // }
 
-        const a_texture = new textures.BitmapTexture<
-                textures.TextureLocation,
-                textures.TextureLocation,
-                textures.TextureLocation,
-                Float32Array,
-                number,
-                number,
-                number,
-                Float32Array
-            >(a_initial(), resolution, fields.fields.ScalarField.instance)
+        // const a_texture = new textures.BitmapTexture<
+        //         textures.TextureLocation,
+        //         textures.TextureLocation,
+        //         textures.TextureLocation,
+        //         Float32Array,
+        //         number,
+        //         number,
+        //         number,
+        //         Float32Array
+        //     >(a_initial(), resolution, fields.fields.ScalarField.instance)
         
-        // const system = new tensor.FieldPointTensorSystem(
-        //     [a, b],
-        //     new tensor.FieldPointTensorStatementDiffusion(a, )
-        // )
+        const system = new tensor.FieldPointTensorSystem(
+            [a, b, spaceStretch],
+            new tensor.FieldPointTensorStatementDiffusion(a, spaceStretch, undefined!),
+            new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array(1), 'bool')
+        )
         
         return [
-
+            new textures.factories.ConstantTextureFactory(
+                1,
+                {
+                    inputs: {},
+                    outputs: ['a_initial']
+                }
+            ),
+            // new processing.processors.factories.CopyFactory({
+            //     inputs: ['a_initial'],
+            //     outputs: ['material', 'textures', 'color']
+            // }),
+            new tensor.FieldPointTensorSystemFactory(
+                system,
+                {
+                    resolution,
+                    dt: 0.1,
+                },
+                [
+                    tensor.FieldPointTensorEncodingConstant.instance,
+                    tensor.FieldPointTensorEncodingVector.instance,
+                ],
+                {
+                    inputs: {
+                        [a.name!]: ['a_initial'],
+                    },
+                    outputs: {
+                        [a.name!]: ['material', 'textures', 'color'],
+                        // [b.name!]: ['material', 'textures', 'color'],
+                    }
+                }
+            )
         ]
     }
 
@@ -223,7 +261,8 @@ describe("playcanvas-node", () => {
         })
     }
 
-    const texturers = spaceStretchTexturer
+    // const texturers = spaceStretchTexturer
+    const texturers = RDtexturer1
 
     testShape("one sphere", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT

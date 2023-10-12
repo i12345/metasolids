@@ -8,6 +8,7 @@ import { StorageService } from "../storage/index.js"
 import { MultiObjectsInfluencesGroupKindsTemplate } from "../fields/multi-objects.js"
 import { makeClone } from "../utils/cloneable.js"
 import { WithEncapsulating } from "../paradigm/trees/encapsulating.js"
+import { tensor } from "../fields/index.js"
 
 export const SYSTEM_ID = 'physical-entity'
 
@@ -41,9 +42,17 @@ const processors: VolumeProcessorT[] = [
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
         new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
-                new surfaces.UVunwrapping.SurfaceUVUnwrappingProcessor(
+                new surfaces.unwrapping.uv.SurfaceUVUnwrappingProcessor(
                 "xAtlas",
                 SurfaceUVUnwrappingGroupTemplate,
+            ) as unknown as VolumeSurfaceProcessorT,
+            [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
+        ),
+    ),
+    new processing.processors.ParallelizingProcessor(
+        surfaces.VolumeSurfacesParallelizer,
+        new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
+            new surfaces.unwrapping.spaceStretch.SurfaceWithSpaceStretchProcessor(
             ) as unknown as VolumeSurfaceProcessorT,
             [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
         ),
@@ -59,26 +68,10 @@ const processors: VolumeProcessorT[] = [
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,
         new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
-            new surfaces.texturing.SurfaceWithSpaceStretchProcessor(
-            ) as unknown as VolumeSurfaceProcessorT,
-            [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
-        ),
-    ),
-    new processing.processors.ParallelizingProcessor(
-        surfaces.VolumeSurfacesParallelizer,
-        new processing.processors.RangeGateProcessor<SurfaceProcessingModeGate, RawProcessingMode, SurfaceT & WithEncapsulating<VolumeProcessingT>, VolumeSurfaceProcessingContextT>(
             new surfaces.texturing.SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor(
                 InterpolatingGroupsKindsTemplate
             ) as unknown as VolumeSurfaceProcessorT,
             [RawProcessingMode.TexturedMesh, RawProcessingMode.Full]
-        ),
-    ),
-    solids.processors.VolumeSurfaceSolidificationProcessor.instance,
-    new processing.processors.ParallelizingProcessor(
-        solids.VolumeSolidsParallelizer,
-        new processing.processors.RangeGateProcessor<SolidProcessingModeGate, RawProcessingMode, SolidT & WithEncapsulating<VolumeProcessingT>, VolumeSolidProcessingContextT>(
-            solids.processors.SolidWithEnclosingVolumeProcessor.instance as VolumeSolidProcessorT,
-            [RawProcessingMode.Full]
         ),
     ),
     new processing.processors.ParallelizingProcessor(
@@ -87,6 +80,14 @@ const processors: VolumeProcessorT[] = [
             textures.factories.defaultMaterialFactories,
             [RawProcessingMode.RTMesh]
         )
+    ),
+    solids.processors.VolumeSurfaceSolidificationProcessor.instance,
+    new processing.processors.ParallelizingProcessor(
+        solids.VolumeSolidsParallelizer,
+        new processing.processors.RangeGateProcessor<SolidProcessingModeGate, RawProcessingMode, SolidT & WithEncapsulating<VolumeProcessingT>, VolumeSolidProcessingContextT>(
+            solids.processors.SolidWithEnclosingVolumeProcessor.instance as VolumeSolidProcessorT,
+            [RawProcessingMode.Full]
+        ),
     ),
     new processing.processors.ParallelizingProcessor(
         surfaces.VolumeSurfacesParallelizer,

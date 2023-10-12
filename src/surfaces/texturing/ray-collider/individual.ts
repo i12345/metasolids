@@ -7,7 +7,7 @@ import { change } from "../../../fields/object-algebra.js";
 import { Surface, SurfaceInstance, SurfaceSample } from "../../surface.js";
 import { Field, SampleDomainLocationFieldKey } from "../../../fields/index.js";
 import { FieldsField, Vec2Field, defaultField } from "../../../fields/fields/index.js"
-import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../uv-unwrapping/ray-collider.js";
+import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../unwrapping/uv/ray-collider.js";
 import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../../volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../../volumes/volume.js";

@@ -16,7 +16,11 @@ export class FieldPointTensorTopologyProjectorInstanceIdentity<R extends tf.Rank
             public readonly projector: FieldPointTensorTopologyProjector<R>
         ) { }
         
-    project(t: tf.Tensor<R>): tf.Tensor<R> {
+    project_delta(t: tf.Tensor<R>): tf.Tensor<R> {
+        return t
+    }
+    
+    project_update(t: tf.Tensor<R>): tf.Tensor<R> {
         return t
     }
 }

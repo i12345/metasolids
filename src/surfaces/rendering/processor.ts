@@ -6,8 +6,7 @@ import { SurfaceProcessingContextWithRendering, SurfaceWithRendering } from "./s
 import { SurfaceRendererShared } from "./renderer.js";
 import { SamplingKey, VolumeProcessingWithSampling } from "../../volumes/sampling/index.js"
 import { onlyOne } from "../../utils/only-one.js";
-import { SurfaceUVUnwrappingGroupKindsTemplate } from "../uv-unwrapping/surface.js";
-import { SurfaceUVUnwrapping } from "../uv-unwrapping/algorithm.js";
+import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../unwrapping/uv/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";

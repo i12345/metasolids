@@ -21,7 +21,11 @@ export class FieldPointTensorToplogyProjectorInstanceCopy<R extends tf.Rank = tf
         public readonly projector: FieldPointTensorTopologyProjector<R>
     ) { }
 
-    project(t: tf.Tensor<R>): tf.Tensor<R> {
-        throw new Error("Method not implemented.");
+    project_delta(t: tf.Tensor<R>): tf.Tensor<R> {
+        throw new Error("not implemented")
+    }
+
+    project_update(t: tf.Tensor<R>): tf.Tensor<R> {
+        throw new Error("not implemented")
     }
 }

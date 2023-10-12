@@ -1,5 +1,7 @@
-import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, FieldsPoint, field_point_map } from "../point.js"
-import { FieldPointType, field_point_type_primitive_number_type } from "../type.js"
+import { FieldPoint, FieldPointMapped, FieldPointPrimitive, FieldsPoint, field_point_map } from "../point.js"
+import { FieldPointNumbers } from "../numbers.js"
+import { FieldPointType } from "../type.js"
+import { field_point_numbers_type } from "../numbers.js"
 import * as tf from '@tensorflow/tfjs'
 import { PropertyPath } from "../../paradigm/trees/path.js"
 import { extract } from "../../paradigm/trees/index.js"
@@ -35,7 +37,7 @@ export function field_point_tensor_map<
         <FieldPointMapped<T, FieldPointType<FieldPointPrimitive>>>type,
         leaf => leaf instanceof Function,
         (leaf_type, path_primitive) => {
-            const leaf_primitives = field_point_type_primitive_number_type(<FieldPointType<FieldPointPrimitive>>leaf_type)!
+            const leaf_primitives = field_point_numbers_type(<FieldPointType<FieldPointPrimitive>>leaf_type)!
 
             return field_point_map<FieldPointNumbers<FieldPointPrimitive>, FieldPointType<number>, U>(
                 <any>leaf_primitives,

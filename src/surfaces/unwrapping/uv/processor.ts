@@ -1,13 +1,13 @@
-import { SurfaceProcessor } from "../processing.js";
-import { SurfaceSample } from "../surface.js";
-import { MultiObjectsGroupsTemplate, groupKinds } from "../../paradigm/trees/index.js";
-import { onlyOne } from "../../utils/only-one.js";
+import { SurfaceProcessor } from "../../processing.js";
+import { SurfaceSample } from "../../surface.js";
+import { MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/trees/index.js";
+import { onlyOne } from "../../../utils/only-one.js";
 import { SurfaceUVUnwrappingAlgorithm } from "./algorithm.js";
 import * as algorithms from './algorithms/index.js'
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js";
+import { NumberTypedArray } from "../../../utils/typed-array.js";
 
 export class SurfaceUVUnwrappingProcessor<
         IndicesT extends IndicesTypedArray = IndicesTypedArray,

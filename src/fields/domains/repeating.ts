@@ -2,7 +2,8 @@ import { MultiObjectsTemplate, extract, intract } from "../../paradigm/trees/ind
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { SampleDomain, SamplingContext } from "../domain.js";
-import { FieldPoint, FieldPointMapped, FieldPointNumbers, FieldPointPrimitive, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_equal, field_point_map, field_point_modulo, field_point_multiply } from "../point.js";
+import { FieldPoint, FieldPointMapped, FieldPointPrimitive, FieldsPoint, FieldsPointMapped, fields_point_map, field_point_equal, field_point_map, field_point_modulo, field_point_multiply } from "../point.js";
+import { FieldPointNumbers } from "../numbers.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../vectorized/index.js";
 import { FusedVectorSamplingContext } from "./fusing.js";
 import { TransformingSampleDomain } from "./transforming.js";
