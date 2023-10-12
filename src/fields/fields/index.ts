@@ -1,4 +1,5 @@
 export * from './scalar.js'
+export * from './boolean.js'
 export * from './sign.js'
 export * from './vec2.js'
 export * from './vec3.js'

@@ -135,57 +135,33 @@ describe("playcanvas-node", () => {
     }
 
     function RDtexturer1(): processing.processors.FactoryProcessor[] {
-        const [width, height] = [256, 256]
-        const resolution = new Vec2(width, height)
-
-        const topology: tensor.FieldPointTensorTopology<tf.Rank.R2> = {
-            shape: [["resolution", "y"], ["resolution", "x"]]
+        const space1: tensor.FieldPointTensorSpace<tf.Rank.R2> = {
+            shape: [["resolution", "y"], ["resolution", "x"]],
         }
 
         const a = new tensor.FieldPointTensorVariable<number, tf.Rank.R2>(
             Number,
-            topology
+            space1,
+            "a"
         )
 
         const b = new tensor.FieldPointTensorVariable<number, tf.Rank.R2>(
             Number,
-            topology
+            space1,
+            "b"
         )
  
         const spaceStretch = new tensor.FieldPointTensorVariable<ScalarN<tf.Rank.R2>, tf.Rank.R2>(
             { [0]: Number, [1]: Number },
-            topology,
+            space1,
             surfaces.unwrapping.spaceStretch.SpaceStretchKey
         )
-
-        // function a_initial() {
-        //     const data = new Float32Array(width * height)
-        //     data.fill(0.1)
-
-        //     for (let i = 0; i < 10; i++) {
-        //         const x = (width / 2) + 3 * i
-        //         const y = (height / 2) + 5 * Math.cos(0.1 * i)
-        //         data[x + (width * y)] = 0.5
-        //     }
-                
-        //     return data
-        // }
-
-        // const a_texture = new textures.BitmapTexture<
-        //         textures.TextureLocation,
-        //         textures.TextureLocation,
-        //         textures.TextureLocation,
-        //         Float32Array,
-        //         number,
-        //         number,
-        //         number,
-        //         Float32Array
-        //     >(a_initial(), resolution, fields.fields.ScalarField.instance)
         
         const system = new tensor.FieldPointTensorSystem(
+            [space1],
             [a, b, spaceStretch],
             new tensor.FieldPointTensorStatementDiffusion(a, spaceStretch, undefined!),
-            new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array(1), 'bool')
+            new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array([1]), 'bool')
         )
         
         return [
@@ -200,19 +176,17 @@ describe("playcanvas-node", () => {
             //     inputs: ['a_initial'],
             //     outputs: ['material', 'textures', 'color']
             // }),
-            new tensor.FieldPointTensorSystemFactory(
+            new surfaces.texturing.SurfaceTexturingTensorSystemFactory(
                 system,
                 {
-                    resolution,
+                    resolution: new Vec2(16, 16),
                     dt: 0.1,
                 },
-                [
-                    tensor.FieldPointTensorEncodingConstant.instance,
-                    tensor.FieldPointTensorEncodingVector.instance,
-                ],
                 {
                     inputs: {
+                        [spaceStretch.name!]: [surfaces.unwrapping.spaceStretch.SpaceStretchKey],
                         [a.name!]: ['a_initial'],
+                        [b.name!]: ['a_initial'],
                     },
                     outputs: {
                         [a.name!]: ['material', 'textures', 'color'],

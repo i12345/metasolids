@@ -141,10 +141,10 @@ export function field_point_tensor_encode<
                         ((dtype === 'float32' || dtype === 'complex64') && vector instanceof Float32Array) ||
                         ((dtype === 'bool') && vector instanceof Uint8Array)
                     ) ? vector : (
-                            dtype === 'int32' ? ((tmp = new Int32Array((<FieldPointVectorContainerStatic>vector).length)).set(<FieldPointVectorContainerStatic>vector), <Int32Array>tmp) :
-                            (dtype === 'float32' || dtype === 'complex64') ? ((tmp = new Float32Array()).set(<FieldPointVectorContainerStatic>vector), <Float32Array>tmp) :
-                            dtype === 'bool' ? ((tmp = new Uint8Array()).set(<FieldPointVectorContainerStatic>vector), <Uint8Array>tmp) :
-                            undefined
+                        dtype === 'int32' ? ((tmp = new Int32Array((<FieldPointVectorContainerStatic>vector).length)).set(<FieldPointVectorContainerStatic>vector), <Int32Array>tmp) :
+                        (dtype === 'float32' || dtype === 'complex64') ? ((tmp = new Float32Array((<FieldPointVectorContainerStatic>vector).length)).set(<FieldPointVectorContainerStatic>vector), <Float32Array>tmp) :
+                        dtype === 'bool' ? ((tmp = new Uint8Array((<FieldPointVectorContainerStatic>vector).length)).set(<FieldPointVectorContainerStatic>vector), <Uint8Array>tmp) :
+                        undefined
                     )
                 )
 
@@ -158,6 +158,9 @@ export function field_point_tensor_encode<
                     case Number:
                         return <Result>tf.tensor(vector_array, shape, dtype)
 
+                    case Boolean:
+                        return <Result>tf.tensor(vector_array, shape, dtype)
+                    
                     case Vec2:
                         slices = slice(2)
                         return <Result>{

@@ -4,7 +4,7 @@ import { FieldPointTensorEncoding, FieldPointTensorFactory } from "../tensor-fac
 import { TensorShape, rankOfShape } from "../../../utils/tf-rank.js";
 import { FieldPointType, field_point_type_contains } from "../../type.js";
 import { FieldPointTensor, field_point_tensor_decode, field_point_tensor_encode } from "../tensor.js";
-import { FieldPointVector, FieldPointVectorContainer } from "../../vectorized/point.js";
+import { FieldPointVector, FieldPointVectorContainer, field_point_vector_is } from "../../vectorized/point.js";
 import { arrayEq } from "../../../utils/array-eq.js";
 import { NumberTypedArray } from "../../../utils/typed-array.js";
 
@@ -48,6 +48,9 @@ export class FieldPointTensorEncodingVector<
             item: FieldPointVector<T>,
             context: any
         ): FieldPointTensorFactory<T, R> | undefined {
+        if (!field_point_vector_is(type, item))
+            return undefined
+
         return new FieldPointTensorFactoryVector(type, rank, item)
     }
 

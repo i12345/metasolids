@@ -1,8 +1,8 @@
 import { MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
-import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid, typedArrayClone, Reflect_fromEntries } from "../../utils/index.js"
+import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid, typedArrayClone, Reflect_fromEntries, isTypedArray } from "../../utils/index.js"
 import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldPointPrimitive, FieldsPoint } from "../point.js"
-import { FieldPointType, field_point_multiObj_count, field_point_type_is_multiObj, field_point_type_singleObj } from "../type.js"
+import { FieldPointType, MultiObjectsFieldPointElement, field_point_multiObj_count, field_point_type_is_multiObj, field_point_type_singleObj } from "../type.js"
 import { FieldPointVectorIterator } from "./iterator.js"
 import { vectorIterator } from "./iterators/factory.js"
 import { PrimitiveFieldPointVectorIterator } from "./iterators/primitive.js"
@@ -20,6 +20,10 @@ export type IsDynamicVectorContainer<Container extends FieldPointVectorContainer
     Container extends FieldPointVectorContainerStatic<NumberTypedArray> ? false :
     (true | false)
 )
+
+export function field_point_vector_container_is<Container extends FieldPointVectorContainer<NumberTypedArray>>(container: Container): boolean {
+    return container instanceof TypedArrayList || isTypedArray(container)
+}
 
 export function isDynamicVectorContainer<Container extends FieldPointVectorContainer<NumberTypedArray>>(container: Container): IsDynamicVectorContainer<Container> {
     return <IsDynamicVectorContainer<Container>>(container instanceof TypedArrayList)
@@ -107,6 +111,25 @@ export function isDynamicVector<
         return isDynamicVectorContainer<Container>((<any>vectorRoot)[ItemObjIDsKey])
 
     return <IsDynamicVector<ElementType, Container>>recursive(elementType, vector)!
+}
+
+export function field_point_vector_is<
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+    >(
+        type: FieldPointType<ElementType>,
+        vector: FieldPointVector<ElementType, Container>
+    ): boolean {
+    if (type instanceof Function)
+        return field_point_vector_container_is(<Container>vector)
+    else if (MultiObjectsGroupedObjectsKey in type)
+        return field_point_vector_is<FieldPoint, Container>((<FieldPointType<MultiObjectsFieldPointElement>>type)[MultiObjectsGroupedObjectsKey], vector)
+    else {
+        for (const key of Reflect.ownKeys(type))
+            if (!field_point_vector_is<FieldPoint, Container>((<FieldPointType<FieldsPoint>>type)[key], (<FieldPointVector<FieldsPoint, Container>>vector)[key]))
+                return false
+        return true
+    }
 }
 
 export type WithMultiObjects = {

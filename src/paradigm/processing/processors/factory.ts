@@ -36,7 +36,7 @@ export abstract class FactoryProcessor<
     init() {
         const connections = {
             inputs: [...groups(this.template.inputs)].map(input => input.get<PropertyPath>(this.mappings.inputs)),
-            outputs: [...groups(this.template.outputs)].map(output => output.get<PropertyPath>(this.mappings.outputs)),
+            outputs: [...groups(this.template.outputs)].map(output => output.get<PropertyPath>(this.mappings.outputs)).filter(path => path !== undefined),
         }
 
         return { connections }
@@ -50,12 +50,13 @@ export abstract class FactoryProcessor<
 
         const outputs = this.factory(inputs, item, context)
 
-        mapByGroups(
+        mapByGroups<Outputs, any, void>(
             this.template.outputs,
             outputs,
             (path, output) => {
                 const mapping = extract<PropertyPath>(this.mappings.outputs, path)
-                intract(item, mapping, output)
+                if (mapping)
+                    intract(item, mapping, output)
             }
         )
     }

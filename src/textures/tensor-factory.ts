@@ -102,6 +102,7 @@ export class TextureTensorFactory<
                 texture_context
             )
 
+        this.texture.init(texture_context)
         return this.texture.render(new Vec2(shape[1], shape[0]), texture_context)
     }
 }
@@ -189,6 +190,9 @@ export class TextureTensorEncoding<T extends FieldPoint = FieldPoint>
         if (rank !== tf.Rank.R2)
             return undefined
 
+        if (!field_point_type_contains(item.field.elementType, type))
+            return undefined
+        
         return new TextureTensorFactory(item)
     }
 

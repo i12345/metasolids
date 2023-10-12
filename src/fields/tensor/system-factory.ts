@@ -6,6 +6,7 @@ import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsGroup
 import { Reflect_fromEntries } from "../../utils/reflect-entries.js";
 import { mapFirst, mapFirstValue } from "../../utils/map-first.js";
 import { FieldsPoint } from "../point.js";
+import { FieldPointTensorSpace, FieldPointTensorTopologyProjectorFactory } from "./topology.js";
 
 function variablesTemplate(system: FieldPointTensorSystem): MultiObjectsGroupsTemplate {
     return Reflect_fromEntries<MultiObjectsGroupsTemplate>(system.variables.filter(variable => variable.name).map(variable => [variable.name!, MultiObjectsGroupsTemplate_Leaf]))
@@ -21,11 +22,12 @@ export class FieldPointTensorSystemFactory<Item = any, Context = any>
         Context
     > {
     constructor(
-            public system: FieldPointTensorSystem,
-            public parameters: FieldPointTensorSystemParameters & FieldsPoint,
-            public encodings: FieldPointTensorEncoding[],
-            mappings: FactoryMappings
-        ) {
+        public system: FieldPointTensorSystem,
+        public parameters: FieldPointTensorSystemParameters & FieldsPoint,
+        public topologyProjectors: Map<FieldPointTensorSpace, FieldPointTensorTopologyProjectorFactory>,
+        public encodings: FieldPointTensorEncoding[],
+        mappings: FactoryMappings
+    ) {
         super(
             {
                 inputs: variablesTemplate(system),
@@ -47,10 +49,10 @@ export class FieldPointTensorSystemFactory<Item = any, Context = any>
     }
 
     protected factory(
-            inputs: MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, any>,
-            item: Item,
-            context: Context
-        ): MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, any> {
+        inputs: MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, any>,
+        item: Item,
+        context: Context
+    ): MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, any> {
         const inputs_factories = new Map<FieldPointTensorVariable, FieldPointTensorFactory>()
         const input_encodings = new Map<FieldPointTensorVariable, FieldPointTensorEncoding>()
 
@@ -75,20 +77,23 @@ export class FieldPointTensorSystemFactory<Item = any, Context = any>
             inputs_factories.set(variable, factory)
         }
 
-        const instance = this.system.instance(this.parameters, inputs_factories)
+        const instance = this.system.instance(this.parameters, inputs_factories, this.topologyProjectors)
+        instance.init()
+
+        while (!instance.update().complete) { }
 
         const outputs = <MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, any>>{}
 
-        for(const variable of this.system.variables) {
+        for (const variable of this.system.variables) {
             const variableInstance = instance.variables.get(variable)!
             const variableEncoding = input_encodings.get(variable)!
 
             const encoded =
                 variableEncoding.encode(
-                        variable.type,
-                        variableInstance.topology.shape,
-                        variableInstance.register
-                    ) ??
+                    variable.type,
+                    variableInstance.topology.shape,
+                    variableInstance.register
+                ) ??
                 mapFirstValue(
                     this.encodings,
                     encoding => encoding.encode(

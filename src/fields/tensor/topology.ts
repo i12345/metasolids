@@ -3,42 +3,43 @@ import { PerRank, TensorShape } from "../../utils/tf-rank.js"
 import { PropertyPath, extract } from "../../paradigm/trees/index.js"
 import { FieldsPoint } from "../point.js"
 
-export interface FieldPointTensorTopology<R extends tf.Rank = tf.Rank> {
+export interface FieldPointTensorSpace<R extends tf.Rank = tf.Rank> {
     shape: PerRank<number | PropertyPath, R>
-    projector?: FieldPointTensorTopologyProjector<R>
 }
 
-export interface FieldPointTensorTopologyInstance<R extends tf.Rank = tf.Rank> {
-    topology: FieldPointTensorTopology<R>
+export interface FieldPointTensorTopology<R extends tf.Rank = tf.Rank> {
+    space: FieldPointTensorSpace<R>
     shape: TensorShape<R>
-    projector?: FieldPointTensorTopologyProjectorInstance<R>
+    projector: FieldPointTensorTopologyProjector<R>
 }
 
-export function field_point_tensor_topology_instance < R extends tf.Rank = tf.Rank > (
-        topology: FieldPointTensorTopology<R>,
-        parameters: FieldsPoint
-    ): FieldPointTensorTopologyInstance<R> {
-    const shape = <TensorShape<R>>topology.shape.map(semantic => typeof semantic === 'number' ?
+export function field_point_tensor_topology_instance<R extends tf.Rank = tf.Rank>(
+        space: FieldPointTensorSpace<R>,
+        parameters: FieldsPoint,
+        projectors: Map<FieldPointTensorSpace, FieldPointTensorTopologyProjectorFactory>,
+    ): FieldPointTensorTopology<R> {
+    const shape = <TensorShape<R>>space.shape.map(semantic => typeof semantic === 'number' ?
         semantic :
         extract<number>(parameters, semantic)
     )
 
-    const projector = topology.projector?.instance(shape)
+    const projector = (<FieldPointTensorTopologyProjectorFactory<R>>projectors.get(space)!).instance(shape)
 
     return {
-        topology,
+        space,
         shape,
         projector,
     }
 }
 
-export interface FieldPointTensorTopologyProjector<R extends tf.Rank = tf.Rank> {
-    instance(shape: TensorShape<R>): FieldPointTensorTopologyProjectorInstance<R>
+export interface FieldPointTensorTopologyProjectorFactory<R extends tf.Rank = tf.Rank> {
+    instance(shape: TensorShape<R>): FieldPointTensorTopologyProjector<R>
 }
 
-export interface FieldPointTensorTopologyProjectorInstance<R extends tf.Rank = tf.Rank> {
+export interface FieldPointTensorTopologyProjector<R extends tf.Rank = tf.Rank> {
     shape: TensorShape<R>
-    projector: FieldPointTensorTopologyProjector<R>
+    projector: FieldPointTensorTopologyProjectorFactory<R>
+    mask: tf.Tensor<R>
 
     project_delta(t: tf.Tensor<R>): tf.Tensor<R>
     project_update(t: tf.Tensor<R>): tf.Tensor<R>

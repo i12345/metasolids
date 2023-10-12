@@ -1,19 +1,21 @@
 import * as tf from "@tensorflow/tfjs"
-import { FieldPointTensorTopologyProjector, FieldPointTensorTopologyProjectorInstance } from "../topology.js";
+import { FieldPointTensorTopologyProjectorFactory, FieldPointTensorTopologyProjector } from "../topology.js";
 import { TensorShape } from "../../../utils/tf-rank.js";
 
-export class FieldPointTensorTopologyProjectorIdentity<R extends tf.Rank = tf.Rank>
-    implements FieldPointTensorTopologyProjector<R> {
-    instance(realShape: TensorShape<R>): FieldPointTensorTopologyProjectorInstance<R> {
-        return new FieldPointTensorTopologyProjectorInstanceIdentity(realShape, this)
+export class FieldPointTensorTopologyProjectorFactoryIdentity<R extends tf.Rank = tf.Rank>
+    implements FieldPointTensorTopologyProjectorFactory<R> {
+    instance(realShape: TensorShape<R>): FieldPointTensorTopologyProjector<R> {
+        return new FieldPointTensorTopologyProjectorIdentity(realShape, this)
     }
 }
 
-export class FieldPointTensorTopologyProjectorInstanceIdentity<R extends tf.Rank = tf.Rank>
-    implements FieldPointTensorTopologyProjectorInstance<R> {
+export class FieldPointTensorTopologyProjectorIdentity<R extends tf.Rank = tf.Rank>
+    implements FieldPointTensorTopologyProjector<R> {
+    readonly mask = tf.scalar(true).broadcastTo(this.shape)
+    
     constructor(
             public readonly shape: TensorShape<R>,
-            public readonly projector: FieldPointTensorTopologyProjector<R>
+            public readonly projector: FieldPointTensorTopologyProjectorFactory<R>
         ) { }
         
     project_delta(t: tf.Tensor<R>): tf.Tensor<R> {

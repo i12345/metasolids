@@ -1,10 +1,10 @@
-import { FieldPoint, FieldPointMapped, field_point_map } from "../../point.js";
+import { FieldPoint, FieldPointMapped, field_point_is, field_point_map } from "../../point.js";
 import { FieldPointNumbers, field_point_numbers_decode, field_point_numbers_type } from "../../numbers.js";
 import { field_point_numbers_encode } from "../../numbers.js";
 import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensorEncoding, FieldPointTensorFactory } from "../tensor-factory.js";
 import { TensorShape } from "../../../utils/tf-rank.js";
-import { FieldPointType, field_point_type_contains } from "../../type.js";
+import { FieldPointType, field_point_type_contains, field_point_type_default } from "../../type.js";
 import { FieldPointTensor, field_point_tensor_encode, field_point_tensor_map } from "../tensor.js";
 import { extract } from "../../../paradigm/trees/tree.js";
 import { field_point_vectorized_new } from "../../vectorized/point.js";
@@ -54,6 +54,10 @@ export class FieldPointTensorEncodingConstant<
             item: T,
             context: any
         ): FieldPointTensorFactory<T, R> | undefined {
+        if (!field_point_is(item) ||
+            !field_point_type_contains(field_point_type_default(item), type))
+            return undefined
+
         return new FieldPointTensorFactoryConstant(type, rank, item)
     }
 

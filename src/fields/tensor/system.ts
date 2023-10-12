@@ -6,13 +6,17 @@ import { FieldPointTensorExpression } from "./expression.js"
 import { FieldPointTensorVariable, FieldPointTensorVariableInitializationContext, FieldPointTensorVariableInstance, FieldPointTensorVariableMap } from "./variable.js"
 import { FieldPointType } from "../type.js"
 import { FieldPointTensorFactory } from "./tensor-factory.js"
+import { FieldPointTensorSpace, FieldPointTensorTopologyProjectorFactory, field_point_tensor_topology_instance } from './topology.js'
+import { FieldsPoint } from '../point.js'
+import { unique } from '../../utils/unique.js'
 
-export type FieldPointTensorSystemParameters = {
+export interface FieldPointTensorSystemParameters extends FieldsPoint {
     dt: number
 }
 
 export class FieldPointTensorSystem {
     constructor(
+        public spaces: FieldPointTensorSpace[],
         public variables: FieldPointTensorVariable[],
         public statement: FieldPointTensorStatement,
         public end: FieldPointTensorExpression<boolean, tf.Rank.R0>
@@ -24,15 +28,19 @@ export class FieldPointTensorSystem {
         }
 
         for (const variable of this.variables)
-            for (const parameter of variable.topology.shape.values())
+            for (const parameter of variable.space.shape.values())
                 if (parameter instanceof Array)
                     intract(types, parameter, Number)
         
         return types
     }
 
-    instance(parameters: FieldPointTensorSystemParameters, initializers: Map<FieldPointTensorVariable, FieldPointTensorFactory>): FieldPointTensorSystemRunner {
-        return new FieldPointTensorSystemRunner(this, parameters, initializers)
+    instance(
+            parameters: FieldPointTensorSystemParameters,
+            initializers: Map<FieldPointTensorVariable, FieldPointTensorFactory>,
+            topologyProjectors: Map<FieldPointTensorSpace, FieldPointTensorTopologyProjectorFactory>,
+        ): FieldPointTensorSystemRunner {
+        return new FieldPointTensorSystemRunner(this, parameters, initializers, topologyProjectors)
     }
 }
 
@@ -50,7 +58,8 @@ export class FieldPointTensorSystemRunner {
     constructor(
         public readonly system: FieldPointTensorSystem,
         public readonly parameters: FieldPointTensorSystemParameters,
-        public readonly initializers: Map<FieldPointTensorVariable, FieldPointTensorFactory>
+        public readonly initializers: Map<FieldPointTensorVariable, FieldPointTensorFactory>,
+        public readonly topologyProjectors: Map<FieldPointTensorSpace, FieldPointTensorTopologyProjectorFactory>,
     ) {
         for (const variable of system.variables)
             this.variables.set(variable, variable.instance(initializers.get(variable)))
@@ -61,6 +70,9 @@ export class FieldPointTensorSystemRunner {
             runner: this,
             variables: new FieldPointTensorVariableMap(this.variables)
         }
+
+        for (const space of system.spaces)
+            this.context.toplogies.set(space, field_point_tensor_topology_instance(space, parameters, topologyProjectors))
     }
 
     init() {
@@ -84,7 +96,7 @@ export class FieldPointTensorSystemRunner {
                         (_, path) => tf.addN(differential.map(differential => extract(differential, path)))
                     )
                     
-                    const projector = this.context.toplogies.get(variable.topology)!.projector
+                    const projector = this.context.toplogies.get(variable.space)!.projector
 
                     const differential_projected = projector ? field_point_tensor_map(
                         variable.type,

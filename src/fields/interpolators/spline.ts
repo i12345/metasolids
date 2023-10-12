@@ -6,7 +6,7 @@ import { CurveConfig } from "../curve.js"
 import { Field } from "../field.js"
 import { FieldInterpolationType, InterpolationKeypoint, Interpolator, VectorFieldInterpolationType, VectorInterpolator, makeInterpolator } from "../interpolation.js"
 import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldsPoint } from "../point.js"
-import { FieldPointType, field_point_type_contains, field_point_type_default, field_point_type_is, field_point_type_is_multiObj, field_point_type_size } from "../type.js"
+import { FieldPointType, field_point_type_contains, field_point_type_default, field_point_type_is_instance, field_point_type_is_multiObj, field_point_type_size } from "../type.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorStatic, IsDynamicVector, IsDynamicVectorContainer, field_point_vectorized_new } from "../vectorized/point.js"
 import { CurveInterpolator } from "curve-interpolator-vectorized"
 import { Reflect_fromEntries, Reflect_entries } from "../../utils/reflect-entries.js"
@@ -45,7 +45,7 @@ export class SplineInterpolationType<
         if (locationField.elementType !== Number)
             return undefined
 
-        if (this.resultType && !keypoints.every(({ value }) => field_point_type_is(this.resultType!, value)))
+        if (this.resultType && !keypoints.every(({ value }) => field_point_type_is_instance(this.resultType!, value)))
             return undefined
 
         const curveConfig: CurveConfig = {
@@ -98,7 +98,7 @@ export class SplineInterpolationType<
             LocationVector,
             PointVector
         > | undefined {
-        if (!keypoints.every(({ value }) => field_point_type_is(resultType, value)))
+        if (!keypoints.every(({ value }) => field_point_type_is_instance(resultType, value)))
             return undefined
 
         if (this.resultType && !field_point_type_contains(this.resultType, resultType))

@@ -11,17 +11,22 @@ import { Vec3Field } from "./vec3.js";
 import { Vec4Field } from "./vec4.js";
 import { VectorField } from "./vector.js";
 import { Field } from "../field.js";
-import { FieldPointType, field_point_new } from "../type.js";
+import { FieldPointType, field_point_new, field_point_type_is, field_point_type_is_instance } from "../type.js";
+import { BooleanField } from "./boolean.js";
 
 export function defaultField<
         Point extends FieldPoint = FieldPoint,
         PointElementType extends FieldPoint = Point,
         PointFuseMode extends FieldPoint = Point,
     >(p: Point | FieldPointType<Point>): Field<Point, PointElementType, PointFuseMode> {
-    if (p instanceof Function)
+    if (typeof p === 'object' && p !== null && Reflect.ownKeys(p).length === 0)
+        return new FieldsField<FieldsPoint & Point, FieldsPoint & PointElementType, FieldsPoint & PointFuseMode>(<FieldsPointMapped<FieldsPoint & Point, Field>>{})
+    else if (field_point_type_is(<FieldPointType<Point>>p))
         return defaultField<Point, PointElementType, PointFuseMode>(field_point_new(<FieldPointType<Point>>p))
     else if (typeof p === 'number')
         return ScalarField.instance as unknown as Field<Point, PointElementType, PointFuseMode>
+    else if (typeof p === 'boolean')
+        return BooleanField.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Vec2)
         return Vec2Field.instance as unknown as Field<Point, PointElementType, PointFuseMode>
     else if (p instanceof Vec3)

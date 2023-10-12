@@ -1,5 +1,5 @@
 import { Vec2 } from "playcanvas-extended";
-import { FieldPointTensorTopologyProjector, FieldPointTensorTopologyProjectorInstance } from "../tensor/topology.js";
+import { FieldPointTensorTopologyProjectorFactory, FieldPointTensorTopologyProjector } from "../tensor/topology.js";
 import * as tf from "@tensorflow/tfjs"
 import { Triangles2DMesh } from "./mesh.js";
 import { Triangles2DMeshCollider } from "./collider.js";
@@ -39,14 +39,14 @@ function project_copy(t: tf.Tensor2D, references: Triangle2DMeshTopologyProjecto
     return projected
 }
 
-export class Triangle2DMeshTopologyProjector
-    implements FieldPointTensorTopologyProjector<tf.Rank.R2> {
+export class Triangle2DMeshTopologyProjectorFactory
+    implements FieldPointTensorTopologyProjectorFactory<tf.Rank.R2> {
     constructor(
         public readonly mesh: Triangles2DMesh,
         public readonly externalIndices: IndicesTypedArray
     ) { }
     
-    instance(shape: [h: number, w: number]): FieldPointTensorTopologyProjectorInstance<tf.Rank.R2> {
+    instance(shape: [h: number, w: number]): FieldPointTensorTopologyProjector<tf.Rank.R2> {
         const [h, w] = shape
         const resolution = new Vec2(w, h)
 
@@ -1022,8 +1022,12 @@ export class Triangle2DMeshTopologyProjector
                 const src_coords_n_A = triangle_edge(i_tri, src_coords_A, src_value_A, src_A, vertex_index_a, vertex_index_b)
                 const src_coords_n_B = triangle_edge(i_tri, src_coords_B, src_value_B, src_B, vertex_index_other_a, vertex_index_other_b)
 
+                if(src_coords_n_A === 0 || src_coords_n_B === 0) return
+
                 const dst_coords_n_A = diffuse(invalid, src_coords_A, src_coords_n_A, src_value_A, dst_coords_A, dst_value_A)
                 const dst_coords_n_B = diffuse(invalid, src_coords_B, src_coords_n_B, src_value_B, dst_coords_B, dst_value_B)
+
+                if (dst_coords_n_A === 0 || dst_coords_n_B === 0) return
 
                 const mappings_AB = dst_map_src(src_value_A, src_coords_n_A, dst_value_B, dst_coords_n_B)
                 const mappings_BA = dst_map_src(src_value_B, src_coords_n_B, dst_value_A, dst_coords_n_A)
@@ -1082,17 +1086,31 @@ export class Triangle2DMeshTopologyProjector
 
         const mask = <tf.Tensor2D>tf.tensor2d(invalid, shape, 'bool').logicalNot()
 
-        return new Triangle2DMeshTopologyProjectorInstance(this, shape, copy_references, mask)
+        return new Triangle2DMeshTopologyProjector(this, shape, copy_references, mask)
     }
 }
 
-export class Triangle2DMeshTopologyProjectorInstance
-    implements FieldPointTensorTopologyProjectorInstance<tf.Rank.R2> {
+export class Triangle2DMeshTopologyProjector
+    implements FieldPointTensorTopologyProjector<tf.Rank.R2> {
+    readonly mask = tf.tensorScatterUpdate(
+        this.inside,
+        this.copy_references.inside_to_outside.length > 0 ?
+            tf.concat(this.copy_references.inside_to_outside.map(({ indices }) => indices.dst), 0) :
+            tf.tensor2d([], [0, 2], 'int32'),
+        this.copy_references.inside_to_outside.length > 0 ?
+            tf.scalar(true).broadcastTo([
+                this.copy_references.inside_to_outside
+                    .map(({ indices }) => indices.dst.shape[0])
+                    .reduce((acc, length) => acc + length, 0)
+            ]) :
+            tf.tensor1d([], 'bool')
+    )
+    
     constructor(
-        public readonly projector: Triangle2DMeshTopologyProjector,
+        public readonly projector: Triangle2DMeshTopologyProjectorFactory,
         public readonly shape: [h: number, w: number],
         public readonly copy_references: Triangle2DMeshTopologyProjectorCopyReferences,
-        public readonly mask: tf.Tensor2D
+        public readonly inside: tf.Tensor2D,
     ) { }
 
     project_delta(t: tf.Tensor2D): tf.Tensor2D {
@@ -1100,6 +1118,6 @@ export class Triangle2DMeshTopologyProjectorInstance
     }
 
     project_update(t: tf.Tensor2D): tf.Tensor2D {
-        return t.where(this.mask, project_copy(t, this.copy_references.inside_to_outside))
+        return t.where(this.inside, project_copy(t, this.copy_references.inside_to_outside))
     }
 }

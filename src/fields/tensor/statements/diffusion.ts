@@ -4,6 +4,7 @@ import { FieldPointTensorVariable } from "../variable.js"
 import { RankNext, ScalarN } from "../../../utils/tf-rank.js"
 import { FieldPointTensor } from "../tensor.js"
 import { FieldPointTensorExpression } from "../expression.js"
+import { FieldPointTensorSystemRunnerContext } from "../system.js"
 
 export class FieldPointTensorStatementDiffusion<
         T extends number = number,
@@ -24,6 +25,13 @@ export class FieldPointTensorStatementDiffusion<
         this.spaceStretch_0_reciprocal = spaceStretch[0].reciprocal()
         this.spaceStretch_1_reciprocal = spaceStretch[1].reciprocal()
         this.spaceStretch_01_reciprocal = <tf.Tensor<R>>tf.add(spaceStretch[0].square(), spaceStretch[1].square()).sqrt().reciprocal()
+
+        const valid = (<FieldPointTensorSystemRunnerContext>context).toplogies.get(this.variable.space)!.projector?.mask
+        if (valid) {
+            this.spaceStretch_0_reciprocal = this.spaceStretch_0_reciprocal.where(valid, 0)
+            this.spaceStretch_1_reciprocal = this.spaceStretch_1_reciprocal.where(valid, 0)
+            this.spaceStretch_01_reciprocal = this.spaceStretch_01_reciprocal.where(valid, 0)
+        }
     }
 
     dispose(): void {
@@ -37,7 +45,7 @@ export class FieldPointTensorStatementDiffusion<
 
         function diffuse(axis: [[number, number], [number, number]], inverse_distance: tf.Tensor<R>) {
             const axis_forward = axis
-            const axis_backward: typeof axis = [[axis[0][1] - axis[0][0], axis[0][0] - axis[0][1]], [axis[1][1] - axis[1][0], axis[1][0] - axis[1][1]]]
+            const axis_backward: typeof axis = [[axis[0][1], axis[0][0]], [axis[1][1], axis[1][0]]]
 
             //TODO: generic for multiple ranks using tf.slice() and tf.pad()
             // const shape = x.shape.map((shape_i, i) => shape_i - axis[i])
@@ -66,7 +74,7 @@ export class FieldPointTensorStatementDiffusion<
 
             const spaceStretch_forward = <tf.Tensor<ExpandedRank>>crop_forward.call(pad_forward.call(spaceStretch_expanded, {}), {})
             const spaceStretch_backward = <tf.Tensor<ExpandedRank>>crop_backward.call(pad_backward.call(spaceStretch_expanded, {}), {})
-        
+            
             // const spaceStretch_diffuse = spaceStretch_0.add(spaceStretch_1).div(2)
 
             const diff_backward = <tf.Tensor<ExpandedRank>>x_backward.sub(x_expanded)

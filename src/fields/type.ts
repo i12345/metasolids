@@ -67,7 +67,30 @@ export function field_point_new<Point extends FieldPoint = FieldPoint>(type: Fie
     }
 }
 
-export function field_point_type_is<
+const types_primitive = new Set<FieldPointType<FieldPointPrimitive>>([Number, Boolean, Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color])
+export function field_point_type_is<Point extends FieldPoint = FieldPoint, Obj = FieldPointType<Point>>(type: Obj): Obj extends FieldPointType<Point> ? true : false {
+    function recurse(type: unknown, isMultiObjMapped = false): boolean {
+        if (type instanceof Function)
+            return types_primitive.has(<FieldPointType<FieldPointPrimitive>><unknown>type)
+        else if (typeof type === 'object' && type !== null) {
+            if (MultiObjectsGroupedObjectsKey in <FieldPointType<MultiObjectsFieldPointElement>>type) {
+                if (isMultiObjMapped) return false
+                return recurse((<FieldPointType<MultiObjectsFieldPointElement>>type)[MultiObjectsGroupedObjectsKey], true)
+            }
+            else {
+                for (const key of Reflect.ownKeys(<FieldPointType<FieldsPoint>>type))
+                    if (!recurse((<FieldPointType<FieldsPoint>>type)[key], isMultiObjMapped))
+                        return false
+                return true
+            }
+        }
+        else return false
+    }
+
+    return <Obj extends FieldPointType<Point> ? true : false>recurse(type)
+}
+
+export function field_point_type_is_instance<
         Point extends FieldPoint = FieldPoint,
         PointElementType extends FieldPoint = Point,
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -93,7 +116,7 @@ export function field_point_type_is<
         
         function recurse(p: FieldPoint, objs: MultiObjectsTemplateOrLeaf): boolean {
             if (objs === MultiObjectsTemplate_Leaf)
-                return field_point_type_is(subtype, p, undefined, strict)
+                return field_point_type_is_instance(subtype, p, undefined, strict)
             else return Reflect.ownKeys(<FieldsPoint>p).every(key =>
                 (key in objs) &&
                 recurse((<FieldsPoint>p)[key], objs[key])
@@ -104,7 +127,7 @@ export function field_point_type_is<
     }
     else return Reflect.ownKeys(<FieldsPoint>p).every(key =>
         (!strict || key in type) &&
-        field_point_type_is<FieldPoint, FieldPoint, Objects, ObjIDsT>(
+        field_point_type_is_instance<FieldPoint, FieldPoint, Objects, ObjIDsT>(
             (<FieldPointType<FieldsPoint>>type)[key],
             (<FieldsPoint>p)[key],
             multiObjectIDs,
