@@ -36,7 +36,7 @@ describe("playcanvas-node", () => {
     function testRender(name: string, setup: (entity: Entity) => void) {
         it(name, async () => {
             const canvas = document.createElement("canvas")
-            canvas.width = canvas.height = 512
+            canvas.width = canvas.height = 1024
             const app = new Application(canvas)
             app.start()
 
@@ -122,7 +122,7 @@ describe("playcanvas-node", () => {
             new textures.factories.RemappedTextureFactory(
                 [
                     {
-                        from: [0],
+                        from: [1],
                         to: []
                     }
                 ],
@@ -209,7 +209,7 @@ describe("playcanvas-node", () => {
 
             const component1 = entity1.addComponent(physicalEntity.SYSTEM_ID)! as physicalEntity.Component
             component1.volumeSamplingSettings = {
-                max_depth: 7,
+                max_depth: 5,
                 indicesType: Uint32Array,
                 recommendation_threshold: 1
             }
@@ -235,8 +235,8 @@ describe("playcanvas-node", () => {
         })
     }
 
-    // const texturers = spaceStretchTexturer
-    const texturers = RDtexturer1
+    const texturers = spaceStretchTexturer
+    // const texturers = RDtexturer1
 
     testShape("one sphere", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
