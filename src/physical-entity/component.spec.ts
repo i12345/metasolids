@@ -179,7 +179,7 @@ describe("playcanvas-node", () => {
             new surfaces.texturing.SurfaceTexturingTensorSystemFactory(
                 system,
                 {
-                    resolution: new Vec2(16, 16),
+                    resolution: new Vec2(512, 512),
                     dt: 0.1,
                 },
                 {
