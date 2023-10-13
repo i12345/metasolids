@@ -57,11 +57,14 @@ export class FieldPointTensorSystemFactory<Item = any, Context = any>
         const input_encodings = new Map<FieldPointTensorVariable, FieldPointTensorEncoding>()
 
         function variablePath(variable: FieldPointTensorVariable) {
-            return [variable.name!]
+            return variable.name ? [variable.name] : undefined
         }
 
         for (const variable of this.system.variables) {
-            const input_item = extract(inputs, variablePath(variable))
+            const path = variablePath(variable)
+            if (path === undefined) continue
+
+            const input_item = extract(inputs, path)
 
             const [encoding, factory] = mapFirst(
                 this.encodings,
@@ -85,6 +88,9 @@ export class FieldPointTensorSystemFactory<Item = any, Context = any>
         const outputs = <MultiObjectsGroupsMapped<MultiObjectsGroupsTemplate, any>>{}
 
         for (const variable of this.system.variables) {
+            const path = variablePath(variable)
+            if (path === undefined) continue
+
             const variableInstance = instance.variables.get(variable)!
             const variableEncoding = input_encodings.get(variable)!
 
@@ -103,7 +109,7 @@ export class FieldPointTensorSystemFactory<Item = any, Context = any>
                     )
                 )!
 
-            intract(outputs, variablePath(variable), encoded)
+            intract(outputs, path, encoded)
         }
 
         return outputs
