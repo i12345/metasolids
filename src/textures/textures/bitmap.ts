@@ -247,9 +247,9 @@ export class BitmapTexture<
                 this.field.elementType,
                 encoded,
                 raw => tf.image.resizeBilinear(
-                    <tf.Tensor3D>raw.expandDims(0),
+                    <tf.Tensor3D>raw.expandDims(0).expandDims(3),
                     [resolution.y, resolution.x]
-                ).squeeze([0])
+                ).squeeze([0, 3])
             )
         }
     }

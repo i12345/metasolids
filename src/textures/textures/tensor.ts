@@ -261,7 +261,7 @@ export class TensorTexture<
                 field_point_tensor_map(
                     this.type,
                     this.tensor,
-                    raw => (this.resizeMode === "bilinear" ? tf.image.resizeBilinear : tf.image.resizeNearestNeighbor)(<tf.Tensor3D>raw.expandDims(0), <TensorShape<tf.Rank.R2>>this.shape)
+                    raw => (this.resizeMode === "bilinear" ? tf.image.resizeBilinear : tf.image.resizeNearestNeighbor)(<tf.Tensor3D>raw.expandDims(0).expandDims(3), <TensorShape<tf.Rank.R2>>this.shape).squeeze([0, 3])
                 )
         
             return <tensor.FieldPointTensor2D<Sample>>tensor_real
