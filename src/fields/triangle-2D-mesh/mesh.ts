@@ -14,7 +14,7 @@ export class Triangles2DMesh {
 
     addToDocument() {
         const cvs = document.createElement('canvas')
-        const scale = 250
+        const scale = 512
         cvs.width = cvs.height = scale
         document.body.appendChild(cvs)
         cvs.style.position = 'absolute'
@@ -45,6 +45,8 @@ export class Triangles2DMesh {
             ctx.fill()
             ctx.stroke()
         }
+
+        return cvs
     }
 
     static build(
