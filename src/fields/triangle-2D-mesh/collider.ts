@@ -24,12 +24,12 @@ export class Triangles2DMeshCollider {
 
     constructor(
         public mesh: Triangles2DMesh,
-        public resolution = 5
+        public resolution = Math.floor(Math.max(1, Math.sqrt((mesh.triangles.length / 3) / 16)))
     ) {
         this.cells = new Array(resolution ** 2)
         const cell_size = this.mesh.bounds.size.clone().divScalar(this.resolution)
-        for (let x = 0; x < resolution; x++) {
-            for (let y = 0; y < resolution; y++) {
+        for (let y = 0; y < resolution; y++) {
+            for (let x = 0; x < resolution; x++) {
                 const min = new Vec2(x, y)
                     .divScalar(resolution)
                     .mul(this.mesh.bounds.size)
@@ -116,8 +116,8 @@ export class Triangles2DMeshCollider {
 
         const bounds_origin_x = this.mesh.bounds.origin.x
         const bounds_origin_y = this.mesh.bounds.origin.y
-        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
         const resolution_div_bounds_size_x = resolution / this.mesh.bounds.size.x
+        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
 
         let p_x: number, p_y: number
         let cell_x: number, cell_y: number
@@ -161,7 +161,7 @@ export class Triangles2DMeshCollider {
             if (cell_x < 0 || cell_x >= resolution ||
                 cell_y < 0 || cell_y >= resolution ||
                 isNaN(cell_x) || isNaN(cell_y)) {
-                result_invalid[p_i] = 0xFF
+                result_invalid[p_i] = 1
                 result_tri[p_i] = result_tri_invalid
                 result_w1[p_i] = NaN
                 result_w2[p_i] = NaN
@@ -184,10 +184,11 @@ export class Triangles2DMeshCollider {
                 x = p_x - v0_x
                 y = p_y - v0_y
 
+                tri_vec_inv_i = 4 * tri
                 tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
                 tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
                 tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
-                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i]
 
                 w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
                 w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
@@ -209,7 +210,7 @@ export class Triangles2DMeshCollider {
             }
 
             if (!collided) {
-                result_invalid[p_i] = 0xFF
+                result_invalid[p_i] = 1
                 result_tri[p_i] = result_tri_invalid
                 result_w1[p_i] = NaN
                 result_w2[p_i] = NaN
@@ -226,8 +227,8 @@ export class Triangles2DMeshCollider {
 
         const bounds_origin_x = this.mesh.bounds.origin.x
         const bounds_origin_y = this.mesh.bounds.origin.y
-        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
         const resolution_div_bounds_size_x = resolution / this.mesh.bounds.size.x
+        const resolution_div_bounds_size_y = resolution / this.mesh.bounds.size.y
 
         let p_x: number, p_y: number
         let cell_x: number, cell_y: number
@@ -291,10 +292,11 @@ export class Triangles2DMeshCollider {
                 x = p_x - v0_x
                 y = p_y - v0_y
 
+                tri_vec_inv_i = 4 * tri
                 tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
                 tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
                 tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
-                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i]
 
                 w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
                 w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
@@ -326,14 +328,26 @@ export class Triangles2DMeshCollider {
     }
 
     render<OutputTF extends boolean = true>(render_resolution: Vec2, outputTFtypes: OutputTF = <OutputTF>true): OutputTF extends true ? TriangleCollisionVectorTF : TriangleCollisionVector {
+        // const p = new Float32Array(2 * render_resolution.x * render_resolution.y)
+        // let p_i = 0
+
+        // for (let y = 0; y < render_resolution.y; y++) {
+        //     for (let x = 0; x < render_resolution.x; x++) {
+        //         p[p_i++] = (x * this.mesh.bounds.size.x / render_resolution.x) + this.mesh.bounds.origin.x
+        //         p[p_i++] = (y * this.mesh.bounds.size.y / render_resolution.y) + this.mesh.bounds.origin.y
+        //     }
+        // }
+
+        // return <OutputTF extends true ? TriangleCollisionVectorTF : TriangleCollisionVector>(outputTFtypes ? this.collide_first_vectorized_tensor(p) : this.collide_first_vectorized(p))
+    
         const { v0, tri_vec_inv, margin } = this.mesh
         const margin_min = -margin, margin_max = 1 + margin
         const resolution = this.resolution
 
         const bounds_origin_x = this.mesh.bounds.origin.x
         const bounds_origin_y = this.mesh.bounds.origin.y
-        const bounds_size_y = this.mesh.bounds.size.y
         const bounds_size_x = this.mesh.bounds.size.x
+        const bounds_size_y = this.mesh.bounds.size.y
 
         let p_x: number, p_y: number
         let cell_x: number, cell_y: number
@@ -415,10 +429,11 @@ export class Triangles2DMeshCollider {
                 x = p_x - v0_x
                 y = p_y - v0_y
 
+                tri_vec_inv_i = 4 * tri
                 tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
                 tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
                 tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
-                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i++]
+                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i]
 
                 w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
                 w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
@@ -478,8 +493,8 @@ export class Triangles2DMeshColliderQuad {
             v2_x = vertices[(2 * i2) + 0]
             v2_y = vertices[(2 * i2) + 1]
 
-            max_x = Math.max(v0_x, v1_x, v2_x)
             min_x = Math.min(v0_x, v1_x, v2_x)
+            max_x = Math.max(v0_x, v1_x, v2_x)
             min_y = Math.min(v0_y, v1_y, v2_y)
             max_y = Math.max(v0_y, v1_y, v2_y)
 
