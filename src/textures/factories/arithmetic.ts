@@ -126,7 +126,9 @@ export class ArithmeticTextureFactory<
         TextureLocationFuseMode,
         TextureLocationContainer,
         ResultContainer,
-        TextureContext
+        TextureContext,
+        Item,
+        Context
     >> {
     constructor(
             public op: ArithmeticPrimitiveFuseModeOp,
@@ -147,7 +149,9 @@ export class ArithmeticTextureFactory<
             TextureLocationFuseMode,
             TextureLocationContainer,
             ResultContainer,
-            TextureContext
+            TextureContext,
+            Item,
+            Context
         > {
         return new ArithmeticTextureFactory(
             this.op,

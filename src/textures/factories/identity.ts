@@ -1,6 +1,7 @@
 import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../fields/vectorized/point.js";
 import { FactoryMappings, FactoryProcessor, FactoryTemplate } from "../../paradigm/processing/processors/factory.js";
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
+import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
@@ -26,8 +27,8 @@ export type IdentityTextureFactoryOutputValues<
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         TextureLocationSampleT extends TextureLocation & TextureSample = TextureLocation & TextureSample,
-        TextureLocationSampleElementType extends TextureLocation = TextureLocationSampleT,
-        TextureLocationSampleFuseMode extends TextureLocation = TextureLocationSampleT,
+        TextureLocationSampleElementType extends TextureLocation & TextureSample = TextureLocationSampleT,
+        TextureLocationSampleFuseMode extends TextureLocation & TextureSample = TextureLocationSampleT,
         TextureLocationSampleContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
@@ -65,8 +66,8 @@ export class IdentityTextureFactory<
         ObjIDsT extends IndicesTypedArray = Uint32Array,
         ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
         TextureLocationSampleT extends TextureLocation & TextureSample = TextureLocation & TextureSample,
-        TextureLocationSampleElementType extends TextureLocation = TextureLocationSampleT,
-        TextureLocationSampleFuseMode extends TextureLocation = TextureLocationSampleT,
+        TextureLocationSampleElementType extends TextureLocation & TextureSample = TextureLocationSampleT,
+        TextureLocationSampleFuseMode extends TextureLocation & TextureSample = TextureLocationSampleT,
         TextureLocationSampleContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
@@ -106,13 +107,44 @@ export class IdentityTextureFactory<
         >,
         Item,
         Context
-    > {
+    >
+    implements Cloneable<IdentityTextureFactory<
+        Objects,
+        ObjIDsT,
+        ObjIDsContainer,
+        TextureLocationSampleT,
+        TextureLocationSampleElementType,
+        TextureLocationSampleFuseMode,
+        TextureLocationSampleContainer,
+        TextureContext,
+        TextureLocationSampleVector,
+        Item,
+        Context
+    >> {
     constructor(
             mappings?: FactoryMappings<IdentityTextureFactoryInputs, IdentityTextureFactoryOutputs>
         ) {
         super(
             IdentityTextureFactoryTemplate,
             mappings
+        )
+    }
+
+    [clone](): IdentityTextureFactory<
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            TextureLocationSampleT,
+            TextureLocationSampleElementType,
+            TextureLocationSampleFuseMode,
+            TextureLocationSampleContainer,
+            TextureContext,
+            TextureLocationSampleVector,
+            Item,
+            Context
+        > {
+        return new IdentityTextureFactory(
+            makeClone(this.mappings)
         )
     }
     

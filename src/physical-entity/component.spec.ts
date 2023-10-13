@@ -172,6 +172,13 @@ describe("playcanvas-node", () => {
                     outputs: ['a_initial']
                 }
             ),
+            new textures.factories.noise.OpenSimplexNoiseTextureFactory(
+                "plain",
+                {
+                    inputs: {},
+                    outputs: ['b_initial']
+                }
+            ),
             // new processing.processors.factories.CopyFactory({
             //     inputs: ['a_initial'],
             //     outputs: ['material', 'textures', 'color']
@@ -186,11 +193,11 @@ describe("playcanvas-node", () => {
                     inputs: {
                         [spaceStretch.name!]: [surfaces.unwrapping.spaceStretch.SpaceStretchKey],
                         [a.name!]: ['a_initial'],
-                        [b.name!]: ['a_initial'],
+                        [b.name!]: ['b_initial'],
                     },
                     outputs: {
-                        [a.name!]: ['material', 'textures', 'color'],
-                        // [b.name!]: ['material', 'textures', 'color'],
+                        // [a.name!]: ['material', 'textures', 'color'],
+                        [b.name!]: ['material', 'textures', 'color'],
                     }
                 }
             )
