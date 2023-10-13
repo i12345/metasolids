@@ -91,10 +91,10 @@ export class FieldPointTensorStatementDiffusion<
         }
 
         const sum = <tf.Tensor<R>>tf.addN([
-            diffuse([[0, 0], [0, 1]], this.spaceStretch_1_reciprocal),
-            diffuse([[0, 1], [0, 0]], this.spaceStretch_0_reciprocal),
-            diffuse([[0, 1], [0, 1]], this.spaceStretch_01_reciprocal),
-            diffuse([[1, 0], [0, 1]], this.spaceStretch_01_reciprocal),
+            tf.tidy(() => diffuse([[0, 0], [0, 1]], this.spaceStretch_1_reciprocal)),
+            tf.tidy(() => diffuse([[0, 1], [0, 0]], this.spaceStretch_0_reciprocal)),
+            tf.tidy(() => diffuse([[0, 1], [0, 1]], this.spaceStretch_01_reciprocal)),
+            tf.tidy(() => diffuse([[1, 0], [0, 1]], this.spaceStretch_01_reciprocal)),
         ])
 
         return {
