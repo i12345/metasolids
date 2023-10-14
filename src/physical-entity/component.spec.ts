@@ -173,7 +173,7 @@ describe("playcanvas-node", () => {
             new tensor.FieldPointTensorExpressionArithmetic<boolean, tf.Rank.R0>(
                 tensor.FieldPointTensorExpressionArithmeticOp.gte,
                 new tensor.FieldPointTensorExpressionVariable(t),
-                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([0.5]))
+                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([0.8]))
             )
             // new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array([1]), 'bool')
         )
