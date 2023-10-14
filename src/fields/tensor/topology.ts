@@ -7,10 +7,18 @@ export interface FieldPointTensorSpace<R extends tf.Rank = tf.Rank> {
     shape: PerRank<number | PropertyPath, R>
 }
 
+export const scalarSpace: FieldPointTensorSpace<tf.Rank.R0> = {
+    shape: [],
+}
+
 export interface FieldPointTensorTopology<R extends tf.Rank = tf.Rank> {
     space: FieldPointTensorSpace<R>
     shape: TensorShape<R>
     projector: FieldPointTensorTopologyProjector<R>
+}
+
+export interface FieldPointTensorContextWithSpaceTopologies {
+    toplogies: Map<FieldPointTensorSpace, FieldPointTensorTopology>
 }
 
 export function field_point_tensor_topology_instance<R extends tf.Rank = tf.Rank>(

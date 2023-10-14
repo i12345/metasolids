@@ -135,17 +135,13 @@ describe("playcanvas-node", () => {
     }
 
     function RDtexturer1(): processing.processors.FactoryProcessor[] {
-        const space0: tensor.FieldPointTensorSpace<tf.Rank.R0> = {
-            shape: [],
-        }
-
         const space1: tensor.FieldPointTensorSpace<tf.Rank.R2> = {
             shape: [["resolution", "y"], ["resolution", "x"]],
         }
 
         const t = new tensor.FieldPointTensorVariable<number, tf.Rank.R0>(
             Number,
-            space0,
+            tensor.scalarSpace,
             // "t"
         )
 
@@ -168,16 +164,16 @@ describe("playcanvas-node", () => {
         )
         
         const system = new tensor.FieldPointTensorSystem(
-            [space1, space0],
+            [space1, tensor.scalarSpace],
             [a, b, t, spaceStretch],
             new tensor.FieldPointTensorStatementParallel([
-                new tensor.FieldPointTensorStatementPDE(t, new tensor.FieldPointTensorExpressionConstant<number, tf.Rank.R0>(Number, [], new Float32Array([1]))),
+                new tensor.FieldPointTensorStatementPDE(t, new tensor.FieldPointTensorExpressionConstant<number, tf.Rank.R0>(Number, tensor.scalarSpace, new Float32Array([1]))),
                 new tensor.FieldPointTensorStatementDiffusion(b, spaceStretch, undefined!)
             ]),
             new tensor.FieldPointTensorExpressionArithmetic<boolean, tf.Rank.R0>(
                 tensor.FieldPointTensorExpressionArithmeticOp.gte,
                 new tensor.FieldPointTensorExpressionVariable(t),
-                new tensor.FieldPointTensorExpressionConstant(Number, [], new Float32Array([4]))
+                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([0.5]))
             )
             // new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array([1]), 'bool')
         )

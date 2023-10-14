@@ -5,7 +5,7 @@ import { extract } from "../../paradigm/trees/index.js"
 import { FieldPointTensor, field_point_tensor_encode, field_point_tensor_map } from "./tensor.js"
 import { FieldPointTensorFactory } from "./tensor-factory.js"
 import { field_point_vectorized_new } from "../vectorized/point.js"
-import { FieldPointTensorSpace, FieldPointTensorTopology, FieldPointTensorTopologyProjectorFactory, field_point_tensor_topology_instance } from "./topology.js"
+import { FieldPointTensorContextWithSpaceTopologies, FieldPointTensorSpace, FieldPointTensorTopology, FieldPointTensorTopologyProjectorFactory, field_point_tensor_topology_instance } from "./topology.js"
 
 export class FieldPointTensorVariable<
         T extends FieldPoint = FieldPoint,
@@ -26,9 +26,8 @@ export class FieldPointTensorVariable<
     }
 }
 
-export interface FieldPointTensorVariableInitializationContext {
+export interface FieldPointTensorVariableInitializationContext extends FieldPointTensorContextWithSpaceTopologies {
     parameters: FieldsPoint
-    toplogies: Map<FieldPointTensorSpace, FieldPointTensorTopology>
 }
 
 export class FieldPointTensorVariableInstance<

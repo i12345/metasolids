@@ -24,7 +24,7 @@ export class FieldPointTensorStatementParallel implements FieldPointTensorStatem
         for (const { differentials, values } of childResults) {
             if (differentials) {
                 for (const [key, values] of differentials.entries()) {
-                    if (result.differentials!.has(key))
+                    if (!result.differentials!.has(key))
                         result.differentials!.set(key, values)
                     else result.differentials!.get(key)!.push(...values)
                 }
