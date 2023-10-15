@@ -1,19 +1,19 @@
 import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensorStatement, FieldPointTensorStatementContext, FieldPointTensorStatementResult } from "../statement.js"
 import { FieldPointTensorVariable } from "../variable.js"
-import { RankNext, ScalarN } from "../../../utils/tf-rank.js"
+import { Per2PRank, RankAtOrBelow, RankNext, RankPrev, ScalarN } from "../../../utils/tf-rank.js"
 import { FieldPointTensor } from "../tensor.js"
 import { FieldPointTensorExpression } from "../expression.js"
 import { FieldPointTensorSystemRunnerContext } from "../system.js"
+import { renderTensor } from "../../../utils/tf-img.js"
 
 export class FieldPointTensorStatementDiffusion<
         T extends number = number,
         R extends tf.Rank.R2 = tf.Rank.R2
     > implements FieldPointTensorStatement {
-    private spaceStretch_0_reciprocal!: tf.Tensor<R>
-    private spaceStretch_1_reciprocal!: tf.Tensor<R>
-    private spaceStretch_01_reciprocal!: tf.Tensor<R>
-    
+    private spaceStretch_reciprocal!: Per2PRank<tf.Tensor<R>, R>
+    private dimensions!: Per2PRank<Per2PRank<number, RankAtOrBelow<R>>, R>
+
     constructor(
         public readonly variable: FieldPointTensorVariable<T, R>,
         public readonly spaceStretch: FieldPointTensorVariable<ScalarN<R>, R>,
@@ -22,80 +22,91 @@ export class FieldPointTensorStatementDiffusion<
 
     init(context: FieldPointTensorStatementContext): void {
         const spaceStretch = <FieldPointTensor<ScalarN<R>, R>>context.variables.get(this.spaceStretch)!
-        this.spaceStretch_0_reciprocal = spaceStretch[0].reciprocal()
-        this.spaceStretch_1_reciprocal = spaceStretch[1].reciprocal()
-        this.spaceStretch_01_reciprocal = <tf.Tensor<R>>tf.add(spaceStretch[0].square(), spaceStretch[1].square()).sqrt().reciprocal()
+        const valid = (<FieldPointTensorSystemRunnerContext>context).topologies.get(this.variable.space)!.projector?.mask
+        
+        const rank = this.spaceStretch.space.shape.length
 
-        const valid = (<FieldPointTensorSystemRunnerContext>context).toplogies.get(this.variable.space)!.projector?.mask
-        if (valid) {
-            this.spaceStretch_0_reciprocal = this.spaceStretch_0_reciprocal.where(valid, 0)
-            this.spaceStretch_1_reciprocal = this.spaceStretch_1_reciprocal.where(valid, 0)
-            this.spaceStretch_01_reciprocal = this.spaceStretch_01_reciprocal.where(valid, 0)
+        this.spaceStretch_reciprocal = <Per2PRank<tf.Tensor<R>, R>>new Array(1 << rank)
+        this.dimensions = <Per2PRank<Per2PRank<number, RankAtOrBelow<R>>, R>>new Array(1 << rank)
+
+        for (let var_bits = 1; var_bits < (1 << rank); var_bits++) {
+            this.spaceStretch_reciprocal[var_bits] = tf.tidy(() => {
+                const lengths: tf.Tensor<R>[] = []
+                const dimensions: number[] = []
+                for (let var_i = 0; var_i < rank; var_i++) {
+                    if ((var_bits & (1 << var_i)) !== 0) {
+                        lengths.push((<Record<number, tf.Tensor<R>>>spaceStretch)[var_i])
+                        dimensions.push(var_i)
+                    }
+                }
+                const spaceStretch_reciprocal = tf.addN(lengths.map(length => length.square())).sqrt().reciprocal()
+                this.dimensions[var_bits] = <Per2PRank<number, RankAtOrBelow<R>>>dimensions
+
+                if (valid)
+                    return spaceStretch_reciprocal.where(valid, 0)
+                return spaceStretch_reciprocal
+            })
         }
     }
 
     dispose(): void {
-        this.spaceStretch_0_reciprocal.dispose()
-        this.spaceStretch_1_reciprocal.dispose()
-        this.spaceStretch_01_reciprocal.dispose()
+        tf.dispose(this.spaceStretch_reciprocal)
     }
 
     update(context: FieldPointTensorStatementContext): FieldPointTensorStatementResult {
         const x = context.variables.get(this.variable)!
 
-        function diffuse(axis: [[number, number], [number, number]], inverse_distance: tf.Tensor<R>) {
-            const axis_forward = axis
-            const axis_backward: typeof axis = [[axis[0][1], axis[0][0]], [axis[1][1], axis[1][0]]]
+        const valid = (<FieldPointTensorSystemRunnerContext>context).topologies.get(this.variable.space)!.projector?.mask
 
-            //TODO: generic for multiple ranks using tf.slice() and tf.pad()
-            // const shape = x.shape.map((shape_i, i) => shape_i - axis[i])
+        const rank = this.spaceStretch.space.shape.length
 
-            const crop_forward = tf.layers.cropping2D({
-                cropping: axis_backward
-            })
-            const pad_forward = tf.layers.zeroPadding2d({
-                padding: axis_forward
-            })
+        const y: tf.Tensor<R>[] = []
 
-            const crop_backward = tf.layers.cropping2D({
-                cropping: axis_forward
-            })
-            const pad_backward = tf.layers.zeroPadding2d({
-                padding: axis_backward
-            })
+        for (let var_bits = 1; var_bits < (1 << rank); var_bits++) {
+            const spaceStretch_reciprocal = this.spaceStretch_reciprocal[var_bits]
+            const dimensions = this.dimensions[var_bits]
 
-            // Rank = R2 // ExpandedRank = R4
-            type ExpandedRank = RankNext<RankNext<R>>
+            for (let fwd_mask = 0; fwd_mask < (1 << dimensions.length); fwd_mask++) {
+                y.push(tf.tidy(() => {
+                    const slice_start = new Array<number>(rank).fill(0)
+                    const slice_size = [...x.shape]
+                    const paddings = <[number, number][]>x.shape.map(() => [0, 0])
 
-            const x_expanded = <tf.Tensor<ExpandedRank>>x.expandDims(0).expandDims(3)
-            const spaceStretch_expanded = <tf.Tensor<ExpandedRank>>inverse_distance.expandDims(0).expandDims(3)
+                    for (let i_axis = 0; i_axis < dimensions.length; i_axis++) {
+                        const isForward = (fwd_mask & (1 << i_axis)) === 0
+                        slice_start[dimensions[i_axis]] = isForward ? 0 : 1
+                        slice_size[dimensions[i_axis]] -= 1
+                        paddings[dimensions[i_axis]] = isForward ? [1, 0] : [0, 1]
+                    }
 
-            const x_backward = <tf.Tensor<ExpandedRank>>crop_backward.call(pad_backward.call(x_expanded, {}), {})
+                    const x_offset = x.slice(slice_start, slice_size).pad(paddings)
+                    const valid_offset = valid.slice(slice_start, slice_size).pad(paddings)
+                    const spaceStretch_reciprocal_offset = spaceStretch_reciprocal.slice(slice_start, slice_size).pad(paddings)
+                    
+                    const x_delta_in = tf.sub(x_offset, x)
+                    // const spaceStretch_reciprocal_in = tf.add(spaceStretch_reciprocal, spaceStretch_reciprocal_offset).div(2)
+                    const spaceStretch_reciprocal_in = spaceStretch_reciprocal
+                    const diffuse_in = x_delta_in.mul(spaceStretch_reciprocal_in).where(valid_offset, 0)
+                    // return <tf.Tensor<R>>diffuse_in
+                    for (let i_axis = 0; i_axis < dimensions.length; i_axis++) {
+                        const isForward = (fwd_mask & (1 << i_axis)) !== 0
+                        slice_start[dimensions[i_axis]] = isForward ? 0 : 1
+                        paddings[dimensions[i_axis]] = isForward ? [1, 0] : [0, 1]
+                    }
+                    
+                    const diffuse_out = diffuse_in.slice(slice_start, slice_size).pad(paddings)
 
-            const spaceStretch_forward = <tf.Tensor<ExpandedRank>>crop_forward.call(pad_forward.call(spaceStretch_expanded, {}), {})
-            const spaceStretch_backward = <tf.Tensor<ExpandedRank>>crop_backward.call(pad_backward.call(spaceStretch_expanded, {}), {})
-            
-            // const spaceStretch_diffuse = spaceStretch_0.add(spaceStretch_1).div(2)
+                    // renderTensor(<tf.Tensor2D>diffuse_out, tf.max(diffuse_out).dataSync()[0])
 
-            const diff_backward = <tf.Tensor<ExpandedRank>>x_backward.sub(x_expanded)
-            const diff_forward = <tf.Tensor<ExpandedRank>>crop_forward.call(pad_forward.call(diff_backward, {}), {})
-
-            // diff_1[location] = variable[location + direction] - variable[location]
-
-            const diff = tf.add(
-                diff_forward.mul(spaceStretch_forward),
-                diff_backward.mul(spaceStretch_backward),
-            )
-
-            return diff.squeeze([0, 3])
+                    return tf.sub(diffuse_in, diffuse_out)
+                }))
+            }
         }
 
-        const sum = <tf.Tensor<R>>tf.addN([
-            tf.tidy(() => diffuse([[0, 0], [0, 1]], this.spaceStretch_1_reciprocal)),
-            tf.tidy(() => diffuse([[0, 1], [0, 0]], this.spaceStretch_0_reciprocal)),
-            tf.tidy(() => diffuse([[0, 1], [0, 1]], this.spaceStretch_01_reciprocal)),
-            tf.tidy(() => diffuse([[1, 0], [0, 1]], this.spaceStretch_01_reciprocal)),
-        ])
+        const sum = tf.addN(y)
+        renderTensor(<tf.Tensor2D>sum, 1) // tf.max(sum).dataSync()[0])
+
+        tf.dispose(y)
 
         return {
             differentials: new Map([

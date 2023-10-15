@@ -1,14 +1,21 @@
 import * as tf from "@tensorflow/tfjs"
 import * as fs from "fs"
 
-export function renderTensor(filename: string, t: tf.Tensor2D) {
+let nextTensor = 0
+export function renderTensor(t: tf.Tensor2D, colors_scale?: number, filename: string = `${nextTensor++}`) {
     const cvs = document.createElement('canvas');
     [cvs.height, cvs.width] = t.shape
     const ctx = cvs.getContext('2d')!
 
-    function pxChannel(x: number, y: number) {
+    function pxChannel_random(x: number, y: number) {
       return cyrb53(x.toString(), y) & 0xFF
     }
+  
+    function pxChannel_scale(x: number, y: number) {
+      return Math.floor(255 * x / colors_scale!)
+    }
+  
+    const pxChannel = colors_scale !== undefined ? pxChannel_scale : pxChannel_random
 
     const data = t.dataSync()
     for (let y = 0; y < t.shape[0]; y++) {

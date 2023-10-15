@@ -1,5 +1,4 @@
 import * as tf from "@tensorflow/tfjs"
-import { Vec2, Vec3, Vec4 } from "playcanvas-extended"
 
 const rankArray = [tf.Rank.R0, tf.Rank.R1, tf.Rank.R2, tf.Rank.R3, tf.Rank.R4, tf.Rank.R5, tf.Rank.R6]
 export function rankOfShape<R extends tf.Rank = tf.Rank>(shape: TensorShape<R>): R {
@@ -63,3 +62,15 @@ export type PerRankArtificialObject<T, R extends tf.Rank> = PerRankLookupArtific
 export type ScalarN<R extends tf.Rank> = PerRankArtificialObject<number, R>
 
 export type TensorShape<R extends tf.Rank = tf.Rank> = PerRank<number, R>
+
+export interface Per2PRankLookup<T> {
+    [tf.Rank.R0]: [T]
+    [tf.Rank.R1]: [T, T]
+    [tf.Rank.R2]: [T, T, T, T]
+    [tf.Rank.R3]: [T, T, T, T, T, T, T, T]
+    [tf.Rank.R4]: [T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T]
+    [tf.Rank.R5]: [T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T]
+    [tf.Rank.R6]: [T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T]
+}
+
+export type Per2PRank<T, R extends tf.Rank> = Per2PRankLookup<T>[R]

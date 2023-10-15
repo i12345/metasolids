@@ -23,17 +23,27 @@ function project_copy(t: tf.Tensor2D, references: Triangle2DMeshTopologyProjecto
     let projected = tf.zeros<tf.Rank.R2>(t.shape)
 
     for (const { indices, weights } of references) {
-        const src_values = t.gather(indices.src).expandDims(1)
-        const update_values = weights.matMul(src_values).as1D()
-        projected =
-            tf.add(
-                projected,
-                tf.scatterND(
-                    indices.dst,
-                    update_values,
-                    t.shape
+        projected = tf.tidy(() => {
+            try {
+                const src_values = tf.gatherND(t, indices.src).expandDims(1)
+                const update_values = weights.matMul(src_values, true, false).as1D()
+                const projected_sum = <tf.Tensor2D>tf.add(
+                    projected,
+                    tf.scatterND(
+                        indices.dst,
+                        update_values,
+                        t.shape
+                    )
                 )
-            )
+
+                projected.dispose()
+                return projected_sum
+            }
+            catch (x) {
+                console.log(x)
+                return undefined! 
+            }
+        })
     }
 
     return projected
@@ -114,7 +124,7 @@ export class Triangle2DMeshTopologyProjectorFactory
 
                     edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(vertex_index_a, 0)
                     edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(vertex_index_b, 4)
-                    // edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(i_edge, 8)
+                    edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(i_edge, 8)
                     edges_map_B.set(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
                 }
                 else {
@@ -662,8 +672,8 @@ export class Triangle2DMeshTopologyProjectorFactory
             return coords_n
         }
 
-        const diffuse_buffer = new Float32Array(w * h)
-        const diffuse_count = new Uint8Array(w + h)
+        const diffuse_buffer = new Float32Array(area)
+        const diffuse_count = new Uint8Array(area)
 
         /** @returns number of diffused elements */
         function diffuse(
@@ -853,6 +863,14 @@ export class Triangle2DMeshTopologyProjectorFactory
             return n_diffused
         }
 
+        function normalizeMatCols(m: tf.Tensor2D): tf.Tensor2D {
+            return m.divNoNan(m.sum(0, true))
+        }
+
+        // function normalizeMatRows(m: tf.Tensor2D): tf.Tensor2D {
+        //     return m.divNoNan(m.sum(1, true))
+        // }
+
         function dst_map_src(
                 // ordered
                 time_src: Float32Array, n_indices_src: number,
@@ -931,7 +949,9 @@ export class Triangle2DMeshTopologyProjectorFactory
             for (let i_src = 0, i_src_times_n_dst = 0; i_src < n_indices_src; i_src++, i_src_times_n_dst += n_indices_dst) {
                 if (i_src_dst_a[i_src] !== -1) continue
                 
-                for (i_src_prev = i_src - 1, t_src_prev = 0.5, i_dst_prev = -1; i_src_prev >= 0; i_src_prev--, t_src_prev++) {
+                for (i_src_prev = i_src - 1, t_src_prev = 0.5, i_dst_prev = -1;
+                    i_src_prev >= 0;
+                    i_src_prev--, t_src_prev++) {
                     i_dst_prev = i_src_dst_a[i_src_prev]
                     if (i_dst_prev !== -1) {
                         t_src_prev += (1 - t_dst_src[i_dst_prev])
@@ -939,7 +959,9 @@ export class Triangle2DMeshTopologyProjectorFactory
                     }
                 }
 
-                for (i_src_next = i_src + 1, t_src_next = 0.5, i_dst_next = -1; i_src_next >= 0; i_src_next--, t_src_next++) {
+                for (i_src_next = i_src + 1, t_src_next = 0.5, i_dst_next = -1;
+                    i_src_next < n_indices_src;
+                    i_src_next++, t_src_next++) {
                     i_dst_next = i_src_dst_b[i_src_next]
                     if (i_dst_next !== -1) {
                         t_src_next += t_dst_src[i_dst_next]
@@ -967,16 +989,17 @@ export class Triangle2DMeshTopologyProjectorFactory
                     w_src_dst[i_src_times_n_dst + i_dst_next] = t_src_combination
                 }
             }
-            
+
             return {
                 /** w_src_dst[i, j] = weight from src i to dst j */
-                w_src_dst,
+                w_src_dst: normalizeMatCols(tf.tensor2d(w_src_dst, [n_indices_src, n_indices_dst])),
 
                 /** w_dst_src[i, j] = weight from dst i to src j */
-                w_dst_src,
+                w_dst_src: normalizeMatCols(tf.tensor2d(w_dst_src, [n_indices_dst, n_indices_src])),
             }
         }
 
+        let i_tri_other: number
         const src_coords_A = new Int32Array(2 * (w + h))
         const src_coords_B = new Int32Array(2 * (w + h))
         const src_value_A = new Float32Array(w + h)
@@ -985,7 +1008,7 @@ export class Triangle2DMeshTopologyProjectorFactory
         const dst_coords_B = new Int32Array(2 * (w + h))
         const dst_value_A = new Float32Array(w + h)
         const dst_value_B = new Float32Array(w + h)
-        
+
         const triangle_coords = [w0, w1, w2]
 
         const copy_references: Triangle2DMeshTopologyProjectorCopyReferences = {
@@ -993,77 +1016,88 @@ export class Triangle2DMeshTopologyProjectorFactory
             outside_to_inside: [],
         }
 
-        function mapEdge(i_tri: number, vertex_index_a: number, vertex_index_b: number) {
-            if (edges_indices_island[i_edge] === 1) {
-                external_index_a = edge_external_indices[(2 * i_edge) + 0]
-                external_index_b = edge_external_indices[(2 * i_edge) + 1]
+        function mapEdge_1(i_tri: number, vertex_index_a: number, vertex_index_b: number) {
+            external_index_a = edge_external_indices[(2 * i_edge) + 0]
+            external_index_b = edge_external_indices[(2 * i_edge) + 1]
 
-                if (external_index_a > external_index_b) {
-                    tmp = external_index_a
-                    external_index_a = external_index_b
-                    external_index_b = tmp
+            if (external_index_a > external_index_b) {
+                tmp = external_index_a
+                external_index_a = external_index_b
+                external_index_b = tmp
 
-                    tmp = vertex_index_a
-                    vertex_index_a = vertex_index_b
-                    vertex_index_b = tmp
-                }
-
-                edges_map_lookup_buffer_external_indices.writeUInt32LE(external_index_a, 0)
-                edges_map_lookup_buffer_external_indices.writeUInt32LE(external_index_b, 4)
-                edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
-
-                vertex_index_other_a = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(0)
-                vertex_index_other_b = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(4)
-                i_edge_other = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(8)
-
-                const src_A = triangle_coords[i_edge % 3]
-                const src_B = triangle_coords[i_edge_other % 3]
-
-                const src_coords_n_A = triangle_edge(i_tri, src_coords_A, src_value_A, src_A, vertex_index_a, vertex_index_b)
-                const src_coords_n_B = triangle_edge(i_tri, src_coords_B, src_value_B, src_B, vertex_index_other_a, vertex_index_other_b)
-
-                if(src_coords_n_A === 0 || src_coords_n_B === 0) return
-
-                const dst_coords_n_A = diffuse(invalid, src_coords_A, src_coords_n_A, src_value_A, dst_coords_A, dst_value_A)
-                const dst_coords_n_B = diffuse(invalid, src_coords_B, src_coords_n_B, src_value_B, dst_coords_B, dst_value_B)
-
-                if (dst_coords_n_A === 0 || dst_coords_n_B === 0) return
-
-                const mappings_AB = dst_map_src(src_value_A, src_coords_n_A, dst_value_B, dst_coords_n_B)
-                const mappings_BA = dst_map_src(src_value_B, src_coords_n_B, dst_value_A, dst_coords_n_A)
-
-                copy_references.inside_to_outside.push({
-                    indices: {
-                        src: tf.tensor2d(src_coords_A.subarray(0, src_coords_n_A), [src_coords_n_A / 2, 2]),
-                        dst: tf.tensor2d(dst_coords_B.subarray(0, dst_coords_n_B), [dst_coords_n_B / 2, 2]),
-                    },
-                    weights: tf.tensor2d(mappings_AB.w_src_dst)
-                })
-
-                copy_references.inside_to_outside.push({
-                    indices: {
-                        src: tf.tensor2d(src_coords_B.subarray(0, src_coords_n_B), [src_coords_n_B / 2, 2]),
-                        dst: tf.tensor2d(dst_coords_A.subarray(0, dst_coords_n_A), [dst_coords_n_A / 2, 2]),
-                    },
-                    weights: tf.tensor2d(mappings_BA.w_src_dst)
-                })
-
-                copy_references.outside_to_inside.push({
-                    indices: {
-                        src: tf.tensor2d(dst_coords_A.subarray(0, dst_coords_n_A), [dst_coords_n_A / 2, 2]),
-                        dst: tf.tensor2d(src_coords_B.subarray(0, src_coords_n_B), [src_coords_n_B / 2, 2]),
-                    },
-                    weights: tf.tensor2d(mappings_AB.w_dst_src)
-                })
-
-                copy_references.outside_to_inside.push({
-                    indices: {
-                        src: tf.tensor2d(dst_coords_B.subarray(0, dst_coords_n_B), [dst_coords_n_B / 2, 2]),
-                        dst: tf.tensor2d(src_coords_A.subarray(0, src_coords_n_A), [src_coords_n_A / 2, 2]),
-                    },
-                    weights: tf.tensor2d(mappings_BA.w_dst_src)
-                })
+                tmp = vertex_index_a
+                vertex_index_a = vertex_index_b
+                vertex_index_b = tmp
             }
+
+            edges_map_lookup_buffer_external_indices.writeUInt32LE(external_index_a, 0)
+            edges_map_lookup_buffer_external_indices.writeUInt32LE(external_index_b, 4)
+            edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
+
+            vertex_index_other_a = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(0)
+            vertex_index_other_b = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(4)
+            i_edge_other = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(8)
+
+            const src_A = triangle_coords[i_edge % 3]
+            const src_B = triangle_coords[i_edge_other % 3]
+
+            i_tri_other = Math.floor(i_edge_other / 3)
+
+            const src_coords_n_A = triangle_edge(i_tri, src_coords_A, src_value_A, src_A, vertex_index_a, vertex_index_b)
+            const src_coords_n_B = triangle_edge(i_tri_other, src_coords_B, src_value_B, src_B, vertex_index_other_a, vertex_index_other_b)
+
+            if (src_coords_n_A === 0 || src_coords_n_B === 0) return
+
+            const dst_coords_n_A = diffuse(invalid, src_coords_A, src_coords_n_A, src_value_A, dst_coords_A, dst_value_A)
+            const dst_coords_n_B = diffuse(invalid, src_coords_B, src_coords_n_B, src_value_B, dst_coords_B, dst_value_B)
+
+            if (dst_coords_n_A === 0 || dst_coords_n_B === 0) return
+
+            const mappings_AB = dst_map_src(src_value_A, src_coords_n_A, dst_value_B, dst_coords_n_B)
+            const mappings_BA = dst_map_src(src_value_B, src_coords_n_B, dst_value_A, dst_coords_n_A)
+
+            const src_coords_tensor_A = tf.tensor2d(src_coords_A.subarray(0, 2 * src_coords_n_A), [src_coords_n_A, 2])
+            const src_coords_tensor_B = tf.tensor2d(src_coords_B.subarray(0, 2 * src_coords_n_B), [src_coords_n_B, 2])
+
+            const dst_coords_tensor_A = tf.tensor2d(dst_coords_A.subarray(0, 2 * dst_coords_n_A), [dst_coords_n_A, 2])
+            const dst_coords_tensor_B = tf.tensor2d(dst_coords_B.subarray(0, 2 * dst_coords_n_B), [dst_coords_n_B, 2])
+
+            copy_references.inside_to_outside.push({
+                indices: {
+                    src: src_coords_tensor_A,
+                    dst: dst_coords_tensor_B
+                },
+                weights: mappings_AB.w_src_dst
+            })
+
+            copy_references.inside_to_outside.push({
+                indices: {
+                    src: src_coords_tensor_B,
+                    dst: dst_coords_tensor_A
+                },
+                weights: mappings_BA.w_src_dst
+            })
+
+            copy_references.outside_to_inside.push({
+                indices: {
+                    src: dst_coords_tensor_A,
+                    dst: src_coords_tensor_B
+                },
+                weights: mappings_BA.w_dst_src
+            })
+
+            copy_references.outside_to_inside.push({
+                indices: {
+                    src: dst_coords_tensor_B,
+                    dst: src_coords_tensor_A
+                },
+                weights: mappings_AB.w_dst_src
+            })
+        }
+
+        function mapEdge(i_tri: number, vertex_index_a: number, vertex_index_b: number) {
+            if (edges_indices_island[i_edge] === 1)
+                mapEdge_1(i_tri, vertex_index_a, vertex_index_b)
 
             i_edge++
         }

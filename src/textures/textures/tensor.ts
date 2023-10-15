@@ -125,7 +125,7 @@ export class TensorTexture<
             const numbers = <FieldPointNumbers<Sample>><unknown>field_point_tensor_map(
                 this.type,
                 this.tensor,
-                raw => raw.gather(i).dataSync()[0]
+                raw => tf.gatherND(raw, i).dataSync()[0]
             )
 
             return field_point_numbers_decode(this.type, numbers)
@@ -238,7 +238,7 @@ export class TensorTexture<
         const extracted = field_point_tensor_map(
             this.type,
             this.tensor,
-            raw => raw.gather(tf_indices)
+            raw => tf.gatherND(raw, tf_indices)
         )
 
         return <SampleVector>field_point_tensor_decode(

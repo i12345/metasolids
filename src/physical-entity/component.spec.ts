@@ -173,7 +173,7 @@ describe("playcanvas-node", () => {
             new tensor.FieldPointTensorExpressionArithmetic<boolean, tf.Rank.R0>(
                 tensor.FieldPointTensorExpressionArithmeticOp.gte,
                 new tensor.FieldPointTensorExpressionVariable(t),
-                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([0.8]))
+                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([1]))
             )
             // new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array([1]), 'bool')
         )
@@ -200,7 +200,7 @@ describe("playcanvas-node", () => {
             new surfaces.texturing.SurfaceTexturingTensorSystemFactory(
                 system,
                 {
-                    resolution: new Vec2(512, 512),
+                    resolution: new Vec2(16, 16),
                     dt: 0.1,
                 },
                 {
@@ -230,7 +230,7 @@ describe("playcanvas-node", () => {
 
             const component1 = entity1.addComponent(physicalEntity.SYSTEM_ID)! as physicalEntity.Component
             component1.volumeSamplingSettings = {
-                max_depth: 7,
+                max_depth: 5,
                 indicesType: Uint32Array,
                 recommendation_threshold: 1
             }
