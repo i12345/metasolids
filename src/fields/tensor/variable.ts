@@ -44,8 +44,8 @@ export class FieldPointTensorVariableInstance<
     ) {}
 
     init(context: FieldPointTensorVariableInitializationContext) {
-        this.topology = <FieldPointTensorTopology<R>>context.toplogies.get(this.definition.space)
-        context.toplogies.set(this.definition.space, this.topology)
+        this.topology = <FieldPointTensorTopology<R>>context.topologies.get(this.definition.space)
+        context.topologies.set(this.definition.space, this.topology)
 
         const initialData =
             this.factory ?
@@ -67,7 +67,7 @@ export class FieldPointTensorVariableInstance<
         this.register = field_point_tensor_map(
             this.definition.type,
             initialData,
-            raw => tf.variable(raw)
+            raw => tf.variable(this.topology.projector.project_update(raw))
         )
     }
 }

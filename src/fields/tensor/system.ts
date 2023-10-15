@@ -66,13 +66,13 @@ export class FieldPointTensorSystemRunner {
 
         this.context = {
             parameters,
-            toplogies: new Map(),
+            topologies: new Map(),
             runner: this,
             variables: new FieldPointTensorVariableMap(this.variables)
         }
 
         for (const space of system.spaces)
-            this.context.toplogies.set(space, field_point_tensor_topology_instance(space, parameters, topologyProjectors))
+            this.context.topologies.set(space, field_point_tensor_topology_instance(space, parameters, topologyProjectors))
     }
 
     init() {
@@ -89,14 +89,14 @@ export class FieldPointTensorSystemRunner {
 
             if (result.differentials) {
                 for (const [variable, differential] of result.differentials) {
-                    if(differential.length === 0) continue
+                    if (differential.length === 0) continue
                     const differential_sum = field_point_tensor_map(
                         variable.type,
                         differential[0],
                         (_, path) => tf.addN(differential.map(differential => extract(differential, path)))
                     )
                     
-                    const projector = this.context.toplogies.get(variable.space)!.projector
+                    const projector = this.context.topologies.get(variable.space)!.projector
 
                     const differential_projected = projector ? field_point_tensor_map(
                         variable.type,

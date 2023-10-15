@@ -27,7 +27,7 @@ export class FieldPointTensorExpressionConstant<
     ) { }
 
     init(context: FieldPointTensorExpressionContext): void {
-        this._topology = <FieldPointTensorTopology<R>>context.toplogies.get(this.space)!
+        this._topology = <FieldPointTensorTopology<R>>context.topologies.get(this.space)!
         this.tensor = field_point_tensor_encode(this.type, this.topology.shape, this.dtype, this.data)
     }
 

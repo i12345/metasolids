@@ -23,7 +23,7 @@ export class FieldPointTensorExpressionVariable<
     constructor(public readonly variable: FieldPointTensorVariable<T, R>) { }
     
     init(context: FieldPointTensorExpressionContext): void {
-        this._topology = <FieldPointTensorTopology<R>>context.toplogies.get(this.variable.space)!
+        this._topology = <FieldPointTensorTopology<R>>context.topologies.get(this.variable.space)!
     }
 
     dispose(): void {

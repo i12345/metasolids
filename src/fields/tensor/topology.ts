@@ -18,7 +18,7 @@ export interface FieldPointTensorTopology<R extends tf.Rank = tf.Rank> {
 }
 
 export interface FieldPointTensorContextWithSpaceTopologies {
-    toplogies: Map<FieldPointTensorSpace, FieldPointTensorTopology>
+    topologies: Map<FieldPointTensorSpace, FieldPointTensorTopology>
 }
 
 export function field_point_tensor_topology_instance<R extends tf.Rank = tf.Rank>(
