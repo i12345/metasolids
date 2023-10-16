@@ -104,12 +104,13 @@ export class FieldPointTensorStatementDiffusion<
         }
 
         const sum = tf.addN(y)
+        tf.dispose(y)
+
         renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[1], 10)
         renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[2], 10)
         renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[3], 10)
+        renderTensor(<tf.Tensor2D>x, 1) // tf.max(sum).dataSync()[0])
         renderTensor(<tf.Tensor2D>sum, 1) // tf.max(sum).dataSync()[0])
-
-        tf.dispose(y)
 
         return {
             differentials: new Map([

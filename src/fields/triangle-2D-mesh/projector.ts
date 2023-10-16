@@ -5,6 +5,8 @@ import { Triangles2DMesh } from "./mesh.js";
 import { Triangles2DMeshCollider } from "./collider.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import HashTable from "@ronomon/hash-table";
+import { renderTensor } from "../../utils/tf-img.js";
+import * as fs from 'fs'
 
 export type Triangle2DMeshTopologyProjectorCopyReference = {
     indices: {
@@ -1104,9 +1106,49 @@ export class Triangle2DMeshTopologyProjectorFactory
             })
         }
 
+        const cvs = document.createElement('canvas')
+        cvs.width = w
+        cvs.height = h
+        const ctx = cvs.getContext('2d')!
+        ctx.lineWidth = 1
+        ctx.strokeStyle = '#fff'
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, 0, w, h)
+
+        function drawLine(a: number, b: number) {
+            const a_x = w * vertices[(2 * a) + 0]
+            const a_y = h * vertices[(2 * a) + 1]
+
+            const b_x = w * vertices[(2 * b) + 0]
+            const b_y = h * vertices[(2 * b) + 1]
+
+            ctx.moveTo(a_x, a_y)
+            ctx.lineTo(b_x, b_y)
+            ctx.stroke()
+        }
+
         function mapEdge(i_tri: number, vertex_index_a: number, vertex_index_b: number) {
-            if (edges_indices_island[i_edge] === 1)
+            if (edges_indices_island[i_edge] === 1) {
+                external_index_a = edge_external_indices[(2 * i_edge) + 0]
+                external_index_b = edge_external_indices[(2 * i_edge) + 1]
+
+                edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_a, 0)
+                edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_b, 4)
+
+                edges_map_A.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
+                drawLine(
+                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(0),
+                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(4)
+                )
+
+                edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
+                drawLine(
+                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(0),
+                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(4)
+                )
+
                 mapEdge_1(i_tri, vertex_index_a, vertex_index_b)
+            }
 
             i_edge++
         }
@@ -1128,6 +1170,17 @@ export class Triangle2DMeshTopologyProjectorFactory
         }
 
         const mask = <tf.Tensor2D>tf.tensor2d(invalid, shape, 'bool').logicalNot()
+
+        const edges_outside = tf.tidy(() => {
+            let x = <tf.Tensor2D>tf.zeros(mask.shape)
+            for (const { indices } of copy_references.inside_to_outside)
+                x = <tf.Tensor2D>tf.tensorScatterUpdate(x, indices.dst, tf.broadcastTo(1, [indices.dst.shape[0]]))
+            return x
+        })
+
+        renderTensor(edges_outside, 1, `edges_${Math.floor(Math.random()*100).toString().padStart(3, '0')}`)
+
+        fs.writeFileSync("output-textures/edges_lines.png", (<any>cvs).toBuffer())
 
         return new Triangle2DMeshTopologyProjector(this, shape, copy_references, mask)
     }

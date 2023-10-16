@@ -8,7 +8,7 @@ export class Triangles2DMesh {
         public readonly v0: Float64Array,
         public readonly tri_vec_inv: Float64Array,
         public readonly bounds: { readonly origin: Vec2, readonly size: Vec2 },
-        public margin = 0.05
+        public margin = 0.001
     ) {
     }
 
