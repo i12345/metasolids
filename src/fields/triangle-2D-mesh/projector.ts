@@ -914,7 +914,7 @@ export class Triangle2DMeshTopologyProjectorFactory
             let current_src_dst_b: number
 
             for (let i_dst = 0; i_dst < n_indices_dst; i_dst++) {
-                t_src = Math.max(0, Math.min(n_indices_src_minus_1, (time_dst[i_dst] - src_0) / src_spacing))
+                t_src = Number.isNaN(src_spacing) ? 0 : Math.max(0, Math.min(n_indices_src_minus_1, (time_dst[i_dst] - src_0) / src_spacing))
                 i_src = Math.round(t_src)
                 t_local_src = t_src - i_src + 0.5
 
@@ -1016,6 +1016,15 @@ export class Triangle2DMeshTopologyProjectorFactory
             outside_to_inside: [],
         }
 
+        function coordsTensor(coords: Int32Array, count: number): tf.Tensor2D {
+            const array = new Int32Array(2 * count)
+            for (let i = 0; i < count; i++) {
+                array[(2 * i) + 1] = coords[(2 * i) + 0]
+                array[(2 * i) + 0] = coords[(2 * i) + 1]
+            }
+            return tf.tensor2d(array, [count, 2])
+        }
+
         function mapEdge_1(i_tri: number, vertex_index_a: number, vertex_index_b: number) {
             external_index_a = edge_external_indices[(2 * i_edge) + 0]
             external_index_b = edge_external_indices[(2 * i_edge) + 1]
@@ -1056,11 +1065,11 @@ export class Triangle2DMeshTopologyProjectorFactory
             const mappings_AB = dst_map_src(src_value_A, src_coords_n_A, dst_value_B, dst_coords_n_B)
             const mappings_BA = dst_map_src(src_value_B, src_coords_n_B, dst_value_A, dst_coords_n_A)
 
-            const src_coords_tensor_A = tf.tensor2d(src_coords_A.subarray(0, 2 * src_coords_n_A), [src_coords_n_A, 2])
-            const src_coords_tensor_B = tf.tensor2d(src_coords_B.subarray(0, 2 * src_coords_n_B), [src_coords_n_B, 2])
+            const src_coords_tensor_A = coordsTensor(src_coords_A, src_coords_n_A)
+            const src_coords_tensor_B = coordsTensor(src_coords_B, src_coords_n_B)
 
-            const dst_coords_tensor_A = tf.tensor2d(dst_coords_A.subarray(0, 2 * dst_coords_n_A), [dst_coords_n_A, 2])
-            const dst_coords_tensor_B = tf.tensor2d(dst_coords_B.subarray(0, 2 * dst_coords_n_B), [dst_coords_n_B, 2])
+            const dst_coords_tensor_A = coordsTensor(dst_coords_A, dst_coords_n_A)
+            const dst_coords_tensor_B = coordsTensor(dst_coords_B, dst_coords_n_B)
 
             copy_references.inside_to_outside.push({
                 indices: {
@@ -1145,7 +1154,23 @@ export class Triangle2DMeshTopologyProjector
         public readonly shape: [h: number, w: number],
         public readonly copy_references: Triangle2DMeshTopologyProjectorCopyReferences,
         public readonly inside: tf.Tensor2D,
-    ) { }
+    ) {
+        tf.tidy(() => {
+            for (const { indices } of copy_references.inside_to_outside) {
+                const x = tf.gatherND(this.inside, indices.dst)
+                if (x.sum(0).dataSync()[0] > 0) {
+                    console.error("")
+                }
+            }
+
+            for (const { indices } of copy_references.outside_to_inside) {
+                const x = tf.gatherND(this.inside, indices.dst)
+                if (x.sum(0).dataSync()[0] === 0 && indices.dst.shape[1] !== 0) {
+                    console.error("")
+                }
+            }
+        })
+    }
 
     project_delta(t: tf.Tensor2D): tf.Tensor2D {
         return t.add(project_copy(t, this.copy_references.outside_to_inside))

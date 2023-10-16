@@ -84,8 +84,8 @@ export class FieldPointTensorStatementDiffusion<
                     const spaceStretch_reciprocal_offset = spaceStretch_reciprocal.slice(slice_start, slice_size).pad(paddings)
                     
                     const x_delta_in = tf.sub(x_offset, x)
-                    // const spaceStretch_reciprocal_in = tf.add(spaceStretch_reciprocal, spaceStretch_reciprocal_offset).div(2)
-                    const spaceStretch_reciprocal_in = spaceStretch_reciprocal
+                    const spaceStretch_reciprocal_in = tf.add(spaceStretch_reciprocal, spaceStretch_reciprocal_offset).div(2)
+                    // const spaceStretch_reciprocal_in = spaceStretch_reciprocal
                     const diffuse_in = x_delta_in.mul(spaceStretch_reciprocal_in).where(valid_offset, 0)
                     // return <tf.Tensor<R>>diffuse_in
                     for (let i_axis = 0; i_axis < dimensions.length; i_axis++) {
@@ -104,6 +104,9 @@ export class FieldPointTensorStatementDiffusion<
         }
 
         const sum = tf.addN(y)
+        renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[1], 10)
+        renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[2], 10)
+        renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[3], 10)
         renderTensor(<tf.Tensor2D>sum, 1) // tf.max(sum).dataSync()[0])
 
         tf.dispose(y)
