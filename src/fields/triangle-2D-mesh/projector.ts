@@ -182,6 +182,11 @@ export class Triangle2DMeshTopologyProjectorFactory
         const area = w * h
         const w_minus_2 = w - 2
 
+        let x0: number
+        let y0: number
+        let x1: number
+        let y1: number
+
         let x_a: number
         let y_a: number
         let c_a: number
@@ -275,13 +280,17 @@ export class Triangle2DMeshTopologyProjectorFactory
         let dy1: number
         let dc1: number
 
-        let dx2a: number
-        let dy2a: number
-        let dc2a: number
+        let dx2: number
+        let dy2: number
+        let dc2: number
 
-        let dx2b: number
-        let dy2b: number
-        let dc2b: number
+        //? is before dx2?
+        let dx3: number
+        let dy3: number
+        let dc3: number
+
+        let t: number
+        let len: number
 
         const dc_N = -w
         const dc_S = +w
@@ -317,325 +326,470 @@ export class Triangle2DMeshTopologyProjectorFactory
         const dx_NW = dx_N + dx_W
         const dy_NW = dy_N + dy_W
 
+        let tri_above: boolean
+        let tri_right: boolean
+
+        /**
+         * y_c = (y_b - y_a)t + y_a
+         * t = (y_c - y_a) / (y_b - y_a)
+         * x_c' = (x_b  - x_a)t + x_a
+         *      = (x_b - x_a)(y_c - y_a) / (y_b - y_a) + x_a
+         * tri_right = (x_c' < x_c)
+         */
+        let x_c: number
+        let y_c: number
+
         function triangle_edge(
-            tri_i: number,
-            coords: Int32Array,
-            values: Float32Array,
-            bitmap_value: Float32Array,
-            vertex_index_a: number, vertex_index_b: number,
-        ): number {
+                tri_i: number,
+                coords: Int32Array,
+                values: Float32Array,
+                bitmap_value: Float32Array,
+                vertex_index_a: number, vertex_index_b: number, vertex_index_c: number
+            ): number {
             vertex_index_a *= 2
             vertex_index_b *= 2
+            vertex_index_c *= 2
 
-            x_a = vertices[vertex_index_a++]
-            y_a = vertices[vertex_index_a]
+            x_a = x0 = vertices[vertex_index_a++]
+            y_a = y0 = vertices[vertex_index_a]
 
-            x_b = vertices[vertex_index_b++]
-            y_b = vertices[vertex_index_b]
+            x_b = x1 = vertices[vertex_index_b++]
+            y_b = y1 = vertices[vertex_index_b]
+
+            x_c = vertices[vertex_index_c++]
+            y_c = vertices[vertex_index_c]
 
             triangle_edge_direction = direction(x_b - x_a, y_b - y_a)
 
-            x_a = Math.floor(x_a * w)
-            y_a = Math.floor(y_a * h)
+            tri_right = ((x_b - x_a) * (y_c - y_a) / (y_b - y_a)) + x_a < x_c
+            tri_above = ((y_b - y_a) * (x_c - x_a) / (x_b - x_a)) + y_a > y_c
+
+            x_a = Math.round((x_a * w) - 0.5)
+            y_a = Math.round((y_a * h) - 0.5)
             c_a = (y_a * w) + x_a
 
+            coords_n = 0
+            coords_offset = 0
+            
             switch (triangle_edge_direction) {
                 case Direction.N:
-                    dx0 = dx1 = dx_N
-                    dy0 = dy1 = dy_N
-                    dc0 = dc1 = dc_N
-
-                    dx2a = dx_E
-                    dy2a = dy_E
-                    dc2a = dc_E
-
-                    dx2b = dx_W
-                    dy2b = dy_W
-                    dc2b = dc_W
-
-                    break
-                
-                case Direction.NNE:
                     dx0 = dx_N
                     dy0 = dy_N
                     dc0 = dc_N
 
-                    dx1 = dx_NE
-                    dy1 = dy_NE
-                    dc1 = dc_NE
+                    if (tri_right) {
+                        dx1 = dx_NW
+                        dy1 = dy_NW
+                        dc1 = dc_NW
 
-                    dx2a = dx2b = dx_E
-                    dy2a = dy2b = dy_E
-                    dc2a = dc2b = dc_E
+                        dx3 = dx_E
+                        dy3 = dy_E
+                        dc3 = dc_E
+                    }
+                    else {
+                        dx1 = dx_NE
+                        dy1 = dy_NE
+                        dc1 = dc_NE
+
+                        dx3 = dx_W
+                        dy3 = dy_W
+                        dc3 = dc_W
+                    }
+
+                    dc2 = 0
                     
                     break
                 
+                case Direction.NNE:
+                    if (tri_right) {
+                        dx0 = dx_N
+                        dy0 = dy_N
+                        dc0 = dc_N
+
+                        dx1 = dx_NE
+                        dy1 = dy_NE
+                        dc1 = dc_NE
+
+                        dx3 = dx_E
+                        dy3 = dy_E
+                        dc3 = dc_E
+                    }
+                    else {
+                        dx0 = dx_NE
+                        dy0 = dy_NE
+                        dc0 = dc_NE
+
+                        dx1 = dx_N
+                        dy1 = dy_N
+                        dc1 = dc_N
+
+                        dx3 = dx_W
+                        dy3 = dy_W
+                        dc3 = dc_W
+                    }
+                    
+                    dc2 = 0
+
+                    break
+                
                 case Direction.NE:
-                    dx0 = dx1 = dx_NE
-                    dy0 = dy1 = dy_NE
-                    dc0 = dc1 = dc_NE
+                    if (tri_above) {
+                        dx0 = dx_E
+                        dy0 = dy_E
+                        dc0 = dc_E
+                        
+                        dx1 = dx_NE
+                        dy1 = dy_NE
+                        dc1 = dc_NE
 
-                    dx2a = dx_N
-                    dy2a = dy_N
-                    dc2a = dc_N
+                        dx2 = dx_N
+                        dy2 = dy_N
+                        dc2 = dc_N
 
-                    dx2b = dx_E
-                    dy2b = dy_E
-                    dc2b = dc_E
+                        dx3 = dx_W
+                        dy3 = dy_W
+                        dc3 = dc_W
+                    }
+                    else {
+                        dx0 = dx_N
+                        dy0 = dy_N
+                        dc0 = dc_N
+                        
+                        dx1 = dx_NE
+                        dy1 = dy_NE
+                        dc1 = dc_NE
+
+                        dx2 = dx_E
+                        dy2 = dy_E
+                        dc2 = dc_E
+
+                        dx3 = dx_W
+                        dy3 = dy_W
+                        dc3 = dc_W
+                    }
                     
                     break
                 
                 case Direction.NEE:
-                    dx0 = dx_E
-                    dy0 = dy_E
-                    dc0 = dc_E
+                    if (tri_above) {
+                        dx0 = dx_E
+                        dy0 = dy_E
+                        dc0 = dc_E
 
-                    dx1 = dx_NE
-                    dy1 = dy_NE
-                    dc1 = dc_NE
+                        dx1 = dx_NE
+                        dy1 = dy_NE
+                        dc1 = dc_NE
+                    }
+                    else {
+                        dx0 = dx_NE
+                        dy0 = dy_NE
+                        dc0 = dc_NE
 
-                    dx2a = dx2b = dx_N
-                    dy2a = dy2b = dy_N
-                    dc2a = dc2b = dc_N
+                        dx1 = dx_E
+                        dy1 = dy_E
+                        dc1 = dc_E
+                    }
+
+                    dc2 = 0
                     
                     break
                 
                 case Direction.E:
-                    dx0 = dx1 = dx_E
-                    dy0 = dy1 = dy_E
-                    dc0 = dc1 = dc_E
+                    dx0 = dx_E
+                    dy0 = dy_E
+                    dc0 = dc_E
+                    
+                    if (tri_above) {
+                        dx1 = dx_NE
+                        dy1 = dy_NE
+                        dc1 = dc_NE
+                    }
+                    else {
+                        dx1 = dx_SE
+                        dy1 = dy_SE
+                        dc1 = dc_SE
+                    }
 
-                    dx2a = dx_S
-                    dy2a = dy_S
-                    dc2a = dc_S
-
-                    dx2b = dx_N
-                    dy2b = dy_N
-                    dc2b = dc_N
+                    dc2 = 0
 
                     break
                 
                 case Direction.SEE:
-                    dx0 = dx_E
-                    dy0 = dy_E
-                    dc0 = dc_E
+                    if (tri_above) {
+                        dx0 = dx_SE
+                        dy0 = dy_SE
+                        dc0 = dc_SE
 
-                    dx1 = dx_SE
-                    dy1 = dy_SE
-                    dc1 = dc_SE
+                        dx1 = dx_E
+                        dy1 = dy_E
+                        dc1 = dc_E
+                    }
+                    else {
+                        dx0 = dx_E
+                        dy0 = dy_E
+                        dc0 = dc_E
 
-                    dx2a = dx2b = dx_S
-                    dy2a = dy2b = dy_S
-                    dc2a = dc2b = dc_S
+                        dx1 = dx_SE
+                        dy1 = dy_SE
+                        dc1 = dc_SE
+                    }
+
+                    dc2 = 0
                     
                     break
                 
                 case Direction.SE:
-                    dx0 = dx1 = dx_SE
-                    dy0 = dy1 = dy_SE
-                    dc0 = dc1 = dc_SE
+                    if (tri_above) {
+                        dx0 = dx_S
+                        dy0 = dy_S
+                        dc0 = dc_S
 
-                    dx2a = dx_S
-                    dy2a = dy_S
-                    dc2a = dc_S
+                        dx1 = dx_SE
+                        dy1 = dy_SE
+                        dc1 = dc_SE
 
-                    dx2b = dx_E
-                    dy2b = dy_E
-                    dc2b = dc_E
+                        dx2 = dx_E
+                        dy2 = dy_E
+                        dc2 = dc_E
+                    }
+                    else {
+                        dx0 = dx_E
+                        dy0 = dy_E
+                        dc0 = dc_E
+
+                        dx1 = dx_SE
+                        dy1 = dy_SE
+                        dc1 = dc_SE
+
+                        dx2 = dx_S
+                        dy2 = dy_S
+                        dc2 = dc_S
+                    }
                     
                     break
                 
                 case Direction.SSE:
-                    dx0 = dx_S
-                    dy0 = dy_S
-                    dc0 = dc_S
+                    if (tri_right) {
+                        dx0 = dx_S
+                        dy0 = dy_S
+                        dc0 = dc_S
 
-                    dx1 = dx_SE
-                    dy1 = dy_SE
-                    dc1 = dc_SE
+                        dx1 = dx_SE
+                        dy1 = dy_SE
+                        dc1 = dc_SE
+                    }
+                    else {
+                        dx0 = dx_SE
+                        dy0 = dy_SE
+                        dc0 = dc_SE
 
-                    dx2a = dx2b = dx_E
-                    dy2a = dy2b = dy_E
-                    dc2a = dc2b = dc_E
+                        dx1 = dx_S
+                        dy1 = dy_S
+                        dc1 = dc_S
+                    }
                     
+                    dc2 = 0
+
                     break
                 
                 case Direction.S:
-                    dx0 = dx1 = dx_S
-                    dy0 = dy1 = dy_S
-                    dc0 = dc1 = dc_S
-
-                    dx2a = dx_W
-                    dy2a = dy_W
-                    dc2a = dc_W
-
-                    dx2b = dx_E
-                    dy2b = dy_E
-                    dc2b = dc_E
-
-                    break
-                
-                case Direction.SSW:
                     dx0 = dx_S
                     dy0 = dy_S
                     dc0 = dc_S
+                        
+                    if (tri_right) {
+                        dx1 = dx_SE
+                        dy1 = dy_SE
+                        dc1 = dc_SE
+                    }
+                    else {
+                        dx1 = dx_SW
+                        dy1 = dy_SW
+                        dc1 = dc_SW
+                    }
 
-                    dx1 = dx_SW
-                    dy1 = dy_SW
-                    dc1 = dc_SW
+                    dc2 = 0
+                    
+                    break
+                
+                case Direction.SSW:
+                    if (tri_right) {
+                        dx0 = dx_SW
+                        dy0 = dy_SW
+                        dc0 = dc_SW
 
-                    dx2a = dx2b = dx_W
-                    dy2a = dy2b = dy_W
-                    dc2a = dc2b = dc_W
+                        dx1 = dx_S
+                        dy1 = dy_S
+                        dc1 = dc_S
+                    }
+                    else {
+                        dx0 = dx_S
+                        dy0 = dy_S
+                        dc0 = dc_S
+
+                        dx1 = dx_SW
+                        dy1 = dy_SW
+                        dc1 = dc_SW
+                    }
+
+                    dc2 = 0
                     
                     break
                 
                 case Direction.SW:
-                    dx0 = dx1 = dx_SW
-                    dy0 = dy1 = dy_SW
-                    dc0 = dc1 = dc_SW
+                    if (tri_above) {
+                        dx0 = dx_S
+                        dy0 = dy_S
+                        dc0 = dc_S
 
-                    dx2a = dx_S
-                    dy2a = dy_S
-                    dc2a = dc_S
+                        dx1 = dx_SW
+                        dy1 = dy_SW
+                        dc1 = dc_SW
 
-                    dx2b = dx_W
-                    dy2b = dy_W
-                    dc2b = dc_W
+                        dx2 = dx_W
+                        dy2 = dy_W
+                        dc2 = dc_W
+                    }
+                    else {
+                        dx0 = dx_W
+                        dy0 = dy_W
+                        dc0 = dc_W
+
+                        dx1 = dx_SW
+                        dy1 = dy_SW
+                        dc1 = dc_SW
+
+                        dx2 = dx_S
+                        dy2 = dy_S
+                        dc2 = dc_S
+                    }
                     
                     break
                 
                 case Direction.SWW:
-                    dx0 = dx_W
-                    dy0 = dy_W
-                    dc0 = dc_W
+                    if (tri_above) {
+                        dx0 = dx_SW
+                        dy0 = dy_SW
+                        dc0 = dc_SW
 
-                    dx1 = dx_SW
-                    dy1 = dy_SW
-                    dc1 = dc_SW
+                        dx1 = dx_W
+                        dy1 = dy_W
+                        dc1 = dc_W
+                    }
+                    else {
+                        dx0 = dx_W
+                        dy0 = dy_W
+                        dc0 = dc_W
 
-                    dx2a = dx2b = dx_S
-                    dy2a = dy2b = dy_S
-                    dc2a = dc2b = dc_S
+                        dx1 = dx_SW
+                        dy1 = dy_SW
+                        dc1 = dc_SW
+                    }
+
+                    dc2 = 0
                     
                     break
                 
                 case Direction.W:
-                    dx0 = dx1 = dx_W
-                    dy0 = dy1 = dy_W
-                    dc0 = dc1 = dc_W
+                    dx0 = dx_W
+                    dy0 = dy_W
+                    dc0 = dc_W
+                    
+                    if (tri_above) {
+                        dx1 = dx_NW
+                        dy1 = dy_NW
+                        dc1 = dc_NW
+                    }
+                    else {
+                        dx1 = dx_SW
+                        dy1 = dy_SW
+                        dc1 = dc_SW
+                    }
 
-                    dx2a = dx_N
-                    dy2a = dy_N
-                    dc2a = dc_N
-
-                    dx2b = dx_S
-                    dy2b = dy_S
-                    dc2b = dc_S
+                    dc2 = 0
                     
                     break
                 
                 case Direction.NWW:
-                    dx0 = dx_W
-                    dy0 = dy_W
-                    dc0 = dc_W
+                    if (tri_above) {
+                        dx0 = dx_W
+                        dy0 = dy_W
+                        dc0 = dc_W
 
-                    dx1 = dx_NW
-                    dy1 = dy_NW
-                    dc1 = dc_NW
+                        dx1 = dx_NW
+                        dy1 = dy_NW
+                        dc1 = dc_NW
+                    }
+                    else {
+                        dx0 = dx_NW
+                        dy0 = dy_NW
+                        dc0 = dc_NW
 
-                    dx2a = dx2b = dx_N
-                    dy2a = dy2b = dy_N
-                    dc2a = dc2b = dc_N
+                        dx1 = dx_W
+                        dy1 = dy_W
+                        dc1 = dc_W
+                    }
+
+                    dc2 = 0
                     
                     break
                 
                 case Direction.NW:
-                    dx0 = dx1 = dx_NW
-                    dy0 = dy1 = dy_NW
-                    dc0 = dc1 = dc_NW
+                    if (tri_above) {
+                        dx0 = dx_W
+                        dy0 = dy_W
+                        dc0 = dc_W
 
-                    dx2a = dx_N
-                    dy2a = dy_N
-                    dc2a = dc_N
+                        dx1 = dx_NW
+                        dy1 = dy_NW
+                        dc1 = dc_NW
 
-                    dx2b = dx_W
-                    dy2b = dy_W
-                    dc2b = dc_W
+                        dx2 = dx_N
+                        dy2 = dy_N
+                        dc2 = dc_N
+                    }
+                    else {
+                        dx0 = dx_N
+                        dy0 = dy_N
+                        dc0 = dc_N
+
+                        dx1 = dx_NW
+                        dy1 = dy_NW
+                        dc1 = dc_NW
+
+                        dx2 = dx_W
+                        dy2 = dy_W
+                        dc2 = dc_W
+                    }
                     
                     break
                 
                 case Direction.NNW:
-                    dx0 = dx_N
-                    dy0 = dy_N
-                    dc0 = dc_N
+                    if (tri_right) {
+                        dx0 = dx_NW
+                        dy0 = dy_NW
+                        dc0 = dc_NW
 
-                    dx1 = dx_NW
-                    dy1 = dy_NW
-                    dc1 = dc_NW
+                        dx1 = dx_N
+                        dy1 = dy_N
+                        dc1 = dc_N
+                    }
+                    else {
+                        dx0 = dx_N
+                        dy0 = dy_N
+                        dc0 = dc_N
 
-                    dx2a = dx2b = dx_W
-                    dy2a = dy2b = dy_W
-                    dc2a = dc2b = dc_W
+                        dx1 = dx_NW
+                        dy1 = dy_NW
+                        dc1 = dc_NW
+                    }
+
+                    dc2 = 0
                     
                     break
                 
                 default:
                     throw new Error()
-            }
-
-            coords_n = 0
-            coords_offset = 0
-            
-            if (tri[c_a] !== tri_i) {
-                x_b = x_a + dx0
-                y_b = y_a + dy0
-                c_b = c_a + dc0
-        
-                if (x_b >= 0 && x_b < w && y_b >= 0 && y_b < h && tri[c_b] === tri_i) {
-                    x_a = x_b
-                    y_a = y_b
-                    c_a = c_b
-                }
-                else {
-                    x_b = x_a + dx1
-                    y_b = y_a + dy1
-                    c_b = c_a + dc1
-            
-                    if (x_b >= 0 && x_b < w && y_b >= 0 && y_b < h && tri[c_b] === tri_i) {
-                        x_a = x_b
-                        y_a = y_b
-                        c_a = c_b
-                    }
-                    else {
-                        x_b = x_a + dx2a
-                        y_b = y_a + dy2a
-                        c_b = c_a + dc2a
-            
-                        if (x_b >= 0 && x_b < w && y_b >= 0 && y_b < h && tri[c_b] === tri_i) {
-                            x_a = x_b
-                            y_a = y_b
-                            c_a = c_b
-                        }
-                        else if (dc2b !== dc2a) {
-                            x_b = x_a + dx2b
-                            y_b = y_a + dy2b
-                            c_b = c_a + dc2b
-                
-                            if (x_b >= 0 && x_b < w && y_b >= 0 && y_b < h && tri[c_b] === tri_i) {
-                                x_a = x_b
-                                y_a = y_b
-                                c_a = c_b
-                            }
-                            else {
-                                return 0
-                            }
-                        }
-                        else {
-                            return 0
-                        }
-                    }
-                }
             }
 
             while (true) {
@@ -656,7 +810,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                     x_b = x_a + dx1
                     y_b = y_a + dy1
                     c_b = c_a + dc1
-                
+                    
                     if (x_b >= 0 && x_b < w && y_b >= 0 && y_b < h && tri[c_b] === tri_i) {
                         x_a = x_b
                         y_a = y_b

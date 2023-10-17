@@ -397,8 +397,8 @@ export class Triangles2DMeshCollider {
         const resolution_div_render_resolution_y = resolution / render_resolution_y
 
         for (let p_i = 0; p_i < length; p_i++) {
-            p_x = ((p_i % render_resolution_x) * bounds_size_x_div_render_resolution_x) + bounds_origin_x
-            p_y = (Math.floor(p_i / render_resolution_x) * bounds_size_y_div_render_resolution_y) + bounds_origin_y
+            p_x = (((p_i % render_resolution_x) + 0.5) * bounds_size_x_div_render_resolution_x) + bounds_origin_x
+            p_y = ((Math.floor(p_i / render_resolution_x) + 0.5) * bounds_size_y_div_render_resolution_y) + bounds_origin_y
 
             cell_x = Math.floor((p_i % render_resolution_x) * resolution_div_render_resolution_x)
             cell_y = Math.floor(Math.floor(p_i / render_resolution_x) * resolution_div_render_resolution_y)
