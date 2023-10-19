@@ -7,6 +7,7 @@ import { IndicesTypedArray } from "../../utils/indices-array.js";
 import HashTable from "@ronomon/hash-table";
 import { renderTensor } from "../../utils/tf-img.js";
 import * as fs from 'fs'
+import { NumberTypedArray, typedArrayConstructor } from "../../utils/typed-array.js";
 
 export type Triangle2DMeshTopologyProjectorCopyReference = {
     indices: {
@@ -73,12 +74,13 @@ export class Triangle2DMeshTopologyProjectorFactory
         const n_triangle_edges = triangles.length
 
         const edges_map_lookup_buffer_external_indices = Buffer.alloc(2 * 4)
-        const edges_map_lookup_buffer_vertex_and_edge_indices = Buffer.alloc(3 * 4)
+        const edges_map_lookup_buffer_vertex_and_edge_indices = Buffer.alloc(4 * Uint32Array.BYTES_PER_ELEMENT)
+        const edges_map_lookup_vertex_edges_indices = new Uint32Array(edges_map_lookup_buffer_vertex_and_edge_indices.buffer, 0, 4)
         
         /** stored before swapping order */
         const edge_external_indices = new Uint32Array(2 * n_triangle_edges)
 
-        /** external index -> vertex indices A/B, edge index */
+        /** external index -> vertex indices A/B/C, edge index */
         const edges_map_A = new HashTable(edges_map_lookup_buffer_external_indices.byteLength, edges_map_lookup_buffer_vertex_and_edge_indices.byteLength, n_triangle_edges, n_triangle_edges)
         const edges_map_B = new HashTable(edges_map_lookup_buffer_external_indices.byteLength, edges_map_lookup_buffer_vertex_and_edge_indices.byteLength, n_triangle_edges, n_triangle_edges)
         
@@ -89,12 +91,13 @@ export class Triangle2DMeshTopologyProjectorFactory
 
         let vertex_index_other_a: number,
             vertex_index_other_b: number,
+            vertex_index_other_c: number,
             i_edge_other: number
 
         let tmp: number
         
         function iterateEdge(
-                vertex_index_a: number, vertex_index_b: number,
+                vertex_index_a: number, vertex_index_b: number, vertex_index_c: number,
                 external_index_a: number, external_index_b: number
             ) {
             edge_external_indices[(2 * i_edge) + 0] = external_index_a
@@ -114,31 +117,32 @@ export class Triangle2DMeshTopologyProjectorFactory
             edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_b, 4)
             
             if (edges_map_A.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0) !== 0) {
-                vertex_index_other_a = edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(0)
-                vertex_index_other_b = edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(4)
-                i_edge_other = edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(8)
+                vertex_index_other_a = edges_map_lookup_vertex_edges_indices[0]
+                vertex_index_other_b = edges_map_lookup_vertex_edges_indices[1]
+                vertex_index_other_c = edges_map_lookup_vertex_edges_indices[2]
+                i_edge_other = edges_map_lookup_vertex_edges_indices[3]
 
                 if (edges_map_B.exist(edges_map_lookup_buffer_external_indices, 0))
                     throw new Error("same edge shared by > 2 triangles")
                 
-                if (vertex_index_other_a !== vertex_index_a || vertex_index_other_b !== vertex_index_b) {
+                if (vertex_index_other_a === vertex_index_a && vertex_index_other_b === vertex_index_b)
+                    edges_indices_island[i_edge_other] = 0
+                else
                     edges_indices_island[i_edge] = 2
 
-                    edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(vertex_index_a, 0)
-                    edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(vertex_index_b, 4)
-                    edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(i_edge, 8)
-                    edges_map_B.set(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
-                }
-                else {
-                    edges_indices_island[i_edge_other] = 0
-                }
+                edges_map_lookup_vertex_edges_indices[0] = vertex_index_a
+                edges_map_lookup_vertex_edges_indices[1] = vertex_index_b
+                edges_map_lookup_vertex_edges_indices[2] = vertex_index_c
+                edges_map_lookup_vertex_edges_indices[3] = i_edge
+                edges_map_B.set(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
             }
             else {
                 edges_indices_island[i_edge] = 1
 
-                edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(vertex_index_a, 0)
-                edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(vertex_index_b, 4)
-                edges_map_lookup_buffer_vertex_and_edge_indices.writeUint32LE(i_edge, 8)
+                edges_map_lookup_vertex_edges_indices[0] = vertex_index_a
+                edges_map_lookup_vertex_edges_indices[1] = vertex_index_b
+                edges_map_lookup_vertex_edges_indices[2] = vertex_index_c
+                edges_map_lookup_vertex_edges_indices[3] = i_edge
                 edges_map_A.set(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
             }
             
@@ -172,9 +176,33 @@ export class Triangle2DMeshTopologyProjectorFactory
             external_index_b = externalIndices[triangle_index_b]
             external_index_c = externalIndices[triangle_index_c]
 
-            iterateEdge(vertices_index_a, vertices_index_b, external_index_a, external_index_b)
-            iterateEdge(vertices_index_b, vertices_index_c, external_index_b, external_index_c)
-            iterateEdge(vertices_index_c, vertices_index_a, external_index_c, external_index_a)
+            iterateEdge(vertices_index_a, vertices_index_b, vertices_index_c, external_index_a, external_index_b)
+            iterateEdge(vertices_index_b, vertices_index_c, vertices_index_a, external_index_b, external_index_c)
+            iterateEdge(vertices_index_c, vertices_index_a, vertices_index_b, external_index_c, external_index_a)
+        }
+
+        for (i_edge = 0; i_edge < n_triangle_edges; i_edge++) {
+            external_index_a = externalIndices[(3 * Math.floor(i_edge / 3)) + ((i_edge + 0) % 3)]
+            external_index_b = externalIndices[(3 * Math.floor(i_edge / 3)) + ((i_edge + 1) % 3)]
+
+            if (external_index_a > external_index_b) {
+                tmp = external_index_a
+                external_index_a = external_index_b
+                external_index_b = tmp
+            }
+
+            edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_a, 0)
+            edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_b, 4)
+
+            if (!edges_map_A.exist(edges_map_lookup_buffer_external_indices, 0))
+                throw new Error()
+            if (!edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0))
+                throw new Error()
+
+            vertex_index_other_a = edges_map_lookup_vertex_edges_indices[0]
+            vertex_index_other_b = edges_map_lookup_vertex_edges_indices[1]
+            vertex_index_other_c = edges_map_lookup_vertex_edges_indices[2]
+            i_edge_other = edges_map_lookup_vertex_edges_indices[3]
         }
 
         i_edge = 0
@@ -182,149 +210,24 @@ export class Triangle2DMeshTopologyProjectorFactory
         const area = w * h
         const w_minus_2 = w - 2
 
-        let x0: number
-        let y0: number
-        let x1: number
-        let y1: number
+        let dx: number
+        let dy: number
+        let dc: number
+        let dc_j: number
+
+        let x_i: number
+        let y_i: number
+        let c_i: number
 
         let x_a: number
         let y_a: number
-        let c_a: number
 
         let x_b: number
         let y_b: number
-        let c_b: number
 
-        enum Direction {
-            Invalid = 0,
-            NW = 0x1,
-            N = 0x2,
-            NE = 0x3,
-            W = 0x4,
-            E = 0x5,
-            SW = 0x6,
-            S = 0x7,
-            SE = 0x8,
-
-            X_greaterEqual = 0x10,
-            Y_greaterEqual = 0x20,
-
-            NNE = NE | Y_greaterEqual,
-            NEE = NE | X_greaterEqual,
-            SEE = SE | X_greaterEqual,
-            SSE = SE | Y_greaterEqual,
-            SSW = SW | Y_greaterEqual,
-            SWW = SW | X_greaterEqual,
-            NWW = NW | X_greaterEqual,
-            NNW = NW | Y_greaterEqual,
-        }
-
-        let ax: number
-        let ay: number
-        let ac: number
-        let ad: Direction
-
-        function direction(dx: number, dy: number): Direction {
-            ax = Math.sign(dx)
-            ay = Math.sign(dy)
-
-            switch ((3 * (ay + 1)) + (ax + 1)) {
-                case 0:
-                    ad = Direction.NW
-                    break
-                case 1:
-                    ad = Direction.N
-                    break
-                case 2:
-                    ad = Direction.NE
-                    break
-                case 3:
-                    ad = Direction.W
-                    break
-                case 4:
-                    return Direction.Invalid
-                case 5:
-                    ad = Direction.E
-                    break
-                case 6:
-                    ad = Direction.SW
-                    break
-                case 7:
-                    ad = Direction.S
-                    break
-                case 8:
-                    ad = Direction.SE
-                    break
-            }
-
-            ac = (dx / ax) / (dy / ay)
-
-            if (ax === 0 || ay === 0)
-                return ad
-            else return ad | (
-                (ac >= 1 ? Direction.X_greaterEqual : 0) |
-                (ac <= 1 ? Direction.Y_greaterEqual : 0)
-            )
-        }
-        
         let coords_n: number
         let coords_offset: number
-        
-        let triangle_edge_direction: Direction
-
-        let dx0: number
-        let dy0: number
-        let dc0: number
-        
-        let dx1: number
-        let dy1: number
-        let dc1: number
-
-        let dx2: number
-        let dy2: number
-        let dc2: number
-
-        //? is before dx2?
-        let dx3: number
-        let dy3: number
-        let dc3: number
-
-        let t: number
-        let len: number
-
-        const dc_N = -w
-        const dc_S = +w
-        const dc_E = +1
-        const dc_W = -1
-
-        const dc_NE = dc_N + dc_E
-        const dc_SE = dc_S + dc_E
-        const dc_SW = dc_S + dc_W
-        const dc_NW = dc_N + dc_W
-
-        const dx_N = 0
-        const dy_N = -1
-
-        const dx_E = +1
-        const dy_E = 0
-
-        const dx_S = 0
-        const dy_S = +1
-
-        const dx_W = -1
-        const dy_W = 0
-
-        const dx_NE = dx_N + dx_E
-        const dy_NE = dy_N + dy_E
-
-        const dx_SE = dx_S + dx_E
-        const dy_SE = dy_S + dy_E
-
-        const dx_SW = dx_S + dx_W
-        const dy_SW = dy_S + dy_W
-
-        const dx_NW = dx_N + dx_W
-        const dy_NW = dy_N + dy_W
+        let coords_clear_i: number
 
         let tri_above: boolean
         let tri_right: boolean
@@ -339,6 +242,13 @@ export class Triangle2DMeshTopologyProjectorFactory
         let x_c: number
         let y_c: number
 
+        let min_x: number
+        let max_x: number
+        let min_y: number
+        let max_y: number
+
+        const coords_mask = new Uint8Array(area)
+
         function triangle_edge(
                 tri_i: number,
                 coords: Int32Array,
@@ -350,479 +260,144 @@ export class Triangle2DMeshTopologyProjectorFactory
             vertex_index_b *= 2
             vertex_index_c *= 2
 
-            x_a = x0 = vertices[vertex_index_a++]
-            y_a = y0 = vertices[vertex_index_a]
+            x_a = vertices[vertex_index_a++]
+            y_a = vertices[vertex_index_a]
 
-            x_b = x1 = vertices[vertex_index_b++]
-            y_b = y1 = vertices[vertex_index_b]
+            x_b = vertices[vertex_index_b++]
+            y_b = vertices[vertex_index_b]
 
             x_c = vertices[vertex_index_c++]
             y_c = vertices[vertex_index_c]
 
-            triangle_edge_direction = direction(x_b - x_a, y_b - y_a)
-
             tri_right = ((x_b - x_a) * (y_c - y_a) / (y_b - y_a)) + x_a < x_c
             tri_above = ((y_b - y_a) * (x_c - x_a) / (x_b - x_a)) + y_a > y_c
 
-            x_a = Math.round((x_a * w) - 0.5)
-            y_a = Math.round((y_a * h) - 0.5)
-            c_a = (y_a * w) + x_a
+            x_a = x_a * w
+            y_a = y_a * h
+
+            x_b = x_b * w
+            y_b = y_b * h
 
             coords_n = 0
             coords_offset = 0
-            
-            switch (triangle_edge_direction) {
-                case Direction.N:
-                    dx0 = dx_N
-                    dy0 = dy_N
-                    dc0 = dc_N
 
-                    if (tri_right) {
-                        dx1 = dx_NW
-                        dy1 = dy_NW
-                        dc1 = dc_NW
+            // y0 = (y_b - y_a) * t + y_a
+            // t = (y0 - y_a) / (y_b - y_a)
+            // x0 = (x_b - x_a) * t + x_a
+            //    = (x_b - x_a) * (y0 - y_a) / (y_b - y_a) + x_a
 
-                        dx3 = dx_E
-                        dy3 = dy_E
-                        dc3 = dc_E
-                    }
-                    else {
-                        dx1 = dx_NE
-                        dy1 = dy_NE
-                        dc1 = dc_NE
+            let pixel_found: boolean
+            let last: number
 
-                        dx3 = dx_W
-                        dy3 = dy_W
-                        dc3 = dc_W
-                    }
+            if (Math.abs(y_a - y_b) > Math.abs(x_a - x_b)) {
+                dx = tri_right ? 1 : -1
+                dc = tri_right ? 1 : -1
+                dy = Math.sign(y_b - y_a)
+                dc_j = dy * w
+                last = Math.floor(y_b)
+                for (y_i = Math.floor(y_a); y_i !== last; y_i += dy) {
+                    x_i = (x_b - x_a) * ((y_i + 0.5) - y_a) / (y_b - y_a) + x_a
+                    x_i = Math.floor(x_i)
+                    c_i = (y_i * w) + x_i
+                    pixel_found = (invalid[c_i] === 0 && tri[c_i] === tri_i)
 
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.NNE:
-                    if (tri_right) {
-                        dx0 = dx_N
-                        dy0 = dy_N
-                        dc0 = dc_N
+                    while (true) {
+                        if (pixel_found) {
+                            if (coords_n === 0)
+                                break
 
-                        dx1 = dx_NE
-                        dy1 = dy_NE
-                        dc1 = dc_NE
+                            if (coords_mask[c_i - dc_j] === 1 ||
+                                coords_mask[c_i - dc_j - dc] === 1 ||
+                                coords_mask[c_i - dc_j + dc] === 1)
+                                break
+                        }
 
-                        dx3 = dx_E
-                        dy3 = dy_E
-                        dc3 = dc_E
-                    }
-                    else {
-                        dx0 = dx_NE
-                        dy0 = dy_NE
-                        dc0 = dc_NE
-
-                        dx1 = dx_N
-                        dy1 = dy_N
-                        dc1 = dc_N
-
-                        dx3 = dx_W
-                        dy3 = dy_W
-                        dc3 = dc_W
-                    }
-                    
-                    dc2 = 0
-
-                    break
-                
-                case Direction.NE:
-                    if (tri_above) {
-                        dx0 = dx_E
-                        dy0 = dy_E
-                        dc0 = dc_E
-                        
-                        dx1 = dx_NE
-                        dy1 = dy_NE
-                        dc1 = dc_NE
-
-                        dx2 = dx_N
-                        dy2 = dy_N
-                        dc2 = dc_N
-
-                        dx3 = dx_W
-                        dy3 = dy_W
-                        dc3 = dc_W
-                    }
-                    else {
-                        dx0 = dx_N
-                        dy0 = dy_N
-                        dc0 = dc_N
-                        
-                        dx1 = dx_NE
-                        dy1 = dy_NE
-                        dc1 = dc_NE
-
-                        dx2 = dx_E
-                        dy2 = dy_E
-                        dc2 = dc_E
-
-                        dx3 = dx_W
-                        dy3 = dy_W
-                        dc3 = dc_W
-                    }
-                    
-                    break
-                
-                case Direction.NEE:
-                    if (tri_above) {
-                        dx0 = dx_E
-                        dy0 = dy_E
-                        dc0 = dc_E
-
-                        dx1 = dx_NE
-                        dy1 = dy_NE
-                        dc1 = dc_NE
-                    }
-                    else {
-                        dx0 = dx_NE
-                        dy0 = dy_NE
-                        dc0 = dc_NE
-
-                        dx1 = dx_E
-                        dy1 = dy_E
-                        dc1 = dc_E
+                        x_i += dx
+                        c_i += dc
+                        if (x_i >= 0 && x_i < w && (invalid[c_i] === 0 && tri[c_i] === tri_i))
+                            pixel_found = true
+                        else break
                     }
 
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.E:
-                    dx0 = dx_E
-                    dy0 = dy_E
-                    dc0 = dc_E
-                    
-                    if (tri_above) {
-                        dx1 = dx_NE
-                        dy1 = dy_NE
-                        dc1 = dc_NE
-                    }
-                    else {
-                        dx1 = dx_SE
-                        dy1 = dy_SE
-                        dc1 = dc_SE
+                    if (!pixel_found) {
+                        if (coords_n > 0) {
+                            // there are no tri elements in this row
+                            // this function is done
+                            break
+                        }
+                        else {
+                            // line not yet started
+                            continue
+                        }
                     }
 
-                    dc2 = 0
+                    coords_mask[c_i] = 1
 
-                    break
-                
-                case Direction.SEE:
-                    if (tri_above) {
-                        dx0 = dx_SE
-                        dy0 = dy_SE
-                        dc0 = dc_SE
+                    if (invalid[c_i])
+                        throw new Error()
+                    values[coords_n++] = bitmap_value[c_i]
+                    coords[coords_offset++] = x_i
+                    coords[coords_offset++] = y_i
+                }
+            }
+            else {
+                dy = tri_above ? -1 : 1
+                dc = tri_above ? -w : w
+                dx = Math.sign(x_b - x_a)
+                dc_j = dx
+                last = Math.floor(x_b)
+                for (x_i = Math.floor(x_a); x_i !== last; x_i += dx) {
+                    y_i = (y_b - y_a) * ((x_i + 0.5) - x_a) / (x_b - x_a) + y_a
+                    y_i = Math.floor(y_i)
+                    c_i = (y_i * w) + x_i
+                    pixel_found = (invalid[c_i] === 0 && tri[c_i] === tri_i)
 
-                        dx1 = dx_E
-                        dy1 = dy_E
-                        dc1 = dc_E
-                    }
-                    else {
-                        dx0 = dx_E
-                        dy0 = dy_E
-                        dc0 = dc_E
+                    while (true) {
+                        if (pixel_found) {
+                            if (coords_n === 0)
+                                break
 
-                        dx1 = dx_SE
-                        dy1 = dy_SE
-                        dc1 = dc_SE
-                    }
+                            if (coords_mask[c_i - dc_j] === 1 ||
+                                coords_mask[c_i - dc_j - dc] === 1 ||
+                                coords_mask[c_i - dc_j + dc] === 1)
+                                break
+                        }
 
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.SE:
-                    if (tri_above) {
-                        dx0 = dx_S
-                        dy0 = dy_S
-                        dc0 = dc_S
-
-                        dx1 = dx_SE
-                        dy1 = dy_SE
-                        dc1 = dc_SE
-
-                        dx2 = dx_E
-                        dy2 = dy_E
-                        dc2 = dc_E
-                    }
-                    else {
-                        dx0 = dx_E
-                        dy0 = dy_E
-                        dc0 = dc_E
-
-                        dx1 = dx_SE
-                        dy1 = dy_SE
-                        dc1 = dc_SE
-
-                        dx2 = dx_S
-                        dy2 = dy_S
-                        dc2 = dc_S
-                    }
-                    
-                    break
-                
-                case Direction.SSE:
-                    if (tri_right) {
-                        dx0 = dx_S
-                        dy0 = dy_S
-                        dc0 = dc_S
-
-                        dx1 = dx_SE
-                        dy1 = dy_SE
-                        dc1 = dc_SE
-                    }
-                    else {
-                        dx0 = dx_SE
-                        dy0 = dy_SE
-                        dc0 = dc_SE
-
-                        dx1 = dx_S
-                        dy1 = dy_S
-                        dc1 = dc_S
-                    }
-                    
-                    dc2 = 0
-
-                    break
-                
-                case Direction.S:
-                    dx0 = dx_S
-                    dy0 = dy_S
-                    dc0 = dc_S
-                        
-                    if (tri_right) {
-                        dx1 = dx_SE
-                        dy1 = dy_SE
-                        dc1 = dc_SE
-                    }
-                    else {
-                        dx1 = dx_SW
-                        dy1 = dy_SW
-                        dc1 = dc_SW
+                        y_i += dy
+                        c_i += dc
+                        if (y_i >= 0 && y_i < h && (invalid[c_i] === 0 && tri[c_i] === tri_i))
+                            pixel_found = true
+                        else break
                     }
 
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.SSW:
-                    if (tri_right) {
-                        dx0 = dx_SW
-                        dy0 = dy_SW
-                        dc0 = dc_SW
-
-                        dx1 = dx_S
-                        dy1 = dy_S
-                        dc1 = dc_S
-                    }
-                    else {
-                        dx0 = dx_S
-                        dy0 = dy_S
-                        dc0 = dc_S
-
-                        dx1 = dx_SW
-                        dy1 = dy_SW
-                        dc1 = dc_SW
+                    if (!pixel_found) {
+                        if (coords_n > 0) {
+                            // there are no tri elements in this row
+                            // this function is done
+                            break
+                        }
+                        else {
+                            // line not yet started
+                            continue
+                        }
                     }
 
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.SW:
-                    if (tri_above) {
-                        dx0 = dx_S
-                        dy0 = dy_S
-                        dc0 = dc_S
+                    coords_mask[c_i] = 1
 
-                        dx1 = dx_SW
-                        dy1 = dy_SW
-                        dc1 = dc_SW
-
-                        dx2 = dx_W
-                        dy2 = dy_W
-                        dc2 = dc_W
-                    }
-                    else {
-                        dx0 = dx_W
-                        dy0 = dy_W
-                        dc0 = dc_W
-
-                        dx1 = dx_SW
-                        dy1 = dy_SW
-                        dc1 = dc_SW
-
-                        dx2 = dx_S
-                        dy2 = dy_S
-                        dc2 = dc_S
-                    }
-                    
-                    break
-                
-                case Direction.SWW:
-                    if (tri_above) {
-                        dx0 = dx_SW
-                        dy0 = dy_SW
-                        dc0 = dc_SW
-
-                        dx1 = dx_W
-                        dy1 = dy_W
-                        dc1 = dc_W
-                    }
-                    else {
-                        dx0 = dx_W
-                        dy0 = dy_W
-                        dc0 = dc_W
-
-                        dx1 = dx_SW
-                        dy1 = dy_SW
-                        dc1 = dc_SW
-                    }
-
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.W:
-                    dx0 = dx_W
-                    dy0 = dy_W
-                    dc0 = dc_W
-                    
-                    if (tri_above) {
-                        dx1 = dx_NW
-                        dy1 = dy_NW
-                        dc1 = dc_NW
-                    }
-                    else {
-                        dx1 = dx_SW
-                        dy1 = dy_SW
-                        dc1 = dc_SW
-                    }
-
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.NWW:
-                    if (tri_above) {
-                        dx0 = dx_W
-                        dy0 = dy_W
-                        dc0 = dc_W
-
-                        dx1 = dx_NW
-                        dy1 = dy_NW
-                        dc1 = dc_NW
-                    }
-                    else {
-                        dx0 = dx_NW
-                        dy0 = dy_NW
-                        dc0 = dc_NW
-
-                        dx1 = dx_W
-                        dy1 = dy_W
-                        dc1 = dc_W
-                    }
-
-                    dc2 = 0
-                    
-                    break
-                
-                case Direction.NW:
-                    if (tri_above) {
-                        dx0 = dx_W
-                        dy0 = dy_W
-                        dc0 = dc_W
-
-                        dx1 = dx_NW
-                        dy1 = dy_NW
-                        dc1 = dc_NW
-
-                        dx2 = dx_N
-                        dy2 = dy_N
-                        dc2 = dc_N
-                    }
-                    else {
-                        dx0 = dx_N
-                        dy0 = dy_N
-                        dc0 = dc_N
-
-                        dx1 = dx_NW
-                        dy1 = dy_NW
-                        dc1 = dc_NW
-
-                        dx2 = dx_W
-                        dy2 = dy_W
-                        dc2 = dc_W
-                    }
-                    
-                    break
-                
-                case Direction.NNW:
-                    if (tri_right) {
-                        dx0 = dx_NW
-                        dy0 = dy_NW
-                        dc0 = dc_NW
-
-                        dx1 = dx_N
-                        dy1 = dy_N
-                        dc1 = dc_N
-                    }
-                    else {
-                        dx0 = dx_N
-                        dy0 = dy_N
-                        dc0 = dc_N
-
-                        dx1 = dx_NW
-                        dy1 = dy_NW
-                        dc1 = dc_NW
-                    }
-
-                    dc2 = 0
-                    
-                    break
-                
-                default:
-                    throw new Error()
+                    if (invalid[c_i])
+                        throw new Error()
+                    values[coords_n++] = bitmap_value[c_i]
+                    coords[coords_offset++] = x_i
+                    coords[coords_offset++] = y_i
+                }
             }
 
-            while (true) {
-                coords[coords_offset++] = x_a
-                coords[coords_offset++] = y_a
-                values[coords_n++] = bitmap_value[c_a]
-
-                x_b = x_a + dx0
-                y_b = y_a + dy0
-                c_b = c_a + dc0
-            
-                if (x_b >= 0 && x_b < w && y_b >= 0 && y_b < h && tri[c_b] === tri_i) {
-                    x_a = x_b
-                    y_a = y_b
-                    c_a = c_b
-                }
-                else if (dc1 !== dc0) {
-                    x_b = x_a + dx1
-                    y_b = y_a + dy1
-                    c_b = c_a + dc1
-                    
-                    if (x_b >= 0 && x_b < w && y_b >= 0 && y_b < h && tri[c_b] === tri_i) {
-                        x_a = x_b
-                        y_a = y_b
-                        c_a = c_b
-                    }
-                    else {
-                        break
-                    }
-                }
-                else {
-                    break
-                }
+            coords_clear_i = 0
+            while (coords_clear_i < coords_offset) {
+                x_i = coords[coords_clear_i++]
+                y_i = coords[coords_clear_i++]
+                c_i = (y_i * w) + x_i
+                coords_mask[c_i] = 0
             }
 
             return coords_n
@@ -833,7 +408,6 @@ export class Triangle2DMeshTopologyProjectorFactory
 
         /** @returns number of diffused elements */
         function diffuse(
-                mask: Uint8Array,
                 diffusing_coords: Int32Array,
                 diffusing_coords_n: number,
                 diffusing_values: Float32Array,
@@ -860,7 +434,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 diffusing = diffusing_values[i]
 
                 if (line_1D >= 0 && x > 0) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -878,7 +452,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 }
                 line_1D++
                 if (line_1D >= 0) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -896,7 +470,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 }
                 line_1D++
                 if (line_1D >= 0 && x <= w_minus_2) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -914,7 +488,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 }
                 line_1D += w_minus_2
                 if (line_1D >= 0 && x > 0) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -930,9 +504,12 @@ export class Triangle2DMeshTopologyProjectorFactory
                         }
                     }
                 }
-                line_1D += 2
+                line_1D++
+                if (invalid[line_1D] !== 0)
+                    throw new Error()
+                line_1D++
                 if (line_1D < area && x <= w_minus_2) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -950,7 +527,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 }
                 line_1D += w_minus_2
                 if (line_1D < area && x > 0) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -968,7 +545,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 }
                 line_1D++
                 if (line_1D < area) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -986,7 +563,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 }
                 line_1D++
                 if (line_1D < area && x <= w_minus_2) {
-                    if (mask[line_1D] !== 0) {
+                    if (invalid[line_1D] !== 0) {
                         count_current = diffuse_count[line_1D]
                         if (count_current === 0) {
                             diffuse_buffer[line_1D] = diffusing
@@ -1165,8 +742,6 @@ export class Triangle2DMeshTopologyProjectorFactory
         const dst_value_A = new Float32Array(w + h)
         const dst_value_B = new Float32Array(w + h)
 
-        const triangle_coords = [w0, w1, w2]
-
         const copy_references: Triangle2DMeshTopologyProjectorCopyReferences = {
             inside_to_outside: [],
             outside_to_inside: [],
@@ -1181,11 +756,59 @@ export class Triangle2DMeshTopologyProjectorFactory
             return tf.tensor2d(array, [count, 2])
         }
 
-        function mapEdge_1(i_tri: number, vertex_index_a: number, vertex_index_b: number) {
+        function invert(a: Float32Array) {
+            const b = new Float32Array(a.length)
+
+            for (let i = 0; i < a.length; i++)
+                b[i] = 1 - a[i]
+
+            return b
+        }
+
+        const w01 = w1
+        const w02 = w2
+        const w12 = w2
+        const w21 = w1
+        const w10 = invert(w1)
+        const w20 = invert(w2)
+
+        const triangle_coords = [
+            w01, w12, w20,
+            w10, w21, w02,
+        ]
+
+        function localNeighborhood_index(arr: NumberTypedArray, index: number, margin_x = 5, margin_y = 4) {
+            const x = Math.floor(vertices[(2 * index) + 0] * w);
+            const y = Math.floor(vertices[(2 * index) + 1] * h);
+            return localNeighborhood(arr, x,y,margin_x,margin_y)
+        }
+
+        function localNeighborhood(arr: NumberTypedArray, x: number, y: number, margin_x = 5, margin_y = 4) {
+            const lines: NumberTypedArray[] = [];
+
+            for (let dy = -margin_y; dy <= margin_y; dy++) {
+                const x0 = Math.max(0, x - margin_x);
+                const x1 = Math.min(w, x + margin_x + 1);
+
+                if (y + dy >= 0 && y + dy < h) {
+                    const c = w * (y + dy);
+                    lines.push(arr.subarray(c + x0, c + x1));
+                }
+                else lines.push(undefined!);
+            }
+
+            return lines;
+        }
+
+        function mapEdge_1(i_tri: number, vertex_index_a: number, vertex_index_b: number, vertex_index_c: number) {
             external_index_a = edge_external_indices[(2 * i_edge) + 0]
             external_index_b = edge_external_indices[(2 * i_edge) + 1]
 
+            let inverted = false
+
             if (external_index_a > external_index_b) {
+                inverted = true
+
                 tmp = external_index_a
                 external_index_a = external_index_b
                 external_index_b = tmp
@@ -1197,24 +820,31 @@ export class Triangle2DMeshTopologyProjectorFactory
 
             edges_map_lookup_buffer_external_indices.writeUInt32LE(external_index_a, 0)
             edges_map_lookup_buffer_external_indices.writeUInt32LE(external_index_b, 4)
-            edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
+            if (!edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0))
+                throw new Error("mesh not closed")
 
-            vertex_index_other_a = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(0)
-            vertex_index_other_b = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(4)
-            i_edge_other = edges_map_lookup_buffer_vertex_and_edge_indices.readUInt32LE(8)
+            vertex_index_other_a = edges_map_lookup_vertex_edges_indices[0]
+            vertex_index_other_b = edges_map_lookup_vertex_edges_indices[1]
+            vertex_index_other_c = edges_map_lookup_vertex_edges_indices[2]
+            i_edge_other = edges_map_lookup_vertex_edges_indices[3]
 
-            const src_A = triangle_coords[i_edge % 3]
-            const src_B = triangle_coords[i_edge_other % 3]
+            const src_A = triangle_coords[(i_edge % 3) + (inverted ? 3 : 0)]
+            const src_B = triangle_coords[(i_edge_other % 3) + (inverted ? 3 : 0)]
 
             i_tri_other = Math.floor(i_edge_other / 3)
 
-            const src_coords_n_A = triangle_edge(i_tri, src_coords_A, src_value_A, src_A, vertex_index_a, vertex_index_b)
-            const src_coords_n_B = triangle_edge(i_tri_other, src_coords_B, src_value_B, src_B, vertex_index_other_a, vertex_index_other_b)
+            const src_coords_n_A = triangle_edge(i_tri, src_coords_A, src_value_A, src_A, vertex_index_a, vertex_index_b, vertex_index_c)
+            const src_coords_n_B = triangle_edge(i_tri_other, src_coords_B, src_value_B, src_B, vertex_index_other_a, vertex_index_other_b, vertex_index_other_c)
 
+            if (Math.random() < 0) {
+                localNeighborhood_index(tri, vertex_index_a)
+                localNeighborhood(tri, 0, 0)
+            }
+            
             if (src_coords_n_A === 0 || src_coords_n_B === 0) return
 
-            const dst_coords_n_A = diffuse(invalid, src_coords_A, src_coords_n_A, src_value_A, dst_coords_A, dst_value_A)
-            const dst_coords_n_B = diffuse(invalid, src_coords_B, src_coords_n_B, src_value_B, dst_coords_B, dst_value_B)
+            const dst_coords_n_A = diffuse(src_coords_A, src_coords_n_A, src_value_A, dst_coords_A, dst_value_A)
+            const dst_coords_n_B = diffuse(src_coords_B, src_coords_n_B, src_value_B, dst_coords_B, dst_value_B)
 
             if (dst_coords_n_A === 0 || dst_coords_n_B === 0) return
 
@@ -1281,7 +911,7 @@ export class Triangle2DMeshTopologyProjectorFactory
             ctx.stroke()
         }
 
-        function mapEdge(i_tri: number, vertex_index_a: number, vertex_index_b: number) {
+        function mapEdge(i_tri: number, vertex_index_a: number, vertex_index_b: number, vertex_index_c: number) {
             if (edges_indices_island[i_edge] === 1) {
                 external_index_a = edge_external_indices[(2 * i_edge) + 0]
                 external_index_b = edge_external_indices[(2 * i_edge) + 1]
@@ -1291,17 +921,17 @@ export class Triangle2DMeshTopologyProjectorFactory
 
                 edges_map_A.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
                 drawLine(
-                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(0),
-                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(4)
+                    edges_map_lookup_vertex_edges_indices[0],
+                    edges_map_lookup_vertex_edges_indices[1]
                 )
 
                 edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
                 drawLine(
-                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(0),
-                    edges_map_lookup_buffer_vertex_and_edge_indices.readUint32LE(4)
+                    edges_map_lookup_vertex_edges_indices[0],
+                    edges_map_lookup_vertex_edges_indices[1]
                 )
 
-                mapEdge_1(i_tri, vertex_index_a, vertex_index_b)
+                mapEdge_1(i_tri, vertex_index_a, vertex_index_b, vertex_index_c)
             }
 
             i_edge++
@@ -1318,9 +948,9 @@ export class Triangle2DMeshTopologyProjectorFactory
             vertices_index_b = triangles[triangle_index_b]
             vertices_index_c = triangles[triangle_index_c]
 
-            mapEdge(i_tri, vertices_index_a, vertices_index_b)
-            mapEdge(i_tri, vertices_index_b, vertices_index_c)
-            mapEdge(i_tri, vertices_index_c, vertices_index_a)
+            mapEdge(i_tri, vertices_index_a, vertices_index_b, vertices_index_c)
+            mapEdge(i_tri, vertices_index_b, vertices_index_c, vertices_index_a)
+            mapEdge(i_tri, vertices_index_c, vertices_index_a, vertices_index_b)
         }
 
         const mask = <tf.Tensor2D>tf.tensor2d(invalid, shape, 'bool').logicalNot()
@@ -1332,7 +962,18 @@ export class Triangle2DMeshTopologyProjectorFactory
             return x
         })
 
-        renderTensor(edges_outside, 1, `edges_${Math.floor(Math.random()*100).toString().padStart(3, '0')}`)
+        const edges_inside = tf.tidy(() => {
+            let x = <tf.Tensor2D>tf.zeros(mask.shape)
+            for (const { indices } of copy_references.inside_to_outside)
+                x = <tf.Tensor2D>tf.tensorScatterUpdate(x, indices.src, tf.broadcastTo(1, [indices.src.shape[0]]))
+            return x
+        })
+
+        renderTensor(edges_outside, 1, `edges_o_${Math.floor(Math.random()*100).toString().padStart(3, '0')}`)
+        renderTensor(edges_inside, 1, `edges_i_${Math.floor(Math.random()*100).toString().padStart(3, '0')}`)
+
+        edges_outside.dispose()
+        edges_inside.dispose()
 
         fs.writeFileSync("output-textures/edges_lines.png", (<any>cvs).toBuffer())
 
