@@ -16,6 +16,7 @@ export class FieldPointTensorStatementDiffusion<
 
     constructor(
         public readonly variable: FieldPointTensorVariable<T, R>,
+        //this will be changed to topology field
         public readonly spaceStretch: FieldPointTensorVariable<ScalarN<R>, R>,
         public readonly rate: FieldPointTensorExpression<boolean, R>,
     ) { }
@@ -96,21 +97,29 @@ export class FieldPointTensorStatementDiffusion<
                     
                     const diffuse_out = diffuse_in.slice(slice_start, slice_size).pad(paddings)
 
-                    // renderTensor(<tf.Tensor2D>diffuse_out, tf.max(diffuse_out).dataSync()[0])
+                    // // renderTensor(<tf.Tensor2D>diffuse_out, tf.max(diffuse_out).dataSync()[0])
 
+                    // return <tf.Tensor<R>>diffuse_out
                     return tf.sub(diffuse_in, diffuse_out)
                 }))
             }
         }
 
+        // renderTensor(<tf.Tensor2D>x, 1) // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>y[0], 1.5, "y_0_") // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>y[1], 1.5, "y_1_") // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>y[2], 1.5, "y_2_") // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>y[3], 1.5, "y_3_") // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>y[4], 1.5, "y_4_") // tf.max(sum).dataSync()[0])
+
         const sum = tf.addN(y)
         tf.dispose(y)
 
-        renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[1], 10)
-        renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[2], 10)
-        renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[3], 10)
-        renderTensor(<tf.Tensor2D>x, 1) // tf.max(sum).dataSync()[0])
-        renderTensor(<tf.Tensor2D>sum, 1) // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[1], 10)
+        // renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[2], 10)
+        // renderTensor(<tf.Tensor2D>this.spaceStretch_reciprocal[3], 10)
+        // renderTensor(<tf.Tensor2D>x, 1, "x") // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>sum, 5, "sum") // tf.max(sum).dataSync()[0])
 
         return {
             differentials: new Map([

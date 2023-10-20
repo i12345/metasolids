@@ -52,6 +52,10 @@ export class Triangles2DMesh {
     static build(
             vertices: NumberArrayLike,
             triangles: NumberArrayLike,
+            presetBounds?: {
+                origin: Vec2,
+                size: Vec2
+            }
         ) {
         const n = triangles.length / 3
 
@@ -123,6 +127,6 @@ export class Triangles2DMesh {
         const origin = new Vec2(v_min_x, v_min_y)
         const size = new Vec2(v_max_x, v_max_y).sub(origin)
 
-        return new Triangles2DMesh(vertices, triangles, v0, tri_vec_inv, { origin, size })
+        return new Triangles2DMesh(vertices, triangles, v0, tri_vec_inv, presetBounds ?? { origin, size })
     }
 }

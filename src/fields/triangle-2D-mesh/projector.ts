@@ -5,9 +5,9 @@ import { Triangles2DMesh } from "./mesh.js";
 import { Triangles2DMeshCollider } from "./collider.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import HashTable from "@ronomon/hash-table";
-import { renderTensor } from "../../utils/tf-img.js";
+import { cyrb53, renderTensor } from "../../utils/tf-img.js";
 import * as fs from 'fs'
-import { NumberTypedArray, typedArrayConstructor } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../utils/typed-array.js";
 
 export type Triangle2DMeshTopologyProjectorCopyReference = {
     indices: {
@@ -28,8 +28,8 @@ function project_copy(t: tf.Tensor2D, references: Triangle2DMeshTopologyProjecto
     for (const { indices, weights } of references) {
         projected = tf.tidy(() => {
             try {
-                const src_values = tf.gatherND(t, indices.src).expandDims(1)
-                const update_values = weights.matMul(src_values, true, false).as1D()
+                const src_values = tf.gatherND(t, indices.src).expandDims(0)
+                const update_values = src_values.matMul(weights).as1D()
                 const projected_sum = <tf.Tensor2D>tf.add(
                     projected,
                     tf.scatterND(
@@ -711,7 +711,9 @@ export class Triangle2DMeshTopologyProjectorFactory
                     w_src_dst[i_src_times_n_dst + i_dst_prev] = 1
                 }
                 else {
-                    t_src_combination = (i_src - t_src_prev) / (t_src_next - t_src_prev)
+                    t_src_prev += i_src - i_src_prev
+                    t_src_next += i_src_next - i_src
+                    t_src_combination = t_src_prev / (t_src_prev + t_src_next)
 
                     w_dst_src[(i_dst_prev * n_indices_src) + i_src] = t_src_combination
                     w_src_dst[i_src_times_n_dst + i_dst_prev] = t_src_combination
@@ -899,13 +901,22 @@ export class Triangle2DMeshTopologyProjectorFactory
         ctx.fillStyle = '#000'
         ctx.fillRect(0, 0, w, h)
 
-        function drawLine(a: number, b: number) {
+        function colorFromID(id: number) {
+            const r = cyrb53(id.toString())
+            const g = cyrb53(id.toString())
+            const b = cyrb53(id.toString())
+
+            return `rgb(${r & 0xFF}, ${g & 0xFF}, ${b & 0xFF})`
+        }
+
+        function drawLine(a: number, b: number, id: number) {
             const a_x = w * vertices[(2 * a) + 0]
             const a_y = h * vertices[(2 * a) + 1]
 
             const b_x = w * vertices[(2 * b) + 0]
             const b_y = h * vertices[(2 * b) + 1]
 
+            ctx.strokeStyle = colorFromID(id)
             ctx.moveTo(a_x, a_y)
             ctx.lineTo(b_x, b_y)
             ctx.stroke()
@@ -916,19 +927,31 @@ export class Triangle2DMeshTopologyProjectorFactory
                 external_index_a = edge_external_indices[(2 * i_edge) + 0]
                 external_index_b = edge_external_indices[(2 * i_edge) + 1]
 
+                if (external_index_a > external_index_b) {
+                    tmp = external_index_a
+                    external_index_a = external_index_b
+                    external_index_b = tmp
+
+                    tmp = vertex_index_a
+                    vertex_index_a = vertex_index_b
+                    vertex_index_b = tmp
+                }
+
                 edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_a, 0)
                 edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_b, 4)
 
                 edges_map_A.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
                 drawLine(
                     edges_map_lookup_vertex_edges_indices[0],
-                    edges_map_lookup_vertex_edges_indices[1]
+                    edges_map_lookup_vertex_edges_indices[1],
+                    i_edge
                 )
 
                 edges_map_B.get(edges_map_lookup_buffer_external_indices, 0, edges_map_lookup_buffer_vertex_and_edge_indices, 0)
                 drawLine(
                     edges_map_lookup_vertex_edges_indices[0],
-                    edges_map_lookup_vertex_edges_indices[1]
+                    edges_map_lookup_vertex_edges_indices[1],
+                    i_edge
                 )
 
                 mapEdge_1(i_tri, vertex_index_a, vertex_index_b, vertex_index_c)
@@ -997,12 +1020,17 @@ export class Triangle2DMeshTopologyProjector
             tf.tensor1d([], 'bool')
     )
     
+    private readonly divisor_outside: tf.Tensor2D
+
     constructor(
         public readonly projector: Triangle2DMeshTopologyProjectorFactory,
         public readonly shape: [h: number, w: number],
         public readonly copy_references: Triangle2DMeshTopologyProjectorCopyReferences,
         public readonly inside: tf.Tensor2D,
     ) {
+        this.divisor_outside = tf.tidy(() => project_copy(tf.where<tf.Tensor2D>(this.inside, 1, 0), copy_references.inside_to_outside))
+        renderTensor(this.divisor_outside, 10, 'divisorOutside')
+
         tf.tidy(() => {
             for (const { indices } of copy_references.inside_to_outside) {
                 const x = tf.gatherND(this.inside, indices.dst)
@@ -1025,6 +1053,11 @@ export class Triangle2DMeshTopologyProjector
     }
 
     project_update(t: tf.Tensor2D): tf.Tensor2D {
-        return t.where(this.inside, project_copy(t, this.copy_references.inside_to_outside))
+        // renderTensor(t, 1.5, 't')
+        const projected = project_copy(t, this.copy_references.inside_to_outside)
+        // renderTensor(projected, 1.5, 'projected')
+        const projectedScaled = <tf.Tensor2D>projected.divNoNan(this.divisor_outside)
+        // renderTensor(projectedScaled, 1.5, 'projectedScaled')
+        return t.where(this.inside, projectedScaled)
     }
 }

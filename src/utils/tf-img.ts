@@ -1,18 +1,29 @@
 import * as tf from "@tensorflow/tfjs"
 import * as fs from "fs"
 
-let nextTensor = 0
-export function renderTensor(t: tf.Tensor2D, colors_scale?: number, filename: string = `${nextTensor++}`) {
+let nextTensorIDs = new Map<string, number>()
+function nextTensorID(prefix: string) {
+  const id = nextTensorIDs.get(prefix)
+  if (id === undefined) {
+    nextTensorIDs.set(prefix, 1)
+    return 0
+  }
+  
+  nextTensorIDs.set(prefix, id + 1)
+  return id
+}
+
+export function renderTensor(t: tf.Tensor2D, colors_scale?: number, filenamePrefix?: string, filename = `${filenamePrefix ? filenamePrefix : ""}${nextTensorID(filenamePrefix!)}`) {
     const cvs = document.createElement('canvas');
     [cvs.height, cvs.width] = t.shape
     const ctx = cvs.getContext('2d')!
 
     function pxChannel_random(x: number, y: number) {
-      return cyrb53(x.toString(), y) & 0xFF
+      return Math.max(0, cyrb53(x.toString(), y)) & 0xFF
     }
   
     function pxChannel_scale(x: number, y: number) {
-      return Math.floor(255 * x / colors_scale!)
+      return Math.max(0, Math.floor(255 * x / colors_scale!))
     }
   
     const pxChannel = colors_scale !== undefined ? pxChannel_scale : pxChannel_random
@@ -37,7 +48,7 @@ export function renderTensor(t: tf.Tensor2D, colors_scale?: number, filename: st
     A fast and simple 53-bit string hash function with decent collision resistance.
     Largely inspired by MurmurHash2/3, but with a focus on speed/simplicity.
 */
-const cyrb53 = function(str: string, seed = 0) {
+export const cyrb53 = function(str: string, seed = 0) {
     let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
     for(let i = 0, ch; i < str.length; i++) {
       ch = str.charCodeAt(i);
