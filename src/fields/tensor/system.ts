@@ -55,6 +55,8 @@ export class FieldPointTensorSystemRunner {
     readonly context: FieldPointTensorSystemRunnerContext
     readonly variables = new Map<FieldPointTensorVariable, FieldPointTensorVariableInstance>()
 
+    private iteration = 0
+
     constructor(
         public readonly system: FieldPointTensorSystem,
         public readonly parameters: FieldPointTensorSystemParameters,
@@ -83,6 +85,8 @@ export class FieldPointTensorSystemRunner {
 
     update() {
         return tf.tidy(() => {
+            console.log(`starting iteration ${this.iteration++}`)
+            
             const result = this.system.statement.update(this.context)
 
             const dt = tf.scalar(this.parameters.dt)

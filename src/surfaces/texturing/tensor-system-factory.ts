@@ -73,7 +73,8 @@ export class SurfaceTexturingTensorSystemFactory<
         const surfaceUVunrwapping = onlyOne(groupKinds(context, unwrapping.uv.SurfaceUVUnwrappingGroupKindsTemplate, this.surfaceUVUnwrappingGroup)).group.get<unwrapping.uv.SurfaceUVUnwrapping>(item)
         const uv_mesh = Triangles2DMesh.build(
             surfaceUVunrwapping.UVs,
-            surfaceUVunrwapping.finalIndices
+            surfaceUVunrwapping.finalIndices,
+            { origin: Vec2.ZERO, size: Vec2.ONE }
         )
 
         const topology_spaceStretch = new Triangle2DMeshTopologyProjectorFactory(uv_mesh, item.mesh.triangles)

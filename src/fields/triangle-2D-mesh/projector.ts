@@ -66,10 +66,6 @@ export class Triangle2DMeshTopologyProjectorFactory
         const { vertices, triangles } = this.mesh
 
         const { tri, w1, w2, invalid } = new Triangles2DMeshCollider(this.mesh).render(resolution, true)
-        const w0 = new Float32Array(w1.length)
-
-        for (let i = 0; i < w0.length; i++)
-            w0[i] = 1 - (w1[i] + w2[i])
 
         const n_triangle_edges = triangles.length
 
@@ -242,11 +238,6 @@ export class Triangle2DMeshTopologyProjectorFactory
         let x_c: number
         let y_c: number
 
-        let min_x: number
-        let max_x: number
-        let min_y: number
-        let max_y: number
-
         const coords_mask = new Uint8Array(area)
 
         function triangle_edge(
@@ -294,7 +285,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 dc = tri_right ? 1 : -1
                 dy = Math.sign(y_b - y_a)
                 dc_j = dy * w
-                last = Math.floor(y_b)
+                last = Math.floor(y_b) + dy
                 for (y_i = Math.floor(y_a); y_i !== last; y_i += dy) {
                     x_i = (x_b - x_a) * ((y_i + 0.5) - y_a) / (y_b - y_a) + x_a
                     x_i = Math.floor(x_i)
@@ -345,7 +336,7 @@ export class Triangle2DMeshTopologyProjectorFactory
                 dc = tri_above ? -w : w
                 dx = Math.sign(x_b - x_a)
                 dc_j = dx
-                last = Math.floor(x_b)
+                last = Math.floor(x_b) + dx
                 for (x_i = Math.floor(x_a); x_i !== last; x_i += dx) {
                     y_i = (y_b - y_a) * ((x_i + 0.5) - x_a) / (x_b - x_a) + y_a
                     y_i = Math.floor(y_i)
@@ -779,6 +770,16 @@ export class Triangle2DMeshTopologyProjectorFactory
             w10, w21, w02,
         ]
 
+        function indexOf(x: number, y: number, range = 5) {
+            for (let i = 0; i < vertices.length / 2; i++)
+                if ((((w * vertices[(2 * i) + 0]) - x) ** 2) +
+                    (((h * vertices[(2 * i) + 1]) - y) ** 2) <=
+                    range ** 2)
+                    return i
+            return -1
+        }
+        indexOf(0, 0)
+
         function localNeighborhood_index(arr: NumberTypedArray, index: number, margin_x = 5, margin_y = 4) {
             const x = Math.floor(vertices[(2 * index) + 0] * w);
             const y = Math.floor(vertices[(2 * index) + 1] * h);
@@ -932,9 +933,9 @@ export class Triangle2DMeshTopologyProjectorFactory
                     external_index_a = external_index_b
                     external_index_b = tmp
 
-                    tmp = vertex_index_a
-                    vertex_index_a = vertex_index_b
-                    vertex_index_b = tmp
+                    // tmp = vertex_index_a
+                    // vertex_index_a = vertex_index_b
+                    // vertex_index_b = tmp
                 }
 
                 edges_map_lookup_buffer_external_indices.writeUint32LE(external_index_a, 0)
