@@ -43,8 +43,10 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
             chart: xAtlasAPI.defaultChartOptions(),
             pack: xAtlasAPI.defaultPackOptions()
         }
-
-        xatlas_options.pack.padding = 3
+        
+        xatlas_options.chart.maxIterations = 3
+        xatlas_options.pack.resolution = 256
+        xatlas_options.pack.padding = 1
         
         if (unwrap_options) {
             xatlas_options.chart.maxIterations = unwrap_options.maxIterations
