@@ -83,7 +83,7 @@ export class SpaceStretchTexture<
         public readonly mesh: MeshData,
         public readonly UVunwrapping: SurfaceUVUnwrapping
     ) {
-        this.collider = new Triangles2DMeshCollider(Triangles2DMesh.build(UVunwrapping.UVs, UVunwrapping.finalIndices))
+        this.collider = new Triangles2DMeshCollider(Triangles2DMesh.build(UVunwrapping.UVs, UVunwrapping.finalIndices, { origin: Vec2.ZERO, size: Vec2.ONE }))
     }
 
     init(context: TextureSamplingContextT): void {

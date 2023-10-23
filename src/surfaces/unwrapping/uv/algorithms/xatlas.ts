@@ -23,6 +23,9 @@ export const init_XAtlasAPI = (xatlas_path: string = '/xatlasjs-esm') => new Pro
 export interface XAtlasOptions {
     maxIterations: number
     // maxCost: number
+    
+    /** @default 3 */
+    margin: number
 }
 
 export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
@@ -44,9 +47,13 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
             pack: xAtlasAPI.defaultPackOptions()
         }
         
+        const margin = unwrap_options?.margin ?? 3
+        const resolution = 512
+
         xatlas_options.chart.maxIterations = 3
-        xatlas_options.pack.resolution = 256
-        xatlas_options.pack.padding = 1
+        xatlas_options.pack.resolution = resolution - (2 * margin)
+        xatlas_options.pack.padding = margin
+        xatlas_options.pack.bilinear = false
         
         if (unwrap_options) {
             xatlas_options.chart.maxIterations = unwrap_options.maxIterations
@@ -156,6 +163,9 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
             UVs_final[(2 * i_final) + 1] = UVs_tmp[i_UV++]
         }
         
+        for (i_final = 0; i_final < UVs_final.length; i_final++)
+            UVs_final[i_final] = (((resolution - 2 * margin) * UVs_final[i_final]) + margin) / resolution
+
         xAtlasAPI.destroyAtlas()
 
         return {

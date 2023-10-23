@@ -1562,8 +1562,9 @@ export class Triangle2DMeshTopologyProjector
     ) {
         this.divisor_outside = tf.tidy(() => project_copy(tf.where<tf.Tensor2D>(this.inside, 1, 0), copy_references.inside_to_outside))
         this.outside = tf.tidy(() => this.divisor_outside.notEqual(0))
-        renderTensor(this.divisor_outside, 10, 'divisorOutside')
-        renderTensor(this.outside, 1, 'outside')
+        // renderTensor(this.divisor_outside, 10, 'tri_divisorOutside')
+        // renderTensor(this.outside, 1, 'tri_outside')
+        // renderTensor(this.inside, 1, 'tri_inside')
 
         tf.tidy(() => {
             for (const { indices } of copy_references.inside_to_outside) {
@@ -1583,16 +1584,16 @@ export class Triangle2DMeshTopologyProjector
     }
 
     project_delta(t: tf.Tensor2D): tf.Tensor2D {
-        renderTensor(t, 1.5, 't_delta')
+        // renderTensor(t, 1.5, 't_delta')
         return t.add(project_copy(<tf.Tensor2D>tf.where(this.outside, t.divNoNan(this.divisor_outside), t), this.copy_references.outside_to_inside))
     }
 
     project_update(t: tf.Tensor2D): tf.Tensor2D {
-        renderTensor(t, 1.5, 't_update')
+        // renderTensor(t, 1.5, 't_update')
         const projected = project_copy(t, this.copy_references.inside_to_outside)
-        renderTensor(projected, 1.5, 'projected')
+        // renderTensor(projected, 1.5, 'projected')
         const projectedScaled = <tf.Tensor2D>projected.divNoNan(this.divisor_outside)
-        renderTensor(projectedScaled, 1.5, 'projectedScaled')
+        // renderTensor(projectedScaled, 1.5, 'projectedScaled')
         return t.where(this.inside, projectedScaled)
     }
 }

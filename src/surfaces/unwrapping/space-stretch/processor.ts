@@ -1,17 +1,17 @@
-import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
-import { SurfaceProcessor } from "../../processing.js";
-import { SurfaceSample } from "../../surface.js";
-import * as tf from "@tensorflow/tfjs";
-import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../../texturing/types.js";
-import { MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/trees/index.js";
-import { TextureLocation, TextureSamplingContext } from "../../../textures/index.js";
-import { ScalarN } from "../../../utils/tf-rank.js";
-import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../uv/index.js";
-import { onlyOne } from "../../../utils/only-one.js";
-import { SpaceStretchTexture } from "./texture.js";
-import { SurfaceWithSpaceStretch, SpaceStretchTextureGroup, SpaceStretchKey } from "./surface.js";
+import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js"
+import { IndicesTypedArray } from "../../../utils/indices-array.js"
+import { NumberTypedArray } from "../../../utils/typed-array.js"
+import { SurfaceProcessor } from "../../processing.js"
+import { SurfaceSample } from "../../surface.js"
+import * as tf from "@tensorflow/tfjs"
+import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../../texturing/types.js"
+import { MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/trees/index.js"
+import { TextureLocation, TextureSamplingContext } from "../../../textures/index.js"
+import { ScalarN } from "../../../utils/tf-rank.js"
+import { SurfaceUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate } from "../uv/index.js"
+import { onlyOne } from "../../../utils/only-one.js"
+import { SpaceStretchTexture } from "./texture.js"
+import { SurfaceWithSpaceStretch, SpaceStretchTextureGroup, SpaceStretchKey } from "./surface.js"
 
 
 export class SurfaceWithSpaceStretchProcessor<
@@ -78,7 +78,7 @@ export class SurfaceWithSpaceStretchProcessor<
     ) { }
 
     init(context: SurfaceProcessingContextT) {
-        const UVunwrappingGroup = onlyOne(groupKinds(context, SurfaceUVUnwrappingGroupKindsTemplate, this.UVunwrappingGroup));
+        const UVunwrappingGroup = onlyOne(groupKinds(context, SurfaceUVUnwrappingGroupKindsTemplate, this.UVunwrappingGroup))
 
         const connections = {
             inputs: [
@@ -88,15 +88,15 @@ export class SurfaceWithSpaceStretchProcessor<
             outputs: [
                 [SpaceStretchKey]
             ]
-        };
+        }
 
-        return { connections };
+        return { connections }
     }
 
     process(item: SurfaceT, context: SurfaceProcessingContextT): void {
-        const UVunwrappingGroup = onlyOne(groupKinds(context, SurfaceUVUnwrappingGroupKindsTemplate, this.UVunwrappingGroup));
-        const UVunwrapping = UVunwrappingGroup.group.get<SurfaceUVUnwrapping>(item);
-        const mesh = item.mesh;
-        item[SpaceStretchKey] = new SpaceStretchTexture(mesh, UVunwrapping);
+        const UVunwrappingGroup = onlyOne(groupKinds(context, SurfaceUVUnwrappingGroupKindsTemplate, this.UVunwrappingGroup))
+        const UVunwrapping = UVunwrappingGroup.group.get<SurfaceUVUnwrapping>(item)
+        const mesh = item.mesh
+        item[SpaceStretchKey] = new SpaceStretchTexture(mesh, UVunwrapping)
     }
 }
