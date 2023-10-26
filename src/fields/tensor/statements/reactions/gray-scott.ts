@@ -13,8 +13,8 @@ export class FieldPointTensorStatementReactionGrayScott<
     constructor(
         public readonly u: FieldPointTensorVariable<number, R>,
         public readonly v: FieldPointTensorVariable<number, R>,
-        public readonly F: FieldPointTensorExpression<number, R>,
-        public readonly k: FieldPointTensorExpression<number, R>,
+        public readonly F: FieldPointTensorExpression<number, R | tf.Rank.R0>,
+        public readonly k: FieldPointTensorExpression<number, R | tf.Rank.R0>,
     ) { }
 
     init(context: FieldPointTensorStatementContext): void {
