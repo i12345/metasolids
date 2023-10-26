@@ -1581,9 +1581,7 @@ export class Triangle2DMeshTopologyProjector
 
     project_update(t: tf.Tensor2D): tf.Tensor2D {
         const projected = project_copy(t, this.copy_references.inside_to_outside)
-        renderTensor(projected, 1.5, 'projected')
         const projectedScaled = <tf.Tensor2D>projected.divNoNan(this.divisor_outside)
-        renderTensor(projectedScaled, 1.5, 'projectedScaled')
         return t.where(this.inside, projectedScaled)
     }
 }
