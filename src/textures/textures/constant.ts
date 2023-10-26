@@ -5,7 +5,7 @@ import { FieldPointVectorContainerStatic, FieldPointVector, field_point_vectoriz
 import { MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldPointTensor2D, field_point_tensor_encode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
 import { Field } from "../../fields/field.js";
 
@@ -97,7 +97,23 @@ export class ConstantTexture<
         super(value, field)
     }
     
-    render(resolution: Vec2, context: Context): FieldPointTensor2D<SampleElementType> {
+    render(resolution: Vec2, context: TextureRenderContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            Sample,
+            SampleElementType,
+            SampleFuseMode,
+            SampleContainer,
+            Context,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            SampleVector,
+            VectorContext
+        >): FieldPointTensor2D<SampleElementType> {
         const vector1 = field_point_vectorized_new<SampleElementType, FieldPointVectorContainerStatic>(this.field.elementType, 1, false, undefined, <SampleElementType><unknown>this.value)
         const tensor1 = field_point_tensor_encode(this.field.elementType, [1, 1], undefined, vector1)
         return field_point_tensor_map(

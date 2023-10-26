@@ -3,12 +3,13 @@ import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } fro
 import { MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSample } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample } from "../texture.js";
 import { FieldPointTensor2D } from "../../fields/tensor/tensor.js";
 import { IdentitySampleDomain } from "../../fields/domains/identity.js";
 import { SamplingContext } from "../../fields/index.js";
 import { FusedVectorSamplingContext } from "../../fields/domains/fusing.js";
 import * as tf from "@tensorflow/tfjs"
+import { UVColorTexture } from "./uv-color.js";
 
 export class IdentityTexture<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -101,12 +102,25 @@ export class IdentityTexture<
         super()
     }
     
-    render(resolution: Vec2, context: Context): FieldPointTensor2D<LocationSampleElementType> {
-        const uv = <FieldPointTensor2D<Vec2>>{
-            x: tf.broadcastTo(tf.range(0, resolution.x).div(resolution.x).expandDims(0), [resolution.y, resolution.x]),
-            y: tf.broadcastTo(tf.range(0, resolution.y).div(resolution.y).expandDims(1), [resolution.y, resolution.x]),
+    render(resolution: Vec2, context: TextureRenderContext<
+            LocationSample,
+            LocationSampleElementType,
+            LocationSampleFuseMode,
+            LocationSampleContainer,
+            LocationSample,
+            LocationSampleElementType,
+            LocationSampleFuseMode,
+            LocationSampleContainer,
+            Context,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationSampleVector,
+            LocationSampleVector,
+            VectorContext
+        >): FieldPointTensor2D<LocationSampleElementType> {
+        return <FieldPointTensor2D<LocationSampleElementType>>{
+            uv: UVColorTexture.prototype.render(resolution, <any>context)
         }
-
-        return <FieldPointTensor2D<LocationSampleElementType>>{ uv }
     }
 }

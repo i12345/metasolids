@@ -4,7 +4,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { tensor } from "../../fields/index.js";
 
 export class CachedTexture<
@@ -106,7 +106,23 @@ export class CachedTexture<
         public readonly resolution: number
     ) { }
 
-    render(resolution: Vec2, context: Context): tensor.FieldPointTensor2D<SampleElementType> {
+    render(resolution: Vec2, context: TextureRenderContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            Sample,
+            SampleElementType,
+            SampleFuseMode,
+            SampleContainer,
+            Context,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            SampleVector,
+            VectorContext
+        >): tensor.FieldPointTensor2D<SampleElementType> {
         throw new Error("Method not implemented.")
     }
 

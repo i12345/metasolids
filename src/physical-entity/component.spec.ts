@@ -168,19 +168,34 @@ describe("playcanvas-node", () => {
             [a, b, t, spaceStretch],
             new tensor.FieldPointTensorStatementParallel([
                 new tensor.FieldPointTensorStatementPDE(t, new tensor.FieldPointTensorExpressionConstant<number, tf.Rank.R0>(Number, tensor.scalarSpace, new Float32Array([1]))),
-                new tensor.FieldPointTensorStatementDiffusion(b, spaceStretch, undefined!)
+                new tensor.FieldPointTensorStatementDiffusion(
+                    a,
+                    spaceStretch,
+                    new tensor.FieldPointTensorExpressionConstant<number, tf.Rank.R0>(Number, tensor.scalarSpace, new Float32Array([1.4])),
+                ),
+                new tensor.FieldPointTensorStatementDiffusion(
+                    b,
+                    spaceStretch,
+                    new tensor.FieldPointTensorExpressionConstant<number, tf.Rank.R0>(Number, tensor.scalarSpace, new Float32Array([1])),
+                ),
+                new tensor.reactions.FieldPointTensorStatementReactionGrayScott(
+                    a,
+                    b,
+                    new tensor.FieldPointTensorExpressionConstant<number>(Number, tensor.scalarSpace, new Float32Array([0.014 /* 0.067 */])),
+                    new tensor.FieldPointTensorExpressionConstant<number>(Number, tensor.scalarSpace, new Float32Array([0.039 /* 0.034 */]))
+                )
             ]),
             new tensor.FieldPointTensorExpressionArithmetic<boolean, tf.Rank.R0>(
                 tensor.FieldPointTensorExpressionArithmeticOp.gte,
                 new tensor.FieldPointTensorExpressionVariable(t),
-                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([1]))
+                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([10]))
             )
             // new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array([1]), 'bool')
         )
         
         return [
             new textures.factories.ConstantTextureFactory(
-                1,
+                0.3,
                 {
                     inputs: {},
                     outputs: ['a_initial']
@@ -190,6 +205,24 @@ describe("playcanvas-node", () => {
                 "plain",
                 {
                     inputs: {},
+                    outputs: ['noise']
+                }
+            ),
+            new textures.factories.TransformedTextureFactory(
+                new Vec2(0.2, 0.5),
+                Math.E * 180,
+                new Vec2(0.1, 0.1),
+                {
+                    inputs: ['noise'],
+                    outputs: ['a_initial']
+                }
+            ),
+            new textures.factories.TransformedTextureFactory(
+                Vec2.ZERO,
+                10,
+                new Vec2(0.1342, 0.15345),
+                {
+                    inputs: ['noise'],
                     outputs: ['b_initial']
                 }
             ),
@@ -201,7 +234,7 @@ describe("playcanvas-node", () => {
                 system,
                 {
                     resolution: new Vec2(512, 512),
-                    dt: 0.01,
+                    dt: 0.1,
                 },
                 {
                     inputs: {
@@ -230,7 +263,7 @@ describe("playcanvas-node", () => {
 
             const component1 = entity1.addComponent(physicalEntity.SYSTEM_ID)! as physicalEntity.Component
             component1.volumeSamplingSettings = {
-                max_depth: 5,
+                max_depth: 6,
                 indicesType: Uint32Array,
                 recommendation_threshold: 1
             }

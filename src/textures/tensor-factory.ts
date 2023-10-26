@@ -1,15 +1,13 @@
-import { FieldPoint, FieldPointMapped, FieldsPoint, FieldsPointMapped } from "../fields/point.js";
+import { FieldPoint } from "../fields/point.js";
 import { FieldPointTensorEncoding, FieldPointTensorFactory } from "../fields/tensor/tensor-factory.js";
 import * as tf from "@tensorflow/tfjs"
-import { PropertyPath } from "../paradigm/trees/path.js";
 import { FieldPointType, field_point_type_contains } from "../fields/type.js";
 import { FieldPointTensor2D } from "../fields/tensor/tensor.js";
-import { extract } from "../paradigm/trees/tree.js";
-import { Texture, TextureLocation, TextureSamplingContext, defaultTextureLocationField } from "./texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext, defaultTextureLocationField } from "./texture.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
 import { NumberTypedArray } from "../utils/typed-array.js";
 import { SampleDomainLocationFieldKey } from "../fields/domain.js";
-import { Vec2 } from "playcanvas-extended";
+import { Mat3, Vec2 } from "playcanvas-extended";
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../fields/domains/vector.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../utils/indices-array.js";
@@ -58,9 +56,6 @@ export class TextureTensorFactory<
     ) { }
 
     init(type: FieldPointType<T>, shape: [h: number, w: number]): FieldPointTensor2D<T> {
-        if (!field_point_type_contains(this.texture.field.elementType, type))
-            throw new Error()
-        
         type TextureSamplingContextT = VectorSamplingContext<
             TextureLocation,
             TextureLocation,
@@ -84,6 +79,11 @@ export class TextureTensorFactory<
             [SampleDomainLocationFieldKey]: defaultTextureLocationField
         }
 
+        this.texture.init(texture_context)
+
+        if (!field_point_type_contains(this.texture.field.elementType, type))
+            throw new Error()
+
         makeVectorSamplingContext<
                 TextureLocation,
                 TextureLocation,
@@ -101,9 +101,31 @@ export class TextureTensorFactory<
                 this.texture.field,
                 texture_context
             )
-
-        this.texture.init(texture_context)
-        return this.texture.render(new Vec2(shape[1], shape[0]), texture_context)
+        
+        type TextureRenderContextT = TextureRenderContext<
+            TextureLocation,
+            TextureLocation,
+            TextureLocation,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            T,
+            T,
+            T,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            TextureSamplingContextT,
+            MultiObjectsTemplate,
+            IndicesTypedArray,
+            FieldPointVectorContainerStatic<IndicesTypedArray>,
+            FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>,
+            FieldPointVector<T, FieldPointVectorContainerStatic>,
+            TextureSamplingContextT
+        >
+        
+        const texture_render_context = <TextureRenderContextT>{
+            ...texture_context,
+            transform: new Mat3().setIdentity()
+        }
+        
+        return this.texture.render(new Vec2(shape[1], shape[0]), texture_render_context)
     }
 }
 
@@ -189,8 +211,8 @@ export class TextureTensorEncoding<T extends FieldPoint = FieldPoint>
         ): FieldPointTensorFactory<T, tf.Rank.R2> | undefined {
         if (rank !== tf.Rank.R2)
             return undefined
-
-        if (!field_point_type_contains(item.field.elementType, type))
+        
+        if (item.init === undefined || item.sample === undefined || item.render === undefined)
             return undefined
         
         return new TextureTensorFactory(item)

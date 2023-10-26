@@ -8,7 +8,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/
 import { MultiObjectsGroupedObjectsKey, MultiObjectsTemplate, PropertyMapping, PropertyPath, object_mapped } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext, textureSampleLocationsGridVector } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext, textureSampleLocationsGridVector } from "../texture.js";
 import { FieldPointTensor2D, field_point_tensor_encode } from "../../fields/tensor/tensor.js";
 import { SampleDomainLocationFieldKey } from "../../fields/domain.js";
 
@@ -107,7 +107,23 @@ export class MappingTexture<
         super(mappings)
     }
 
-    render(resolution: Vec2, context: VectorContext): FieldPointTensor2D<SampleElementType> {
+    render(resolution: Vec2, context: TextureRenderContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            Sample,
+            SampleElementType,
+            SampleFuseMode,
+            SampleContainer,
+            SingularContext,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            SampleVector,
+            VectorContext
+        >): FieldPointTensor2D<SampleElementType> {
         const locations = field_point_tensor_encode(context[SampleDomainLocationFieldKey].elementType, [resolution.y, resolution.x], undefined, textureSampleLocationsGridVector(resolution))
 
         function objGroupRemoved(path: PropertyPath) {

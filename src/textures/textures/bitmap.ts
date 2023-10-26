@@ -5,7 +5,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorIter
 import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { field_point_type_is_multiObj } from "../../fields/type.js";
 import { vectorized } from "vectorized-functions";
@@ -237,9 +237,28 @@ export class BitmapTexture<
         return dst
     }
 
-    render(resolution: Vec2, context: SingularContext): tensor.FieldPointTensor2D<SampleElementType> {
+    render(resolution: Vec2, context: TextureRenderContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            Sample,
+            SampleElementType,
+            SampleFuseMode,
+            SampleContainer,
+            SingularContext,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            SampleVector,
+            VectorContext
+        >): tensor.FieldPointTensor2D<SampleElementType> {
         const encoded = field_point_tensor_encode<SampleElementType, tf.Rank.R2>(this.field.elementType, [this.resolution.y, this.resolution.x], this.dtype, this.data)
         
+        if (!context.transform.isIdentity())
+            console.warn('rendering bitmap texture with non-identity transform')
+
         if (resolution.equals(this.resolution))
             return encoded
         else {

@@ -1,7 +1,7 @@
 import { iterObjects, MultiObjectsGroup, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate, objectValues } from "../../paradigm/trees/index.js";
 import { Field, FieldPoint, FieldPointCombiner, FieldsPoint, SampleDomainLocationFieldKey, tensor } from "../../fields/index.js";
 import { extract, intract } from "../../paradigm/trees/index.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldsField } from "../../fields/fields/fields.js";
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
@@ -353,7 +353,18 @@ export class ObjectsCombiningTexture<
         )
     }
     
-    render(resolution: Vec2, context: TextureSamplingContextT): tensor.FieldPointTensor2D<ValueTextureSampleElementType> {
+    render(resolution: Vec2, context: TextureRenderContext<
+            TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            TextureLocationContainer,
+            ValueTextureSampleT,
+            ValueTextureSampleElementType,
+            ValueTextureSampleFuseMode,
+            ValueTextureSampleContainer,
+            TextureSamplingContextT,
+            Objects
+        >): tensor.FieldPointTensor2D<ValueTextureSampleElementType> {
         throw new Error("Method not implemented.")
     }
 }

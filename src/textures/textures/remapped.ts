@@ -8,7 +8,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/
 import { MultiObjectsTemplate, PropertyMapping, WithMultiObjectsIDs, object_mapped } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldPointTensor2D } from "../../fields/tensor/tensor.js";
 
 export class RemappedTexture<
@@ -168,7 +168,26 @@ export class RemappedTexture<
         )
     }
 
-    render(resolution: Vec2, context: SampleVectorContext): FieldPointTensor2D<SampleElementType> {
+    render(
+            resolution: Vec2,
+            context: TextureRenderContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    SingularContext,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    LocationVector,
+                    SampleVector,
+                    SampleVectorContext
+                >
+        ): FieldPointTensor2D<SampleElementType> {
         const inner = <Texture<
             Location,
             LocationElementType,
@@ -186,9 +205,27 @@ export class RemappedTexture<
             IntermediateVector,
             IntermediateVectorContext
         >>this.inner
-        
+
+        const inner_context = <TextureRenderContext<
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                Intermediate,
+                IntermediateElementType,
+                IntermediateFuseMode,
+                IntermediateContainer,
+                SingularContext,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                LocationVector,
+                IntermediateVector,
+                IntermediateVectorContext
+            >>this.transformContext_vectorized(context)
+
         return object_mapped(
-            inner.render(resolution, this.transformContext_vectorized(context)),
+            inner.render(resolution, inner_context),
             this.mappings
         )
     }

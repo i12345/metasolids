@@ -164,6 +164,8 @@ export class Triangles2DMeshInterpolator<
             tris: FieldPointVector<number, TrisContainer>,
             w1: FieldPointVector<number, WeightsContainer>,
             w2: FieldPointVector<number, WeightsContainer>,
+            //TODO: let scatter() support invalid
+            invalid?: never & FieldPointVector<number, FieldPointVectorContainerStatic<Uint8Array>>
         ): VertexVector {
         const iterator = vectorIterator<VertexPoint, VertexContainer, Objects, ObjIDsT, VertexPointElementType, VertexVector>(
             this.vertexType,
@@ -198,19 +200,35 @@ export class Triangles2DMeshInterpolator<
             let tri_objOffset: number
             let tri_objOffset_next: number
             let tri: number
-            const tri_invalid = invalidIndex(tris)
 
-            for (let tri_i = 0; tri_i < tris.length; tri_i++) {
-                tri = tris[tri_i]
-                if (tri !== tri_invalid) {
+            if (invalid) {
+                for (let tri_i = 0; tri_i < tris.length; tri_i++) {
+                    if (invalid[tri_i]) continue
+                    tri = tris[tri_i]
+                    
                     tri_objCount = tri_objCounts[tri]
                     tri_objOffset_next = tri_objOffsets[tri]
-                    
+                
                     for (tri_objOffset = tri_objOffset_next - tri_objCount; tri_objOffset < tri_objOffset_next; tri_objOffset++)
                         interpolated_objIDs[interpolated_objIDs_offset++] = tri_objIDs[tri_objOffset]
+                    
+                    interpolated_objOffsets[tri_i] = interpolated_objIDs_offset
                 }
+            }
+            else {
+                const tri_invalid = invalidIndex(tris)
+                for (let tri_i = 0; tri_i < tris.length; tri_i++) {
+                    tri = tris[tri_i]
+                    if (tri !== tri_invalid) {
+                        tri_objCount = tri_objCounts[tri]
+                        tri_objOffset_next = tri_objOffsets[tri]
+                    
+                        for (tri_objOffset = tri_objOffset_next - tri_objCount; tri_objOffset < tri_objOffset_next; tri_objOffset++)
+                            interpolated_objIDs[interpolated_objIDs_offset++] = tri_objIDs[tri_objOffset]
+                    }
 
-                interpolated_objOffsets[tri_i] = interpolated_objIDs_offset
+                    interpolated_objOffsets[tri_i] = interpolated_objIDs_offset
+                }
             }
         }
 

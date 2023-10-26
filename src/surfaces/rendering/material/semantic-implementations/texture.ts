@@ -1,8 +1,8 @@
-import { Vec2, StandardMaterial, BasicMaterial, Vec3, Vec4, Quat, Color } from "playcanvas-extended"
+import { Vec2, StandardMaterial, BasicMaterial, Vec3, Vec4, Quat, Color, Mat3 } from "playcanvas-extended"
 import { MultiObjectsIDsKey, MultiObjectsTemplate, groups } from "../../../../paradigm/trees/index.js"
 import { RANGE_MAX, RANGE_MIN } from "../../../../fields/range.js"
 import { textures } from "../../../../index.js"
-import { TextureLocation, TextureSample } from "../../../../textures/texture.js"
+import { TextureRenderContext, TextureSample } from "../../../../textures/texture.js"
 import { GeneratorType } from "../../../../utils/generator-type.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"
 import { Cost_Space_Texture, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
@@ -106,18 +106,36 @@ export class MaterialSemanticImplementation_Texture<
 
     implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] {
         type TextureVectorSamplingContext = VectorSamplingContext<
-            TextureLocation,
-            TextureLocation,
-            TextureLocation,
-            FieldPointVectorContainerStatic,
+            Material_Texture_Location<VolumeLocationT>,
+            Material_Texture_Location<VolumeLocationT>,
+            Material_Texture_Location<VolumeLocationT>,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
             TexelTypeT,
             TexelTypeT,
             TexelTypeT,
-            FieldPointVectorContainerStatic,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
             Objects,
             ObjIDsT,
             FieldPointVectorContainerStatic<ObjIDsT>,
             Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT, TexelTypeT, TexelTypeT, TexelTypeT>
+        >
+        
+        type TextureRenderContextT = TextureRenderContext<
+            Material_Texture_Location<VolumeLocationT>,
+            Material_Texture_Location<VolumeLocationT>,
+            Material_Texture_Location<VolumeLocationT>,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            TexelTypeT,
+            TexelTypeT,
+            TexelTypeT,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
+            TextureVectorSamplingContext,
+            Objects,
+            ObjIDsT,
+            FieldPointVectorContainerStatic<ObjIDsT>,
+            FieldPointVector<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            FieldPointVector<TexelTypeT, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            TextureVectorSamplingContext
         >
         
         const texture_context = <TextureVectorSamplingContext>this.surface_textureGroup.get<Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>>(renderer.shared.textureContexts)
@@ -129,25 +147,30 @@ export class MaterialSemanticImplementation_Texture<
         this.texture.init(texture_context)
 
         makeVectorSamplingContext<
-            TextureLocation,
-            TextureLocation,
-            TextureLocation,
-            FieldPointVectorContainerStatic,
+            Material_Texture_Location<VolumeLocationT>,
+            Material_Texture_Location<VolumeLocationT>,
+            Material_Texture_Location<VolumeLocationT>,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
             TexelTypeT,
             TexelTypeT,
             TexelTypeT,
-            FieldPointVectorContainerStatic,
+            FieldPointVectorContainerStatic<NumberTypedArray>,
             Objects,
             ObjIDsT,
             FieldPointVectorContainerStatic<ObjIDsT>,
             Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT, TexelTypeT, TexelTypeT, TexelTypeT>,
-            FieldPointVector<TextureLocation, FieldPointVectorContainerStatic>,
-            FieldPointVector<TexelTypeT, FieldPointVectorContainerStatic>,
+            FieldPointVector<Material_Texture_Location<VolumeLocationT>, FieldPointVectorContainerStatic<NumberTypedArray>>,
+            FieldPointVector<TexelTypeT, FieldPointVectorContainerStatic<NumberTypedArray>>,
             TextureVectorSamplingContext
         >(this.texture.field, texture_context, multiObjectsIDs)
         
+        const texture_render_context = <TextureRenderContextT>{
+            ...texture_context,
+            transform: new Mat3()
+        }
+
         const buffer = tf.tidy(() => {
-            const samples = this.texture.render(resolution, <any>texture_context)
+            const samples = this.texture.render(resolution, texture_render_context)
             let samples_channels: tf.Tensor[]
 
             switch (this.texture.field.elementType) {

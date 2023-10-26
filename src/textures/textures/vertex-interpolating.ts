@@ -1,7 +1,7 @@
 import { Vec2 } from "playcanvas-extended";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { Field, FieldPoint, FieldPointMapped, FieldPointNumbers, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_new, tensor } from "../../fields/index.js";
-import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext } from "../texture.js";
 import { IndicesArray, IndicesTypedArray } from "../../utils/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../fields/vectorized/point.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
@@ -95,8 +95,23 @@ export class VertexInterpolatingTexture<
     ) {
     }
 
-    render(resolution: Vec2, context: Context): tensor.FieldPointTensor2D<VertexSampleElementType> {
-        const collision = this.collider!.render(resolution, false)
+    render(resolution: Vec2, context: TextureRenderContext<
+            TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            TextureLocationContainer,
+            VertexSample,
+            VertexSampleElementType,
+            VertexSampleFuseMode,
+            VertexSampleContainer,
+            Context,
+            Objects,
+            ObjIDsT,
+            FieldPointVectorContainerStatic<ObjIDsT>,
+            TextureLocationVector,
+            VertexSampleVector
+        >): tensor.FieldPointTensor2D<VertexSampleElementType> {
+        const collision = this.collider!.render(resolution, true, context.transform)
         const interpolated = this.interpolator!.interpolate_vectorized(collision.tri, collision.w1, collision.w2)
         return field_point_tensor_encode(
             this.field.elementType,

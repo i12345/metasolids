@@ -533,9 +533,9 @@ export class SurfaceWithObjectsTexturesCombinedUsingSurfaceUVUnwrappingProcessor
         const locations_texture = new VertexInterpolatingTexture<
                 Objects,
                 ObjIDsT,
-                TextureLocation,
-                TextureLocation,
-                TextureLocation,
+                TextureLocationT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
                 ObjectsTextureLocationsT,
                 ObjectsTextureLocationsElementType,
                 ObjectsTextureLocationsFuseMode,

@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended"
+import { Mat3, Vec2 } from "playcanvas-extended"
 import { IndicesTypedArray, indicesArrayType, invalidIndex } from "../../utils/indices-array.js"
 import { NumberTypedArray } from "../../utils/typed-array.js"
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../vectorized/point.js"
@@ -327,7 +327,11 @@ export class Triangles2DMeshCollider {
         return result
     }
 
-    render<OutputTF extends boolean = true>(render_resolution: Vec2, outputTFtypes: OutputTF = <OutputTF>true): OutputTF extends true ? TriangleCollisionVectorTF : TriangleCollisionVector {
+    render<OutputTF extends boolean = true>(
+            render_resolution: Vec2,
+            outputTFtypes: OutputTF = <OutputTF>true,
+            transform?: Mat3
+        ): OutputTF extends true ? TriangleCollisionVectorTF : TriangleCollisionVector {
         // const p = new Float32Array(2 * render_resolution.x * render_resolution.y)
         // let p_i = 0
 
@@ -396,69 +400,147 @@ export class Triangles2DMeshCollider {
         const resolution_div_render_resolution_x = resolution / render_resolution_x
         const resolution_div_render_resolution_y = resolution / render_resolution_y
 
-        for (let p_i = 0; p_i < length; p_i++) {
-            p_x = (((p_i % render_resolution_x) + 0.5) * bounds_size_x_div_render_resolution_x) + bounds_origin_x
-            p_y = ((Math.floor(p_i / render_resolution_x) + 0.5) * bounds_size_y_div_render_resolution_y) + bounds_origin_y
+        const resolution_div_bounds_size_x = resolution / bounds_size_x
+        const resolution_div_bounds_size_y = resolution / bounds_size_y
 
-            cell_x = Math.floor((p_i % render_resolution_x) * resolution_div_render_resolution_x)
-            cell_y = Math.floor(Math.floor(p_i / render_resolution_x) * resolution_div_render_resolution_y)
+        if (transform && !transform.isIdentity()) {
+            const [
+                m11, m12, m13,
+                m21, m22, m23,
+                m31, m32, m33
+            ] = transform.data
 
-            if (cell_x < 0 || cell_x >= resolution ||
-                cell_y < 0 || cell_y >= resolution ||
-                isNaN(cell_x) || isNaN(cell_y)) {
-                result_invalid[p_i] = 1
-                result_tri[p_i] = result_tri_invalid
-                result_w1[p_i] = NaN
-                result_w2[p_i] = NaN
-                
-                continue
-            }
-            
-            tri_indices = cells_filtered_triangles[cell_x + (resolution * cell_y)]
-            tri_n = tri_indices.length
-            tri_vec_inv_i = 0
+            for (let p_i = 0; p_i < length; p_i++) {
+                p_x = (((p_i % render_resolution_x) + 0.5) * bounds_size_x_div_render_resolution_x) + bounds_origin_x
+                p_y = ((Math.floor(p_i / render_resolution_x) + 0.5) * bounds_size_y_div_render_resolution_y) + bounds_origin_y
 
-            collided = false
-
-            for (let tri_i = 0; tri_i < tri_n; tri_i++) {
-                tri = tri_indices[tri_i]
-
-                v0_x = v0[(2 * tri) + 0]
-                v0_y = v0[(2 * tri) + 1]
-
-                x = p_x - v0_x
-                y = p_y - v0_y
-
-                tri_vec_inv_i = 4 * tri
-                tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
-                tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
-                tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
-                tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i]
-
-                w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
-                w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
-
-                if (w1 < margin_min || w2 < margin_min ||
-                    w1 + w2 > margin_max)
+                cell_x = Math.floor((p_x - bounds_origin_x) * resolution_div_bounds_size_x)
+                cell_y = Math.floor((p_y - bounds_origin_y) * resolution_div_bounds_size_y)
+    
+                if (cell_x < 0 || cell_x >= resolution ||
+                    cell_y < 0 || cell_y >= resolution ||
+                    isNaN(cell_x) || isNaN(cell_y)) {
+                    result_invalid[p_i] = 1
+                    result_tri[p_i] = result_tri_invalid
+                    result_w1[p_i] = NaN
+                    result_w2[p_i] = NaN
+                    
                     continue
+                }
                 
-                if (w1 < 0) w1 = 0
-                else if (w1 + w2 >= 1) w1 = 1 - w2
-
-                if (w2 < 0) w2 = 0
-
-                result_tri[p_i] = tri
-                result_w1[p_i] = w1
-                result_w2[p_i] = w2
-                collided = true
-                break
+                tri_indices = cells_filtered_triangles[cell_x + (resolution * cell_y)]
+                tri_n = tri_indices.length
+                tri_vec_inv_i = 0
+    
+                collided = false
+    
+                for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+                    tri = tri_indices[tri_i]
+    
+                    v0_x = v0[(2 * tri) + 0]
+                    v0_y = v0[(2 * tri) + 1]
+    
+                    x = p_x - v0_x
+                    y = p_y - v0_y
+    
+                    tri_vec_inv_i = 4 * tri
+                    tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
+                    tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
+                    tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
+                    tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i]
+    
+                    w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+                    w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+    
+                    if (w1 < margin_min || w2 < margin_min ||
+                        w1 + w2 > margin_max)
+                        continue
+                    
+                    if (w1 < 0) w1 = 0
+                    else if (w1 + w2 >= 1) w1 = 1 - w2
+    
+                    if (w2 < 0) w2 = 0
+    
+                    result_tri[p_i] = tri
+                    result_w1[p_i] = w1
+                    result_w2[p_i] = w2
+                    collided = true
+                    break
+                }
+    
+                if (!collided) {
+                    result_invalid[p_i] = 1
+                    result_tri[p_i] = result_tri_invalid
+                    result_w1[p_i] = NaN
+                    result_w2[p_i] = NaN
+                }
             }
+        }
+        else {
+            for (let p_i = 0; p_i < length; p_i++) {
+                p_x = (((p_i % render_resolution_x) + 0.5) * bounds_size_x_div_render_resolution_x) + bounds_origin_x
+                p_y = ((Math.floor(p_i / render_resolution_x) + 0.5) * bounds_size_y_div_render_resolution_y) + bounds_origin_y
 
-            if (!collided) {
-                result_invalid[p_i] = 1
-                result_tri[p_i] = result_tri_invalid
-                result_w1[p_i] = NaN
-                result_w2[p_i] = NaN
+                cell_x = Math.floor((p_i % render_resolution_x) * resolution_div_render_resolution_x)
+                cell_y = Math.floor(Math.floor(p_i / render_resolution_x) * resolution_div_render_resolution_y)
+
+                if (cell_x < 0 || cell_x >= resolution ||
+                    cell_y < 0 || cell_y >= resolution ||
+                    isNaN(cell_x) || isNaN(cell_y)) {
+                    result_invalid[p_i] = 1
+                    result_tri[p_i] = result_tri_invalid
+                    result_w1[p_i] = NaN
+                    result_w2[p_i] = NaN
+                
+                    continue
+                }
+            
+                tri_indices = cells_filtered_triangles[cell_x + (resolution * cell_y)]
+                tri_n = tri_indices.length
+                tri_vec_inv_i = 0
+
+                collided = false
+
+                for (let tri_i = 0; tri_i < tri_n; tri_i++) {
+                    tri = tri_indices[tri_i]
+
+                    v0_x = v0[(2 * tri) + 0]
+                    v0_y = v0[(2 * tri) + 1]
+
+                    x = p_x - v0_x
+                    y = p_y - v0_y
+
+                    tri_vec_inv_i = 4 * tri
+                    tri_vec_inv_a = tri_vec_inv[tri_vec_inv_i++]
+                    tri_vec_inv_b = tri_vec_inv[tri_vec_inv_i++]
+                    tri_vec_inv_c = tri_vec_inv[tri_vec_inv_i++]
+                    tri_vec_inv_d = tri_vec_inv[tri_vec_inv_i]
+
+                    w1 = (tri_vec_inv_a * x) + (tri_vec_inv_b * y)
+                    w2 = (tri_vec_inv_c * x) + (tri_vec_inv_d * y)
+
+                    if (w1 < margin_min || w2 < margin_min ||
+                        w1 + w2 > margin_max)
+                        continue
+                
+                    if (w1 < 0) w1 = 0
+                    else if (w1 + w2 >= 1) w1 = 1 - w2
+
+                    if (w2 < 0) w2 = 0
+
+                    result_tri[p_i] = tri
+                    result_w1[p_i] = w1
+                    result_w2[p_i] = w2
+                    collided = true
+                    break
+                }
+
+                if (!collided) {
+                    result_invalid[p_i] = 1
+                    result_tri[p_i] = result_tri_invalid
+                    result_w1[p_i] = NaN
+                    result_w2[p_i] = NaN
+                }
             }
         }
 

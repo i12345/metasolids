@@ -5,7 +5,7 @@ import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../../fields/vectorized/index.js";
 import { Cloneable, clone } from "../../../utils/cloneable.js";
-import { Texture, TextureLocation, TextureSamplingContext, textureTensorSampleUsingVectorSample } from "../../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext, textureTensorSampleUsingVectorSample } from "../../texture.js";
 import { Vec2 } from "playcanvas-extended";
 import { ScalarField } from "../../../fields/fields/scalar.js";
 import { Vec2Field } from "../../../fields/fields/vec2.js";
@@ -188,7 +188,23 @@ export class OpenSimplexNoiseTexture<
 
     render(
             resolution: Vec2,
-            context: VectorContext
+            context: TextureRenderContext<
+                    TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureLocationContainer,
+                    number,
+                    number,
+                    number,
+                    TextureSampleContainer,
+                    ContextT,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    LocationVector,
+                    SampleVector,
+                    VectorContext
+                >
         ): FieldPointTensor2D<number> {
         return textureTensorSampleUsingVectorSample<
                 TextureLocationT,

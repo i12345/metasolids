@@ -6,7 +6,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWith
 import { MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext, textureSampleLocationsGridVector, textureTensorSampleUsingVectorSample } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext, textureSampleLocationsGridVector, textureTensorSampleUsingVectorSample } from "../texture.js";
 import { FieldPointTensor2D, field_point_tensor_encode } from "../../fields/tensor/tensor.js";
 
 export class ObjectsFilteredFusingTexture<
@@ -197,7 +197,25 @@ export class ObjectsFilteredFusingTexture<
         )
     }
 
-    render(resolution: Vec2, context: SingularContext): FieldPointTensor2D<ResultSampleElementType> {
-        return textureTensorSampleUsingVectorSample(<any>this, resolution, <any>context)
+    render(
+        resolution: Vec2,
+        context: TextureRenderContext<
+            LocationT,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            ResultSampleT,
+            ResultSampleElementType,
+            SampleFuseMode,
+            SampleContainer,
+            SingularContext,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            ResultSampleVector,
+            ResultVectorContext
+        >): FieldPointTensor2D<ResultSampleElementType> {
+        return textureTensorSampleUsingVectorSample(this, resolution, context)
     }
 }

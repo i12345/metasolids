@@ -8,11 +8,10 @@ import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";
 import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
 import { FieldPointTensor, FieldPointTensor2D, field_point_tensor_decode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
-import { FieldPointTensorVariableInstance } from "../../fields/tensor/variable.js";
-import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
+import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import * as tf from "@tensorflow/tfjs"
 import { Vec2 } from "playcanvas-extended";
-import { FieldPointType, tensor } from "../../fields/index.js";
+import { FieldPointType } from "../../fields/index.js";
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { TensorShape } from "../../utils/tf-rank.js";
 import { defaultField } from "../../fields/fields/default.js";
@@ -247,7 +246,23 @@ export class TensorTexture<
         ).vector
     }
 
-    render(resolution: Vec2, context: Context): tensor.FieldPointTensor2D<Sample> {
+    render(resolution: Vec2, context: TextureRenderContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            Sample,
+            Sample,
+            Sample,
+            SampleContainer,
+            Context,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            SampleVector,
+            VectorContext
+        >): FieldPointTensor2D<Sample> {
         if (this.shape.length === 0) {
             return field_point_tensor_map(
                 this.type,
@@ -256,6 +271,9 @@ export class TensorTexture<
             )
         }
         else {
+            if (!context.transform.isIdentity())
+                console.warn("rendering tensor texture with non-identity transform")
+
             const tensor_real = (this.shape[0] === resolution.y && this.shape[1] === resolution.x) ?
                 this.tensor :
                 field_point_tensor_map(
@@ -264,7 +282,7 @@ export class TensorTexture<
                     raw => (this.resizeMode === "bilinear" ? tf.image.resizeBilinear : tf.image.resizeNearestNeighbor)(<tf.Tensor3D>raw.expandDims(0).expandDims(3), <TensorShape<tf.Rank.R2>>this.shape).squeeze([0, 3])
                 )
         
-            return <tensor.FieldPointTensor2D<Sample>>tensor_real
+            return <FieldPointTensor2D<Sample>>tensor_real
         }
     }
 }

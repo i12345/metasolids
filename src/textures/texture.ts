@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Mat3, Vec2 } from "playcanvas-extended";
 import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate } from "../paradigm/trees/index.js";
 import { FieldPoint, SampleDomain, SamplingContext, fields, tensor } from "../fields/index.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
@@ -27,6 +27,65 @@ export interface TextureSamplingContext<
         LocationFuseMode extends TextureLocation = Location,
     > extends
     SamplingContext<Location, LocationElementType, LocationFuseMode> {
+}
+
+export type TextureRenderContext<
+        Location extends TextureLocation = TextureLocation,
+        LocationElementType extends TextureLocation = Location,
+        LocationFuseMode extends TextureLocation = Location,
+        LocationContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+        Sample extends TextureSample = TextureSample,
+        SampleElementType extends TextureSample = Sample,
+        SampleFuseMode extends TextureSample = Sample,
+        SampleContainer extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic,
+        Context extends
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode> =
+            TextureSamplingContext<Location, LocationElementType, LocationFuseMode>,
+        Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainerStatic<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
+        LocationVector extends
+            FieldPointVector<LocationElementType, LocationContainer> =
+            FieldPointVector<LocationElementType, LocationContainer>,
+        SampleVector extends
+            FieldPointVector<SampleElementType, SampleContainer> =
+            FieldPointVector<SampleElementType, SampleContainer>,
+        VectorContext extends
+            VectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                > =
+            VectorSamplingContext<
+                    Location,
+                    LocationElementType,
+                    LocationFuseMode,
+                    LocationContainer,
+                    Sample,
+                    SampleElementType,
+                    SampleFuseMode,
+                    SampleContainer,
+                    Objects,
+                    ObjIDsT,
+                    ObjIDsContainer,
+                    Context,
+                    LocationVector,
+                    SampleVector
+                >
+    > =
+    VectorContext & {
+    transform: Mat3
 }
 
 export interface Texture<
@@ -111,16 +170,39 @@ export interface Texture<
     > {
     render(
         resolution: Vec2,
-        context: VectorContext
+        context: TextureRenderContext<
+            Location,
+            LocationElementType,
+            LocationFuseMode,
+            LocationContainer,
+            Sample,
+            SampleElementType,
+            SampleFuseMode,
+            SampleContainer,
+            Context,
+            Objects,
+            ObjIDsT,
+            ObjIDsContainer,
+            LocationVector,
+            SampleVector,
+            VectorContext
+        >
     ): tensor.FieldPointTensor2D<SampleElementType>
 }
 
-export function textureSampleLocationsGridVector(resolution: Vec2): FieldPointVector<TextureLocation, FieldPointVectorContainerStatic> {
+export function textureSampleLocationsGridVector(resolution: Vec2, world: Mat3 = new Mat3().setIdentity()): FieldPointVector<TextureLocation, FieldPointVectorContainerStatic> {
     const uv = new Float64Array(2 * resolution.x * resolution.y)
+
+    const [
+        m11, m12, m13,
+        m21, m22, m23,
+        m31, m32, m33
+    ] = world.data
 
     let n_x = resolution.x
     let n_y = resolution.y
 
+    let scaled_x: number
     let scaled_y: number
 
     let i_uv = 0
@@ -128,8 +210,9 @@ export function textureSampleLocationsGridVector(resolution: Vec2): FieldPointVe
     for (let y = 0; y < n_y; y++) {
         scaled_y = y / n_y
         for (let x = 0; x < n_x; x++) {
-            uv[i_uv++] = x / n_x
-            uv[i_uv++] = scaled_y
+            scaled_x = x / n_x
+            uv[i_uv++] = (m11 * scaled_x) + (m21 * scaled_y) + m31
+            uv[i_uv++] = (m12 * scaled_x) + (m22 * scaled_y) + m32
         }
     }
 
@@ -209,9 +292,25 @@ export function textureTensorSampleUsingVectorSample<
             VectorContext
         >,
         resolution: Vec2,
-        context: VectorContext
+        context: TextureRenderContext<
+                Location,
+                LocationElementType,
+                LocationFuseMode,
+                LocationContainer,
+                Sample,
+                SampleElementType,
+                SampleFuseMode,
+                SampleContainer,
+                Context,
+                Objects,
+                ObjIDsT,
+                ObjIDsContainer,
+                LocationVector,
+                SampleVector,
+                VectorContext
+            >
     ): tensor.FieldPointTensor2D<SampleElementType> {
-    const locations = <LocationVector>textureSampleLocationsGridVector(resolution)
+    const locations = <LocationVector>textureSampleLocationsGridVector(resolution, context.transform)
     const samples = <SampleVector>context[VectorSampleFunction](texture, locations, context)
     return tensor.field_point_tensor_encode(texture.field.elementType, [resolution.y, resolution.x], undefined, samples)
 }
