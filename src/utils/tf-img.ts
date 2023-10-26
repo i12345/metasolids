@@ -23,7 +23,7 @@ export function renderTensor(t: tf.Tensor2D, colors_scale?: number, filenamePref
     }
   
     function pxChannel_scale(x: number, y: number) {
-      return Math.max(0, Math.floor(255 * x / colors_scale!))
+      return Math.max(0, Math.min(255, Math.floor(255 * x / colors_scale!)))
     }
   
     const pxChannel = colors_scale !== undefined ? pxChannel_scale : pxChannel_random
