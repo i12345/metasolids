@@ -1274,13 +1274,8 @@ export class Triangle2DMeshTopologyProjectorFactory
             vertex_index_other_c = edges_map_lookup_vertex_edges_indices[2]
             i_edge_other = edges_map_lookup_vertex_edges_indices[3]
 
-            // const src_A = triangle_coords[(i_edge % 3) + (inverted ? 3 : 0)]
-            // const src_B = triangle_coords[(i_edge_other % 3) + (inverted ? 3 : 0)]
-
             const src_A = boundary_values
             const src_B = boundary_values
-
-            // i_tri_other = Math.floor(i_edge_other / 3)
 
             const src_coords_n_A = triangle_edge_final(i_edge, src_coords_A, src_value_A, src_A, vertex_index_a, vertex_index_b)
             const src_coords_n_B = triangle_edge_final(i_edge_other, src_coords_B, src_value_B, src_B, vertex_index_other_a, vertex_index_other_b)
@@ -1562,9 +1557,6 @@ export class Triangle2DMeshTopologyProjector
     ) {
         this.divisor_outside = tf.tidy(() => project_copy(tf.where<tf.Tensor2D>(this.inside, 1, 0), copy_references.inside_to_outside))
         this.outside = tf.tidy(() => this.divisor_outside.notEqual(0))
-        // renderTensor(this.divisor_outside, 10, 'tri_divisorOutside')
-        // renderTensor(this.outside, 1, 'tri_outside')
-        // renderTensor(this.inside, 1, 'tri_inside')
 
         tf.tidy(() => {
             for (const { indices } of copy_references.inside_to_outside) {
@@ -1584,16 +1576,14 @@ export class Triangle2DMeshTopologyProjector
     }
 
     project_delta(t: tf.Tensor2D): tf.Tensor2D {
-        // renderTensor(t, 1.5, 't_delta')
         return t.add(project_copy(<tf.Tensor2D>tf.where(this.outside, t.divNoNan(this.divisor_outside), t), this.copy_references.outside_to_inside))
     }
 
     project_update(t: tf.Tensor2D): tf.Tensor2D {
-        // renderTensor(t, 1.5, 't_update')
         const projected = project_copy(t, this.copy_references.inside_to_outside)
-        // renderTensor(projected, 1.5, 'projected')
+        renderTensor(projected, 1.5, 'projected')
         const projectedScaled = <tf.Tensor2D>projected.divNoNan(this.divisor_outside)
-        // renderTensor(projectedScaled, 1.5, 'projectedScaled')
+        renderTensor(projectedScaled, 1.5, 'projectedScaled')
         return t.where(this.inside, projectedScaled)
     }
 }
