@@ -54,10 +54,15 @@ export class FieldPointTensorEncodingConstant<
             item: T,
             context: any
         ): FieldPointTensorFactory<T, R> | undefined {
-        if (!field_point_is(item) ||
-            !field_point_type_contains(field_point_type_default(item), type))
+        try {
+            if (!field_point_is(item) ||
+                !field_point_type_contains(field_point_type_default(item), type))
+                return undefined
+        }
+        catch {
             return undefined
-
+        }
+        
         return new FieldPointTensorFactoryConstant(type, rank, item)
     }
 
