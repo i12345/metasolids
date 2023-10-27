@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs-node'
 import { describe, it, beforeEach, afterEach } from "mocha"
-import { FieldPointTensorSystem, FieldPointTensor2D, FieldPointTensorTopology, FieldPointTensorSpace, FieldPointTensorVariableInstance, FieldPointTensorVariable, FieldPointTensorEncodingConstant, FieldPointTensorExpressionConstant, FieldPointTensorStatementDiffusion, field_point_tensor_encode, FieldPointTensorTopologyProjectorIdentity, FieldPointTensorTopologyProjectorFactoryIdentity, FieldPointTensorTopologyProjectorFactory } from "../index.js"
+import { FieldPointTensorSystem, FieldPointTensorSpace, FieldPointTensorVariable, FieldPointTensorExpressionConstant, FieldPointTensorStatementDiffusion, field_point_tensor_encode, FieldPointTensorTopologyProjectorFactoryIdentity, FieldPointTensorTopologyProjectorFactory } from "../index.js"
 import { Triangle2DMeshTopologyProjectorFactory, Triangles2DMesh } from "../../triangle-2D-mesh/index.js"
 import { Vec2 } from "playcanvas-extended"
 import { TensorShape } from "../../../utils/tf-rank.js"
@@ -77,7 +77,7 @@ describe("tensor diffusion", () => {
 
         const instance = system.instance({
                 resolution: new Vec2(256, 256),
-                dt: 0.01,
+                dt: 0.1,
             },
             new Map([
                 [a, {

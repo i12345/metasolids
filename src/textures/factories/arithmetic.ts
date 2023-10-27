@@ -1,11 +1,11 @@
-import { FieldPoint } from "../../fields/point.js";
 import { ArithmeticPrimitiveFuseModeOp } from "../../fields/vectorized/fuse-modes/arithmetic.js";
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
 import { FactoryMappings, FactoryProcessor, FactoryTemplate } from "../../paradigm/processing/processors/factory.js";
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
+import { ArithmeticTexture } from "../index.js";
+import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 
 export type ArithmeticTextureFactoryInputs = {
     a: MultiObjectsGroupsTemplateLeaf
@@ -27,34 +27,60 @@ export const ArithmeticTextureFactoryTemplate: FactoryTemplate<ArithmeticTexture
 }
 
 export type ArithmeticTextureFactoryInputValues<
-        A extends FieldPoint = FieldPoint,
-        B extends FieldPoint = FieldPoint,
+        // A extends FieldPoint = FieldPoint,
+        // B extends FieldPoint = FieldPoint,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureLocationElementType extends TextureLocation = TextureLocationT,
         TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureLocationContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
-        ResultContainer extends
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSampleContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
         Context extends
             TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode> =
             TextureSamplingContext<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode>
     > = {
-    a: Texture<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode, TextureLocationContainer, A, A, A, ResultContainer, Context>
-    b: Texture<TextureLocationT, TextureLocationElementType, TextureLocationFuseMode, TextureLocationContainer, B, B, B, ResultContainer, Context>
+    a: Texture<
+            TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            TextureLocationContainer,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleContainer,
+            Context
+        >
+    b: Texture<
+            TextureLocationT,
+            TextureLocationElementType,
+            TextureLocationFuseMode,
+            TextureLocationContainer,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleContainer,
+            Context
+        >
 }
 
 export type ArithmeticTextureFactoryOutputValues<
-        C extends FieldPoint = FieldPoint,
+        // C extends FieldPoint = FieldPoint,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureLocationElementType extends TextureLocation = TextureLocationT,
         TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureLocationContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
-        ResultContainer extends
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSampleContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
         Context extends
@@ -66,24 +92,27 @@ export type ArithmeticTextureFactoryOutputValues<
             TextureLocationElementType,
             TextureLocationFuseMode,
             TextureLocationContainer,
-            C,
-            C,
-            C,
-            ResultContainer,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleContainer,
             Context
         >
 
 export class ArithmeticTextureFactory<
-        A extends FieldPoint = FieldPoint,
-        B extends FieldPoint = FieldPoint,
-        C extends FieldPoint = FieldPoint,
+        // A extends FieldPoint = FieldPoint,
+        // B extends FieldPoint = FieldPoint,
+        // C extends FieldPoint = FieldPoint,
         TextureLocationT extends TextureLocation = TextureLocation,
         TextureLocationElementType extends TextureLocation = TextureLocationT,
         TextureLocationFuseMode extends TextureLocation = TextureLocationT,
         TextureLocationContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
-        ResultContainer extends
+        TextureSampleT extends TextureSample = TextureSample,
+        TextureSampleElementType extends TextureSample = TextureSampleT,
+        TextureSampleFuseMode extends TextureSample = TextureSampleT,
+        TextureSampleContainer extends
             FieldPointVectorContainerStatic<NumberTypedArray> =
             FieldPointVectorContainerStatic<NumberTypedArray>,
         TextureContext extends
@@ -96,36 +125,45 @@ export class ArithmeticTextureFactory<
         ArithmeticTextureFactoryInputs,
         ArithmeticTextureFactoryOutputs,
         ArithmeticTextureFactoryInputValues<
-            A,
-            B,
+            // A,
+            // B,
             TextureLocationT,
             TextureLocationElementType,
             TextureLocationFuseMode,
             TextureLocationContainer,
-            ResultContainer,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleContainer,
             TextureContext
         >,
         ArithmeticTextureFactoryOutputValues<
-            C,
+            // C,
             TextureLocationT,
             TextureLocationElementType,
             TextureLocationFuseMode,
             TextureLocationContainer,
-            ResultContainer,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleContainer,
             TextureContext
         >,
         Item,
         Context
     >
     implements Cloneable<ArithmeticTextureFactory<
-        A,
-        B,
-        C,
+        // A,
+        // B,
+        // C,
         TextureLocationT,
         TextureLocationElementType,
         TextureLocationFuseMode,
         TextureLocationContainer,
-        ResultContainer,
+        TextureSampleT,
+        TextureSampleElementType,
+        TextureSampleFuseMode,
+        TextureSampleContainer,
         TextureContext,
         Item,
         Context
@@ -141,14 +179,17 @@ export class ArithmeticTextureFactory<
     }
     
     [clone](): ArithmeticTextureFactory<
-            A,
-            B,
-            C,
+            // A,
+            // B,
+            // C,
             TextureLocationT,
             TextureLocationElementType,
             TextureLocationFuseMode,
             TextureLocationContainer,
-            ResultContainer,
+            TextureSampleT,
+            TextureSampleElementType,
+            TextureSampleFuseMode,
+            TextureSampleContainer,
             TextureContext,
             Item,
             Context
@@ -159,8 +200,35 @@ export class ArithmeticTextureFactory<
         )
     }
 
-    protected factory(inputs: ArithmeticTextureFactoryInputValues<A, B, TextureLocationT, TextureLocationElementType, TextureLocationFuseMode, TextureLocationContainer, ResultContainer, TextureContext>, item: Item, context: Context): ArithmeticTextureFactoryOutputValues<C, TextureLocationT, TextureLocationElementType, TextureLocationFuseMode, TextureLocationContainer, ResultContainer, TextureContext> {
-        ///@ts-ignore
-        return MultiObjectsSampleDomain.compositeArithmetic(this.op, inputs.a, inputs.b)
+    protected factory(
+            inputs:
+                ArithmeticTextureFactoryInputValues<
+                    // A,
+                    // B,
+                    TextureLocationT,
+                    TextureLocationElementType,
+                    TextureLocationFuseMode,
+                    TextureLocationContainer,
+                    TextureSampleT,
+                    TextureSampleElementType,
+                    TextureSampleFuseMode,
+                    TextureSampleContainer,
+                    TextureContext
+                >,
+            item: Item,
+            context: Context
+        ): ArithmeticTextureFactoryOutputValues<
+                // C,
+                TextureLocationT,
+                TextureLocationElementType,
+                TextureLocationFuseMode,
+                TextureLocationContainer,
+                TextureSampleT,
+                TextureSampleElementType,
+                TextureSampleFuseMode,
+                TextureSampleContainer,
+                TextureContext
+            > {
+        return new ArithmeticTexture(this.op, [inputs.a, inputs.b])
     }
 }

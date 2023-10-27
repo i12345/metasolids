@@ -1,3 +1,4 @@
+import '@tensorflow/tfjs-node'
 import { mockDOM } from "node-canvas-webgl"
 import jsdomSetup from "jsdom-global"
 import fs from 'node:fs'
@@ -13,10 +14,9 @@ import { fields } from "../index.js"
 import { groupPaths } from "../paradigm/trees/index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { processing } from "../paradigm/index.js"
-import '@tensorflow/tfjs-node'
 import * as tf from "@tensorflow/tfjs"
-import { tensor } from "../fields/index.js"
-import { PerRank, ScalarN } from "../utils/tf-rank.js"
+import { tensor, vectorized } from "../fields/index.js"
+import { ScalarN } from "../utils/tf-rank.js"
 
 describe("playcanvas-node", () => {
     let jsdomCleanup: Function
@@ -186,7 +186,7 @@ describe("playcanvas-node", () => {
                 )
             ]),
             new tensor.FieldPointTensorExpressionArithmetic<boolean, tf.Rank.R0>(
-                tensor.FieldPointTensorExpressionArithmeticOp.gte,
+                tensor.FieldPointTensorArithmeticOp.gte,
                 new tensor.FieldPointTensorExpressionVariable(t),
                 new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([10]))
             )
@@ -208,12 +208,29 @@ describe("playcanvas-node", () => {
                     outputs: ['noise']
                 }
             ),
+            new textures.factories.ConstantTextureFactory(
+                0.25,
+                {
+                    inputs: {},
+                    outputs: ['noise_scale']
+                }
+            ),
+            new textures.factories.ArithmeticTextureFactory(
+                vectorized.fuseModes.ArithmeticPrimitiveFuseModeOp.multiply,
+                {
+                    inputs: {
+                        a: ['noise'],
+                        b: ['noise_scale'],
+                    },
+                    outputs: ['noise_scaled']
+                }
+            ),
             new textures.factories.TransformedTextureFactory(
                 new Vec2(0.2, 0.5),
                 Math.E * 180,
                 new Vec2(0.1, 0.1),
                 {
-                    inputs: ['noise'],
+                    inputs: ['noise_scaled'],
                     outputs: ['a_initial']
                 }
             ),
@@ -222,14 +239,10 @@ describe("playcanvas-node", () => {
                 10,
                 new Vec2(0.1342, 0.15345),
                 {
-                    inputs: ['noise'],
+                    inputs: ['noise_scaled'],
                     outputs: ['b_initial']
                 }
             ),
-            // new processing.processors.factories.CopyFactory({
-            //     inputs: ['a_initial'],
-            //     outputs: ['material', 'textures', 'color']
-            // }),
             new surfaces.texturing.SurfaceTexturingTensorSystemFactory(
                 system,
                 {

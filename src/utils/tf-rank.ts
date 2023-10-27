@@ -5,6 +5,30 @@ export function rankOfShape<R extends tf.Rank = tf.Rank>(shape: TensorShape<R>):
     return <R>rankArray[shape.length]
 }
 
+export interface RankIndexLookup {
+    [tf.Rank.R0]: 0
+    [tf.Rank.R1]: 1
+    [tf.Rank.R2]: 2
+    [tf.Rank.R3]: 3
+    [tf.Rank.R4]: 4
+    [tf.Rank.R5]: 5
+    [tf.Rank.R6]: 6
+}
+
+export type RankIndex<R extends tf.Rank> = RankIndexLookup[R]
+
+export interface IndexRankLookup {
+    [0]: tf.Rank.R0
+    [1]: tf.Rank.R1
+    [2]: tf.Rank.R2
+    [3]: tf.Rank.R3
+    [4]: tf.Rank.R4
+    [5]: tf.Rank.R5
+    [6]: tf.Rank.R6
+}
+
+export type IndexRank<R extends 0 | 1 | 2 | 3 | 4 | 5 | 6> = IndexRankLookup[R]
+
 export interface RankPrevLookup {
     [tf.Rank.R0]: never
     [tf.Rank.R1]: tf.Rank.R0
@@ -74,3 +98,5 @@ export interface Per2PRankLookup<T> {
 }
 
 export type Per2PRank<T, R extends tf.Rank> = Per2PRankLookup<T>[R]
+
+export type GreaterRank<A extends tf.Rank, B extends tf.Rank> = A extends RankAtOrAbove<B> ? A : B

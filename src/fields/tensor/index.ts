@@ -1,4 +1,6 @@
 export * from './tensor.js'
+export * from './arithmetic.js'
+
 export * from './tensor-factory.js'
 export * from './topology.js'
 export * from './variable.js'
