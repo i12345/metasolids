@@ -1353,85 +1353,92 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                 let triangulation_start_vertex = -1
 
-                do {
-                    polygon_points_updated_partial++;
+                function collectCells() {
+                    do {
+                        polygon_points_updated_partial++;
 
-                    const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
-                    if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
-                        return invalidate()
+                        const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
+                        if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
+                            return false
 
-                    const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
-                    const edge_current = (four_times_edge_axis) | edge_quadrant_current
+                        const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
+                        const edge_current = (four_times_edge_axis) | edge_quadrant_current
 
-                    cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
-                    cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
+                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
+                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
 
-                    new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
-                    new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
+                        new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
+                        new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
 
-                    const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
-
-                    const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                    if (dual_cell_layer_adjacent === invalid_layer) {
-                        // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
-                        // then continue in the previous direction that would have been before this dual cell
-                        // otherwise a polygon cannot be formed around this edge
-
-                        const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
-                        const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
-                        const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
-                        const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
-                        const vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
-                        const vertex_test_b = vertex_test_a | cell_0
-
-                        const test_matches = (
-                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
-                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
-                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
-                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
-                        )
-
-                        if (!test_matches)
-                            return invalidate()
-
-                        const edge_test = (four_times_edge_axis) | edge_quadrant_test
-                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
-                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
-
-                        const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
-                        const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
+                        const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
 
                         const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                        const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                        if (dual_cell_layer_adjacent === invalid_layer) {
+                            // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
+                            // then continue in the previous direction that would have been before this dual cell
+                            // otherwise a polygon cannot be formed around this edge
 
-                        if (dual_cell_layer_adjacent === invalid_layer)
-                            return invalidate()
+                            const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
+                            const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
+                            const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
+                            const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
+                            const vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
+                            const vertex_test_b = vertex_test_a | cell_0
 
-                        // it should be valid because a "tent" can only be formed between two triagonal corners
+                            const test_matches = (
+                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
+                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
+                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
+                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
+                            )
 
-                        dual_cell_layer_current = dual_cell_layer_adjacent
-                        dual_cell_localIndex_current = dual_cell_localIndex_adjacent
-                    }
-                    else {
-                        const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                            if (!test_matches)
+                                return false
 
-                        dual_cell_layer_current = dual_cell_layer_adjacent
-                        dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+                            const edge_test = (four_times_edge_axis) | edge_quadrant_test
+                            cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
+                            cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
 
-                        if (triangulation_start_vertex === -1)
-                            triangulation_start_vertex = polygon_points
+                            const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
+                            const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
 
-                        circular_quadrant += circular_quadrant_offset_direction_next
-                        circular_quadrant &= 0b11
-                    }
+                            const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
 
-                    polygon_points++
-                } while (!(
-                    (dual_cell_layer_current === dual_cell_layer_initial) &&
-                    (dual_cell_localIndex_current === dual_cell_localIndex_initial)
-                ))
+                            if (dual_cell_layer_adjacent === invalid_layer)
+                                return false
 
-                if (dual_cell_layer_current === invalid_layer)
+                            // it should be valid because a "tent" can only be formed between two triagonal corners
+
+                            dual_cell_layer_current = dual_cell_layer_adjacent
+                            dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+                        }
+                        else {
+                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+
+                            dual_cell_layer_current = dual_cell_layer_adjacent
+                            dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+
+                            if (triangulation_start_vertex === -1)
+                                triangulation_start_vertex = polygon_points
+
+                            circular_quadrant += circular_quadrant_offset_direction_next
+                            circular_quadrant &= 0b11
+                        }
+
+                        polygon_points++
+                    } while (!(
+                        (dual_cell_layer_current === dual_cell_layer_initial) &&
+                        (dual_cell_localIndex_current === dual_cell_localIndex_initial)
+                    ))
+
+                    if (dual_cell_layer_current === invalid_layer)
+                        return false
+
+                    return true
+                }
+
+                if (!collectCells())
                     return invalidate()
 
                 const polygon_index = new_polygon_localIndex++
@@ -1527,7 +1534,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                 new_polygon_triangulation_start[polygon_index] = zigZagLength(0) > zigZagLength(1) ? triangulation_start_vertex : -(1 + triangulation_start_vertex)
 
-                if (edge_vertex_above_a) {
+                function reverseVertices() {
                     // vertices will be swapped in place
                     for (let i = Math.ceil(polygon_points / 2) - 1; i > 0; i--) {
                         const vertex_index_H = polygon_vertices_offset + ((triangulation_start_vertex + i) % polygon_points)
@@ -1545,15 +1552,26 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                     }
                 }
 
-                for (let point = 0; point < polygon_points; point++) {
-                    const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]
-                    const polygon_vertex_dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + point]
+                if (edge_vertex_above_a)
+                    reverseVertices()
 
-                    dual_cell_subdivide_recommendation_surfaceIntersects.set(polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex, true)
+                function fillRecommendArray() {
+                    for (let point = 0; point < polygon_points; point++) {
+                        const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]
+                        const polygon_vertex_dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + point]
+
+                        dual_cell_subdivide_recommendation_surfaceIntersects.set(polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex, true)
+                    }
                 }
+
+                fillRecommendArray()
 
                 return true
             }
+
+            const dual_cells_formPolygon = new Array<Uint8Array>(dual_cells.vertices.layers.layers.length)
+            for (let i = 0; i < dual_cells.vertices.layers.layers.length; i++)
+                dual_cells_formPolygon[i] = new Uint8Array(dual_cells.vertices.layers.layers[i].length / 8)
 
             for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
                 const primary_children_localIndex_offset = 8 * primary_localIndex_group
@@ -1564,6 +1582,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         const dual_cell_layer = dual_cells_lookup_corners_layers[primary_child_layer][(8 * primary_child_localIndex) | corner]
                         if (dual_cell_layer === invalid_layer) continue
                         const dual_cell_localIndex = dual_cells_lookup_corners_localIndices[primary_child_layer][(8 * primary_child_localIndex) | corner]
+                        if (dual_cells_formPolygon[dual_cell_layer][dual_cell_localIndex] !== 0) continue
+                        dual_cells_formPolygon[dual_cell_layer][dual_cell_localIndex] = 1
 
                         for (let edge_axis = 0; edge_axis < 3; edge_axis++) {
                             for (let edge_quadrant = 0; edge_quadrant < 4; edge_quadrant++) {
