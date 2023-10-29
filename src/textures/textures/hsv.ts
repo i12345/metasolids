@@ -186,8 +186,8 @@ export class HSVTexture<
         const context_numbers = <TextureRenderContext<Location, LocationElementType, LocationFuseMode, LocationContainer, number, number, number, SampleContainer, Context, Objects, ObjIDsT, ObjIDsContainer, LocationVector, FieldPointVector<number, SampleContainer>>><unknown>{ ...context }
         makeVectorSamplingContext<Location, LocationElementType, LocationFuseMode, LocationContainer, number, number, number, SampleContainer, Objects, ObjIDsT, ObjIDsContainer, Context, LocationVector, FieldPointVector<number, SampleContainer>>(ScalarField.instance, context_numbers, context[MultiObjectsIDsKey])
         const h = this.h.render(resolution, context_numbers)
-        const s = this.h.render(resolution, context_numbers)
-        const v = this.h.render(resolution, context_numbers)
+        const s = this.s.render(resolution, context_numbers)
+        const v = this.v.render(resolution, context_numbers)
         
         // based on https://github.com/Evercoder/culori/blob/main/src/hsv/convertHsvToRgb.js
         // MIT licensed
@@ -245,6 +245,6 @@ export class HSVTexture<
                         h_4_b.where(h_class.equal(4),
                             h_5_b)))))
         
-        return <FieldPointTensor2D<Color>>{ r, g, b }
+        return <FieldPointTensor2D<Color>>{ r, g, b, a: tf.onesLike(h) }
     }
 }
