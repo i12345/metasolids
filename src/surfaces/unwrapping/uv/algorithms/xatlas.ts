@@ -50,7 +50,7 @@ export const xAtlas: SurfaceUVUnwrappingAlgorithm = {
         const margin = unwrap_options?.margin ?? 3
         const resolution = 512
 
-        xatlas_options.chart.maxIterations = 0
+        xatlas_options.chart.maxIterations = 1
         xatlas_options.pack.resolution = resolution - (2 * margin)
         xatlas_options.pack.padding = margin
         xatlas_options.pack.bilinear = false
