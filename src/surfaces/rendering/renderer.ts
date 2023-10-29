@@ -31,7 +31,7 @@ export class SurfaceRendererShared<
     readonly textures: Material_Groups_Textures<Objects, ObjIDsT, VolumeLocationT>
 
     @serializableProperty({ preDeserialize: true })
-    readonly surfaceUVUnwrapping: SurfaceUVUnwrapping
+    readonly surfaceUVUnwrapping?: SurfaceUVUnwrapping
 
     @serializableProperty({ preDeserialize: true })
     readonly extraLocationParameters: ExtraFields<VolumeLocationT, VolumeLocation>
@@ -54,7 +54,7 @@ export class SurfaceRendererShared<
     constructor(
             meshData: MeshDataWithNormals,
             textures: Material_Groups_Textures<Objects, ObjIDsT, VolumeLocationT>,
-            surfaceUVUnwrapping: SurfaceUVUnwrapping,
+            surfaceUVUnwrapping: SurfaceUVUnwrapping | undefined,
             extraLocationParameters: ExtraFields<VolumeLocationT, VolumeLocation>,
             multiObjectsIDs: MultiObjectsIDs<Objects, ObjIDsT>,
         ) {

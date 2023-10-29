@@ -82,7 +82,7 @@ export class MaterialSemanticImplementation_VertexColors<
     implement(renderer: SurfaceRendererIndividual<Objects, ObjIDsT, VolumeLocationT>): RenderedBufferForSemanticWithImplementation<Objects, ObjIDsT, VolumeLocationT>[] {
         const textureContext = this.surface_textureGroup.get<Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>>(renderer.shared.textureContexts)
 
-        const UVs = renderer.shared.surfaceUVUnwrapping.UVs
+        const UVs = renderer.shared.surfaceUVUnwrapping!.UVs
         const n_vertices = renderer.shared.meshData.vertices.length / 3
         const buffer = new Float32Array(this.channels * n_vertices)
 

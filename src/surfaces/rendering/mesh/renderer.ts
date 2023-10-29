@@ -167,16 +167,7 @@ export class MeshRendererIndividual<
             normals[(3 * i_decimated) + 1] = surface_meshData.normals[(3 * i_original) + 1]
             normals[(3 * i_decimated) + 2] = surface_meshData.normals[(3 * i_original) + 2]
         }
-
-        // if (UVunwrapping) {
-        //     for (let i_decimated = 0; i_decimated < n_decimated; i_decimated++) {
-        //         const i_UVunwrapped = vertices_final[i_decimated]
-
-        //         UVs[(2 * i_decimated) + 0] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 0]
-        //         UVs[(2 * i_decimated) + 1] = UVunwrapping.UVs[(2 * i_UVunwrapped) + 1]
-        //     }
-        // }
-
+        
         const triangles_typed = (triangles instanceof Uint8Array || triangles instanceof Uint16Array || triangles instanceof Uint32Array) ? triangles :
             triangles instanceof Int8Array ? new Uint8Array(triangles.buffer) :
             triangles instanceof Int16Array ? new Uint16Array(triangles.buffer) :
@@ -186,7 +177,8 @@ export class MeshRendererIndividual<
         mesh.setPositions(positions)
         mesh.setIndices(triangles_typed)
         mesh.setNormals(normals)
-        mesh.setUvs(0, UVs)
+        if (UVs)
+            mesh.setUvs(0, UVs)
 
         this.shared.computeBackingCallbacks.forEach(callback => callback(this))
     }

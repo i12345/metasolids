@@ -471,7 +471,7 @@ function qualityMetrics_compute<
             ObjIDsT,
             VolumeLocationT
         >,
-        UVunwrapping: SurfaceUVUnwrapping,
+        UVunwrapping: SurfaceUVUnwrapping | undefined,
         implementation: Material_Group_Implementations,
         multiObjectsIDs?: MultiObjectsIDs
     ): QualityMetrics {
@@ -564,6 +564,15 @@ function qualityMetrics_compute<
         }
     }
 
+    if (!UVunwrapping) {
+        return {
+            constancy: 0,
+            triangleMonotonicity: 0,
+            effectiveTexelSizeUV: 1,
+            meanValue: field_point_new(texture.field.elementType)
+        }
+    }
+
     /**
         Let ${\bf{\hat{t}}}(\vec{x})$ be the texture value at location $\vec{x}$
         and let ${\bf{t}}(\vec{x})$ be the vertex-interpolated value.
@@ -573,7 +582,7 @@ function qualityMetrics_compute<
 
     function vertex_original(vertex: number) {
         return (vertex < mesh.vertices.length) ? vertex :
-            UVunwrapping.duplicatedVerts[vertex - mesh.vertices.length]
+            UVunwrapping!.duplicatedVerts[vertex - mesh.vertices.length]
     }
 
     /** indices in UV-unwrapped, not decimated vertices */
@@ -620,8 +629,8 @@ function qualityMetrics_compute<
 
         if (!vertex_texture_locations.has(vertex)) {
             const uv = new Vec2(
-                UVunwrapping.UVs[(2 * vertex) + 0],
-                UVunwrapping.UVs[(2 * vertex) + 1]
+                UVunwrapping!.UVs[(2 * vertex) + 0],
+                UVunwrapping!.UVs[(2 * vertex) + 1]
             )
             //TODO: integrate extra fields for material texture location
             const texture_location = { uv } as Material_Texture_Location<VolumeLocationT>
@@ -803,7 +812,7 @@ export function* material_group_implementations<
         textures: Material_Groups_Textures<Objects, ObjIDsT, VolumeLocationT>,
         contexts: Material_Groups_TextureContexts<Objects, ObjIDsT, VolumeLocationT>,
         mesh: MeshData,
-        UVunwrapping: SurfaceUVUnwrapping
+        UVunwrapping?: SurfaceUVUnwrapping
     ): Generator<MaterialSemanticImplementation<Objects, ObjIDsT, VolumeLocationT>> {
     type TextureLocationT = Material_Texture_Location<VolumeLocationT>
     type TextureContextT = Material_Texture_Context<Objects, ObjIDsT, VolumeLocationT>
