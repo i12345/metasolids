@@ -1,7 +1,7 @@
 import { IndicesTypedArray, allocNewFilledInvalid } from "../../utils/indices-array.js";
 import { NumberArrayLike, TypedArray } from "../../utils/typed-array.js";
 import { arrayCopy } from "../../paradigm/trees/index.js"
-import { Axis, Direction, OctTreeCell, OctTreeCellsMask, Quadrant } from "../../paradigm/octtree/address.js";
+import { Axis, DiagonalDirection, Direction, OctTreeCell, OctTreeCellsMask, Quadrant, TriagonalDirection } from "../../paradigm/octtree/address.js";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualGroupsTemplate, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import { OctTreeCellsMaskOctTree } from "../../paradigm/octtree/mask.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
@@ -1176,423 +1176,827 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             const lookup_value_buffer = Buffer.alloc(1)
             const considered_edges = new HashTable(lookup_key_buffer.byteLength, 1, 0, number_subdivided_primary_cells * 8 * 8 * 4)
 
-            // form polygons for every edge of every dual cell cornered by any primary child vertex
-            function form_polygon(
-                dual_cell_layer_initial: number,
-                dual_cell_localIndex_initial: number,
-                edge_axis: Axis,
-                edge_quadrant_initial: Quadrant,
-            ) {
-                const four_times_edge_axis = 4 * edge_axis
-                const edge_initial = four_times_edge_axis | edge_quadrant_initial
+            // // form polygons for every edge of every dual cell cornered by any primary child vertex
+            // function form_polygon(
+            //     dual_cell_layer_initial: number,
+            //     dual_cell_localIndex_initial: number,
+            //     edge_axis: Axis,
+            //     edge_quadrant_initial: Quadrant,
+            // ) {
+            //     const four_times_edge_axis = 4 * edge_axis
+            //     const edge_initial = four_times_edge_axis | edge_quadrant_initial
 
-                if (cells_polygons_by_edge_layers[dual_cell_layer_initial][(12 * dual_cell_localIndex_initial) + edge_initial] !== invalid_layer)
-                    return false
+            //     if (cells_polygons_by_edge_layers[dual_cell_layer_initial][(12 * dual_cell_localIndex_initial) + edge_initial] !== invalid_layer)
+            //         return false
 
-                const axis_1 = (edge_axis + 1) % 3
-                const axis_2 = (edge_axis + 2) % 3
-                const cell_0 = 1 << edge_axis
-                const cell_1 = 1 << axis_1
-                const cell_2 = 1 << axis_2
+            //     const axis_1 = (edge_axis + 1) % 3
+            //     const axis_2 = (edge_axis + 2) % 3
+            //     const cell_0 = 1 << edge_axis
+            //     const cell_1 = 1 << axis_1
+            //     const cell_2 = 1 << axis_2
 
-                const edge_initial_direction_1 = <Direction>((edge_quadrant_initial >> 0) & 1)
-                const edge_initial_direction_2 = <Direction>((edge_quadrant_initial >> 1) & 1)
-                const vertex_initial_a = (edge_initial_direction_1 === 0 ? 0 : cell_1) | (edge_initial_direction_2 === 0 ? 0 : cell_2)
-                const vertex_initial_b = vertex_initial_a | cell_0
+            //     const edge_initial_direction_1 = <Direction>((edge_quadrant_initial >> 0) & 1)
+            //     const edge_initial_direction_2 = <Direction>((edge_quadrant_initial >> 1) & 1)
+            //     const vertex_initial_a = (edge_initial_direction_1 === 0 ? 0 : cell_1) | (edge_initial_direction_2 === 0 ? 0 : cell_2)
+            //     const vertex_initial_b = vertex_initial_a | cell_0
 
-                const edge_vertex_layer_a = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
-                const edge_vertex_layer_b = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
-                const edge_vertex_localIndex_a = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
-                const edge_vertex_localIndex_b = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
+            //     const edge_vertex_layer_a = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
+            //     const edge_vertex_layer_b = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
+            //     const edge_vertex_localIndex_a = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
+            //     const edge_vertex_localIndex_b = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
 
-                if (edge_vertex_layer_a === edge_vertex_layer_b &&
-                    edge_vertex_localIndex_a === edge_vertex_localIndex_b)
-                    return false
+            //     if (edge_vertex_layer_a === edge_vertex_layer_b &&
+            //         edge_vertex_localIndex_a === edge_vertex_localIndex_b)
+            //         return false
 
-                const edge_vertex_value_a = primary_alpha[edge_vertex_layer_a][edge_vertex_localIndex_a]
-                const edge_vertex_value_b = primary_alpha[edge_vertex_layer_b][edge_vertex_localIndex_b]
-                const edge_vertex_above_a = edge_vertex_value_a > surface_level
-                const edge_vertex_above_b = edge_vertex_value_b > surface_level
+            //     const edge_vertex_value_a = primary_alpha[edge_vertex_layer_a][edge_vertex_localIndex_a]
+            //     const edge_vertex_value_b = primary_alpha[edge_vertex_layer_b][edge_vertex_localIndex_b]
+            //     const edge_vertex_above_a = edge_vertex_value_a > surface_level
+            //     const edge_vertex_above_b = edge_vertex_value_b > surface_level
 
-                if (edge_vertex_above_a === edge_vertex_above_b)
-                    return false
+            //     if (edge_vertex_above_a === edge_vertex_above_b)
+            //         return false
 
-                if (edge_vertex_above_a) {
-                    lookup_key_layers[0] = edge_vertex_layer_a
-                    lookup_key_layers[1] = edge_vertex_layer_b
-                    lookup_key_localIndices[0] = edge_vertex_localIndex_a
-                    lookup_key_localIndices[1] = edge_vertex_localIndex_b
-                }
-                else {
-                    lookup_key_layers[0] = edge_vertex_layer_b
-                    lookup_key_layers[1] = edge_vertex_layer_a
-                    lookup_key_localIndices[0] = edge_vertex_localIndex_b
-                    lookup_key_localIndices[1] = edge_vertex_localIndex_a
-                }
+            //     if (edge_vertex_above_a) {
+            //         lookup_key_layers[0] = edge_vertex_layer_a
+            //         lookup_key_layers[1] = edge_vertex_layer_b
+            //         lookup_key_localIndices[0] = edge_vertex_localIndex_a
+            //         lookup_key_localIndices[1] = edge_vertex_localIndex_b
+            //     }
+            //     else {
+            //         lookup_key_layers[0] = edge_vertex_layer_b
+            //         lookup_key_layers[1] = edge_vertex_layer_a
+            //         lookup_key_localIndices[0] = edge_vertex_localIndex_b
+            //         lookup_key_localIndices[1] = edge_vertex_localIndex_a
+            //     }
 
-                if (considered_edges.exist(lookup_key_buffer, 0))
-                    return false
+            //     if (considered_edges.exist(lookup_key_buffer, 0))
+            //         return false
 
-                considered_edges.set(lookup_key_buffer, 0, lookup_value_buffer, 0)
+            //     considered_edges.set(lookup_key_buffer, 0, lookup_value_buffer, 0)
 
-                const polygon_vertices_offset = new_polygon_vertices_offsets[new_polygon_localIndex]
+            //     const polygon_vertices_offset = new_polygon_vertices_offsets[new_polygon_localIndex]
 
-                let polygon_points = 0
-                let polygon_points_updated_partial = 0
+            //     let polygon_points = 0
+            //     let polygon_points_updated_partial = 0
 
-                //TODO: optimize by copy-and-pasting separate version for vertex b above and below
-                // const circular_quadrant_offset_direction = edge_vertex_above_b ? 2 : 0
-                // const circular_quadrant_offset_direction_next = edge_vertex_above_b ? 3 : 1
-                // const circular_quadrant_offset_direction_prev = edge_vertex_above_b ? 1 : 3
-                // const circular_quadrant_offset_direction_prev_offset = edge_vertex_above_b ? 3 : 1
+            //     //TODO: optimize by copy-and-pasting separate version for vertex b above and below
+            //     // const circular_quadrant_offset_direction = edge_vertex_above_b ? 2 : 0
+            //     // const circular_quadrant_offset_direction_next = edge_vertex_above_b ? 3 : 1
+            //     // const circular_quadrant_offset_direction_prev = edge_vertex_above_b ? 1 : 3
+            //     // const circular_quadrant_offset_direction_prev_offset = edge_vertex_above_b ? 3 : 1
 
-                // TODO: optimize with these variables instead of swapping items after
-                const circular_quadrant_offset_direction = 0
-                const circular_quadrant_offset_direction_next = 1
-                const circular_quadrant_offset_direction_prev = 3
-                const circular_quadrant_offset_direction_prev_offset = 1
+            //     // TODO: optimize with these variables instead of swapping items after
+            //     const circular_quadrant_offset_direction = 0
+            //     const circular_quadrant_offset_direction_next = 1
+            //     const circular_quadrant_offset_direction_prev = 3
+            //     const circular_quadrant_offset_direction_prev_offset = 1
 
-                // const circular_quadrant_offset_direction = 2
-                // const circular_quadrant_offset_direction_next = 3
-                // const circular_quadrant_offset_direction_prev = 1
-                // const circular_quadrant_offset_direction_prev_offset = 3
+            //     // const circular_quadrant_offset_direction = 2
+            //     // const circular_quadrant_offset_direction_next = 3
+            //     // const circular_quadrant_offset_direction_prev = 1
+            //     // const circular_quadrant_offset_direction_prev_offset = 3
 
-                /**
-                 * invalidates references for the half-formed polygon in context[SurfaceNetKey].cells.polygons_by_edge
-                 * modified copy-and-paste of the following code
-                 * @returns false for convenience
-                 */
-                function invalidate() {
-                    // these faces are not ordered by edge_quadrant, but by a circular quadrant
-                    // this number wraps around by adjacent quadrants, like in algebra
-                    let circular_quadrant: Quadrant = (edge2circular_quadrant_mapping[edge_quadrant_initial] + 2) & 0b11
+            //     /**
+            //      * invalidates references for the half-formed polygon in context[SurfaceNetKey].cells.polygons_by_edge
+            //      * modified copy-and-paste of the following code
+            //      * @returns false for convenience
+            //      */
+            //     function invalidate() {
+            //         // these faces are not ordered by edge_quadrant, but by a circular quadrant
+            //         // this number wraps around by adjacent quadrants, like in algebra
+            //         let circular_quadrant: Quadrant = (edge2circular_quadrant_mapping[edge_quadrant_initial] + 2) & 0b11
 
-                    let dual_cell_layer_current = dual_cell_layer_initial
-                    let dual_cell_localIndex_current = dual_cell_localIndex_initial
+            //         let dual_cell_layer_current = dual_cell_layer_initial
+            //         let dual_cell_localIndex_current = dual_cell_localIndex_initial
 
-                    for (let polygon_points = 0; polygon_points < polygon_points_updated_partial; polygon_points++) {
-                        const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
-                        if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
-                            break
+            //         for (let polygon_points = 0; polygon_points < polygon_points_updated_partial; polygon_points++) {
+            //             const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
+            //             if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
+            //                 break
 
-                        const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
-                        const edge_current = (four_times_edge_axis) | edge_quadrant_current
+            //             const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
+            //             const edge_current = (four_times_edge_axis) | edge_quadrant_current
 
-                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_layer
-                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_localIndex
+            //             cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_layer
+            //             cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_localIndex
 
-                        new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = invalid_layer
-                        new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = invalid_localIndex
+            //             new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = invalid_layer
+            //             new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = invalid_localIndex
 
-                        const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
+            //             const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
 
-                        const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                        if (dual_cell_layer_adjacent === invalid_layer) {
-                            // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
-                            // then continue in the previous direction that would have been before this dual cell
-                            // otherwise a polygon cannot be formed around this edge
+            //             const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+            //             if (dual_cell_layer_adjacent === invalid_layer) {
+            //                 // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
+            //                 // then continue in the previous direction that would have been before this dual cell
+            //                 // otherwise a polygon cannot be formed around this edge
 
-                            const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
-                            const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
-                            const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
-                            const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
-                            const vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
-                            const vertex_test_b = vertex_test_a | cell_0
+            //                 const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
+            //                 const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
+            //                 const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
+            //                 const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
+            //                 const vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
+            //                 const vertex_test_b = vertex_test_a | cell_0
 
-                            const test_matches = (
-                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
-                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
-                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
-                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
-                            )
+            //                 const test_matches = (
+            //                     (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
+            //                     (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
+            //                     (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
+            //                     (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
+            //                 )
 
-                            if (!test_matches)
-                                break
+            //                 if (!test_matches)
+            //                     break
 
-                            const edge_test = (four_times_edge_axis) | edge_quadrant_test
-                            cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_layer
-                            cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_localIndex
+            //                 const edge_test = (four_times_edge_axis) | edge_quadrant_test
+            //                 cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_layer
+            //                 cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_localIndex
 
-                            const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
-                            const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
+            //                 const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
+            //                 const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
 
-                            const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+            //                 const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+            //                 const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
 
-                            if (dual_cell_layer_adjacent === invalid_layer)
-                                break
+            //                 if (dual_cell_layer_adjacent === invalid_layer)
+            //                     break
 
-                            // it should be valid because a "tent" can only be formed between two triagonal corners
+            //                 // it should be valid because a "tent" can only be formed between two triagonal corners
 
-                            dual_cell_layer_current = dual_cell_layer_adjacent
-                            dual_cell_localIndex_current = dual_cell_localIndex_adjacent
-                        }
-                        else {
-                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+            //                 dual_cell_layer_current = dual_cell_layer_adjacent
+            //                 dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+            //             }
+            //             else {
+            //                 const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
 
-                            dual_cell_layer_current = dual_cell_layer_adjacent
-                            dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+            //                 dual_cell_layer_current = dual_cell_layer_adjacent
+            //                 dual_cell_localIndex_current = dual_cell_localIndex_adjacent
 
-                            if (triangulation_start_vertex === -1)
-                                triangulation_start_vertex = polygon_points
+            //                 if (triangulation_start_vertex === -1)
+            //                     triangulation_start_vertex = polygon_points
 
-                            circular_quadrant += circular_quadrant_offset_direction_next
-                            circular_quadrant &= 0b11
-                        }
-                    }
+            //                 circular_quadrant += circular_quadrant_offset_direction_next
+            //                 circular_quadrant &= 0b11
+            //             }
+            //         }
 
-                    return false
-                }
+            //         return false
+            //     }
 
+            //     // these faces are not ordered by edge_quadrant, but by a circular quadrant
+            //     // this number wraps around by adjacent quadrants, like in algebra
+            //     let circular_quadrant: Quadrant = (edge2circular_quadrant_mapping[edge_quadrant_initial] + 2) & 0b11
+
+            //     let dual_cell_layer_current = dual_cell_layer_initial
+            //     let dual_cell_localIndex_current = dual_cell_localIndex_initial
+
+            //     let triangulation_start_vertex = -1
+
+            //     function collectCells() {
+            //         do {
+            //             polygon_points_updated_partial++;
+
+            //             const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
+            //             if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
+            //                 return false
+
+            //             const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
+            //             const edge_current = (four_times_edge_axis) | edge_quadrant_current
+
+            //             cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
+            //             cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
+
+            //             new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
+            //             new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
+
+            //             const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
+
+            //             const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+            //             if (dual_cell_layer_adjacent === invalid_layer) {
+            //                 // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
+            //                 // then continue in the previous direction that would have been before this dual cell
+            //                 // otherwise a polygon cannot be formed around this edge
+
+            //                 const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
+            //                 const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
+            //                 const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
+            //                 const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
+            //                 const vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
+            //                 const vertex_test_b = vertex_test_a | cell_0
+
+            //                 const test_matches = (
+            //                     (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
+            //                     (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
+            //                     (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
+            //                     (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
+            //                 )
+
+            //                 if (!test_matches)
+            //                     return false
+
+            //                 const edge_test = (four_times_edge_axis) | edge_quadrant_test
+            //                 cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
+            //                 cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
+
+            //                 const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
+            //                 const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
+
+            //                 const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+            //                 const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+
+            //                 if (dual_cell_layer_adjacent === invalid_layer)
+            //                     return false
+
+            //                 // it should be valid because a "tent" can only be formed between two triagonal corners
+
+            //                 dual_cell_layer_current = dual_cell_layer_adjacent
+            //                 dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+            //             }
+            //             else {
+            //                 const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+
+            //                 dual_cell_layer_current = dual_cell_layer_adjacent
+            //                 dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+
+            //                 if (triangulation_start_vertex === -1)
+            //                     triangulation_start_vertex = polygon_points
+
+            //                 circular_quadrant += circular_quadrant_offset_direction_next
+            //                 circular_quadrant &= 0b11
+            //             }
+
+            //             polygon_points++
+            //         } while (!(
+            //             (dual_cell_layer_current === dual_cell_layer_initial) &&
+            //             (dual_cell_localIndex_current === dual_cell_localIndex_initial)
+            //         ))
+
+            //         if (dual_cell_layer_current === invalid_layer)
+            //             return false
+
+            //         return true
+            //     }
+
+            //     if (!collectCells())
+            //         return invalidate()
+
+            //     const polygon_index = new_polygon_localIndex++
+
+            //     new_polygon_vertices_offsets[new_polygon_localIndex] = polygon_vertices_offset + polygon_points
+
+            //     new_polygon_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
+            //     new_polygon_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
+            //     new_polygon_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+            //     new_polygon_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+
+            //     let x: number, y: number, z: number
+
+            //     // at this point, triangulation_start_vertex is >= 0
+
+            //     /**
+            //      * this index is relative to {@link triangulation_start_vertex},
+            //      * and negative values mirror so that -x = {@link polygon_points} - x
+            //      * before adding the {@link triangulation_start_vertex}
+            //      */
+            //     function loadVertex(index: number) {
+            //         if (index < 0)
+            //             index += polygon_points
+            //         index += triangulation_start_vertex
+            //         index %= polygon_points
+
+            //         const dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + index]
+            //         const dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + index]
+            //         const array = surfacePoints[dual_cell_layer]
+            //         x = array[(3 * dual_cell_localIndex) + 0]
+            //         y = array[(3 * dual_cell_localIndex) + 1]
+            //         z = array[(3 * dual_cell_localIndex) + 2]
+            //     }
+
+            //     /**
+            //      * Computes the zig-zag length to discern how triangulation should be done
+            //      * @param direction 0 = positive or zero triangulation_start
+            //      * (zig zag starts using vertices to left and right of triangulation_start);
+            //      * 1 = negative triangulation_start (zig zag starts from triangulation_start)
+            //      * @returns the length of the zig-zag lines
+            //      */
+            //     function zigZagLength(direction: Direction) {
+            //         const zig_zag_lines = polygon_points - 3
+            //         // only diagonal zig-zag lines will be counted though
+            //         // both directions give the same number of straight-across lines
+
+            //         let ax: number,
+            //             ay: number,
+            //             az: number
+
+            //         let distance = 0
+
+            //         switch (direction) {
+            //             case 0:
+            //                 for (let i = 0; i < zig_zag_lines; i += 2) {
+            //                     const isInverse = (i & 1) === 1
+            //                     const a = (i >> 1) + 1
+            //                     const b = isInverse ? -(1 + a) : -a
+
+            //                     loadVertex(a)
+            //                     ax = x, ay = y, az = z
+
+            //                     loadVertex(b)
+            //                     distance += Math.sqrt(
+            //                         ((x - ax) ** 2) +
+            //                         ((y - ay) ** 2) +
+            //                         ((z - az) ** 2)
+            //                     )
+            //                 }
+            //                 break
+
+            //             case 1:
+            //                 for (let i = 0; i < zig_zag_lines; i += 2) {
+            //                     const isInverse = (i & 1) === 1
+            //                     const a = i >> 1
+            //                     const b = isInverse ? (a + 1) : -(2 + a)
+
+            //                     loadVertex(a)
+            //                     ax = x, ay = y, az = z
+
+            //                     loadVertex(b)
+            //                     distance += Math.sqrt(
+            //                         ((x - ax) ** 2) +
+            //                         ((y - ay) ** 2) +
+            //                         ((z - az) ** 2)
+            //                     )
+            //                 }
+            //                 break
+            //         }
+
+            //         return distance
+            //     }
+
+            //     new_polygon_triangulation_start[polygon_index] = zigZagLength(0) > zigZagLength(1) ? triangulation_start_vertex : -(1 + triangulation_start_vertex)
+
+            //     function reverseVertices() {
+            //         // vertices will be swapped in place
+            //         for (let i = Math.ceil(polygon_points / 2) - 1; i > 0; i--) {
+            //             const vertex_index_H = polygon_vertices_offset + ((triangulation_start_vertex + i) % polygon_points)
+            //             const vertex_index_T = polygon_vertices_offset + ((triangulation_start_vertex - i + polygon_points) % polygon_points)
+
+            //             let vertex_layer_H = new_polygon_vertices_dualCells_layers[vertex_index_H]
+            //             let vertex_layer_T = new_polygon_vertices_dualCells_layers[vertex_index_T]
+            //             let vertex_localIndex_H = new_polygon_vertices_dualCells_localIndices[vertex_index_H]
+            //             let vertex_localIndex_T = new_polygon_vertices_dualCells_localIndices[vertex_index_T]
+
+            //             new_polygon_vertices_dualCells_layers[vertex_index_H] = vertex_layer_T
+            //             new_polygon_vertices_dualCells_layers[vertex_index_T] = vertex_layer_H
+            //             new_polygon_vertices_dualCells_localIndices[vertex_index_H] = vertex_localIndex_T
+            //             new_polygon_vertices_dualCells_localIndices[vertex_index_T] = vertex_localIndex_H
+            //         }
+            //     }
+
+            //     if (edge_vertex_above_a)
+            //         reverseVertices()
+
+            //     function fillRecommendArray() {
+            //         for (let point = 0; point < polygon_points; point++) {
+            //             const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]
+            //             const polygon_vertex_dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + point]
+
+            //             dual_cell_subdivide_recommendation_surfaceIntersects.set(polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex, true)
+            //         }
+            //     }
+
+            //     fillRecommendArray()
+
+            //     return true
+            // }
+
+            // TODO: optimize with these variables instead of swapping items after
+            const circular_quadrant_offset_direction = 0
+            const circular_quadrant_offset_direction_next = 1
+            const circular_quadrant_offset_direction_prev = 3
+            const circular_quadrant_offset_direction_prev_offset = 1
+            
+            let circular_quadrant: Quadrant
+            let dual_cell_layer_current: number
+            let dual_cell_localIndex_current: number
+            let triangulation_start_vertex: number
+            let current_surfacePoint_x: number
+            let edge_quadrant_current: number
+            let edge_current: number
+            let face_next: number
+            let dual_cell_layer_adjacent: number
+            let dual_cell_localIndex_adjacent: number
+            let circular_quadrant_test: number
+            let edge_quadrant_test: number
+            let edge_direction_1: number
+            let edge_direction_2: number
+            let vertex_test_a: number
+            let vertex_test_b: number
+            let test_matches: boolean
+            let edge_test: number
+            let circular_quadrant_prev: number
+            let polygon_index: number
+            let x: number, y: number, z: number
+            let polygon_points: number
+            let polygon_points_updated_partial: number
+            let four_times_edge_axis: number
+            let edge_initial: DiagonalDirection
+            let axis_1: Axis
+            let axis_2: Axis
+            let cell_0: OctTreeCell
+            let cell_1: OctTreeCell
+            let cell_2: OctTreeCell
+            let edge_initial_direction_1: Direction
+            let edge_initial_direction_2: Direction
+            let vertex_initial_a: number
+            let vertex_initial_b: number
+            let edge_vertex_layer_a: number
+            let edge_vertex_layer_b: number
+            let edge_vertex_localIndex_a: number
+            let edge_vertex_localIndex_b: number
+            let edge_vertex_value_a: number
+            let edge_vertex_value_b: number
+            let edge_vertex_above_a: boolean
+            let edge_vertex_above_b: boolean
+            let primary_subcell: OctTreeCell
+            let corner: TriagonalDirection
+            let dual_cell_layer_initial: number
+            let dual_cell_localIndex_initial: number
+            let edge_axis: Axis
+            let edge_quadrant: Quadrant
+            let polygon_vertices_offset: number
+
+            /**
+             * invalidates references for the half-formed polygon in context[SurfaceNetKey].cells.polygons_by_edge
+             * modified copy-and-paste of the following code
+             */
+            function invalidate() {
                 // these faces are not ordered by edge_quadrant, but by a circular quadrant
                 // this number wraps around by adjacent quadrants, like in algebra
-                let circular_quadrant: Quadrant = (edge2circular_quadrant_mapping[edge_quadrant_initial] + 2) & 0b11
+                let circular_quadrant: Quadrant = (edge2circular_quadrant_mapping[edge_quadrant] + 2) & 0b11
+                    
+                dual_cell_layer_current = dual_cell_layer_initial
+                dual_cell_localIndex_current = dual_cell_localIndex_initial
+                    
+                for (polygon_points = 0; polygon_points < polygon_points_updated_partial; polygon_points++) {
+                    const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
+                    if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
+                        break
+                    
+                    edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
+                    edge_current = (four_times_edge_axis) | edge_quadrant_current
 
-                let dual_cell_layer_current = dual_cell_layer_initial
-                let dual_cell_localIndex_current = dual_cell_localIndex_initial
-
-                let triangulation_start_vertex = -1
-
-                function collectCells() {
-                    do {
-                        polygon_points_updated_partial++;
-
-                        const current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
-                        if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x))
-                            return false
-
-                        const edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
-                        const edge_current = (four_times_edge_axis) | edge_quadrant_current
-
-                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
-                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
-
-                        new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
-                        new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
-
-                        const face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
-
-                        const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                        if (dual_cell_layer_adjacent === invalid_layer) {
-                            // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
-                            // then continue in the previous direction that would have been before this dual cell
-                            // otherwise a polygon cannot be formed around this edge
-
-                            const circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
-                            const edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
-                            const edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
-                            const edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
-                            const vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
-                            const vertex_test_b = vertex_test_a | cell_0
-
-                            const test_matches = (
-                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
-                                (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
-                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
-                                (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
-                            )
-
-                            if (!test_matches)
-                                return false
-
-                            const edge_test = (four_times_edge_axis) | edge_quadrant_test
-                            cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
-                            cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
-
-                            const circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
-                            const face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
-
-                            const dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-
-                            if (dual_cell_layer_adjacent === invalid_layer)
-                                return false
-
-                            // it should be valid because a "tent" can only be formed between two triagonal corners
-
-                            dual_cell_layer_current = dual_cell_layer_adjacent
-                            dual_cell_localIndex_current = dual_cell_localIndex_adjacent
-                        }
-                        else {
-                            const dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
-
-                            dual_cell_layer_current = dual_cell_layer_adjacent
-                            dual_cell_localIndex_current = dual_cell_localIndex_adjacent
-
-                            if (triangulation_start_vertex === -1)
-                                triangulation_start_vertex = polygon_points
-
-                            circular_quadrant += circular_quadrant_offset_direction_next
-                            circular_quadrant &= 0b11
-                        }
-
-                        polygon_points++
-                    } while (!(
-                        (dual_cell_layer_current === dual_cell_layer_initial) &&
-                        (dual_cell_localIndex_current === dual_cell_localIndex_initial)
-                    ))
-
-                    if (dual_cell_layer_current === invalid_layer)
-                        return false
-
-                    return true
-                }
-
-                if (!collectCells())
-                    return invalidate()
-
-                const polygon_index = new_polygon_localIndex++
-
-                new_polygon_vertices_offsets[new_polygon_localIndex] = polygon_vertices_offset + polygon_points
-
-                new_polygon_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
-                new_polygon_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
-                new_polygon_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
-                new_polygon_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
-
-                let x: number, y: number, z: number
-
-                // at this point, triangulation_start_vertex is >= 0
-
-                /**
-                 * this index is relative to {@link triangulation_start_vertex},
-                 * and negative values mirror so that -x = {@link polygon_points} - x
-                 * before adding the {@link triangulation_start_vertex}
-                 */
-                function loadVertex(index: number) {
-                    if (index < 0)
-                        index += polygon_points
-                    index += triangulation_start_vertex
-                    index %= polygon_points
-
-                    const dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + index]
-                    const dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + index]
-                    const array = surfacePoints[dual_cell_layer]
-                    x = array[(3 * dual_cell_localIndex) + 0]
-                    y = array[(3 * dual_cell_localIndex) + 1]
-                    z = array[(3 * dual_cell_localIndex) + 2]
-                }
-
-                /**
-                 * Computes the zig-zag length to discern how triangulation should be done
-                 * @param direction 0 = positive or zero triangulation_start
-                 * (zig zag starts using vertices to left and right of triangulation_start);
-                 * 1 = negative triangulation_start (zig zag starts from triangulation_start)
-                 * @returns the length of the zig-zag lines
-                 */
-                function zigZagLength(direction: Direction) {
-                    const zig_zag_lines = polygon_points - 3
-                    // only diagonal zig-zag lines will be counted though
-                    // both directions give the same number of straight-across lines
-
-                    let ax: number,
-                        ay: number,
-                        az: number
-
-                    let distance = 0
-
-                    switch (direction) {
-                        case 0:
-                            for (let i = 0; i < zig_zag_lines; i += 2) {
-                                const isInverse = (i & 1) === 1
-                                const a = (i >> 1) + 1
-                                const b = isInverse ? -(1 + a) : -a
-
-                                loadVertex(a)
-                                ax = x, ay = y, az = z
-
-                                loadVertex(b)
-                                distance += Math.sqrt(
-                                    ((x - ax) ** 2) +
-                                    ((y - ay) ** 2) +
-                                    ((z - az) ** 2)
-                                )
-                            }
+                    cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_layer
+                    cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = invalid_localIndex
+                    
+                    new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = invalid_layer
+                    new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = invalid_localIndex
+                    
+                    face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
+                    
+                    dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                    if (dual_cell_layer_adjacent === invalid_layer) {
+                        // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
+                        // then continue in the previous direction that would have been before this dual cell
+                        // otherwise a polygon cannot be formed around this edge
+                    
+                        circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
+                        edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
+                        edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
+                        edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
+                        vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
+                        vertex_test_b = vertex_test_a | cell_0
+                    
+                        test_matches = (
+                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
+                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
+                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
+                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
+                        )
+                    
+                        if (!test_matches)
                             break
-
-                        case 1:
-                            for (let i = 0; i < zig_zag_lines; i += 2) {
-                                const isInverse = (i & 1) === 1
-                                const a = i >> 1
-                                const b = isInverse ? (a + 1) : -(2 + a)
-
-                                loadVertex(a)
-                                ax = x, ay = y, az = z
-
-                                loadVertex(b)
-                                distance += Math.sqrt(
-                                    ((x - ax) ** 2) +
-                                    ((y - ay) ** 2) +
-                                    ((z - az) ** 2)
-                                )
-                            }
+                    
+                        edge_test = (four_times_edge_axis) | edge_quadrant_test
+                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_layer
+                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = invalid_localIndex
+                    
+                        circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
+                        face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
+                    
+                        dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                        dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                    
+                        if (dual_cell_layer_adjacent === invalid_layer)
                             break
+                    
+                        // it should be valid because a "tent" can only be formed between two triagonal corners
+                    
+                        dual_cell_layer_current = dual_cell_layer_adjacent
+                        dual_cell_localIndex_current = dual_cell_localIndex_adjacent
                     }
-
-                    return distance
-                }
-
-                new_polygon_triangulation_start[polygon_index] = zigZagLength(0) > zigZagLength(1) ? triangulation_start_vertex : -(1 + triangulation_start_vertex)
-
-                function reverseVertices() {
-                    // vertices will be swapped in place
-                    for (let i = Math.ceil(polygon_points / 2) - 1; i > 0; i--) {
-                        const vertex_index_H = polygon_vertices_offset + ((triangulation_start_vertex + i) % polygon_points)
-                        const vertex_index_T = polygon_vertices_offset + ((triangulation_start_vertex - i + polygon_points) % polygon_points)
-
-                        let vertex_layer_H = new_polygon_vertices_dualCells_layers[vertex_index_H]
-                        let vertex_layer_T = new_polygon_vertices_dualCells_layers[vertex_index_T]
-                        let vertex_localIndex_H = new_polygon_vertices_dualCells_localIndices[vertex_index_H]
-                        let vertex_localIndex_T = new_polygon_vertices_dualCells_localIndices[vertex_index_T]
-
-                        new_polygon_vertices_dualCells_layers[vertex_index_H] = vertex_layer_T
-                        new_polygon_vertices_dualCells_layers[vertex_index_T] = vertex_layer_H
-                        new_polygon_vertices_dualCells_localIndices[vertex_index_H] = vertex_localIndex_T
-                        new_polygon_vertices_dualCells_localIndices[vertex_index_T] = vertex_localIndex_H
+                    else {
+                        dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                    
+                        dual_cell_layer_current = dual_cell_layer_adjacent
+                        dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+                    
+                        if (triangulation_start_vertex === -1)
+                            triangulation_start_vertex = polygon_points
+                    
+                        circular_quadrant += circular_quadrant_offset_direction_next
+                        circular_quadrant &= 0b11
                     }
                 }
-
-                if (edge_vertex_above_a)
-                    reverseVertices()
-
-                function fillRecommendArray() {
-                    for (let point = 0; point < polygon_points; point++) {
-                        const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]
-                        const polygon_vertex_dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + point]
-
-                        dual_cell_subdivide_recommendation_surfaceIntersects.set(polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex, true)
-                    }
-                }
-
-                fillRecommendArray()
-
-                return true
             }
 
             const dual_cells_formPolygon = new Array<Uint8Array>(dual_cells.vertices.layers.layers.length)
             for (let i = 0; i < dual_cells.vertices.layers.layers.length; i++)
                 dual_cells_formPolygon[i] = new Uint8Array(dual_cells.vertices.layers.layers[i].length / 8)
-
+            
             for (let primary_localIndex_group = 0; primary_localIndex_group < number_subdivided_primary_cells; primary_localIndex_group++) {
                 const primary_children_localIndex_offset = 8 * primary_localIndex_group
-                for (let primary_subcell = 0; primary_subcell < 8; primary_subcell++) {
+                for (primary_subcell = 0; primary_subcell < 8; primary_subcell++) {
                     const primary_child_layer = layer
                     const primary_child_localIndex = primary_children_localIndex_offset | primary_subcell
-                    for (let corner = 0; corner < 8; corner++) {
-                        const dual_cell_layer = dual_cells_lookup_corners_layers[primary_child_layer][(8 * primary_child_localIndex) | corner]
-                        if (dual_cell_layer === invalid_layer) continue
-                        const dual_cell_localIndex = dual_cells_lookup_corners_localIndices[primary_child_layer][(8 * primary_child_localIndex) | corner]
-                        if (dual_cells_formPolygon[dual_cell_layer][dual_cell_localIndex] !== 0) continue
-                        dual_cells_formPolygon[dual_cell_layer][dual_cell_localIndex] = 1
+                    for (corner = 0; corner < 8; corner++) {
+                        dual_cell_layer_initial = dual_cells_lookup_corners_layers[primary_child_layer][(8 * primary_child_localIndex) | corner]
+                        if (dual_cell_layer_initial === invalid_layer) continue
+                        dual_cell_localIndex_initial = dual_cells_lookup_corners_localIndices[primary_child_layer][(8 * primary_child_localIndex) | corner]
+                        if (dual_cells_formPolygon[dual_cell_layer_initial][dual_cell_localIndex_initial] !== 0) continue
+                        dual_cells_formPolygon[dual_cell_layer_initial][dual_cell_localIndex_initial] = 1
 
-                        for (let edge_axis = 0; edge_axis < 3; edge_axis++) {
-                            for (let edge_quadrant = 0; edge_quadrant < 4; edge_quadrant++) {
-                                form_polygon(
-                                    dual_cell_layer,
-                                    dual_cell_localIndex,
-                                    edge_axis,
-                                    edge_quadrant
-                                )
+                        for (edge_axis = 0; edge_axis < 3; edge_axis++) {
+                            for (edge_quadrant = 0; edge_quadrant < 4; edge_quadrant++) {
+                                four_times_edge_axis = 4 * edge_axis
+                                edge_initial = four_times_edge_axis | edge_quadrant
+                    
+                                if (cells_polygons_by_edge_layers[dual_cell_layer_initial][(12 * dual_cell_localIndex_initial) + edge_initial] !== invalid_layer)
+                                    continue
+                    
+                                axis_1 = (edge_axis + 1) % 3
+                                axis_2 = (edge_axis + 2) % 3
+                                cell_0 = <OctTreeCell>(1 << edge_axis)
+                                cell_1 = <OctTreeCell>(1 << axis_1)
+                                cell_2 = <OctTreeCell>(1 << axis_2)
+                    
+                                edge_initial_direction_1 = <Direction>((edge_quadrant >> 0) & 1)
+                                edge_initial_direction_2 = <Direction>((edge_quadrant >> 1) & 1)
+                                vertex_initial_a = (edge_initial_direction_1 === 0 ? 0 : cell_1) | (edge_initial_direction_2 === 0 ? 0 : cell_2)
+                                vertex_initial_b = vertex_initial_a | cell_0
+
+                                edge_vertex_layer_a = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
+                                edge_vertex_layer_b = dual_cells_vertices_layers[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
+                                edge_vertex_localIndex_a = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_a]
+                                edge_vertex_localIndex_b = dual_cells_vertices_localIndices[dual_cell_layer_initial][(8 * dual_cell_localIndex_initial) | vertex_initial_b]
+                    
+                                if (edge_vertex_layer_a === edge_vertex_layer_b &&
+                                    edge_vertex_localIndex_a === edge_vertex_localIndex_b)
+                                    continue
+                    
+                                edge_vertex_value_a = primary_alpha[edge_vertex_layer_a][edge_vertex_localIndex_a]
+                                edge_vertex_value_b = primary_alpha[edge_vertex_layer_b][edge_vertex_localIndex_b]
+                                edge_vertex_above_a = edge_vertex_value_a > surface_level
+                                edge_vertex_above_b = edge_vertex_value_b > surface_level
+                    
+                                if (edge_vertex_above_a === edge_vertex_above_b)
+                                    continue
+                    
+                                if (edge_vertex_above_a) {
+                                    lookup_key_layers[0] = edge_vertex_layer_a
+                                    lookup_key_layers[1] = edge_vertex_layer_b
+                                    lookup_key_localIndices[0] = edge_vertex_localIndex_a
+                                    lookup_key_localIndices[1] = edge_vertex_localIndex_b
+                                }
+                                else {
+                                    lookup_key_layers[0] = edge_vertex_layer_b
+                                    lookup_key_layers[1] = edge_vertex_layer_a
+                                    lookup_key_localIndices[0] = edge_vertex_localIndex_b
+                                    lookup_key_localIndices[1] = edge_vertex_localIndex_a
+                                }
+                    
+                                if (considered_edges.exist(lookup_key_buffer, 0))
+                                    continue
+                    
+                                considered_edges.set(lookup_key_buffer, 0, lookup_value_buffer, 0)
+                    
+                                polygon_vertices_offset = new_polygon_vertices_offsets[new_polygon_localIndex]
+                    
+                                polygon_points = 0
+                                polygon_points_updated_partial = 0
+                    
+                                // these faces are not ordered by edge_quadrant, but by a circular quadrant
+                                // this number wraps around by adjacent quadrants, like in algebra
+                                circular_quadrant = (edge2circular_quadrant_mapping[edge_quadrant] + 2) & 0b11
+                    
+                                dual_cell_layer_current = dual_cell_layer_initial
+                                dual_cell_localIndex_current = dual_cell_localIndex_initial
+                    
+                                triangulation_start_vertex = -1
+                    
+                                do {
+                                    polygon_points_updated_partial++;
+                    
+                                    current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
+                                    if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x)) {
+                                        invalidate()
+                                        continue
+                                    }
+                    
+                                    edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
+                                    edge_current = (four_times_edge_axis) | edge_quadrant_current
+                    
+                                    cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = layer // = new_polygon_layer
+                                    cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_current] = new_polygon_localIndex
+                    
+                                    new_polygon_vertices_dualCells_layers[polygon_vertices_offset + polygon_points] = dual_cell_layer_current
+                                    new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + polygon_points] = dual_cell_localIndex_current
+                    
+                                    face_next = faces_next[four_times_edge_axis | ((circular_quadrant + circular_quadrant_offset_direction) & 0b11)]
+
+                                    dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                                    if (dual_cell_layer_adjacent === invalid_layer) {
+                                        // if there is no face in this direction because the focus edge makes two edges in this dual cell, like a tent,
+                                        // then continue in the previous direction that would have been before this dual cell
+                                        // otherwise a polygon cannot be formed around this edge
+                    
+                                        circular_quadrant_test = (circular_quadrant + circular_quadrant_offset_direction_prev_offset) & 0b11
+                                        edge_quadrant_test = circular2edge_quadrant_mapping[circular_quadrant_test]
+                                        edge_direction_1 = <Direction>((edge_quadrant_test >> 0) & 1)
+                                        edge_direction_2 = <Direction>((edge_quadrant_test >> 1) & 1)
+                                        vertex_test_a = (edge_direction_1 === 0 ? 0 : cell_1) | (edge_direction_2 === 0 ? 0 : cell_2)
+                                        vertex_test_b = vertex_test_a | cell_0
+                    
+                                        test_matches = (
+                                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_layer_a) &&
+                                            (dual_cells_vertices_layers[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_layer_b) &&
+                                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_a] === edge_vertex_localIndex_a) &&
+                                            (dual_cells_vertices_localIndices[dual_cell_layer_current][(8 * dual_cell_localIndex_current) | vertex_test_b] === edge_vertex_localIndex_b)
+                                        )
+                    
+                                        if (!test_matches) {
+                                            invalidate()
+                                            continue
+                                        }
+                    
+                                        edge_test = (four_times_edge_axis) | edge_quadrant_test
+                                        cells_polygons_by_edge_layers[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = layer // = new_polygon_layer
+                                        cells_polygons_by_edge_localIndices[dual_cell_layer_current][(12 * dual_cell_localIndex_current) + edge_test] = new_polygon_localIndex
+                    
+                                        circular_quadrant_prev = (circular_quadrant + circular_quadrant_offset_direction_prev) & 0b11
+                                        face_next = faces_next[four_times_edge_axis | circular_quadrant_prev]
+                    
+                                        dual_cell_layer_adjacent = dual_cells_neighbors_layers[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                                        dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                    
+                                        if (dual_cell_layer_adjacent === invalid_layer) {
+                                            invalidate()
+                                            continue
+                                        }
+                    
+                                        // it should be valid because a "tent" can only be formed between two triagonal corners
+                    
+                                        dual_cell_layer_current = dual_cell_layer_adjacent
+                                        dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+                                    }
+                                    else {
+                                        dual_cell_localIndex_adjacent = dual_cells_neighbors_localIndices[dual_cell_layer_current][(6 * dual_cell_localIndex_current) + face_next]
+                    
+                                        dual_cell_layer_current = dual_cell_layer_adjacent
+                                        dual_cell_localIndex_current = dual_cell_localIndex_adjacent
+                    
+                                        if (triangulation_start_vertex === -1)
+                                            triangulation_start_vertex = polygon_points
+                    
+                                        circular_quadrant += circular_quadrant_offset_direction_next
+                                        circular_quadrant &= 0b11
+                                    }
+                    
+                                    polygon_points++
+                                } while (!(
+                                    (dual_cell_layer_current === dual_cell_layer_initial) &&
+                                    (dual_cell_localIndex_current === dual_cell_localIndex_initial)
+                                ))
+                    
+                                if (dual_cell_layer_current === invalid_layer) {
+                                    invalidate()
+                                    continue
+                                }
+                    
+                                polygon_index = new_polygon_localIndex++
+                    
+                                new_polygon_vertices_offsets[new_polygon_localIndex] = polygon_vertices_offset + polygon_points
+                    
+                                new_polygon_edges_layers[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_layer_a : edge_vertex_layer_b
+                                new_polygon_edges_layers[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_layer_a : edge_vertex_layer_b
+                                new_polygon_edges_localIndices[(2 * polygon_index) + 0] = edge_vertex_above_a ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+                                new_polygon_edges_localIndices[(2 * polygon_index) + 1] = edge_vertex_above_b ? edge_vertex_localIndex_a : edge_vertex_localIndex_b
+
+                                // at this point, triangulation_start_vertex is >= 0
+                    
+                                /**
+                                 * this index is relative to {@link triangulation_start_vertex},
+                                 * and negative values mirror so that -x = {@link polygon_points} - x
+                                 * before adding the {@link triangulation_start_vertex}
+                                 */
+                                function loadVertex(index: number) {
+                                    if (index < 0)
+                                        index += polygon_points
+                                    index += triangulation_start_vertex
+                                    index %= polygon_points
+
+                                    const dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + index]
+                                    const dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + index]
+                                    const array = surfacePoints[dual_cell_layer]
+                                    x = array[(3 * dual_cell_localIndex) + 0]
+                                    y = array[(3 * dual_cell_localIndex) + 1]
+                                    z = array[(3 * dual_cell_localIndex) + 2]
+                                }
+                    
+                                /**
+                                 * Computes the zig-zag length to discern how triangulation should be done
+                                 * @param direction 0 = positive or zero triangulation_start
+                                 * (zig zag starts using vertices to left and right of triangulation_start);
+                                 * 1 = negative triangulation_start (zig zag starts from triangulation_start)
+                                 * @returns the length of the zig-zag lines
+                                 */
+                                function zigZagLength(direction: Direction) {
+                                    const zig_zag_lines = polygon_points - 3
+                                    // only diagonal zig-zag lines will be counted though
+                                    // both directions give the same number of straight-across lines
+                    
+                                    let ax: number,
+                                        ay: number,
+                                        az: number
+                    
+                                    let distance = 0
+                    
+                                    switch (direction) {
+                                        case 0:
+                                            for (let i = 0; i < zig_zag_lines; i += 2) {
+                                                const isInverse = (i & 1) === 1
+                                                const a = (i >> 1) + 1
+                                                const b = isInverse ? -(1 + a) : -a
+                    
+                                                loadVertex(a)
+                                                ax = x, ay = y, az = z
+                    
+                                                loadVertex(b)
+                                                distance += Math.sqrt(
+                                                    ((x - ax) ** 2) +
+                                                    ((y - ay) ** 2) +
+                                                    ((z - az) ** 2)
+                                                )
+                                            }
+                                            break
+                    
+                                        case 1:
+                                            for (let i = 0; i < zig_zag_lines; i += 2) {
+                                                const isInverse = (i & 1) === 1
+                                                const a = i >> 1
+                                                const b = isInverse ? (a + 1) : -(2 + a)
+                    
+                                                loadVertex(a)
+                                                ax = x, ay = y, az = z
+                    
+                                                loadVertex(b)
+                                                distance += Math.sqrt(
+                                                    ((x - ax) ** 2) +
+                                                    ((y - ay) ** 2) +
+                                                    ((z - az) ** 2)
+                                                )
+                                            }
+                                            break
+                                    }
+                    
+                                    return distance
+                                }
+                    
+                                new_polygon_triangulation_start[polygon_index] = zigZagLength(0) > zigZagLength(1) ? triangulation_start_vertex : -(1 + triangulation_start_vertex)
+                    
+                                if (edge_vertex_above_a) {
+                                    // vertices will be swapped in place
+                                    for (let i = Math.ceil(polygon_points / 2) - 1; i > 0; i--) {
+                                        const vertex_index_H = polygon_vertices_offset + ((triangulation_start_vertex + i) % polygon_points)
+                                        const vertex_index_T = polygon_vertices_offset + ((triangulation_start_vertex - i + polygon_points) % polygon_points)
+                    
+                                        let vertex_layer_H = new_polygon_vertices_dualCells_layers[vertex_index_H]
+                                        let vertex_layer_T = new_polygon_vertices_dualCells_layers[vertex_index_T]
+                                        let vertex_localIndex_H = new_polygon_vertices_dualCells_localIndices[vertex_index_H]
+                                        let vertex_localIndex_T = new_polygon_vertices_dualCells_localIndices[vertex_index_T]
+                    
+                                        new_polygon_vertices_dualCells_layers[vertex_index_H] = vertex_layer_T
+                                        new_polygon_vertices_dualCells_layers[vertex_index_T] = vertex_layer_H
+                                        new_polygon_vertices_dualCells_localIndices[vertex_index_H] = vertex_localIndex_T
+                                        new_polygon_vertices_dualCells_localIndices[vertex_index_T] = vertex_localIndex_H
+                                    }
+                                }
+                    
+                                for (let point = 0; point < polygon_points; point++) {
+                                    const polygon_vertex_dual_cell_layer = new_polygon_vertices_dualCells_layers[polygon_vertices_offset + point]
+                                    const polygon_vertex_dual_cell_localIndex = new_polygon_vertices_dualCells_localIndices[polygon_vertices_offset + point]
+                    
+                                    dual_cell_subdivide_recommendation_surfaceIntersects.set(polygon_vertex_dual_cell_layer, polygon_vertex_dual_cell_localIndex, true)
+                                }
                             }
                         }
                     }
