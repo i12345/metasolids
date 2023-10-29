@@ -8,7 +8,6 @@ import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext 
 import { Tensor, Rank } from "@tensorflow/tfjs";
 import { FieldsPointMapped } from "../../fields/point.js";
 import { ColorField } from "../../fields/fields/color.js";
-import { convertHsvToRgb } from "culori"
 import { ScalarField } from "../../fields/fields/scalar.js";
 import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensor2D } from "../../fields/tensor/tensor.js";
@@ -148,8 +147,39 @@ export class HSVTexture<
         const h = this.h.sample(location, context)
         const s = this.s.sample(location, context)
         const v = this.v.sample(location, context)
-        const rgb = convertHsvToRgb({ h, s, v })
-        return new Color(rgb.r, rgb.g, rgb.b)
+        
+        // based on https://github.com/Evercoder/culori/blob/main/src/hsv/convertHsvToRgb.js
+        // MIT licensed
+        // Based on: https://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
+
+        const h_adjusted = (h + 360) % 360
+        const h_over_60 = h_adjusted / 60
+        let f = Math.abs(((h_over_60) % 2) - 1);
+        let res: { r: number, g: number, b: number }
+        switch (Math.floor(h_over_60)) {
+            case 0:
+                res = { r: v, g: v * (1 - s * f), b: v * (1 - s) };
+                break;
+            case 1:
+                res = { r: v * (1 - s * f), g: v, b: v * (1 - s) };
+                break;
+            case 2:
+                res = { r: v * (1 - s), g: v, b: v * (1 - s * f) };
+                break;
+            case 3:
+                res = { r: v * (1 - s), g: v * (1 - s * f), b: v };
+                break;
+            case 4:
+                res = { r: v * (1 - s * f), g: v * (1 - s), b: v };
+                break;
+            case 5:
+                res = { r: v, g: v * (1 - s), b: v * (1 - s * f) };
+                break;
+            default:
+                return new Color()
+        }
+
+        return new Color(res.r, res.g, res.b)
     }
 
     render(resolution: Vec2, context: TextureRenderContext<Location, LocationElementType, LocationFuseMode, LocationContainer, Color, Color, Color, SampleContainer, Context, Objects, ObjIDsT, ObjIDsContainer, LocationVector, SampleVector, VectorContext>): FieldsPointMapped<{ r: number; g: number; b: number; a: number; }, Tensor<Rank.R2>> {
@@ -160,6 +190,8 @@ export class HSVTexture<
         const v = this.h.render(resolution, context_numbers)
         
         // based on https://github.com/Evercoder/culori/blob/main/src/hsv/convertHsvToRgb.js
+        // MIT licensed
+        // Based on: https://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
         const h_normalized = h.add(360).mod(360)
         const h_div_60 = h.div(60)
         const f = h_div_60.mod(2).sub(1).abs()
