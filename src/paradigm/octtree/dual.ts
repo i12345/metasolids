@@ -1,6 +1,6 @@
 import { AdjacentDirection, Axis, Direction, octTreeAddressPrecedes, OctTreeCell, octTreeCellsByDirection, OctTreeCellsMask, OctTreeCellsMaskOctTree, OctTreeReferences, OctTreeReferencesOctTreeGroups, OctTreeReferencesOctTreeGroupsTemplate as OctTreeReferencesOctTreeGroupsTemplate, OctTreeReferencesOctTreeLayer as OctTreeReferencesOctTreeLayer, OctTreeReferencesOctTreeLayersGrouped as OctTreeReferencesOctTreeLayersGrouped, OctTreeReferencesOctTreesGrouped, OctTreeReferencesOctTreeValue as OctTreeReferencesOctTreeValue, OctTreeReferencesOctTreeValuesGrouped as OctTreeReferencesOctTreeValuesGrouped, OctTreesTemplated, octTreeSubcell, octTreeSubcellOpposite, OctTreeSubdivisionProcessing, OctTreeSubdivisionProcessingContext, OctTreeSubdivisionProcessor, SubdivisionKey, TypedArrayOctTree } from "./index.js";
 import { ProcessorInitialization } from "../processing/processor.js";
-import { IndicesTypedArray } from "../../utils/index.js";
+import { allocNewFilledInvalid, IndicesTypedArray, TypedArrayConstructor } from "../../utils/index.js";
 import { groupPaths } from "../trees/multi-objects-groups.js";
 import { arrayCopy } from "../trees/index.js";
 
@@ -272,13 +272,13 @@ export class OctTreeWithDualSubdivisionProcessor<
             const max_number_new_dual_cells = 19 * number_subdivided_primary_cells
 
             const new_dual_cells_vertices: OctTreeReferencesOctTreeLayersGrouped<IndicesT> = {
-                layers: new Uint8Array(8 * max_number_new_dual_cells),
-                localIndices: new subdivision.typedArray(8 * max_number_new_dual_cells) as IndicesT
+                layers: allocNewFilledInvalid(Uint8Array, 8 * max_number_new_dual_cells),
+                localIndices: allocNewFilledInvalid(<TypedArrayConstructor<number, IndicesT>>subdivision.typedArray, 8 * max_number_new_dual_cells) as IndicesT
             }
 
             const new_dual_cells_neighbors: OctTreeReferencesOctTreeLayersGrouped<IndicesT> = {
-                layers: new Uint8Array(8 * max_number_new_dual_cells),
-                localIndices: new subdivision.typedArray(8 * max_number_new_dual_cells) as IndicesT
+                layers: allocNewFilledInvalid(Uint8Array, 8 * max_number_new_dual_cells),
+                localIndices: allocNewFilledInvalid(<TypedArrayConstructor<number, IndicesT>>subdivision.typedArray, 8 * max_number_new_dual_cells) as IndicesT
             }
 
             const {
@@ -296,15 +296,6 @@ export class OctTreeWithDualSubdivisionProcessor<
                 layers: new_dual_cells_lookup_corners_layers,
                 localIndices: new_dual_cells_lookup_corners_localIndices
             } = new_dual_cells_lookup_corners
-
-            new_dual_cells_vertices_layers.fill(invalid_layer)
-            new_dual_cells_vertices_localIndices.fill(invalid_localIndex)
-
-            new_dual_cells_neighbors_layers.fill(invalid_layer)
-            new_dual_cells_neighbors_localIndices.fill(invalid_localIndex)
-
-            new_dual_cells_lookup_corners_layers.fill(invalid_layer)
-            new_dual_cells_lookup_corners_localIndices.fill(invalid_localIndex)
 
             const lookup_corners_parents_layers = dual_cells.lookup.corners.layers.layers[parent_layer]
             const lookup_corners_parents_localIndices = dual_cells.lookup.corners.localIndices.layers[parent_layer]
@@ -326,15 +317,14 @@ export class OctTreeWithDualSubdivisionProcessor<
              * Is this only needed for new pyramid dual cells?
              * face = (2 * axis) + direction = index in [x-, x+, y-, y+, z-, z+]
              */
-            const tmp_lookup_adjacent = new subdivision.typedArray(6 * subdivision.layer_sizes.at(-2)!).fill(invalid_localIndex)
+            const tmp_lookup_adjacent = <IndicesT>allocNewFilledInvalid(<TypedArrayConstructor<number, IndicesT>>subdivision.typedArray, 6 * subdivision.layer_sizes.at(-2)!)
 
             /**
-             * tmp_lookup_diagonal[(12 * (local_index on parent_layer)) + direction_diagonal] = local index of dual cell in new layer
-             *
+             * tmp_lookup_diagonal[(12 * (local_index on parent_layer)) + direction_diagonal] = 1 + local index of dual cell in new layer
+             * 0 = invalid
              * diagonal_direction = (4 * plane) + quadrant
              */
             const tmp_lookup_diagonal = new subdivision.typedArray(12 * number_subdivided_primary_cells)
-            tmp_lookup_diagonal.fill(invalid_localIndex)
 
             for (let primary_local_index_group = 0; primary_local_index_group < number_subdivided_primary_cells; primary_local_index_group++) {
                 //TODO: OctTreeNeighbors class can optimize this
@@ -358,15 +348,15 @@ export class OctTreeWithDualSubdivisionProcessor<
                     new_dual_cells_lookup_corners_localIndices[(8 * primary_child_localIndex) | corner_opposite] = new_dual_cell_interior_localIndex
                 }
 
-                primary_parent_neighbors_adjacent_layers.fill(invalid_layer)
-                primary_parent_neighbors_adjacent_localIndices.fill(invalid_localIndex)
+                primary_parent_neighbors_adjacent_layers[0] = primary_parent_neighbors_adjacent_layers[1] = primary_parent_neighbors_adjacent_layers[2] = primary_parent_neighbors_adjacent_layers[3] = primary_parent_neighbors_adjacent_layers[4] = primary_parent_neighbors_adjacent_layers[5] = 0xFF
+                primary_parent_neighbors_adjacent_localIndices[0] = primary_parent_neighbors_adjacent_localIndices[1] = primary_parent_neighbors_adjacent_localIndices[2] = primary_parent_neighbors_adjacent_localIndices[3] = primary_parent_neighbors_adjacent_localIndices[4] = primary_parent_neighbors_adjacent_localIndices[5] = 0xFFFFFFFF
 
                 // make/update adjacent dual cells
                 for (let adjacent_direction = 0; adjacent_direction < 6; adjacent_direction++) {
                     const axis = <Axis>(adjacent_direction >> 1)
                     const axis_direction = <Direction>(adjacent_direction & 1)
 
-                    // focus = the primary cell that was subdivded
+                    // focus = the primary cell that was subdivided
 
                     const primary_focus_boundary_subcells = octTreeCellsByDirection[axis][axis_direction]
 
@@ -431,7 +421,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                                 }
                             }
                             else {
-                                // if both subdivded but this primary cell comes after that one, then simply record
+                                // if both subdivided but this primary cell comes after that one, then simply record
                                 // the new dual cell that was already made
 
                                 // the new dual cell's neighbor must be updated with this new interior cell
@@ -613,6 +603,8 @@ export class OctTreeWithDualSubdivisionProcessor<
 
                                         const diagonal_direction_opposite = 0b11 ^ diagonal_direction
                                         diagonal_neighbor_dual_cell_localIndex = tmp_lookup_diagonal[(12 * primary_parent_diagonal.layerLocalIndex.local_index) + diagonal_direction_opposite]
+                                        if (diagonal_neighbor_dual_cell_localIndex === 0) diagonal_neighbor_dual_cell_localIndex = 0xFFFFFFFF
+                                        else diagonal_neighbor_dual_cell_localIndex--
                                     }
                                 }
                                 else {
@@ -638,7 +630,7 @@ export class OctTreeWithDualSubdivisionProcessor<
                             new_dual_cells_neighbors_localIndices[(6 * dual_neighbor_adjacent_localIndex_0) + face1] = diagonal_neighbor_dual_cell_localIndex
                             new_dual_cells_neighbors_localIndices[(6 * dual_neighbor_adjacent_localIndex_1) + face0] = diagonal_neighbor_dual_cell_localIndex
 
-                            tmp_lookup_diagonal[(12 * primary_parent_local_index) + diagonal_direction] = diagonal_neighbor_dual_cell_localIndex
+                            tmp_lookup_diagonal[(12 * primary_parent_local_index) + diagonal_direction] = 1 + diagonal_neighbor_dual_cell_localIndex
 
                             // update diagonal dual cell's corners just for this primary_parent's children
                             const corner_subcell_a = <OctTreeCell>(cell_mask_prev_0 | cell_mask_prev_1)

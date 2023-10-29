@@ -698,7 +698,7 @@ export function field_point_vector_fill<
     const isDynamicObjIDsContainer = isDynamicVectorContainer((<FieldPointVectorWithMultiObjects>result)[ItemObjIDsKey])
     const resultIterator = vectorIterator(resultType, isDynamic, multiObjectIDs)
     const itemIterator = vectorIterator(itemType, isDynamic, multiObjectIDs)
-    const indices = new Uint32Array(resultIterator.length(result, result)).fill(0)
+    const indices = new Uint32Array(resultIterator.length(result, result))
     const copy = field_point_vectorized_multi_objects_new(
         resultType, 1, isDynamic, multiObjectIDs?.IDsType,
         <any>((!isDynamic && !isDynamicObjIDsContainer) ? field_point_multiObj_count(itemType, item) : undefined)

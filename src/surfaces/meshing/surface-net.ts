@@ -2,7 +2,7 @@ import { calculateNormals } from "playcanvas-extended";
 import { DualKey } from "../../paradigm/octtree/dual.js";
 import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
-import { IndicesTypedArray, indicesArrayType } from "../../utils/indices-array.js";
+import { IndicesTypedArray, allocNewFilledInvalid, indicesArrayType } from "../../utils/indices-array.js";
 import { VolumeKey, VolumeProcessor } from "../../volumes/processor.js";
 import { SamplingKey, VolumeSamplingContextKey } from "../../volumes/sampling/types.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
@@ -155,7 +155,7 @@ export class SurfaceNetMeshingProcessor<
 
         let vertex_prelim_next = 0
         const dual_cells_per_layer = dual_cells.vertices.layers.layers.map(vertices_layer => vertices_layer.length / 8)
-        const vertex_buffer_lookup = new TypedArrayOctTree<number, Uint32Array>(Uint32Array, dual_cells_per_layer.map(layer_size => new Uint32Array(layer_size).fill(invalid_uint32)))
+        const vertex_buffer_lookup = new TypedArrayOctTree<number, Uint32Array>(Uint32Array, dual_cells_per_layer.map(layer_size => allocNewFilledInvalid(Uint32Array, layer_size)))
         const surfacePoints = sampling[SurfaceNetKey].cells.surfacePoints.layers
 
         let max_number_vertices_prelim = 0
@@ -301,7 +301,7 @@ export class SurfaceNetMeshingProcessor<
         console.assert(number_vertices_prelim <= max_number_vertices_prelim)
 
         /** a flattened tree; each node references its parent or -1 if it is a root node */
-        const islands = new Uint32Array(number_vertices_prelim).fill(invalid_uint32)
+        const islands = allocNewFilledInvalid(Uint32Array, number_vertices_prelim)
 
         function root_island(x: number) {
             let x_prev: number
@@ -355,7 +355,7 @@ export class SurfaceNetMeshingProcessor<
         for (const island_ID of island_IDs) {
             let number_vertices = 0
 
-            const vertex_translation_toLocal = new Uint32Array(number_vertices_prelim).fill(invalid_uint32)
+            const vertex_translation_toLocal = allocNewFilledInvalid(Uint32Array, number_vertices_prelim)
 
             for (let i_vertex = 0; i_vertex < number_vertices_prelim; i_vertex++) {
                 if (islands[i_vertex] === island_ID) {

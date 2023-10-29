@@ -1,6 +1,6 @@
 import { Texture, TextureLocation, TextureSample } from "../../../textures/texture.js";
 import { StageAndTexture, VertexInterpolatingTexture, opaqueStagedTexture } from "../../../textures/index.js";
-import { GeneratorType, IndicesTypedArray, NumberTypedArray, Reflect_entries, mergeObjects, onlyOne } from "../../../utils/index.js";
+import { GeneratorType, IndicesTypedArray, NumberTypedArray, Reflect_entries, allocNewFilledInvalid, mergeObjects, onlyOne } from "../../../utils/index.js";
 import { MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "./implementation.js";
 import { VolumeLocation } from "../../../volumes/index.js";
 import { MultiObjectsGroupsMapped, groupKinds, groups, MultiObjectsGroupsTemplate, MultiObjectsIDs, extract, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
@@ -591,7 +591,7 @@ function qualityMetrics_compute<
     /** indices in UV-unwrapped, not decimated vertices, divided by 3 (indices in UV-unwrapped, not decimated, triangles) */
     const tri_n_max = UVunwrapping.finalIndices.length / 3
     const tri_n = Math.min(64, tri_n_max)
-    const tri_i_s = new Uint32Array(tri_n).fill(-1)
+    const tri_i_s = allocNewFilledInvalid(Uint32Array, tri_n)
     for (let i = 0; i < tri_n; i++) {
         let tri_i: number
         do tri_i = Math.min(tri_n - 1, Math.floor(tri_n * Math.random()))

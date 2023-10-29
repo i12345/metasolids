@@ -1,4 +1,4 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray, allocNewFilledInvalid } from "../../utils/indices-array.js";
 import { NumberArrayLike, TypedArray } from "../../utils/typed-array.js";
 import { arrayCopy } from "../../paradigm/trees/index.js"
 import { Axis, Direction, OctTreeCell, OctTreeCellsMask, Quadrant } from "../../paradigm/octtree/address.js";
@@ -796,10 +796,10 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
             const new_polygons_by_edge = context[SurfaceNetKey].cells.polygons_by_edge.subdivide(12 * number_new_dual_cells)
 
-            const {
-                layers: new_polygon_by_edges_layers,
-                localIndices: new_polygon_by_edges_localIndices,
-            } = new_polygons_by_edge
+            // const {
+            //     layers: new_polygon_by_edges_layers,
+            //     localIndices: new_polygon_by_edges_localIndices,
+            // } = new_polygons_by_edge
 
             const cells_polygons_by_edge_layers = context[SurfaceNetKey].cells.polygons_by_edge.layers.layers
             const cells_polygons_by_edge_localIndices = context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers
@@ -816,14 +816,14 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             let new_polygon_localIndex = 0
             const max_number_new_polygons = (number_new_dual_cells * 12) + (9 * 8 * number_subdivided_primary_cells)
 
-            const new_polygon_vertices_offsets = new Uint32Array(max_number_new_polygons).fill(0)
+            const new_polygon_vertices_offsets = new Uint32Array(max_number_new_polygons)
             const new_polygon_vertices_dualCells_layers: NumberArrayLike = [] // new Uint8Array(max_number_new_polygons * max_number_vertices_per_polygon)
             const new_polygon_vertices_dualCells_localIndices: NumberArrayLike = [] // new subdivision.typedArray(max_number_new_polygons * max_number_vertices_per_polygon)
             const new_polygon_edges_layers = new Uint8Array(2 * max_number_new_polygons)
             const new_polygon_edges_localIndices = <IndicesT>new subdivision.typedArray(2 * max_number_new_polygons)
 
             const invalid_int32 = (2 << 31) - 1
-            const new_polygon_triangulation_start = new Int32Array(max_number_new_polygons).fill(invalid_int32)
+            const new_polygon_triangulation_start = allocNewFilledInvalid(Int32Array, max_number_new_polygons)
 
             /**
              * this is a bitmap for whether a dual cell is part of at least one polygon or not
@@ -1170,7 +1170,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             ])
 
             const lookup_key_buffer_size_min = 2 * (subdivision.typedArray.BYTES_PER_ELEMENT + 1)
-            const lookup_key_buffer = Buffer.alloc(4 * Math.ceil(lookup_key_buffer_size_min / 4)).fill(0)
+            const lookup_key_buffer = Buffer.alloc(4 * Math.ceil(lookup_key_buffer_size_min / 4))
             const lookup_key_localIndices = new subdivision.typedArray(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + 0, 2)
             const lookup_key_layers = new Uint8Array(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + lookup_key_localIndices.byteLength, 2)
             const lookup_value_buffer = Buffer.alloc(1)
