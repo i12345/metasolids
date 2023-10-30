@@ -1,3 +1,4 @@
+import { isIndicesTypedArray } from "../../utils/indices-array.js"
 import { TypedArray, TypedArrayConstructor } from "../../utils/typed-array.js"
 import { SubdividableOctTree } from "./subdividable.js"
 
@@ -17,9 +18,16 @@ export class TypedArrayOctTree<
     }
 
     subdivide(newVoxels: number) {
-        const layer = new this.typedArray(newVoxels) as TypedArrayT
-        if (this.fillValue !== undefined)
-            layer.fill(this.fillValue as never)
+        let layer: TypedArrayT
+        if (this.fillValue && isIndicesTypedArray(this.typedArray)) {
+            const buffer = Buffer.alloc(this.typedArray.BYTES_PER_ELEMENT * newVoxels, <number>this.fillValue)
+            layer = <TypedArrayT>new this.typedArray(buffer.buffer, 0, newVoxels)
+        }
+        else {
+            layer = new this.typedArray(newVoxels) as TypedArrayT
+            if (this.fillValue !== undefined)
+                layer.fill(this.fillValue as never)
+        }
         this.layers.push(layer as any)
         return layer as TypedArrayT & ArrayLike<T>
     }

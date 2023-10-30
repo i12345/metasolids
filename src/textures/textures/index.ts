@@ -1,4 +1,5 @@
 export * from './constant.js'
+export * from './hsv.js'
 export * from './identity.js'
 export * from './mapping.js'
 export * from './remapped.js'

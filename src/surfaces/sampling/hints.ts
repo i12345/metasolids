@@ -347,8 +347,8 @@ export class SurfaceHintVolumeSamplingSubdivisionProcessor<
         const dual_cells_lookup_layer = dual_cells.lookup.corners.layers.layers[layer]
         const dual_cells_lookup_localIndices = dual_cells.lookup.corners.localIndices.layers[layer]
 
-        const polygons_by_edge_layers = context[SurfaceNetKey].cells.polygons_by_edge.layers.layers
-        const polygons_by_edge_localIndices = context[SurfaceNetKey].cells.polygons_by_edge.localIndices.layers
+        const polygons_by_edge_layers = context[SurfaceNetKey].dual_cells.polygons_by_edge.layers.layers
+        const polygons_by_edge_localIndices = context[SurfaceNetKey].dual_cells.polygons_by_edge.localIndices.layers
 
         const recommendation_pre = new Uint8Array(subdivision.layer_sizes[layer])
 

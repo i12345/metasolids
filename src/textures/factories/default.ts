@@ -6,8 +6,6 @@ export const defaultMaterialFactories: FactoryProcessor = new ConstantTextureFac
     Color.GRAY,
     {
         inputs: {},
-        outputs: {
-            value: ['material', 'textures', 'diffuse']
-        }
+        outputs: ['material', 'textures', 'diffuse']
     }
 )

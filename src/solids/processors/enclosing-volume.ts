@@ -234,7 +234,7 @@ export class SolidWithEnclosingVolumeProcessor<
         }
 
         const lookup_key_buffer_size_min = subdivision.typedArray.BYTES_PER_ELEMENT + 1
-        const lookup_key_buffer = Buffer.alloc(4 * Math.ceil(lookup_key_buffer_size_min / 4)).fill(0)
+        const lookup_key_buffer = Buffer.alloc(4 * Math.ceil(lookup_key_buffer_size_min / 4))
         const lookup_key_localIndex = new subdivision.typedArray(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + 0, 1)
         const lookup_key_layer = new Uint8Array(lookup_key_buffer.buffer, lookup_key_buffer.byteOffset + lookup_key_localIndex.byteLength, 1)
         const lookup_value_buffer = Buffer.alloc(1)

@@ -63,3 +63,21 @@ export function sumIndexedDeltas<T extends number | bigint, OffsetsT extends Typ
         return <T>sum
     }
 }
+
+export function isIndicesTypedArray<TypedArrayT>(array: TypedArrayT): TypedArrayT extends IndicesTypedArray ? true : false {
+    if (array instanceof Uint8Array ||
+        array instanceof Uint8ClampedArray ||
+        array instanceof Uint16Array ||
+        array instanceof Uint32Array ||
+        array instanceof Int8Array ||
+        array instanceof Int16Array ||
+        array instanceof Int32Array)
+        return <TypedArrayT extends IndicesTypedArray ? true : false>true
+    else 
+        return <TypedArrayT extends IndicesTypedArray ? true : false>false
+}
+
+export function allocNewFilledInvalid<TArray extends IndicesTypedArray>(type: TypedArrayConstructor<number, TArray>, length: number): TArray {
+    const buffer = Buffer.alloc(length * type.BYTES_PER_ELEMENT, 0xFF)
+    return <TArray>new type(buffer.buffer, 0, length)
+}
