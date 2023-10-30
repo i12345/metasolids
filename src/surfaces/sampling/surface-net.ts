@@ -928,55 +928,6 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
             for (const layer_size of subdivision.layer_sizes)
                 dual_cell_subdivide_recommendation_surfaceIntersects.subdivide(layer_size)
 
-            //TODO: compute whether each dual cell used to be intersected
-            // perhaps this isn't even desired if the it is desired that the surface have an even positioning of vertices
-
-            // function validate_polygons(
-            //     initial_dual_cell_layer: number,
-            //     initial_dual_cell_localIndex: number,
-            // ) {
-            //     const isNewInitialDualCell = (initial_dual_cell_layer === layer)
-
-            //     for (let edge = 0; edge < 12; edge++) {
-            //         const polygon_layer = (isNewInitialDualCell ? new_polygon_by_edges_layers : cells_polygons_by_edge_layers[initial_dual_cell_layer])[(12 * initial_dual_cell_localIndex) + edge]
-            //         if (polygon_layer !== invalid_layer) {
-            //             const polygon_localIndex = (isNewInitialDualCell ? new_polygon_by_edges_localIndices : cells_polygons_by_edge_localIndices[initial_dual_cell_layer])[(12 * initial_dual_cell_localIndex) + edge]
-            //             let initial_dual_cell_member: boolean | undefined = undefined
-
-            //             const isNewPolygon = (polygon_layer === layer)
-
-            //             const polygon_dual_cells_offset = (isNewPolygon ? new_polygon_vertices_offsets : polygons_vertices_offsets[polygon_layer])[polygon_localIndex]
-            //             const polygon_dual_cells_offset_next = (isNewPolygon ? new_polygon_vertices_offsets : polygons_vertices_offsets[polygon_layer])[polygon_localIndex + 1]
-            //             for (let dual_cell_i = polygon_dual_cells_offset; dual_cell_i < polygon_dual_cells_offset_next; dual_cell_i++) {
-            //                 const dual_cell_layer = (isNewPolygon ? new_polygon_vertices_dualCells_layers : polygon_vertices_dual_cells_layers[polygon_layer])[dual_cell_i]
-            //                 const dual_cell_localIndex = (isNewPolygon ? new_polygon_vertices_dualCells_localIndices : polygon_vertices_dual_cells_localIndices[polygon_layer])[dual_cell_i]
-
-            //                 const isNewDualCell = (dual_cell_layer === layer)
-
-            //                 let polygon_member = false
-
-            //                 initial_dual_cell_member ??= false
-            //                 if (dual_cell_layer === initial_dual_cell_layer &&
-            //                     dual_cell_localIndex === initial_dual_cell_localIndex)
-            //                     initial_dual_cell_member ||= true
-
-            //                 for (let edge_1 = 0; edge_1 < 12; edge_1++) {
-            //                     const referenced_polygon_layer = (isNewDualCell ? new_polygon_by_edges_layers : cells_polygons_by_edge_layers[dual_cell_layer])[(12 * dual_cell_localIndex) + edge_1]
-            //                     const referenced_polygon_localIndex = (isNewDualCell ? new_polygon_by_edges_localIndices : cells_polygons_by_edge_localIndices[dual_cell_layer])[(12 * dual_cell_localIndex) + edge_1]
-            //                     if (referenced_polygon_layer === polygon_layer && referenced_polygon_localIndex === polygon_localIndex)
-            //                         polygon_member ||= true
-            //                 }
-
-            //                 if (polygon_member === false)
-            //                     debugger
-            //             }
-
-            //             if (initial_dual_cell_member === false)
-            //                 debugger
-            //         }
-            //     }
-            // }
-
             function invalidate_polygons(
                 dual_cell_layer: number,
                 dual_cell_localIndex: number,
