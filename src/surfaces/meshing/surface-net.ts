@@ -156,7 +156,7 @@ export class SurfaceNetMeshingProcessor<
         let vertex_prelim_next = 0
         const dual_cells_per_layer = dual_cells.vertices.layers.layers.map(vertices_layer => vertices_layer.length / 8)
         const vertex_buffer_lookup = new TypedArrayOctTree<number, Uint32Array>(Uint32Array, dual_cells_per_layer.map(layer_size => allocNewFilledInvalid(Uint32Array, layer_size)))
-        const surfacePoints = sampling[SurfaceNetKey].cells.surfacePoints.layers
+        const surfacePoints = sampling[SurfaceNetKey].dual_cells.surfacePoints.layers
 
         let max_number_vertices_prelim = 0
         for (let layer = 1; layer < dual_cells_per_layer.length; layer++) {
