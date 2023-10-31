@@ -18,7 +18,7 @@ import * as tf from "@tensorflow/tfjs"
 import { tensor, vectorized } from "../fields/index.js"
 import { ScalarN } from "../utils/tf-rank.js"
 
-describe("playcanvas-node", () => {
+describe("physical-entity", () => {
     let jsdomCleanup: Function
     
     beforeEach(() => {
@@ -188,19 +188,18 @@ describe("playcanvas-node", () => {
             new tensor.FieldPointTensorExpressionArithmetic<boolean, tf.Rank.R0>(
                 tensor.FieldPointTensorArithmeticOp.gte,
                 new tensor.FieldPointTensorExpressionVariable(t),
-                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([10]))
+                new tensor.FieldPointTensorExpressionConstant(Number, tensor.scalarSpace, new Float32Array([1]))
             )
-            // new tensor.FieldPointTensorExpressionConstant<boolean, tf.Rank.R0>(Boolean, [], new Uint8Array([1]), 'bool')
         )
         
         return [
-            new textures.factories.ConstantTextureFactory(
-                0.3,
-                {
-                    inputs: {},
-                    outputs: ['a_initial']
-                }
-            ),
+            // new textures.factories.ConstantTextureFactory(
+            //     0.3,
+            //     {
+            //         inputs: {},
+            //         outputs: ['a_initial']
+            //     }
+            // ),
             new textures.factories.noise.OpenSimplexNoiseTextureFactory(
                 "plain",
                 {
@@ -246,7 +245,7 @@ describe("playcanvas-node", () => {
             new surfaces.texturing.SurfaceTexturingTensorSystemFactory(
                 system,
                 {
-                    resolution: new Vec2(512, 512),
+                    resolution: new Vec2(1024, 1024),
                     dt: 0.1,
                 },
                 {
@@ -304,11 +303,12 @@ describe("playcanvas-node", () => {
 
     // const texturers = spaceStretchTexturer
     const texturers = RDtexturer1
+    // const texturers = defaultTexturers
 
     testShape("one sphere", 1, (entity1, component1) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
     }, texturers)
-    return
+    
     testShape("multiple spheres", 3, (entity1, component1, component2, component3, component4) => {
         component1.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT
         component2.volume = new solids.metasolids.MetaSolidVolume(new solids.metasolids.MetaSphere()) as unknown as physicalEntity.VolumeT

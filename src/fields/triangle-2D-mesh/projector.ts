@@ -1155,6 +1155,11 @@ export class Triangle2DMeshTopologyProjectorFactory
         }
         indexOf(0, 0)
 
+        function bitmapLocation(index: number) {
+            return [Math.floor(w * vertices[(2 * index) + 0]), Math.floor(h * vertices[(2 * index) + 1])]
+        }
+        bitmapLocation(0)
+
         function localNeighborhood_index(arr: NumberTypedArray, index: number, margin_x = 5, margin_y = 4) {
             const x = Math.floor(vertices[(2 * index) + 0] * w);
             const y = Math.floor(vertices[(2 * index) + 1] * h);

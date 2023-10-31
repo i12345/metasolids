@@ -136,7 +136,7 @@ export class FieldPointTensorStatementDiffusion<
             }
         }
 
-        renderTensor(<tf.Tensor2D>x, 1, "diffusion_") // tf.max(sum).dataSync()[0])
+        // renderTensor(<tf.Tensor2D>x, 1, "diffusion_") // tf.max(sum).dataSync()[0])
         // renderTensor(<tf.Tensor2D>y[0], 1.5, "y_0_") // tf.max(sum).dataSync()[0])
         // renderTensor(<tf.Tensor2D>y[1], 1.5, "y_1_") // tf.max(sum).dataSync()[0])
         // renderTensor(<tf.Tensor2D>y[2], 1.5, "y_2_") // tf.max(sum).dataSync()[0])

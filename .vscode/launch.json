@@ -50,6 +50,31 @@
                 "<node_internals>/**"
             ],
             "type": "node",
+        },
+
+        {
+            "args": [
+                "-f",
+                "physical-entity",
+                "-u",
+                "tdd",
+                "--timeout",
+                "999999",
+                "--colors",
+                // "-p",
+                // "${workspaceFolder}/tsconfig.json",
+                "${workspaceFolder}/dist/**/*.spec.js",
+            ],
+            "internalConsoleOptions": "neverOpen",
+            "name": "Mocha Tests (prebuilt) (physical-entity)",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "request": "launch",
+            "sourceMaps": true,
+            "pauseForSourceMap": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
         }
     ],
     "compounds": []
