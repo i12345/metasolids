@@ -33,7 +33,6 @@
   "devDependencies": {
     "@tensorflow/tfjs-node": "^4.12.0",
     "@types/chai": "^4.3.9",
-    "@types/culori": "^2.0.3",
     "@types/jsdom-global": "^3.0.6",
     "@types/mocha": "^10.0.3",
     "@types/ronomon__hash-table": "^2.0.4",
