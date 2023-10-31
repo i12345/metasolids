@@ -9,9 +9,9 @@ import { SurfaceProcessingContext } from "./processing.js"
 import { SurfaceSample, Surface, SurfaceInstance } from "./surface.js"
 import { InstanceContext, Instancer } from "../paradigm/processing/instance.js"
 import { WithEncapsulating, encapsulated } from "../paradigm/trees/encapsulating.js"
-import { IndicesTypedArray } from "../utils/indices-array.js"
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js"
 import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js"
-import { NumberTypedArray } from "../utils/typed-array.js"
+import { NumberTypedArray } from "../paradigm/arrays/typed-array.js"
 
 export const VolumeSurfacesKey = Symbol('volume.surfaces')
 

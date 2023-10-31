@@ -2,10 +2,10 @@ import { Mat3, Mat4, Quat, Vec3 } from "playcanvas-extended";
 import { FieldInterpolationKeypoint, FieldInterpolationType, FieldInterpolator, InterpolationKeypoint, InterpolationManager, VectorFieldInterpolationType, VectorInterpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";
 import { Field } from "../field.js";
-import { TypedArrayList } from "../../utils/typed-array-list.js";
+import { TypedArrayList } from "../../paradigm/arrays/typed-array-list.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, IsDynamicVectorContainer } from "../vectorized/index.js";
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { mat4_from_mat3 } from "../../utils/matrix.js";
 import { vectorized } from "vectorized-functions";
 

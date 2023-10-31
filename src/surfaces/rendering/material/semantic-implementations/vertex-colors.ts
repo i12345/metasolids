@@ -10,9 +10,9 @@ import { SurfaceRendererIndividual } from "../../renderer.js"
 import { Material_Texture_Context, Material_Texture_Location } from "../material-texture.js"
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
-import { IndicesTypedArray } from "../../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../../paradigm/arrays/indices-array.js";
 import { FieldPointVectorContainerStatic } from "../../../../fields/vectorized/point.js";
-import { NumberTypedArray } from "../../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../../paradigm/arrays/typed-array.js";
 
 export class MaterialSemanticImplementation_VertexColors<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

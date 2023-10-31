@@ -3,7 +3,7 @@ import { ColorField } from "../../fields/fields/color.js";
 import { FieldPoint } from "../../fields/point.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext } from "../texture.js";
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { FieldPointTensor } from "../../fields/tensor/tensor.js";
 import * as tf from "@tensorflow/tfjs"
 

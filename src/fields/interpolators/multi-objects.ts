@@ -1,5 +1,5 @@
 import { MultiObjectsIDs, MultiObjectsMapped, MultiObjectsTemplate, PropertyPath, intract, makeExtractor, makeHas, objectValuePaths } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { Field } from "../field.js";
 import { FieldInterpolationType, FieldInterpolator, InterpolationKeypoint, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";

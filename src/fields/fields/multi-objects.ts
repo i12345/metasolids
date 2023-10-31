@@ -3,7 +3,7 @@ import { MultiObjectsIDs, MultiObjectsMapped, MultiObjectsTemplate, objectValueP
 import { PropertyPath } from "../../paradigm/trees/path.js";
 import { extract, hasPath, intract } from "../../paradigm/trees/tree.js";
 import { clone } from "../../utils/cloneable.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { Reflect_entries, Reflect_fromEntries } from "../../utils/reflect-entries.js";
 import { Field } from "../field.js";
 import { makeInterpolator } from "../interpolation.js";

@@ -4,9 +4,9 @@ import { TriangleCollision } from "../fields/triangle-2D-mesh/index.js";
 import { SurfaceProcessingContext } from "./processing.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "./volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSamplingContext } from "../volumes/volume.js";
-import { IndicesTypedArray } from "../utils/indices-array.js";
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js";
-import { NumberTypedArray } from "../utils/typed-array.js";
+import { NumberTypedArray } from "../paradigm/arrays/typed-array.js";
 
 export interface RayCollision {
     /**

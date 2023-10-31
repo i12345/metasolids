@@ -2,16 +2,17 @@ import { VectorFunction } from "vectorized-functions"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
 import { PropertyPath } from "../../paradigm/trees/path.js"
 import { extract } from "../../paradigm/trees/tree.js"
-import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js"
 import { FieldPoint } from "../point.js"
 import { FieldPointType, field_point_new } from "../type.js"
 import { vectorIterator, vectorizedIteratorGetSetLengthCurried } from "./iterators/factory.js"
-import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, field_point_vectorized_multi_objects_new, isDynamicVector } from "./point.js"
-import { NumberTypedArray } from "../../utils/typed-array.js"
+import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorWithMultiObjects, IsDynamicVectorContainer, field_point_vectorized_multi_objects_new, isDynamicVector } from "./point.js"
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js"
+import { SkipConfig } from "../../paradigm/arrays/index.js"
 
-export const VectorCallManager = Symbol()
+export const VectorCallSkip = Symbol()
 
-export type VectorizedType = FieldPoint | undefined | typeof VectorCallManager
+export type VectorizedType = FieldPoint | undefined | typeof VectorCallSkip
 export type VectorizedTypes<Method extends (...args: any[]) => any> =
     VectorizedType[]
     // {
@@ -129,12 +130,15 @@ export class FieldPointVectorFunction<
 
         const multiObjectsIDs = this.multiObjectsContextParamPath ? extract<MultiObjectsIDs<Objects, ObjIDsT>>(params, this.multiObjectsContextParamPath) : undefined
 
+        let skipConfig: SkipConfig | undefined
+
         params.forEach((value, paramIndex) => {
             const paramValue = <FieldPoint | FieldPointVector | FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer, ObjIDsT, ObjIDsContainer>>value
             const type = this.vectorizedParameterTypes[paramIndex]
             if (type === undefined)
                 args[argIndexNext++] = paramValue
-            else if (type === VectorCallManager) { }
+            else if (type === VectorCallSkip)
+                skipConfig = paramValue
             else {
                 args[argIndexNext] = field_point_new(<FieldPointType>type)
 
@@ -158,10 +162,10 @@ export class FieldPointVectorFunction<
             throw new Error("no vectorized args given")
 
         if (this.returnType) {
-            const result = field_point_vectorized_multi_objects_new(
-                this.returnType,
+            const result = field_point_vectorized_multi_objects_new<VectorizedReturnType & FieldPoint, ReturnTypeContainer>(
+                <FieldPointType<VectorizedReturnType & FieldPoint>>this.returnType,
                 vectorizedLength,
-                false,
+                <IsDynamicVectorContainer<ReturnTypeContainer>>false,
                 multiObjectsIDs?.IDsType,
             )
 
@@ -173,18 +177,44 @@ export class FieldPointVectorFunction<
             )
 
             let result_value: FieldPoint
-            for (let i = 0; i < vectorizedLength; i++) {
-                getters.forEach(getter => getter(i))
-                result_value = <FieldPoint>singularMethod.call(target, ...args)
-                result_iterator.set(result, result, result_value, i)
+
+            if (skipConfig) {
+                const skip_start = skipConfig.start
+                const skip_end = skipConfig.end
+                const skip = skipConfig.skip
+                for (let i = skip_start; i < skip_end; i++) {
+                    if (skip[i] !== 1) continue
+                    getters.forEach(getter => getter(i))
+                    result_value = <FieldPoint>singularMethod.call(target, ...args)
+                    result_iterator.set(result, result, result_value, i)
+                }
+            }
+            else {
+                for (let i = 0; i < vectorizedLength; i++) {
+                    getters.forEach(getter => getter(i))
+                    result_value = <FieldPoint>singularMethod.call(target, ...args)
+                    result_iterator.set(result, result, result_value, i)
+                }
             }
 
             return <ReturnType<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedArgsTypes, VectorizedReturnType, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>>>result
         }
         else {
-            for (let i = 0; i < vectorizedLength; i++) {
-                getters.forEach(getter => getter(i))
-                singularMethod.call(target, ...args)
+            if (skipConfig) {
+                const skip_start = skipConfig.start
+                const skip_end = skipConfig.end
+                const skip = skipConfig.skip
+                for (let i = skip_start; i < skip_end; i++) {
+                    if (skip[i] !== 0) continue
+                    getters.forEach(getter => getter(i))
+                    singularMethod.call(target, ...args)
+                }
+            }
+            else {
+                for (let i = 0; i < vectorizedLength; i++) {
+                    getters.forEach(getter => getter(i))
+                    singularMethod.call(target, ...args)
+                }
             }
 
             return <ReturnType<FieldPointVectorizedFunction<Target, MethodName, Method, VectorizedArgsTypes, VectorizedReturnType, ParameterContainers, ReturnTypeContainer, ObjIDsT, ObjIDsContainer>>>undefined

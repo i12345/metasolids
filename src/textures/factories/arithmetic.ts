@@ -3,7 +3,7 @@ import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.j
 import { FactoryMappings, FactoryProcessor, FactoryTemplate } from "../../paradigm/processing/processors/factory.js";
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { ArithmeticTexture } from "../index.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 

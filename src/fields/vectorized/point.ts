@@ -1,6 +1,7 @@
 import { MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js"
-import { IndicesTypedArray, Reflect_entries, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid, typedArrayClone, Reflect_fromEntries, isTypedArray } from "../../utils/index.js"
+import { IndicesTypedArray, NumberTypedArray, TypedArrayConstructor, TypedArrayList, invalidIndex, isNumberTypedArray, sumIndexedDeltas, typedArrayConstructor, typedArrayInvalid, typedArrayClone, isTypedArray, SkipConfig } from "../../paradigm/arrays/index.js"
+import { Reflect_entries, Reflect_fromEntries } from "../../utils/index.js"
 import { FieldPoint, FieldPointMapped, FieldPointMappedObjectsGroupedRemoved, FieldPointPrimitive, FieldsPoint } from "../point.js"
 import { FieldPointType, MultiObjectsFieldPointElement, field_point_multiObj_count, field_point_type_is_multiObj, field_point_type_singleObj } from "../type.js"
 import { FieldPointVectorIterator } from "./iterator.js"
@@ -73,7 +74,7 @@ export function isDynamicVector<
     >(
         elementType: FieldPointType<ElementType>,
         vector: FieldPointVector<ElementType, Container>,
-        vectorRoot?: FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<NumberTypedArray>, IndicesTypedArray, FieldPointVectorContainer<IndicesTypedArray>>
+        vectorRoot: FieldPointVectorWithMultiObjects<FieldPoint, FieldPointVectorContainer<NumberTypedArray>, IndicesTypedArray, FieldPointVectorContainer<IndicesTypedArray>> = <any>vector
     ): IsDynamicVector<ElementType, Container> {
     function recursive(
         elementType: FieldPointType,
@@ -104,8 +105,6 @@ export function isDynamicVector<
             return undefined
         }
     }
-
-    vectorRoot ??= <any>vector
 
     if (ItemObjIDsKey in vectorRoot!)
         return isDynamicVectorContainer<Container>((<any>vectorRoot)[ItemObjIDsKey])
@@ -163,6 +162,33 @@ export function field_point_vector_multi_objs_static_length<
     return <Vector extends FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> ? number : undefined>((ItemObjValuesOffsetsKey in vector_multiObj) ? sumIndexedDeltas(vector_multiObj[ItemObjValuesOffsetsKey], objIndices) : undefined)
 }
 
+export function field_point_vector_filter<
+        ElementType extends FieldPoint = FieldPoint,
+        Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
+        ObjIDsT extends IndicesTypedArray = Uint32Array,
+        ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerDynamic<ObjIDsT>,
+        Vector extends
+            FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer> =
+            FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>
+    >(
+        type: FieldPointType<ElementType>,
+        vector: Vector,
+        skip?: SkipConfig,
+        multiObjectsIDs?: MultiObjectsIDs<MultiObjectsTemplate, ObjIDsT>
+    ): Vector {
+    if (!skip) return vector
+    
+    const isDynamic = isDynamicVector(type, vector)
+    const iterator = vectorIterator(type, isDynamic, multiObjectsIDs, vector)
+    
+    const objectValuesStaticLength = ItemObjIDsKey in vector ? field_point_vector_multiObjs_count(vector, skip) : undefined
+    const dst = <Vector>field_point_vectorized_multi_objects_new(type, skip.n_elements, isDynamic, multiObjectsIDs?.IDsType, objectValuesStaticLength)
+    
+    iterator.scatter(dst, dst, vector, vector, skip)
+
+    return dst
+}
+
 export function field_point_vector_multi_objs_extract<
         ElementType extends FieldPoint = FieldPoint,
         Container extends FieldPointVectorContainer<NumberTypedArray> = FieldPointVectorContainer,
@@ -178,7 +204,8 @@ export function field_point_vector_multi_objs_extract<
         multiObjectIDs: MultiObjectsIDs<Objects, ObjIDsT>,
         objIDs?: ObjIDsT,
         referenceNonMultiObjContainers: boolean = true,
-        outputMultiObjVectors: boolean = false
+        outputMultiObjVectors: boolean = false,
+        skip?: SkipConfig
     ): [objID: number, objVector: Vector][] {
     const iterator = vectorIterator<ElementType, Container, Objects, ObjIDsT, ElementType, Vector>(type, isDynamicVector<ElementType, Container>(type, vector, <any>vector), multiObjectIDs, vector)
     const length = iterator.length(vector, vector)
@@ -429,9 +456,9 @@ export function field_point_vector_multiObjs_count<
         ObjIDsContainer extends FieldPointVectorContainer<ObjIDsT> = FieldPointVectorContainerStatic<ObjIDsT>,
     >(
         src: FieldPointVector<ElementType, Container> | FieldPointVectorWithMultiObjects<ElementType, Container, ObjIDsT, ObjIDsContainer>,
-        indices?: IndicesTypedArray
+        skipOrIndices?: SkipConfig | IndicesTypedArray
     ): number | undefined {
-    if (indices === undefined)
+    if (skipOrIndices === undefined)
         return (<FieldPointVectorWithMultiObjects<ElementType, Container>>src)[ItemObjIDsKey]?.length
     else {
         const src_objOffsets = (<FieldPointVectorWithMultiObjects<ElementType, Container>>src)[ItemObjValuesOffsetsKey]
@@ -444,11 +471,26 @@ export function field_point_vector_multiObjs_count<
         let src_objOffset_prev: number
         let src_objOffset_next: number
 
-        for (let i = 0; i < indices.length; i++) {
-            src_index = indices[i]
-            src_objOffset_prev = src_index === 0 ? 0 : src_objOffsets[src_index - 1]
-            src_objOffset_next = src_objOffsets[src_index]
-            sum += (src_objOffset_next - src_objOffset_prev)
+        if (isTypedArray(skipOrIndices)) {
+            const indices = <IndicesTypedArray>skipOrIndices
+            for (let i = 0; i < indices.length; i++) {
+                src_index = indices[i]
+                src_objOffset_prev = src_index === 0 ? 0 : src_objOffsets[src_index - 1]
+                src_objOffset_next = src_objOffsets[src_index]
+                sum += (src_objOffset_next - src_objOffset_prev)
+            }
+        }
+        else {
+            const skipConfig = <SkipConfig>skipOrIndices
+            const skip_start = skipConfig.start
+            const skip_end = skipConfig.end
+            const skip = skipConfig.skip
+            for (let src_index = skip_start; src_index < skip_end; src_index++) {
+                if (skip[src_index] !== 0) continue
+                src_objOffset_prev = src_index === 0 ? 0 : src_objOffsets[src_index - 1]
+                src_objOffset_next = src_objOffsets[src_index]
+                sum += (src_objOffset_next - src_objOffset_prev)
+            }
         }
 
         return sum

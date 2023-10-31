@@ -1,6 +1,6 @@
 import { Mat3, Vec2 } from "playcanvas-extended"
-import { IndicesTypedArray, indicesArrayType, invalidIndex } from "../../utils/indices-array.js"
-import { NumberTypedArray } from "../../utils/typed-array.js"
+import { IndicesTypedArray, indicesArrayType, invalidIndex } from "../../paradigm/arrays/indices-array.js"
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js"
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../vectorized/point.js"
 import { Triangles2DMesh } from "./mesh.js"
 

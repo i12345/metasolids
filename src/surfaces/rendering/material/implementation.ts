@@ -4,7 +4,7 @@ import { LevelOfDetailInfo } from "../mesh/LOD-info.js"
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js"
 import { VolumeLocation } from "../../../volumes/index.js"
 import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js"
-import { IndicesTypedArray } from "../../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js"
 
 export type Cost_Space = {
     /**

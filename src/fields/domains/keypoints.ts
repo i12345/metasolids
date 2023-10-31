@@ -1,6 +1,6 @@
 import { vectorized } from "vectorized-functions";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldInterpolationKeypoint, FieldInterpolator, InterpolationManager, makeInterpolator } from "../interpolation.js";

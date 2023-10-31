@@ -4,7 +4,7 @@ import { extract, intract } from "../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldsField } from "../../fields/fields/fields.js";
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { Vec2 } from "playcanvas-extended";
 
 export type ObjectsCombiningTexturesTemplated<

@@ -6,12 +6,12 @@ import { VolumeProcessingWithSolids, VolumeSolidProcessing, VolumeSolidProcessin
 import { Solid } from "../solid.js";
 import { EncapsulatingKey, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
 import { OctTreeReferencesOctTreeLayersGrouped } from "../../paradigm/octtree/references.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import HashTable from "@ronomon/hash-table"
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
 
 export const VolumeVoxelsKey = Symbol("voxels")

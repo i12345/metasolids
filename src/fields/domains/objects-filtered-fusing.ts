@@ -2,8 +2,8 @@ import { vectorized } from "vectorized-functions";
 import { MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, PropertyPath, WithMultiObjectsIDs, groupKinds, groups } from "../../paradigm/trees/index.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { GeneratorType } from "../../utils/generator-type.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { SampleDomain, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { MultiObjectsField } from "../fields/multi-objects.js";
@@ -13,6 +13,7 @@ import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWith
 import { MultiObjectsDomainInternalPreservedGroupsKinds, MultiObjectsDomainInternalPreservedGroupsKindsTemplate } from "./multi-objects.js";
 import { TransformingSampleDomain } from "./transforming.js";
 import { VectorSamplingContext } from "./vector.js";
+import { SkipConfig } from "../../paradigm/arrays/skip.js";
 
 export class ObjectsFilteredFusingSampleDomain<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,
@@ -423,9 +424,10 @@ export class ObjectsFilteredFusingSampleDomain<
             samples: InnerSampleVector,
             innerLocations: LocationVector,
             outerLocations: LocationVector,
-            context: { outer: ResultVectorContext, inner: InnerVectorContext }
+            context: { outer: ResultVectorContext, inner: InnerVectorContext },
+            skip?: SkipConfig
         ): ResultSampleVector {
-        const objVectors = field_point_vector_multi_objs_extract <
+        const objVectors = field_point_vector_multi_objs_extract<
                 InnerSampleElementType,
                 SampleContainer,
                 Objects,
@@ -436,7 +438,10 @@ export class ObjectsFilteredFusingSampleDomain<
                 samples,
                 this.inner.field.elementType,
                 context.outer[MultiObjectsIDsKey],
-                this.objectsFilter
+                this.objectsFilter,
+                undefined,
+                undefined,
+                skip
             )
         
         return fuseVectors<

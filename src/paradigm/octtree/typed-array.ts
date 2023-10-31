@@ -1,5 +1,5 @@
-import { isIndicesTypedArray } from "../../utils/indices-array.js"
-import { TypedArray, TypedArrayConstructor } from "../../utils/typed-array.js"
+import { isIndicesTypedArray } from "../arrays/indices-array.js"
+import { TypedArray, TypedArrayConstructor } from "../arrays/typed-array.js"
 import { SubdividableOctTree } from "./subdividable.js"
 
 export class TypedArrayOctTree<

@@ -1,5 +1,5 @@
-import { TypedArray } from "../../utils/typed-array.js"
-import { MultiObjectsGroupsTemplateOrLeaf, MultiObjectsGroupsOrLeafMapped } from "./multi-objects-groups.js"
+import { TypedArray } from "./typed-array.js"
+import { MultiObjectsGroupsTemplateOrLeaf, MultiObjectsGroupsOrLeafMapped } from "../trees/multi-objects-groups.js"
 
 export function arrayCopy<
         T extends TypedArray<number>,

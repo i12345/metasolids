@@ -1,5 +1,5 @@
-import { IndicesTypedArray, allocNewFilledInvalid } from "../../utils/indices-array.js";
-import { NumberArrayLike, TypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray, allocNewFilledInvalid } from "../../paradigm/arrays/indices-array.js";
+import { NumberArrayLike, TypedArray } from "../../paradigm/arrays/typed-array.js";
 import { arrayCopy } from "../../paradigm/trees/index.js"
 import { Axis, DiagonalDirection, Direction, OctTreeCell, OctTreeCellsMask, Quadrant, TriagonalDirection } from "../../paradigm/octtree/address.js";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualGroupsTemplate, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";

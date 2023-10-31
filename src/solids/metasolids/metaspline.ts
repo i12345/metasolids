@@ -14,8 +14,8 @@ import { ScalarField } from "../../fields/fields/scalar.js";
 import { FieldPointVector, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, FuseMode, IsDynamicVector, PrimitiveFuseMode, field_point_vector_fill, field_point_vector_mat4_transformPoint, field_point_vector_mat4_transformPoint_single_multiple, field_point_vector_multiObjs_count, field_point_vector_vec3_normalize, field_point_vectorized_multi_objects_new, field_point_vectorized_new, fuseModes, fuseVectors } from "../../fields/vectorized/index.js";
 import { vectorized } from "vectorized-functions";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
-import { NumberTypedArray, typedArrayClone, typedArrayConstructor } from "../../utils/typed-array.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { NumberTypedArray, typedArrayClone, typedArrayConstructor } from "../../paradigm/arrays/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js";
 import { equals } from "../../utils/equals.js";
 

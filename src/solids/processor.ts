@@ -3,9 +3,9 @@ import { Surface, SurfaceSample } from "../surfaces/surface.js"
 import { SurfaceProcessingContext, SurfaceProcessor } from "../surfaces/processing.js"
 import { VolumeSample } from "../volumes/volume.js"
 import { Solid } from "./solid.js"
-import { IndicesTypedArray } from "../utils/indices-array.js"
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js"
 import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js"
-import { NumberTypedArray } from "../utils/typed-array.js"
+import { NumberTypedArray } from "../paradigm/arrays/typed-array.js"
 
 export interface SolidProcessingContext<
         SampleProcessingContextT = any,

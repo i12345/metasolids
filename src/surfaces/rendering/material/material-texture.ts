@@ -5,9 +5,9 @@ import { VolumeLocation } from "../../../volumes/volume.js"
 import { Material_Groups, Material_Groups_Template, Material_Groups_Textures_TexelTypes, Material_Groups_Textures_TexelTypes_Template } from "./groups.js"
 import { defaultField } from "../../../fields/fields/default.js";
 import { Color } from "playcanvas-extended";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
 import { FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js";
 
 export type Material_Texture_Location<
         VolumeLocationT extends VolumeLocation = VolumeLocation

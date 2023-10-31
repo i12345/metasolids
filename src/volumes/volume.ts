@@ -1,7 +1,6 @@
-import { Vec3 } from "playcanvas-extended";
+import { Mat4, Vec3 } from "playcanvas-extended";
 import { SampleDomain, SamplingContext } from "../fields/index.js"
 import { FieldsField, ScalarField, Vec3Field } from "../fields/fields/index.js";
-import { FuseMode, fuseModes } from "../fields/vectorized/index.js";
 
 export type VolumeLocation = {
     /**
@@ -38,6 +37,7 @@ export const defaultVolumeSampleField = new FieldsField<VolumeSample>({
 })
 
 export const VolumeSampleKey = Symbol("volume.sample")
+export const VolumeWorldTransformKey = Symbol("world")
 
 export interface VolumeSamplingContext<
         Location extends VolumeLocation = VolumeLocation,
@@ -47,6 +47,7 @@ export interface VolumeSamplingContext<
     > extends
     SamplingContext<Location, LocationElementType, LocationFuseMode> {
     [VolumeSampleKey]: SampleProcessingContextT
+    [VolumeWorldTransformKey]: Mat4
 }
 
 export interface Volume<

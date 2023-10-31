@@ -1,5 +1,5 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js"
-import { TypedArrayConstructor } from "../../utils/typed-array.js"
+import { IndicesTypedArray } from "../arrays/indices-array.js"
+import { TypedArrayConstructor } from "../arrays/typed-array.js"
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplateLeaf } from "../trees/index.js"
 import { Processor } from "../processing/processor.js"
 import { Axis, Direction, OctTreeAddress, OctTreeCell, octTreeSubcell } from "./address.js"

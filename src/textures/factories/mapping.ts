@@ -3,8 +3,8 @@ import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/
 import { FactoryMappings, FactoryProcessor, FactoryTemplate } from "../../paradigm/processing/processors/factory.js";
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate, PropertyMapping } from "../../paradigm/trees/index.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { MappingTexture } from "../index.js";
 import { TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 

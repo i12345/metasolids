@@ -1,8 +1,8 @@
 import { MultiObjectsGroupedObjectsKey } from "../../../paradigm/trees/multi-objects-groups.js";
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../../paradigm/trees/multi-objects.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
-import { TypedArrayList } from "../../../utils/typed-array-list.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
+import { TypedArrayList } from "../../../paradigm/arrays/typed-array-list.js";
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js";
 import { FieldPoint, FieldPointPrimitive, FieldsPoint } from "../../point.js";
 import { FieldPointType } from "../../type.js"
 import { FieldPointVectorIterator } from "../iterator.js";

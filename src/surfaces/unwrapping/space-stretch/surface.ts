@@ -1,6 +1,6 @@
 import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js"
-import { IndicesTypedArray } from "../../../utils/indices-array.js"
-import { NumberTypedArray } from "../../../utils/typed-array.js"
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js"
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js"
 import { SurfaceSample } from "../../surface.js"
 import * as tf from "@tensorflow/tfjs"
 import { SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../../texturing/types.js"

@@ -1,7 +1,7 @@
 import { FieldPointVector, FieldPointVectorContainer } from "../../fields/vectorized/index.js";
 import { OctTreeWithDualGroups, OctTreeWithDualValue, OctTreeWithDualValuesGrouped, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped } from "../../paradigm/octtree/dual.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { VolumeProcessingContextWithSampling, VolumeProcessingWithSampling } from "../../volumes/sampling/types.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";

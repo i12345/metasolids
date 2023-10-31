@@ -3,7 +3,7 @@ import { Cost_Space, MaterialSemanticImplementationStorageClass, MaterialSemanti
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { VolumeLocation } from "../../../../volumes/index.js";
 import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../../paradigm/arrays/indices-array.js";
 
 export class MaterialSemanticImplementationStorageClass_Constant<
         VolumeLocationT extends VolumeLocation = VolumeLocation

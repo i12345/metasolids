@@ -11,9 +11,9 @@ import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcess
 import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../../volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../../volumes/volume.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../../fields/vectorized/index.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js";
 
 export interface VolumeWithSurfacesIndividualTexturesRayCollision<
     TextureGroups extends MultiObjectsGroupsTemplate = MultiObjectsGroupsTemplate,

@@ -8,8 +8,8 @@ import { SurfaceUVUnwrapping } from "./algorithm.js";
 import { VolumeWithSurfacesRayCollider, VolumeWithSurfacesTriangleRayCollider, VolumeWithSurfacesTriangleRayColliderProcessingContext, VolumeWithSurfacesTriangleRayCollision } from "../../ray-collider.js";
 import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, VolumeProcessingWithSurfacesInstance, VolumeSurfacesKey } from "../../volume-surfaces.js";
 import { Volume, VolumeLocation, VolumeSamplingContext } from "../../../volumes/volume.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
-import { NumberTypedArray, TypedArray } from "../../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray, TypedArray } from "../../../paradigm/arrays/typed-array.js";
 import { FieldPointVector, FieldPointVectorContainer } from "../../../fields/vectorized/index.js";
 
 export interface VolumeWithSurfacesUVRayCollision extends VolumeWithSurfacesTriangleRayCollision {

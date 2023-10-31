@@ -1,5 +1,6 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js"
-import { NumberTypedArray } from "../../utils/typed-array.js"
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js"
+import { SkipConfig } from "../../paradigm/arrays/skip.js"
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js"
 import { FieldPoint } from "../point.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType } from "./point.js"
 
@@ -23,7 +24,7 @@ export interface FieldPointVectorIterator<
         dst_vectorized: FieldPointVector<VectorizedPoint, Container>, dst_vectorizedRoot: VectorizedRoot,
         src_vectorized: FieldPointVector<VectorizedPoint, Container>, src_vectorizedRoot: VectorizedRoot,
         /** indices[dst_index] = src_index */
-        indices: IndicesTypedArray,
+        skipOrIndices: SkipConfig | IndicesTypedArray,
         isMultiObjMapped?: boolean
     ): void
 
@@ -31,7 +32,7 @@ export interface FieldPointVectorIterator<
         dst_vectorized: FieldPointVector<VectorizedPoint, Container>, dst_vectorizedRoot: VectorizedRoot,
         src_vectorized: FieldPointVector<VectorizedPoint, Container>, src_vectorizedRoot: VectorizedRoot,
         /** indices[dst_index] = src_index */
-        indices: IndicesTypedArray,
+        skipOrIndices: SkipConfig | IndicesTypedArray,
         /** weights[dst_index] = weight for src index */
         weights: NumberTypedArray,
         isMultiObjMapped?: boolean

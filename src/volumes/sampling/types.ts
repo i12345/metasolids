@@ -5,7 +5,7 @@ import { OctTreeSubdividingProcessing, OctTreeSubdividingProcessingContextForSub
 import { EncapsulatingKey, WithEncapsulating } from "../../paradigm/trees/encapsulating.js"
 import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/multi-objects-groups.js"
 import { WithMultiObjectsIDs } from "../../paradigm/trees/multi-objects.js"
-import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js"
 import { VolumeProcessing, VolumeProcessingContext } from "../processor.js"
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"

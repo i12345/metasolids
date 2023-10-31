@@ -2,7 +2,7 @@ import { calculateNormals } from "playcanvas-extended";
 import { DualKey } from "../../paradigm/octtree/dual.js";
 import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
-import { IndicesTypedArray, allocNewFilledInvalid, indicesArrayType } from "../../utils/indices-array.js";
+import { IndicesTypedArray, allocNewFilledInvalid, indicesArrayType } from "../../paradigm/arrays/indices-array.js";
 import { VolumeKey, VolumeProcessor } from "../../volumes/processor.js";
 import { SamplingKey, VolumeSamplingContextKey } from "../../volumes/sampling/types.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/volume.js";
@@ -18,7 +18,7 @@ import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext 
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vector_fill, field_point_vectorized_multi_objects_new } from "../../fields/vectorized/point.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/multi-objects.js";
 import { SampleDomainLocationFieldKey } from "../../fields/domain.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { FieldPoint, field_point_type_default } from "../../fields/index.js";
 
 export class SurfaceNetMeshingProcessor<

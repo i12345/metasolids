@@ -1,6 +1,6 @@
 import { vectorized } from "vectorized-functions";
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { keypoint_index } from "../../utils/keypoints_index.js";
 import { Field } from "../field.js";
 import { InterpolationKeypoint, Interpolator, VectorFieldInterpolationType, VectorInterpolator, makeInterpolator } from "../interpolation.js";
@@ -8,7 +8,7 @@ import { FieldPoint } from "../point.js";
 import { FieldPointType } from "../type.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorIterator, IsDynamicVector, field_point_vector_multi_objs_static_length, field_point_vectorized_multi_objects_new } from "../vectorized/index.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 
 export class ConstantInterpolationType<
         Point extends FieldPoint = FieldPoint,

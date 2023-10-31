@@ -1,12 +1,12 @@
 import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
-import { TypedArrayList } from "../../../utils/typed-array-list.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
+import { TypedArrayList } from "../../../paradigm/arrays/typed-array-list.js";
 import { FieldPoint, FieldPointMapped, FieldPointPrimitive } from "../../point.js";
 import { FieldPointType, field_point_type_size } from "../../type.js"
 import { FuseMode, FusingFieldPointVectorWithMultiObjects, PrimitiveFuseMode } from "../fusing.js";
 import { FieldPointVectorIterator } from "../iterator.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic, FieldPointVectorContainerType, FieldPointVectorWithMultiObjRoot, FieldPointVectorWithMultiObjects, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../point.js";
-import { NumberTypedArray, isNumberTypedArray, typedArrayClone, TypedArrayConstructor, typedArrayInvalid, typedArrayConstructor } from "../../../utils/typed-array.js";
+import { NumberTypedArray, isNumberTypedArray, typedArrayClone, TypedArrayConstructor, typedArrayInvalid, typedArrayConstructor } from "../../../paradigm/arrays/typed-array.js";
 
 export abstract class PrimitiveFieldPointVectorIterator<
         Point extends FieldPointPrimitive = FieldPointPrimitive,

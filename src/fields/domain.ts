@@ -29,5 +29,5 @@ export interface SampleDomain<
     // it would be easier to just store this information in the context
 
     init(context: Context): void
-    sample(location: Location, context: Context): Sample
+    sample(location: Location, context: Context): Sample | undefined
 }

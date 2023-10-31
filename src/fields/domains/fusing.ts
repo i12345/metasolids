@@ -1,7 +1,7 @@
 import { vectorized } from "vectorized-functions";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray, sum } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray, sum } from "../../paradigm/arrays/typed-array.js";
 import { SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { FieldPoint } from "../point.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, FuseMode, FusingFieldPointVectorWithMultiObjects, IsDynamicVector, ItemNextObjectIndexKey, ItemObjValuesOffsetsKey, field_point_vectorized_multi_objects_new, isDynamicVector } from "../vectorized/index.js";
@@ -9,6 +9,7 @@ import { VectorSampleDomain, VectorSamplingContext } from "./vector.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
 import { FieldPointType } from "../type.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
+import { SkipConfig } from "../../paradigm/arrays/skip.js";
 
 export const FusedVectorSamplingKey = Symbol("fused-vector-sampling")
 
@@ -158,6 +159,7 @@ export interface FusingVectorSampleDomain<
         context: VectorContext,
         sampleType: FieldPointType<SampleElementType>,
         fuseMode: FuseMode<SampleFuseMode>,
+        skip?: SkipConfig,
     ): void
 
     sample_fused_results(
@@ -166,6 +168,7 @@ export interface FusingVectorSampleDomain<
         context: VectorContext,
         sampleType: FieldPointType<SampleElementType>,
         fuseMode: FuseMode<SampleFuseMode>,
+        skip?: SkipConfig,
     ): void
 }
 
@@ -459,9 +462,10 @@ export class FusingVectorSampleDomainFacade<
                         Inner
                     >,
                 location: LocationVector,
-                context: Context
+                context: Context,
+                skip?: SkipConfig
             ) {
-        return fusingVectorSampling.sample(this.inner, location, context)
+        return fusingVectorSampling.sample(this.inner, location, context, skip)
     }
 }
 
@@ -550,11 +554,12 @@ export const fusingVectorSampling = {
                 >,
             locations: LocationVector,
             context: Context,
-            fuseMode?: FuseMode<SampleFuseMode>
+            fuseMode?: FuseMode<SampleFuseMode>,
+            skip?: SkipConfig
         ): FusingFieldPointVectorWithMultiObjects<SampleElementType, ObjIDsT, SampleContainer, ObjIDsContainer> {
         const multiObjectIDs = context[MultiObjectsIDsKey]
         const location_type = context[SampleDomainLocationFieldKey].elementType
-        const n_sample = vectorIterator(location_type, isDynamicVector<LocationElementType, LocationContainer>(location_type, locations), multiObjectIDs).length(locations, locations)
+        const n_location = vectorIterator(location_type, isDynamicVector<LocationElementType, LocationContainer>(location_type, locations), multiObjectIDs).length(locations, locations)
 
         const sampleType = domain.field.elementType
         fuseMode ??= domain.field.fuseMode
@@ -562,23 +567,25 @@ export const fusingVectorSampling = {
         if (!domain.can_fuse(sampleType, fuseMode, context))
             throw new Error()
 
-        const objCounts = <ObjIDsT>new multiObjectIDs.IDsType(n_sample)
-        domain.sample_fused_objectCounts(objCounts, locations, context, sampleType, fuseMode)
+        const objCounts = <ObjIDsT>new multiObjectIDs.IDsType(n_location)
+        domain.sample_fused_objectCounts(objCounts, locations, context, sampleType, fuseMode, skip)
 
         const samples = <FusingFieldPointVectorWithMultiObjects<SampleElementType, ObjIDsT, SampleContainer, ObjIDsContainer>>field_point_vectorized_multi_objects_new<SampleElementType, SampleContainer, ObjIDsT, ObjIDsContainer>(
             sampleType,
-            n_sample,
+            skip?.n_elements ?? n_location,
             <IsDynamicVector<SampleElementType, SampleContainer>>false,
             multiObjectIDs.IDsType,
             <any>sum(objCounts)
         )
 
-        samples[ItemNextObjectIndexKey] = <ObjIDsT>new multiObjectIDs.IDsType(n_sample).fill(0)
+        samples[ItemNextObjectIndexKey] = <ObjIDsT>new multiObjectIDs.IDsType(n_location).fill(0)
         const objOffsets = samples[ItemObjValuesOffsetsKey]
-        for (let i_sample = 0; i_sample < n_sample; i_sample++)
-            objOffsets[i_sample] = (i_sample > 0 ? objOffsets[i_sample - 1] : 0) + objCounts[i_sample]
+        if (n_location > 0)
+            objOffsets[0] = objCounts[0]
+        for (let i_sample = 1; i_sample < n_location; i_sample++)
+            objOffsets[i_sample] = objOffsets[i_sample - 1] + objCounts[i_sample]
 
-        domain.sample_fused_results(samples, locations, context, sampleType, fuseMode)
+        domain.sample_fused_results(samples, locations, context, sampleType, fuseMode, skip)
 
         delete (<Partial<FusingFieldPointVectorWithMultiObjects>>samples)[ItemNextObjectIndexKey]
 

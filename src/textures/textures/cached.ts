@@ -2,8 +2,8 @@ import { Vec2 } from "playcanvas-extended";
 import { VectorSamplingContext } from "../../fields/domains/index.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/vectorized/index.js";
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { tensor } from "../../fields/index.js";
 

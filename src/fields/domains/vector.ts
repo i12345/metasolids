@@ -1,11 +1,12 @@
 import { MultiObjectsIDs, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldPoint } from "../point.js";
 import { FieldPointType } from "../type.js"
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, VectorizedTypes } from "../vectorized/index.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, VectorCallSkip, VectorizedTypes } from "../vectorized/index.js";
+import { SkipConfig } from "../../paradigm/arrays/index.js";
 
 export const VectorSampleFunction = Symbol("vector-sample()")
 
@@ -98,16 +99,16 @@ export function makeVectorSamplingContext<
                     LocationVector,
                     SampleVector
                 >["sample"],
-            [LocationElementType, undefined],
+            [LocationElementType, undefined, typeof VectorCallSkip],
             SampleElementType,
-            [LocationContainer, undefined],
+            [LocationContainer, undefined, undefined],
             SampleContainer,
             Objects,
             ObjIDsT,
             ObjIDsContainer
         >(
             "sample",
-            [<LocationElementType extends FieldPoint ? FieldPointType<LocationElementType> : LocationElementType>context[SampleDomainLocationFieldKey].elementType, undefined],
+            [<LocationElementType extends FieldPoint ? FieldPointType<LocationElementType> : LocationElementType>context[SampleDomainLocationFieldKey].elementType, undefined, VectorCallSkip],
             <SampleElementType extends FieldPoint ? (FieldPointType<SampleElementType> | undefined) : undefined>field.elementType,
             [1, MultiObjectsIDsKey]
         )
@@ -163,7 +164,8 @@ export type VectorSamplingContext<
                 SingularContext,
                 LocationVector,
                 SampleVector
-            >
+            >,
+        skip?: SkipConfig
     ): SampleVector
 }
 

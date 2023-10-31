@@ -5,8 +5,8 @@ import { FieldPointType } from "../../type.js"
 import { vectorIterator } from "./factory.js"
 import { FieldPointVectorIterator } from "../iterator.js"
 import { FieldPointVector, ItemObjValuesOffsetsKey, ItemObjIDsKey, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, FieldPointVectorContainerType, FieldPointVectorContainerDynamic } from "../point.js"
-import { IndicesTypedArray, invalidIndex } from "../../../utils/indices-array.js"
-import { NumberTypedArray } from "../../../utils/typed-array.js"
+import { IndicesTypedArray, invalidIndex } from "../../../paradigm/arrays/indices-array.js"
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js"
 
 export class MultiObjectsFieldPointVectorIteratorStatic<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

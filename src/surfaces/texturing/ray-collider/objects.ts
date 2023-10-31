@@ -13,9 +13,9 @@ import { VolumeProcessingWithSurfaces, VolumeProcessingWithSurfacesContext, Volu
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../../volumes/volume.js";
 import { VolumeWithSurfacesUVRayCollider, VolumeWithSurfacesUVRayColliderProcessingContext, VolumeWithSurfacesUVRayCollision } from "../../unwrapping/uv/ray-collider.js";
 import { VolumeWithSurfacesRayCollider } from "../../ray-collider.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js";
 
 export interface VolumeWithSurfacesObjectsTexturesRayCollision<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

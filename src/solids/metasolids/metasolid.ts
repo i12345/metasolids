@@ -12,13 +12,14 @@ import { VolumeSamplingContextWithSurfaceHints } from "../../surfaces/sampling/h
 import { VolumeWithBoundingBox } from "../../volumes/volumes/bounded.js";
 import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js";
 import { FuseMode } from "../../fields/vectorized/fusing.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic, FieldPointVectorWithMultiObjects, IsDynamicVector } from "../../fields/vectorized/point.js";
 import { vectorized } from "vectorized-functions";
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
-import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
+import { NumberTypedArray, typedArrayClone } from "../../paradigm/arrays/typed-array.js";
 import { onlyOne } from "../../utils/only-one.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
+import { field_point_vector_boundingBox_contains } from "../../fields/vectorized/math.js";
 
 export type MetaSolidLocation = VolumeLocation
 
@@ -701,6 +702,8 @@ export class MetaSolidVolume<
                 ObjIDsT,
                 ObjIDsContainer
             > {
+        const { n_inside, inside } = field_point_vector_boundingBox_contains(this.boundingBox, innerLocations.p)
+        
         const texture_context = <TextureVectorContext>context.inner[MetaSolidSamplingContext_Texture].context
         const texture_location_field = texture_context[SampleDomainLocationFieldKey] as FieldsField<MetaSolidTxLocation<Location, TxLocation>>
         

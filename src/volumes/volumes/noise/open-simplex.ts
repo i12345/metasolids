@@ -5,7 +5,7 @@ import { openSimplex } from "../../../fields/domains/noise/open-simplex.js";
 import { FusedVectorSamplingContext, SeededSamplingContext, TransformingSampleDomain } from "../../../fields/domains/index.js";
 import { Vec3Field } from "../../../fields/fields/vec3.js";
 import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../../fields/vectorized/index.js";
 import { Cloneable, clone } from "../../../utils/cloneable.js";
 

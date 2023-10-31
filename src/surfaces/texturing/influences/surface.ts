@@ -3,12 +3,12 @@ import { ScalarField, MultiObjectsField } from "../../../fields/fields/index.js"
 import { MultiObjectsInfluences, MultiObjectsInfluencesElementType, MultiObjectsInfluencesFuseMode, MultiObjectsInfluencesGroupKinds, MultiObjectsInfluencesGroupKindsTemplate } from "../../../fields/multi-objects.js";
 import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsProcessingContext, MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
 import { Texture, TextureLocation, TextureSamplingContext } from "../../../textures/texture.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
 import { SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContextWithIndividualTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualTexturesUsingSurfaceUVUnwrapping } from "../types.js";
 import { SurfaceSampleProcessingContextWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceSampleWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrapping, SurfaceWithIndividualInterpolatingValueTexturesUsingSurfaceUVUnwrappingProcessor } from "../vertex-interpolating/individual-surface.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic } from "../../../fields/vectorized/index.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js";
 
 export type SurfaceSampleWithInfluences<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

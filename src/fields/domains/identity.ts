@@ -2,11 +2,10 @@ import { vectorized } from "vectorized-functions";
 import { SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldPoint } from "../point.js";
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, ItemObjValuesOffsetsKey } from "../vectorized/point.js";
-import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, ItemObjValuesOffsetsKey, field_point_vector_filter } from "../vectorized/point.js";
+import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
+import { IndicesTypedArray, NumberTypedArray, addDeltas, SkipConfig } from "../../paradigm/arrays/index.js";
 import { FusedVectorSamplingContext, FusingVectorSampleDomain } from "./fusing.js";
-import { NumberTypedArray, addDeltas } from "../../utils/typed-array.js";
 import { FuseMode, FusingFieldPointVectorWithMultiObjects, fuseVectors } from "../vectorized/fusing.js";
 import { FieldPointType } from "../type.js";
 import { vectorIterator } from "../vectorized/iterators/factory.js";
@@ -135,7 +134,12 @@ export class IdentitySampleDomain<
         return true
     }
 
-    sample_fused_objectCounts(objCounts: ObjIDsT, locations: FieldPointVector<LocationSampleElementType, LocationSampleContainer>, context: VectorContext): void {
+    sample_fused_objectCounts(
+            objCounts: ObjIDsT,
+            locations: FieldPointVector<LocationSampleElementType, LocationSampleContainer>,
+            context: VectorContext,
+            skip?: SkipConfig,
+        ): void {
         const locations_multiObj = <FieldPointVectorWithMultiObjects<LocationSampleElementType, LocationSampleContainer, ObjIDsT, ObjIDsContainer>>locations
 
         addDeltas(objCounts, locations_multiObj[ItemObjValuesOffsetsKey] ?? 1)
@@ -155,6 +159,7 @@ export class IdentitySampleDomain<
             context: VectorContext,
             sampleType: FieldPointType<LocationSampleElementType>,
             fuseMode: FuseMode<LocationSampleFuseMode>,
+            skip?: SkipConfig,
         ): void {
         const locations_multiObj = <FieldPointVectorWithMultiObjects<LocationSampleElementType, LocationSampleContainer, ObjIDsT, ObjIDsContainer>>locations
 
@@ -260,8 +265,9 @@ export class IdentitySampleDomain<
                     VectorContext
                 >,
             locations: LocationSampleVector,
-            context: Context
+            context: Context,
+            skip?: SkipConfig
         ): LocationSampleVector {
-        return locations
+        return field_point_vector_filter(context[SampleDomainLocationFieldKey].elementType, locations, skip, (<Partial<WithMultiObjectsIDs>>context)[MultiObjectsIDsKey])
     }
 }

@@ -3,9 +3,9 @@ import { FieldInterpolationKeypoint, FieldInterpolationType, FieldInterpolator, 
 import { FieldPoint, FieldPointMappedObjectsGroupedRemoved } from "../point.js";
 import { Field } from "../index.js";
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, IsDynamicVectorContainer } from "../vectorized/point.js";
-import { TypedArrayList } from "../../utils/typed-array-list.js";
+import { TypedArrayList } from "../../paradigm/arrays/typed-array-list.js";
 import { vectorized } from "vectorized-functions";
 
 export class Mat4InterpolationType<

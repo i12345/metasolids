@@ -2,7 +2,7 @@ import { Field } from "../../../fields/field.js";
 import { openSimplex } from "../../../fields/domains/noise/open-simplex.js";
 import { FusedVectorSamplingContext, SeededSamplingContext, TransformingSampleDomain } from "../../../fields/domains/index.js";
 import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../../fields/vectorized/index.js";
 import { Cloneable, clone } from "../../../utils/cloneable.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext, textureTensorSampleUsingVectorSample } from "../../texture.js";
@@ -11,7 +11,7 @@ import { ScalarField } from "../../../fields/fields/scalar.js";
 import { Vec2Field } from "../../../fields/fields/vec2.js";
 import { vectorized } from "vectorized-functions";
 import { FieldPointTensor2D } from "../../../fields/tensor/tensor.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js";
 
 export type OpenSimplexNoiseTextureVersion = keyof typeof openSimplex[2]
 

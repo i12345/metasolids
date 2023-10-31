@@ -3,11 +3,11 @@ import { FieldPointTensorTopologyProjectorFactory, FieldPointTensorTopologyProje
 import * as tf from "@tensorflow/tfjs"
 import { Triangles2DMesh } from "./mesh.js";
 import { Triangles2DMeshCollider } from "./collider.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import HashTable from "@ronomon/hash-table";
 import { cyrb53, renderTensor } from "../../utils/tf-img.js";
 import * as fs from 'fs'
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 
 export type Triangle2DMeshTopologyProjectorCopyReference = {
     indices: {

@@ -4,7 +4,7 @@ import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { onlyOne } from "../utils/only-one.js"
 import { octtree } from "../paradigm/index.js";
 import { MultiObjectsField } from "../fields/fields/multi-objects.js";
-import { TypedArrayConstructor } from "../utils/typed-array.js";
+import { TypedArrayConstructor } from "../paradigm/arrays/typed-array.js";
 import { mergeObjects } from "../utils/merge-objects.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
 import { GateGroupKindKey, GateGroupKinds, GateGroupKindsTemplate, GateProcessingContext } from "../paradigm/processing/processors/gate.js";

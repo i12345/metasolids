@@ -1,5 +1,5 @@
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { FieldPoint, field_point_add_inplace, field_point_clone, field_point_divide, field_point_map, field_point_sqrt, field_point_square, field_point_subtract } from "../point.js";
 import { FieldPointType, field_point_new } from "../type.js";
 import { vectorizedIteratorGetSetLengthCurried } from "./iterators/factory.js";

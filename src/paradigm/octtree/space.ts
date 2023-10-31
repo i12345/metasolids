@@ -2,13 +2,13 @@ import { Vec3 } from "playcanvas-extended"
 import { LayerLocalIndex } from "./octtree.js"
 import { SubdivisionReferences } from "./subdivision.js"
 import { OctTreeAddress, OctTreeCell, octTreeSubcell } from "./address.js"
-import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { IndicesTypedArray } from "../arrays/indices-array.js"
 import { MultiObjectsGroupsTemplateLeaf } from "../trees/multi-objects-groups.js"
 import { TypedArrayOctTree } from "./typed-array.js"
 import { Subdividable } from "./subdividable.js"
 import { FieldPointVectorFunction } from "../../fields/vectorized/function.js"
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js"
-import { NumberTypedArray } from "../../utils/typed-array.js"
+import { NumberTypedArray } from "../arrays/typed-array.js"
 
 export interface OctTreeAddressWithOffset {
     address: OctTreeAddress

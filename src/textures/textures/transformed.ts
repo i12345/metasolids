@@ -3,8 +3,8 @@ import { TransformingSampleDomain } from "../../fields/domains/transforming.js";
 import { VectorSamplingContext } from "../../fields/domains/vector.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/vectorized/index.js";
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray, typedArrayConstructor } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray, typedArrayConstructor } from "../../paradigm/arrays/typed-array.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldPointTensor2D, field_point_tensor_map } from "../../fields/tensor/tensor.js";
 import * as tf from "@tensorflow/tfjs"

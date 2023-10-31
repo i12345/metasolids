@@ -1,5 +1,5 @@
 import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../../paradigm/arrays/indices-array.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 import { Cost, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js";

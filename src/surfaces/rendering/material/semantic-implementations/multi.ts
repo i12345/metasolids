@@ -4,7 +4,7 @@ import { VolumeLocation } from "../../../../volumes/volume.js";
 import { LevelOfDetailInfo } from "../../mesh/LOD-info.js";
 import { SurfaceRendererIndividual } from "../../renderer.js";
 import { Cost, MaterialSemanticImplementation, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
-import { IndicesTypedArray } from "../../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../../paradigm/arrays/indices-array.js";
 
 export class MaterialSemanticImplementation_Multi<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

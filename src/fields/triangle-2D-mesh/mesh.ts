@@ -1,5 +1,5 @@
 import { Vec2 } from "playcanvas-extended"
-import { NumberArrayLike } from "../../utils/typed-array.js"
+import { NumberArrayLike } from "../../paradigm/arrays/typed-array.js"
 
 export class Triangles2DMesh {
     private constructor(

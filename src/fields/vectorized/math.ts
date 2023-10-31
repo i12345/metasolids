@@ -1,5 +1,5 @@
-import { Mat4, Vec2, Vec3 } from "playcanvas-extended";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "./point.js";
 
 export function field_point_vector_vec2_normalize<
@@ -136,4 +136,36 @@ export function field_point_vector_mat4_transformPoint<
     }
 
     return p_out
+}
+
+export function field_point_vector_boundingBox_contains<Container extends FieldPointVectorContainerStatic<NumberTypedArray> = FieldPointVectorContainerStatic<NumberTypedArray>>(boundingBox: BoundingBox, points: FieldPointVector<Vec3, Container>): {
+        inside: FieldPointVector<boolean, Uint8Array>
+        n_inside: number
+    } {
+    const n = points.length / 3
+    let n_inside = 0
+    const result = new Uint8Array(n)
+
+    let x: number, y: number, z: number
+
+    const x0 = boundingBox.center.x - boundingBox.halfExtents.x
+    const y0 = boundingBox.center.y - boundingBox.halfExtents.y
+    const z0 = boundingBox.center.z - boundingBox.halfExtents.z
+
+    const x1 = boundingBox.center.x + boundingBox.halfExtents.x
+    const y1 = boundingBox.center.y + boundingBox.halfExtents.y
+    const z1 = boundingBox.center.z + boundingBox.halfExtents.z
+
+    for (let i = 0, offset = 0; i < n; i++) {
+        x = points[offset++]
+        y = points[offset++]
+        z = points[offset++]
+        if (x < x0 || x > x1) continue
+        if (y < y0 || y > y1) continue
+        if (z < z0 || z > z1) continue
+        result[i] = 1
+        n_inside++
+    }
+
+    return { inside: result, n_inside }
 }

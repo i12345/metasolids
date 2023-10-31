@@ -1,5 +1,5 @@
 import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js"
-import { IndicesArray, IndicesTypedArray, indicesArrayType } from "../../../utils/indices-array.js"
+import { IndicesArray, IndicesTypedArray, indicesArrayType } from "../../../paradigm/arrays/indices-array.js"
 import { VolumeLocation } from "../../../volumes/index.js"
 import { MeshRendererShared } from "./renderer.js"
 

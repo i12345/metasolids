@@ -1,6 +1,6 @@
 import { OctTreeWithDualGroups, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import { WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { VolumeProcessing } from "../processor.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js";
 import { VolumeWithBoundingBox } from "../volumes/bounded.js";

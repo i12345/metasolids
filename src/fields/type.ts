@@ -3,9 +3,9 @@ import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey } from "../paradigm/tr
 import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDs, objectValuePaths, MultiObjectsTemplateOrLeaf } from "../paradigm/trees/multi-objects.js"
 import { Reflect_entries, Reflect_fromEntries } from "../utils/reflect-entries.js"
 import { FieldPoint, FieldPointPrimitive, Vector, FieldsPoint } from "./point.js"
-import { IndicesTypedArray } from "../utils/indices-array.js"
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js"
 import { extract, hasPath, intract } from "../paradigm/trees/tree.js"
-import { TypedArray, typedArrayConstructor } from "../utils/typed-array.js"
+import { TypedArray, typedArrayConstructor } from "../paradigm/arrays/typed-array.js"
 import { PropertyPath } from "../paradigm/trees/path.js"
 
 export type FieldPointType<Point extends FieldPoint = FieldPoint> =

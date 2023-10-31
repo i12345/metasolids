@@ -6,7 +6,7 @@ import { FieldPointType, field_point_type_contains } from "../../type.js";
 import { FieldPointTensor, field_point_tensor_decode, field_point_tensor_encode } from "../tensor.js";
 import { FieldPointVector, FieldPointVectorContainer, field_point_vector_is } from "../../vectorized/point.js";
 import { arrayEq } from "../../../utils/array-eq.js";
-import { NumberTypedArray } from "../../../utils/typed-array.js";
+import { NumberTypedArray } from "../../../paradigm/arrays/typed-array.js";
 
 export class FieldPointTensorFactoryVector<
         T extends FieldPoint = FieldPoint,

@@ -22,7 +22,7 @@ import { MaterialSemanticImplementation_VertexColors } from "./semantic-implemen
 import { MaterialSemanticImplementationStorageClass_Constant } from "./storage-classes/constant.js"
 import { MaterialSemanticImplementationStorageClass_Texture } from "./storage-classes/texture.js"
 import { MaterialSemanticImplementationStorageClass_VertexColors } from "./storage-classes/vertex-colors.js"
-import { IndicesTypedArray } from "../../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../../paradigm/arrays/indices-array.js"
 
 
 const groups_priorities: MultiObjectsGroupsMapped<Material_Groups, number> = {

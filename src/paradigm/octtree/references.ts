@@ -1,5 +1,5 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js"
-import { TypedArrayConstructor } from "../../utils/typed-array.js"
+import { IndicesTypedArray } from "../arrays/indices-array.js"
+import { TypedArrayConstructor } from "../arrays/typed-array.js"
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../trees/multi-objects-groups.js"
 import { Subdividable } from "./subdividable.js"
 import { TypedArrayOctTree } from "./typed-array.js"

@@ -5,8 +5,8 @@ import { FieldPoint } from "../../fields/point.js";
 import { FieldPointNumbers, field_point_numbers_decode } from "../../fields/numbers.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, IsDynamicVector, field_point_vectorized_new } from "../../fields/vectorized/point.js";
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray, typedArrayClone } from "../../paradigm/arrays/typed-array.js";
 import { FieldPointTensor, FieldPointTensor2D, field_point_tensor_decode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import * as tf from "@tensorflow/tfjs"

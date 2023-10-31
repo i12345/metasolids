@@ -1,4 +1,4 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../arrays/indices-array.js";
 import { AdjacentDirection, Axis, Direction, OctTreeAddress, OctTreeCell, octTreeCellsByDirection } from "./address.js";
 import { LayerLocalIndex } from "./octtree.js";
 import { OctTreeReferences, OctTreeReferencesOctTreeLayersGrouped } from "./references.js";

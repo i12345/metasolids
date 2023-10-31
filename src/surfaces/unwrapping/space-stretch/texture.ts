@@ -1,5 +1,5 @@
 import { FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../../fields/vectorized/index.js"
-import { NumberTypedArray, typedArrayClone } from "../../../utils/typed-array.js"
+import { NumberTypedArray, typedArrayClone } from "../../../paradigm/arrays/typed-array.js"
 import * as tf from "@tensorflow/tfjs"
 import { Texture, TextureLocation, TextureSamplingContext } from "../../../textures/index.js"
 import { Vec2 } from "playcanvas-extended"

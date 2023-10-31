@@ -1,9 +1,9 @@
 import { FusedVectorSamplingContext, LocationFieldObserverSampleDomain, MultiObjectsSampleDomain, TransformingSampleDomain } from "../../fields/domains/index.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../fields/vectorized/index.js";
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { Reflect_entries } from "../../utils/reflect-entries.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../texture.js";
 
 export class StagedTexture<

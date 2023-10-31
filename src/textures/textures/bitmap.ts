@@ -3,8 +3,8 @@ import { VectorSampleDomain, VectorSamplingContext } from "../../fields/domains/
 import { Field } from "../../fields/field.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorIterator, FieldPointVectorStatic, IsDynamicVector, field_point_vector_multiObjs_count, field_point_vectorized_multi_objects_new, isDynamicVector } from "../../fields/vectorized/index.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { field_point_type_is_multiObj } from "../../fields/type.js";

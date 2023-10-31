@@ -1,4 +1,4 @@
-import { NumberArrayLike, NumberTypedArray } from "../../utils/typed-array.js"
+import { NumberArrayLike, NumberTypedArray } from "../arrays/typed-array.js"
 
 export type OctTreeCell = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 

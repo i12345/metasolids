@@ -4,7 +4,7 @@ import { iterTreeByLeavesValues, TreeByValue, TreeByValueMapped, leavesByValues,
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from "../../volumes/index.js"
 import { SolidProcessingContext } from "../processor.js"
 import { SolidWithEnclosingVolume, TotalVolumeKey, VolumeVoxelsKey } from "./enclosing-volume.js"
-import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js"
 import { VolumeProcessingWithSolids, VolumeProcessingWithSolidsContext, VolumeSolidProcessing, VolumeSolidProcessingContext, VolumeSolidProcessor } from "../volume-solids.js"
 import { SamplesKey, SamplingKey, VolumeProcessingWithSampling, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from "../../volumes/sampling/types.js"
 import { NumberTypedArray } from "../../utils/index.js"

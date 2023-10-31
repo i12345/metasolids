@@ -1,12 +1,12 @@
 import { Mat4, BoundingBox, Vec3 } from 'playcanvas-extended'
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume.js'
-import { TransformingDefaultInnerSamplingContext, TransformingSampleDomain } from '../../fields/domains/transforming.js'
+import { TransformingSampleDomain } from '../../fields/domains/transforming.js'
 import { VolumeWithBoundingBox } from './bounded.js'
 import { SampleDomainLocationFieldKey } from '../../fields/domain.js'
 import { FusedVectorSamplingContext } from '../../fields/domains/fusing.js'
 import { FusingFieldPointVectorWithMultiObjects, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, FieldPointVector, isDynamicVector, field_point_vectorized_new, FieldPointVectorContainerDynamic } from '../../fields/vectorized/index.js'
 import { MultiObjectsGroupsTemplate_Leaf, MultiObjectsIDsKey, MultiObjectsTemplate, groupsProxyOverwritten } from '../../paradigm/trees/index.js'
-import { IndicesTypedArray } from '../../utils/indices-array.js'
+import { IndicesTypedArray } from '../../paradigm/arrays/indices-array.js'
 import { vectorIterator } from '../../fields/vectorized/iterators/factory.js'
 import { vectorized } from 'vectorized-functions'
 import { FieldsField } from '../../fields/fields/fields.js'
@@ -323,7 +323,8 @@ export class TransformVolume<
             VolumeT
         >,
         outerLocations: LocationVector,
-        context: { outer: VectorContext, inner: VectorContext }
+        context: { outer: VectorContext, inner: VectorContext },
+        skip?: Uint8Array
     ): LocationVector {
         const outerLocations_type = context.outer[SampleDomainLocationFieldKey].elementType
         const transform_inverse = this.transformInverse
@@ -349,42 +350,136 @@ export class TransformVolume<
             { p: p_local }
         )
 
-        let p_i_world = 0
-        let p_i_local = 0
+        const m00 = transform_inverse.data[0]
+        const m01 = transform_inverse.data[1]
+        const m02 = transform_inverse.data[2]
+        const m03 = transform_inverse.data[3]
+    
+        const m10 = transform_inverse.data[4]
+        const m11 = transform_inverse.data[5]
+        const m12 = transform_inverse.data[6]
+        const m13 = transform_inverse.data[7]
+    
+        const m20 = transform_inverse.data[8]
+        const m21 = transform_inverse.data[9]
+        const m22 = transform_inverse.data[10]
+        const m23 = transform_inverse.data[11]
+    
+        const m30 = transform_inverse.data[12]
+        const m31 = transform_inverse.data[13]
+        const m32 = transform_inverse.data[14]
+        const m33 = transform_inverse.data[15]
 
-        const p_item_local = new Vec3()
-        const p_item_world = new Vec3()
+        let offset_world = 0
+        let offset_local = 0
 
-        if (isDynamic_outerLocations) {
-            const p_world_container = <FieldPointVectorContainerDynamic><unknown>p_world
-            const p_local_container = <FieldPointVectorContainerDynamic>p_local
+        let local_x: number, local_y: number, local_z: number
+        let world_x: number, world_y: number, world_z: number
+        
+        if (this.boundingBox) {
+            const boundingBox = this.boundingBox
+            const x0 = boundingBox.center.x - boundingBox.halfExtents.x
+            const y0 = boundingBox.center.y - boundingBox.halfExtents.y
+            const z0 = boundingBox.center.z - boundingBox.halfExtents.z
 
-            for (let i = 0; i < length; i++) {
-                p_item_world.x = p_world_container.get(p_i_local++)
-                p_item_world.y = p_world_container.get(p_i_local++)
-                p_item_world.z = p_world_container.get(p_i_local++)
+            const x1 = boundingBox.center.x + boundingBox.halfExtents.x
+            const y1 = boundingBox.center.y + boundingBox.halfExtents.y
+            const z1 = boundingBox.center.z + boundingBox.halfExtents.z
 
-                transform_inverse.transformPoint(p_item_world, p_item_local)
+            if (!skip)
+                throw new Error()
 
-                p_local_container.set(p_i_world++, p_item_local.x)
-                p_local_container.set(p_i_world++, p_item_local.y)
-                p_local_container.set(p_i_world++, p_item_local.z)
+            if (isDynamic_outerLocations) {
+                const p_world_container = <FieldPointVectorContainerDynamic><unknown>p_world
+                const p_local_container = <FieldPointVectorContainerDynamic>p_local
+
+                for (let i = 0; i < length; i++) {
+                    world_x = p_world_container.get(offset_world++)
+                    world_y = p_world_container.get(offset_world++)
+                    world_z = p_world_container.get(offset_world++)
+
+                    if (world_x < x0 || world_x > x1 ||
+                        world_y < y0 || world_y > y1 ||
+                        world_z < z0 || world_z > z1) {
+                        offset_local += 3
+                        skip[i] = 1
+                        continue
+                    }
+
+                    local_x = (world_x * m00) + (world_y * m10) + (world_z * m20) + m30
+                    local_y = (world_x * m01) + (world_y * m11) + (world_z * m21) + m31
+                    local_z = (world_x * m02) + (world_y * m12) + (world_z * m22) + m32
+
+                    p_local_container.set(offset_local++, local_x)
+                    p_local_container.set(offset_local++, local_y)
+                    p_local_container.set(offset_local++, local_z)
+                }
+            }
+            else {
+                const p_world_container = <FieldPointVectorContainerStatic>p_world
+                const p_local_container = <FieldPointVectorContainerStatic>p_local
+
+                for (let i = 0; i < length; i++) {
+                    world_x = p_world_container[offset_world++]
+                    world_y = p_world_container[offset_world++]
+                    world_z = p_world_container[offset_world++]
+
+                    if (world_x < x0 || world_x > x1 ||
+                        world_y < y0 || world_y > y1 ||
+                        world_z < z0 || world_z > z1) {
+                        offset_local += 3
+                        skip[i] = 1
+                        continue
+                    }
+
+                    local_x = (world_x * m00) + (world_y * m10) + (world_z * m20) + m30
+                    local_y = (world_x * m01) + (world_y * m11) + (world_z * m21) + m31
+                    local_z = (world_x * m02) + (world_y * m12) + (world_z * m22) + m32
+
+                    p_local_container[offset_local++] = local_x
+                    p_local_container[offset_local++] = local_y
+                    p_local_container[offset_local++] = local_z
+                }
+
+                innerLocations.p = <LocationContainer>innerLocations.p.subarray(0, offset_local)
             }
         }
         else {
-            const p_world_container = <FieldPointVectorContainerStatic>p_world
-            const p_local_container = <FieldPointVectorContainerStatic>p_local
+            if (isDynamic_outerLocations) {
+                const p_world_container = <FieldPointVectorContainerDynamic><unknown>p_world
+                const p_local_container = <FieldPointVectorContainerDynamic>p_local
 
-            for (let i = 0; i < length; i++) {
-                p_item_world.x = p_world_container[p_i_local++]
-                p_item_world.y = p_world_container[p_i_local++]
-                p_item_world.z = p_world_container[p_i_local++]
+                for (let i = 0; i < length; i++) {
+                    world_x = p_world_container.get(offset_world++)
+                    world_y = p_world_container.get(offset_world++)
+                    world_z = p_world_container.get(offset_world++)
 
-                transform_inverse.transformPoint(p_item_world, p_item_local)
+                    local_x = (world_x * m00) + (world_y * m10) + (world_z * m20) + m30
+                    local_y = (world_x * m01) + (world_y * m11) + (world_z * m21) + m31
+                    local_z = (world_x * m02) + (world_y * m12) + (world_z * m22) + m32
 
-                p_local_container[p_i_world++] = p_item_local.x
-                p_local_container[p_i_world++] = p_item_local.y
-                p_local_container[p_i_world++] = p_item_local.z
+                    p_local_container.set(offset_local++, local_x)
+                    p_local_container.set(offset_local++, local_y)
+                    p_local_container.set(offset_local++, local_z)
+                }
+            }
+            else {
+                const p_world_container = <FieldPointVectorContainerStatic>p_world
+                const p_local_container = <FieldPointVectorContainerStatic>p_local
+
+                for (let i = 0; i < length; i++) {
+                    world_x = p_world_container[offset_world++]
+                    world_y = p_world_container[offset_world++]
+                    world_z = p_world_container[offset_world++]
+
+                    local_x = (world_x * m00) + (world_y * m10) + (world_z * m20) + m30
+                    local_y = (world_x * m01) + (world_y * m11) + (world_z * m21) + m31
+                    local_z = (world_x * m02) + (world_y * m12) + (world_z * m22) + m32
+
+                    p_local_container[offset_local++] = local_x
+                    p_local_container[offset_local++] = local_y
+                    p_local_container[offset_local++] = local_z
+                }
             }
         }
 

@@ -1,5 +1,4 @@
-import { IndicesTypedArray } from '../../utils/indices-array.js';
-import { TypedArrayConstructor } from '../../utils/typed-array.js';
+import { IndicesTypedArray, TypedArrayConstructor } from '../arrays/index.js';
 import { PropertyPath } from './path.js'
 import { pathsToNodeWithKey, intract, leavesByValue, iterTreeByLeavesValue, pathsToValue, makeLeafInterface } from "./tree.js";
 

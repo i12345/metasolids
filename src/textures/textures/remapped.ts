@@ -6,8 +6,8 @@ import { FieldPointMapped } from "../../fields/point.js";
 import { FieldPointNumbers } from "../../fields/numbers.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/vectorized/index.js";
 import { MultiObjectsTemplate, PropertyMapping, WithMultiObjectsIDs, object_mapped } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import { FieldPointTensor2D } from "../../fields/tensor/tensor.js";
 

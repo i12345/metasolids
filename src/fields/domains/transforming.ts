@@ -7,10 +7,9 @@ import { PropertyPath } from '../../paradigm/trees/path.js'
 import { vectorized } from 'vectorized-functions'
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from './vector.js'
 import { FusedVectorSamplingContext, FusingVectorSampleDomain } from './fusing.js'
-import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, FieldPointVectorWithMultiObjects, FuseMode, FusingFieldPointVectorWithMultiObjects, fuseVectors } from '../vectorized/index.js'
+import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorFunction, FieldPointVectorWithMultiObjects, FuseMode, FusingFieldPointVectorWithMultiObjects, VectorCallSkip, fuseVectors } from '../vectorized/index.js'
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsIDsKey, MultiObjectsTemplate } from '../../paradigm/trees/index.js'
-import { IndicesTypedArray } from '../../utils/indices-array.js'
-import { NumberTypedArray } from '../../utils/typed-array.js'
+import { NumberTypedArray, typedArrayClone, IndicesTypedArray, SkipConfig, cloneSkip } from '../../paradigm/arrays/index.js'
 
 export type TransformingDefaultInnerSamplingContext<
         OuterLocation extends FieldPoint = FieldPoint,
@@ -212,7 +211,10 @@ type TransformingFusingVectorSampleContextPrivate<
                 InnerSampleVector,
                 InnerVectorContext
             >,
-            InnerLocationVector
+            {
+                locations: InnerLocationVector
+                skip?: SkipConfig
+            }
         >
     }
 /**
@@ -562,11 +564,17 @@ export abstract class TransformingSampleDomain<
         return innerField as any as Field<OuterSample, OuterSampleElementType, OuterSampleFuseMode>
     }
 
+    /**
+     * Transforms an outer location to inner location or undefined if it should be skipped.
+     * @param location the location to transform
+     * @param context transform context
+     * @returns location for sampling inner domain or undefined if it should be skipped
+     */
     @vectorized(TransformingSampleDomain._transformLocation_vectorized)
     protected transformLocation(
             location: OuterLocation,
             context: { outer: OuterContext, inner: InnerContext }
-        ): InnerLocation {
+        ): InnerLocation | undefined {
         return location as any as InnerLocation
     }
 
@@ -718,7 +726,8 @@ export abstract class TransformingSampleDomain<
                     InnerVectorContext
                 >,
             location: OuterLocationVector,
-            context: { outer: OuterContext, inner: InnerContext }
+            context: { outer: OuterContext, inner: InnerContext },
+            skip?: SkipConfig
         ): InnerLocationVector {
         return <InnerLocationVector><unknown>location
     }
@@ -742,7 +751,8 @@ export abstract class TransformingSampleDomain<
             >,
             innerLocations: InnerLocationVector,
             outerLocations: OuterLocationVector,
-            context: { outer: OuterVectorContext, inner: InnerVectorContext }
+            context: { outer: OuterVectorContext, inner: InnerVectorContext },
+            skip?: SkipConfig
         ): void
 
     private static _transformSample_vectorized<
@@ -895,7 +905,8 @@ export abstract class TransformingSampleDomain<
             samples: InnerSampleVector,
             innerLocations: InnerLocationVector,
             outerLocations: OuterLocationVector,
-            context: { outer: OuterContext, inner: InnerContext }
+            context: { outer: OuterContext, inner: InnerContext },
+            skip?: SkipConfig
         ): OuterSampleVector {
         return <OuterSampleVector><unknown>samples
     }
@@ -905,7 +916,8 @@ export abstract class TransformingSampleDomain<
             outerLocations: OuterLocationVector,
             outerContext: OuterVectorContext,
             sampleType: FieldPointType<OuterSampleElementType>,
-            fuseMode: FuseMode<OuterSampleFuseMode>
+            fuseMode: FuseMode<OuterSampleFuseMode>,
+            skip?: SkipConfig,
         ): void {
         type ContextPrivateT = TransformingFusingVectorSampleContextPrivate<
             Objects,
@@ -980,17 +992,19 @@ export abstract class TransformingSampleDomain<
                 {
                     transformLocation(
                         location: OuterLocation,
-                        context: { outer: OuterVectorContext, inner: InnerVectorContext }
+                        context: { outer: OuterVectorContext, inner: InnerVectorContext },
+                        skip?: SkipConfig
                     ): InnerLocation
                 },
                 "transformLocation",
                 (
                     location: OuterLocation,
-                    context: { outer: OuterVectorContext, inner: InnerVectorContext }
+                    context: { outer: OuterVectorContext, inner: InnerVectorContext },
+                    skip?: SkipConfig
                 ) => InnerLocation,
-                [OuterLocationElementType, undefined],
+                [OuterLocationElementType, undefined, typeof VectorCallSkip],
                 InnerLocationElementType,
-                [OuterLocationContainer, undefined],
+                [OuterLocationContainer, undefined, undefined],
                 InnerLocationContainer,
                 Objects,
                 ObjIDsT,
@@ -999,14 +1013,17 @@ export abstract class TransformingSampleDomain<
                 "transformLocation",
                 [
                     <OuterLocationElementType extends FieldPoint ? FieldPointType<OuterLocationElementType> : OuterLocationElementType>outerContext[SampleDomainLocationFieldKey].elementType,
-                    undefined
+                    undefined,
+                    VectorCallSkip
                 ],
                 <InnerLocationElementType extends FieldPoint ? FieldPointType<InnerLocationElementType> : undefined>context.inner[SampleDomainLocationFieldKey].elementType,
                 [1, MultiObjectsIDsKey]
             )
 
-        const innerLocations = (this.transformsLocation ?? true) ? <InnerLocationVector><unknown>transformLocationVectorFunction.call(this as any, <any>outerLocations, context) : <InnerLocationVector><unknown>outerLocations
-        contextPrivate[TransformingTransformedLocationsKey].set(this, innerLocations)
+        const innerSkip = skip ? <SkipConfig>{ ...skip, skip: typedArrayClone(skip.skip) } : undefined
+        
+        const innerLocations = (this.transformsLocation ?? true) ? <InnerLocationVector><unknown>transformLocationVectorFunction.call(this as any, <any>outerLocations, context, innerSkip) : <InnerLocationVector><unknown>outerLocations
+        contextPrivate[TransformingTransformedLocationsKey].set(this, { locations: innerLocations, skip: innerSkip })
 
         const {
             sampleType: innerSampleType,
@@ -1014,7 +1031,7 @@ export abstract class TransformingSampleDomain<
         } = this.transformFusedSettings(sampleType, fuseMode, context)!
 
         const inner = <InnerDomain><unknown>this.inner
-        inner.sample_fused_objectCounts(objCounts, innerLocations, <InnerFusingVectorContext>context.inner, innerSampleType, innerFuseMode)
+        inner.sample_fused_objectCounts(objCounts, innerLocations, <InnerFusingVectorContext>context.inner, innerSampleType, innerFuseMode, innerSkip)
     }
 
     can_fuse(
@@ -1052,7 +1069,8 @@ export abstract class TransformingSampleDomain<
             outerLocations: OuterLocationVector,
             outerContext: OuterVectorContext,
             sampleType: FieldPointType<OuterSampleElementType>,
-            fuseMode: FuseMode<OuterSampleFuseMode>
+            fuseMode: FuseMode<OuterSampleFuseMode>,
+            skip?: SkipConfig
         ): void {
         type ContextPrivateT = TransformingFusingVectorSampleContextPrivate<
             Objects,
@@ -1123,7 +1141,7 @@ export abstract class TransformingSampleDomain<
 
         const context = this.contextPairs_vectorized(outerContext)
 
-        const innerLocations = contextPrivate[TransformingTransformedLocationsKey].get(this)!
+        const { locations: innerLocations, skip: innerSkip } = contextPrivate[TransformingTransformedLocationsKey].get(this)!
 
         const inner = <InnerDomain><unknown>this.inner
 
@@ -1135,7 +1153,8 @@ export abstract class TransformingSampleDomain<
                     sample: InnerSample,
                     innerLocation: InnerLocation,
                     outerLocation: OuterLocation,
-                    context: { outer: OuterVectorContext, inner: InnerVectorContext }
+                    context: { outer: OuterVectorContext, inner: InnerVectorContext },
+                    skip?: SkipConfig
                 ): OuterSample
             },
             "transformSample",
@@ -1143,19 +1162,22 @@ export abstract class TransformingSampleDomain<
                 sample: InnerSample,
                 innerLocation: InnerLocation,
                 outerLocation: OuterLocation,
-                context: { outer: OuterVectorContext, inner: InnerVectorContext }
+                context: { outer: OuterVectorContext, inner: InnerVectorContext },
+                skip?: SkipConfig
             ) => OuterSample,
             [
                 InnerSampleElementType,
                 InnerLocationElementType,
                 OuterLocationElementType,
-                undefined
+                undefined,
+                typeof VectorCallSkip
             ],
             OuterSampleElementType,
             [
                 InnerSampleContainer,
                 InnerLocationContainer,
                 OuterLocationContainer,
+                undefined,
                 undefined
             ],
             OuterSampleContainer,
@@ -1168,7 +1190,8 @@ export abstract class TransformingSampleDomain<
                 <InnerSampleElementType extends FieldPoint ? FieldPointType<InnerSampleElementType> : InnerSampleElementType>this.inner.field.elementType,
                 <InnerLocationElementType extends FieldPoint ? FieldPointType<InnerLocationElementType> : InnerLocationElementType>context.inner[SampleDomainLocationFieldKey].elementType,
                 <OuterLocationElementType extends FieldPoint ? FieldPointType<OuterLocationElementType> : OuterLocationElementType>context.outer[SampleDomainLocationFieldKey].elementType,
-                undefined
+                undefined,
+                VectorCallSkip
             ],
             <OuterSampleElementType extends FieldPoint ? FieldPointType<OuterSampleElementType> : undefined>this.field.elementType,
             [3, "outer", MultiObjectsIDsKey]
@@ -1182,19 +1205,20 @@ export abstract class TransformingSampleDomain<
         if (this.transformsSample ?? true) {
             if (this.transformSamples_fused_inplace &&
                 inner.can_fuse(innerSampleType, innerFuseMode, <InnerFusingVectorContext>context.inner)) {
-                inner.sample_fused_results(<any>result, innerLocations, <InnerFusingVectorContext>context.inner, innerSampleType, innerFuseMode)
+                inner.sample_fused_results(<any>result, innerLocations, <InnerFusingVectorContext>context.inner, innerSampleType, innerFuseMode, innerSkip)
 
                 this.transformSamples_fused_inplace(
                     result,
                     innerLocations,
                     outerLocations,
-                    context
+                    context,
+                    innerSkip
                 )
             }
             else {
                 const innerSamples = context.inner[VectorSampleFunction](inner, innerLocations, context.inner)
 
-                const outerSamples = <OuterSampleVector><unknown>transformSampleVectorFunction.call(<any>this, <any>innerSamples, <any>innerLocations, <any>outerLocations, context)
+                const outerSamples = <OuterSampleVector><unknown>transformSampleVectorFunction.call(<any>this, <any>innerSamples, <any>innerLocations, <any>outerLocations, context, innerSkip)
 
                 fuseVectors(
                     sampleType,
@@ -1208,15 +1232,17 @@ export abstract class TransformingSampleDomain<
             }
         }
         else {
-            inner.sample_fused_results(<any>result, innerLocations, <InnerFusingVectorContext>context.inner, <FieldPointType<InnerSampleElementType>><unknown>sampleType, <FuseMode<InnerSampleFuseMode>><unknown>fuseMode)
+            inner.sample_fused_results(<any>result, innerLocations, <InnerFusingVectorContext>context.inner, <FieldPointType<InnerSampleElementType>><unknown>sampleType, <FuseMode<InnerSampleFuseMode>><unknown>fuseMode, innerSkip)
         }
     }
 
     @vectorized(TransformingSampleDomain._sample_vectorized)
-    sample(outerLocation: OuterLocation, outerContext: OuterContext): OuterSample {
+    sample(outerLocation: OuterLocation, outerContext: OuterContext): OuterSample | undefined {
         const context = this.contextPairs(outerContext)
         const innerLocation = this.transformLocation(outerLocation, context)
+        if (!innerLocation) return undefined
         const innerSample = this.inner.sample(innerLocation, context.inner)
+        if (!innerSample) return undefined
         return this.transformSample(innerSample, innerLocation, outerLocation, context)
     }
 
@@ -1368,7 +1394,8 @@ export abstract class TransformingSampleDomain<
                     InnerVectorContext
                 >,
             outerLocations: OuterLocationVector,
-            outerContext: OuterVectorContext
+            outerContext: OuterVectorContext,
+            skip?: SkipConfig
         ): OuterSampleVector {
         const context = this.contextPairs_vectorized(outerContext)
 
@@ -1376,17 +1403,19 @@ export abstract class TransformingSampleDomain<
                 {
                     transformLocation(
                         location: OuterLocation,
-                        context: { outer: SamplingContext, inner: SamplingContext }
+                        context: { outer: SamplingContext, inner: SamplingContext },
+                        skip?: SkipConfig
                     ): InnerLocation
                 },
                 "transformLocation",
                 (
                     location: OuterLocation,
-                    context: { outer: SamplingContext, inner: SamplingContext }
+                    context: { outer: SamplingContext, inner: SamplingContext },
+                    skip?: SkipConfig
                 ) => InnerLocation,
-                [OuterLocationElementType, undefined],
+                [OuterLocationElementType, undefined, typeof VectorCallSkip],
                 InnerLocationElementType,
-                [OuterLocationContainer, undefined],
+                [OuterLocationContainer, undefined, undefined],
                 InnerLocationContainer,
                 Objects,
                 ObjIDsT,
@@ -1395,7 +1424,8 @@ export abstract class TransformingSampleDomain<
                 "transformLocation",
                 [
                     <OuterLocationElementType extends FieldPoint ? FieldPointType<OuterLocationElementType> : OuterLocationElementType>outerContext[SampleDomainLocationFieldKey].elementType,
-                    undefined
+                    undefined,
+                    VectorCallSkip
                 ],
                 <InnerLocationElementType extends FieldPoint ? FieldPointType<InnerLocationElementType> : undefined>context.inner[SampleDomainLocationFieldKey].elementType,
                 [1, MultiObjectsIDsKey]
@@ -1407,7 +1437,8 @@ export abstract class TransformingSampleDomain<
                         sample: InnerSample,
                         innerLocation: InnerLocation,
                         outerLocation: OuterLocation,
-                        context: { outer: OuterVectorContext, inner: InnerVectorContext }
+                        context: { outer: OuterVectorContext, inner: InnerVectorContext },
+                        skip?: SkipConfig
                     ): OuterSample
                 },
                 "transformSample",
@@ -1415,19 +1446,22 @@ export abstract class TransformingSampleDomain<
                     sample: InnerSample,
                     innerLocation: InnerLocation,
                     outerLocation: OuterLocation,
-                    context: { outer: OuterVectorContext, inner: InnerVectorContext }
+                    context: { outer: OuterVectorContext, inner: InnerVectorContext },
+                    skip?: SkipConfig
                 ) => OuterSample,
                 [
                     InnerSampleElementType,
                     InnerLocationElementType,
                     OuterLocationElementType,
-                    undefined
+                    undefined,
+                    typeof VectorCallSkip
                 ],
                 OuterSampleElementType,
                 [
                     InnerSampleContainer,
                     InnerLocationContainer,
                     OuterLocationContainer,
+                    undefined,
                     undefined
                 ],
                 OuterSampleContainer,
@@ -1440,14 +1474,17 @@ export abstract class TransformingSampleDomain<
                     <InnerSampleElementType extends FieldPoint ? FieldPointType<InnerSampleElementType> : InnerSampleElementType>this.inner.field.elementType,
                     <InnerLocationElementType extends FieldPoint ? FieldPointType<InnerLocationElementType> : InnerLocationElementType>context.inner[SampleDomainLocationFieldKey].elementType,
                     <OuterLocationElementType extends FieldPoint ? FieldPointType<OuterLocationElementType> : OuterLocationElementType>context.outer[SampleDomainLocationFieldKey].elementType,
-                    undefined
+                    undefined,
+                    VectorCallSkip
                 ],
                 <OuterSampleElementType extends FieldPoint ? FieldPointType<OuterSampleElementType> : undefined>this.field.elementType,
                 [3, "outer", MultiObjectsIDsKey]
             )
 
-        const innerLocations = (this.transformsLocation ?? true) ? <InnerLocationVector><unknown>transformLocationVectorFunction.call(this as any, <any>outerLocations, context) : <InnerLocationVector><unknown>outerLocations
-        const innerSamples = <InnerSampleVector>context.inner[VectorSampleFunction](this.inner, innerLocations, context.inner)
-        return (this.transformsSample ?? true) ? <OuterSampleVector><unknown>transformSampleVectorFunction.call(this as any, <any>innerSamples, <any>innerLocations, <any>outerLocations, context) : <OuterSampleVector><unknown>innerSamples
+        const innerSkip = cloneSkip(skip)
+        
+        const innerLocations = (this.transformsLocation ?? true) ? <InnerLocationVector><unknown>transformLocationVectorFunction.call(this as any, <any>outerLocations, context, innerSkip) : <InnerLocationVector><unknown>outerLocations
+        const innerSamples = <InnerSampleVector>context.inner[VectorSampleFunction](this.inner, innerLocations, context.inner, innerSkip)
+        return (this.transformsSample ?? true) ? <OuterSampleVector><unknown>transformSampleVectorFunction.call(this as any, <any>innerSamples, <any>innerLocations, <any>outerLocations, context, innerSkip) : <OuterSampleVector><unknown>innerSamples
     }
 }

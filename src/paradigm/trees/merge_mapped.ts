@@ -1,4 +1,4 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../arrays/indices-array.js";
 import { MultiObjectsGroupedObjectsKey } from "./multi-objects-groups.js";
 import { MultiObjectsIDs, MultiObjectsTemplate, objectValuePaths } from "./multi-objects.js";
 import { PropertyPath } from "./path.js";

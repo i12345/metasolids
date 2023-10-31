@@ -4,8 +4,8 @@ import { ObjectsFilteredFusingSampleDomain } from "../../fields/domains/objects-
 import { VectorSampleFunction, VectorSamplingContext } from "../../fields/domains/vector.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, FuseMode } from "../../fields/vectorized/index.js";
 import { MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext, textureSampleLocationsGridVector, textureTensorSampleUsingVectorSample } from "../texture.js";
 import { FieldPointTensor2D, field_point_tensor_encode } from "../../fields/tensor/tensor.js";
 

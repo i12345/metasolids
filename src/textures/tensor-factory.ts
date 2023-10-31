@@ -5,12 +5,12 @@ import { FieldPointType, field_point_type_contains } from "../fields/type.js";
 import { FieldPointTensor2D } from "../fields/tensor/tensor.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext, defaultTextureLocationField } from "./texture.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
-import { NumberTypedArray } from "../utils/typed-array.js";
+import { NumberTypedArray } from "../paradigm/arrays/typed-array.js";
 import { SampleDomainLocationFieldKey } from "../fields/domain.js";
 import { Mat3, Vec2 } from "playcanvas-extended";
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../fields/domains/vector.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js";
-import { IndicesTypedArray } from "../utils/indices-array.js";
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js";
 import { TensorTexture, TensorTextureResizeMode } from "./index.js";
 
 export class TextureTensorFactory<

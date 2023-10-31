@@ -1,9 +1,9 @@
 import { MeshDataWithNormals } from "./mesh-data.js";
 import { VolumeSample } from "../volumes/volume.js";
 import { Instance } from "../paradigm/processing/instance.js";
-import { IndicesTypedArray } from "../utils/indices-array.js";
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js";
 import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/point.js";
-import { NumberTypedArray } from "../utils/typed-array.js";
+import { NumberTypedArray } from "../paradigm/arrays/typed-array.js";
 
 export type SurfaceSample = VolumeSample
 

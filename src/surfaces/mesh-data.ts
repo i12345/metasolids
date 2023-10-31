@@ -1,5 +1,5 @@
 import { OctTreeReferencesOctTreeLayersGrouped } from "../paradigm/octtree/references.js"
-import { IndicesTypedArray } from "../utils/indices-array.js"
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js"
 
 /**
  * Data for mesh creation

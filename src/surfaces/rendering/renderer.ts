@@ -12,7 +12,7 @@ import { FieldsField, Vec2Field, defaultField } from "../../fields/fields/index.
 import { preDeserializer, serializableClass, serializableProperty } from "simple-typed-serialization"
 import 'reflect-metadata'
 import { ArithmeticPrimitiveFuseMode } from "../../fields/vectorized/fuse-modes/arithmetic.js"
-import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js"
 
 @serializableClass()
 export class SurfaceRendererShared<

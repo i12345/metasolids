@@ -1,6 +1,6 @@
 import { BasicMaterial, StandardMaterial, math } from "playcanvas-extended"
 import { ColorChannelIndex, ColorChannels } from "./color-channels.js"
-import { IndicesArray } from "../../../utils/indices-array.js"
+import { IndicesArray } from "../../../paradigm/arrays/indices-array.js"
 
 export interface RenderedBuffer {
     buffer: Float32Array | Uint8Array

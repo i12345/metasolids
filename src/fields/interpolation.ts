@@ -5,8 +5,8 @@ import { FieldPointType } from "./type.js"
 import { FieldPointVector, FieldPointVectorContainer, FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects, IsDynamicVector, ItemObjIDsKey, field_point_vectorized_multi_objects_new } from "./vectorized/index.js"
 import { vectorIterator } from "./vectorized/iterators/factory.js"
 import { MultiObjectsIDs, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js"
-import { IndicesTypedArray } from "../utils/indices-array.js"
-import { NumberTypedArray, TypedArrayConstructor, sum, typedArrayConstructor } from "../utils/typed-array.js"
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js"
+import { NumberTypedArray, TypedArrayConstructor, sum, typedArrayConstructor } from "../paradigm/arrays/typed-array.js"
 
 export interface InterpolationKeypoint<
         Location extends FieldPoint = FieldPoint,

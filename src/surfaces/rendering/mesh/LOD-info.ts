@@ -2,7 +2,7 @@ import { Application, Vec2, Vec3 } from "playcanvas-extended"
 import { FieldPointRange, RANGE_MAX, RANGE_MIN, field_point_range_compute } from "../../../fields/index.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
 import { VolumeLocation } from "../../../volumes/index.js"
-import { IndicesTypedArray, indicesArrayType } from "../../../utils/indices-array.js"
+import { IndicesTypedArray, indicesArrayType } from "../../../paradigm/arrays/indices-array.js"
 import { MultiObjectsTemplate } from "../../../paradigm/trees/index.js"
 
 type LevelOfDetailInfo_Edge_Cached = {

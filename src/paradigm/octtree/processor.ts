@@ -1,4 +1,4 @@
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../arrays/indices-array.js";
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsMapped, MultiObjectsGroupsOmitted, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, groupKinds, mapGroups } from "../trees/index.js";
 import { ProcessingPair, Processor, ProcessorInitialization } from "../processing/processor.js";
 import { GraphProcessor, GraphProcessorContext } from "../processing/processors/graph.js";

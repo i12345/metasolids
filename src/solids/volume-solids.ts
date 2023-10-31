@@ -6,9 +6,9 @@ import { VolumeProcessing, VolumeProcessingContext } from "../volumes/processor.
 import { VolumeSample, VolumeLocation, Volume, VolumeSamplingContext } from "../volumes/volume.js"
 import { SolidProcessingContext } from "./processor.js"
 import { Solid } from "./solid.js"
-import { IndicesTypedArray } from "../utils/indices-array.js"
+import { IndicesTypedArray } from "../paradigm/arrays/indices-array.js"
 import { FieldPointVector, FieldPointVectorContainer } from "../fields/vectorized/index.js"
-import { NumberTypedArray } from "../utils/typed-array.js"
+import { NumberTypedArray } from "../paradigm/arrays/typed-array.js"
 
 export const VolumeSolidsKey = Symbol('volume.solids')
 

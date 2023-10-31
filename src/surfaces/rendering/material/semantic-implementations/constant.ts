@@ -7,7 +7,7 @@ import { field_point_equal } from "../../../../fields/point.js"
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js"
 import { VolumeLocation } from "../../../../volumes/volume.js"
 import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js"
-import { IndicesTypedArray } from "../../../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../../../paradigm/arrays/indices-array.js"
 
 export class MaterialSemanticImplementation_Constant<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

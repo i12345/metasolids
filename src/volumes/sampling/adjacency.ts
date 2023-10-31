@@ -3,7 +3,7 @@ import { SubdivisionKey } from "../../paradigm/octtree/processor.js";
 import { OctTreesTemplated } from "../../paradigm/octtree/templated.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { MultiObjectsGroupsTemplate } from "../../paradigm/trees/multi-objects-groups.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { VolumeProcessingContext, VolumeProcessor } from "../processor.js";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js";
 import { VolumeWithBoundingBox } from "../volumes/bounded.js";

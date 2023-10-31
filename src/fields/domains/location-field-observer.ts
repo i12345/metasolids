@@ -1,6 +1,6 @@
 import { MultiObjectsTemplate } from "../../paradigm/trees/index.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
 import { SampleDomain, SampleDomainLocationFieldKey, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldPoint } from "../point.js";

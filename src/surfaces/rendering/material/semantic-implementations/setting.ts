@@ -4,7 +4,7 @@ import { SurfaceRendererIndividual } from "../../renderer.js";
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js";
 import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
 import { VolumeLocation } from "../../../../volumes/volume.js";
-import { IndicesTypedArray } from "../../../../utils/indices-array.js";
+import { IndicesTypedArray } from "../../../../paradigm/arrays/indices-array.js";
 
 export class MaterialSemanticImplementation_Setting<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

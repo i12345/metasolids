@@ -5,7 +5,7 @@ import { ProcessorInitialization, Processor } from "../../paradigm/processing/pr
 import { EncapsulatingKey, WithEncapsulating, encapsulated } from "../../paradigm/trees/encapsulating.js"
 import { MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey } from "../../paradigm/trees/multi-objects-groups.js"
 import { TypedArray, isTypedArray } from "../../utils/index.js"
-import { IndicesTypedArray } from "../../utils/indices-array.js"
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js"
 import { VolumeLocation, VolumeSample, VolumeSamplingContext } from "../volume.js"
 import { VolumeProcessingWithSampling, VolumeProcessingContextWithSampling, VolumeSamplingSubdivisionProcessing, VolumeSamplingSubdivisionProcessingContext, VolumeSamplingSubdivisionProcessor, VolumeSamplingContextKey, SpaceKey, SamplingKey, SamplesKey, VolumeSamplingSubdivisionSamplesOctTreesGrouped } from "./types.js"
 import { VolumeWithBoundingBox } from "../volumes/bounded.js"

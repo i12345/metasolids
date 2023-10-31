@@ -1,7 +1,7 @@
 import { vectorized } from "vectorized-functions";
 import { MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
-import { IndicesTypedArray } from "../../utils/indices-array.js";
-import { NumberTypedArray } from "../../utils/typed-array.js";
+import { IndicesTypedArray } from "../../paradigm/arrays/indices-array.js";
+import { NumberTypedArray } from "../../paradigm/arrays/typed-array.js";
 import { SampleDomain, SamplingContext } from "../domain.js";
 import { Field } from "../field.js";
 import { FieldPoint, FieldPointMapped, field_point_map } from "../point.js";

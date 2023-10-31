@@ -1,6 +1,6 @@
 import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended"
 import { Reflect_entries, Reflect_fromEntries } from "./reflect-entries.js"
-import { TypedArray, isTypedArray, typedArrayClone } from "./typed-array.js"
+import { TypedArray, isTypedArray, typedArrayClone } from "../paradigm/arrays/typed-array.js"
 
 export const clone = Symbol('clone')
 
