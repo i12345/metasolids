@@ -1,7 +1,7 @@
 import { FieldPoint } from "../../fields/point.js";
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
 import { FactoryMappings, FactoryProcessor, FactoryTemplate } from "../../paradigm/processing/processors/factory.js";
-import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, mapGroups } from "../../paradigm/trees/index.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { Texture, TextureLocation, TextureSamplingContext } from "../texture.js";
@@ -95,7 +95,7 @@ export class ConstantTextureFactory<
     >> {
     constructor(
         public value: C,
-        mappings?: FactoryMappings<ConstantTextureFactoryInputs, ConstantTextureFactoryOutputs>
+        mappings: FactoryMappings<ConstantTextureFactoryInputs, ConstantTextureFactoryOutputs> = mapGroups(ConstantTextureFactoryTemplate, () => [])
     ) {
         super(
             ConstantTextureFactoryTemplate,

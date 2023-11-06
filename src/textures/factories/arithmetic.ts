@@ -1,7 +1,7 @@
 import { ArithmeticPrimitiveFuseModeOp } from "../../fields/vectorized/fuse-modes/arithmetic.js";
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
 import { FactoryMappings, FactoryProcessor, FactoryTemplate } from "../../paradigm/processing/processors/factory.js";
-import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../paradigm/trees/index.js";
+import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, mapGroups } from "../../paradigm/trees/index.js";
 import { Cloneable, clone, makeClone } from "../../utils/cloneable.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { ArithmeticTexture } from "../index.js";
@@ -170,7 +170,7 @@ export class ArithmeticTextureFactory<
     >> {
     constructor(
             public op: ArithmeticPrimitiveFuseModeOp,
-            mappings?: FactoryMappings<ArithmeticTextureFactoryInputs, ArithmeticTextureFactoryOutputs>
+            mappings: FactoryMappings<ArithmeticTextureFactoryInputs, ArithmeticTextureFactoryOutputs> = mapGroups(ArithmeticTextureFactoryTemplate, () => [])
         ) {
         super(
             ArithmeticTextureFactoryTemplate,
