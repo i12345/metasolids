@@ -1696,6 +1696,8 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                         circular_quadrant &= 0b11
                     }
                 }
+
+                dual_cell_layer_current = invalid_layer
             }
 
             /**
@@ -1878,7 +1880,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
                                     current_surfacePoint_x = surfacePoints[dual_cell_layer_current][(3 * dual_cell_localIndex_current) + 0]
                                     if (Number.isNaN(current_surfacePoint_x) || !Number.isFinite(current_surfacePoint_x)) {
                                         invalidate()
-                                        continue
+                                        break
                                     }
 
                                     edge_quadrant_current = circular2edge_quadrant_mapping[circular_quadrant]
@@ -1914,7 +1916,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                                         if (!test_matches) {
                                             invalidate()
-                                            continue
+                                            break
                                         }
 
                                         edge_test = (four_times_edge_axis) | edge_quadrant_test
@@ -1929,7 +1931,7 @@ export class SurfaceNetVolumeSamplingSubdivisionProcessor<
 
                                         if (dual_cell_layer_adjacent === invalid_layer) {
                                             invalidate()
-                                            continue
+                                            break
                                         }
 
                                         // it should be valid because a "tent" can only be formed between two triagonal corners
