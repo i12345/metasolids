@@ -1,4 +1,4 @@
-import { AppBase, Entity, Component as pc_Component } from "playcanvas-extended"
+import { AppBase, Entity, Component as pc_Component } from "playcanvas-physics-advanced"
 import { fields, solids, surfaces, textures, volumes } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js"
 import { InfluenceGroupTemplate, InterpolatingGroupsKindsTemplate, RawProcessingMode, RawProcessingRequest, SolidProcessingModeGate, SolidT, SurfaceProcessingContextT, SurfaceProcessingModeGate, SurfaceProcessingModeGateTemplate, SurfaceT, SurfaceUVUnwrappingGroupTemplate, VolumeProcessingContextT, VolumeProcessingInstanceT, VolumeProcessingT, VolumeProcessorT, VolumeSolidProcessingContextT, VolumeSolidProcessorT, VolumeSurfaceProcessingContextT, VolumeSurfaceProcessorT } from "./types.js"

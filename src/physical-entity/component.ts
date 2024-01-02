@@ -1,4 +1,4 @@
-import { Entity, GraphNode } from "playcanvas-extended";
+import { Entity, GraphNode } from "playcanvas-physics-advanced";
 import { textures, volumes, surfaces, solids, fields } from "../index.js"
 import { octtree, processing } from "../paradigm/index.js";
 import { PropertyPath, intract, pathsToNodeWithKey, mergeGroups, mergeGroupsInplace, MultiObjectsGrouped, MultiObjectsGroupsKindsTemplate, MultiObjectsProcessingContextGroupKinds, MultiObjectsGroupsProcessingContext, MultiObjectsProcessingContext, MultiObjectsProcessingContextObjectsGrouped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, MultiObjectsGroupsTemplate, MultiObjectsGroupedObjectsKey, groupKindPaths, MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsTemplateOrLeaf, MultiObjectsMappedOrLeaf, MultiObjectsIDs, MultiObjectsIDsKey, extract, mapGroups, WithEncapsulating } from "../paradigm/trees/index.js";

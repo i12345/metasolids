@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { ConstantSampleDomain } from "../../fields/domains/constant.js";
 import { VectorSamplingContext } from "../../fields/domains/vector.js";
 import { FieldPointVectorContainerStatic, FieldPointVector, field_point_vectorized_new } from "../../fields/vectorized/point.js";

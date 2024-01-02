@@ -1,4 +1,4 @@
-import { Mat3, Vec2 } from "playcanvas-extended"
+import { Mat3, Vec2 } from "playcanvas-physics-advanced"
 import { IndicesTypedArray, indicesArrayType, invalidIndex } from "../../utils/indices-array.js"
 import { NumberTypedArray } from "../../utils/typed-array.js"
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../vectorized/point.js"

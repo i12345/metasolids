@@ -1,4 +1,4 @@
-import { Mat4, BoundingBox, Vec3 } from 'playcanvas-extended'
+import { Mat4, BoundingBox, Vec3 } from 'playcanvas-physics-advanced'
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext } from '../volume.js'
 import { TransformingDefaultInnerSamplingContext, TransformingSampleDomain } from '../../fields/domains/transforming.js'
 import { VolumeWithBoundingBox } from './bounded.js'

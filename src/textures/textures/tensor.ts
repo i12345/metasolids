@@ -10,7 +10,7 @@ import { NumberTypedArray, typedArrayClone } from "../../utils/typed-array.js";
 import { FieldPointTensor, FieldPointTensor2D, field_point_tensor_decode, field_point_tensor_map } from "../../fields/tensor/tensor.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureSamplingContext } from "../texture.js";
 import * as tf from "@tensorflow/tfjs"
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { FieldPointType } from "../../fields/index.js";
 import { vectorIterator } from "../../fields/vectorized/iterators/factory.js";
 import { TensorShape } from "../../utils/tf-rank.js";

@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended";
+import { Vec3 } from "playcanvas-physics-advanced";
 import { DualKey, OctTreeWithDualGroups, OctTreeWithDualLayer, OctTreeWithDualLayersGrouped, OctTreeWithDualOctTreesGrouped, OctTreeWithDualValue, OctTreeWithDualValuesGrouped } from "../../paradigm/octtree/dual.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";

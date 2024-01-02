@@ -1,4 +1,4 @@
-import { calculateNormals } from "playcanvas-extended";
+import { calculateNormals } from "playcanvas-physics-advanced";
 import { DualKey } from "../../paradigm/octtree/dual.js";
 import { TypedArrayOctTree } from "../../paradigm/octtree/typed-array.js";
 import { ProcessorInitialization } from "../../paradigm/processing/processor.js";

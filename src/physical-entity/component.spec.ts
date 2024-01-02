@@ -4,7 +4,7 @@ import jsdomSetup from "jsdom-global"
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, beforeEach, afterEach } from "mocha"
-import { Application, BasicMaterial, Color, Entity, Vec2 } from "playcanvas-extended"
+import { Application, BasicMaterial, Color, Entity, Vec2 } from "playcanvas-physics-advanced"
 import * as textures from "../textures/index.js"
 import * as surfaces from "../surfaces/index.js"
 import * as solids from "../solids/index.js"

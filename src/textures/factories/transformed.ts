@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { VectorSamplingContext } from "../../fields/domains/index.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/vectorized/index.js";
 import { FactoryMappings, FactoryProcessor, FactoryTemplate } from "../../paradigm/processing/processors/factory.js";

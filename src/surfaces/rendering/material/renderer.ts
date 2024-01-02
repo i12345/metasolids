@@ -1,4 +1,4 @@
-import { BasicMaterial, CULLFACE_NONE, StandardMaterial } from "playcanvas-extended"
+import { BasicMaterial, CULLFACE_NONE, StandardMaterial } from "playcanvas-physics-advanced"
 import { MultiObjectsGroupsMapped, groups, MultiObjectsGroupsTemplate, MultiObjectsTemplate } from "../../../paradigm/trees/index.js"
 import { field_point_sum, field_point_primitives_sum, field_point_fraction, field_point_subtract, field_point_compare_gte, field_point_add_inplace } from "../../../fields/point.js"
 import { Texture, opaqueStagedTexture } from "../../../textures/index.js"

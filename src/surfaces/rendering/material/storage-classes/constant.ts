@@ -1,4 +1,4 @@
-import { Color, Vec3, Vec2, Vec4, Material } from "playcanvas-extended";
+import { Color, Vec3, Vec2, Vec4, Material } from "playcanvas-physics-advanced";
 import { Cost_Space, MaterialSemanticImplementationStorageClass, MaterialSemanticImplementationStorageClassInstanceIndividual, MaterialSemanticImplementationStorageClassInstanceShared, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
 import { VolumeLocation } from "../../../../volumes/index.js";

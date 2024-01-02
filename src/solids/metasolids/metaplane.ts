@@ -1,4 +1,4 @@
-import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
+import { BoundingBox, Vec2, Vec3 } from "playcanvas-physics-advanced";
 import { Field, FieldsPointMapped, FieldsPointOptional, MultiObjectsInfluencesGroupsDefault, field_point_new } from "../../fields/index.js";
 import { VolumeSurfacesKey, meshing } from "../../surfaces/index.js";
 import { TextureLocation, TextureSamplingContext } from "../../textures/texture.js";

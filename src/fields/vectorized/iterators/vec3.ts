@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended"
+import { Vec3 } from "playcanvas-physics-advanced"
 import { FieldPointVector, FieldPointVectorContainerDynamic, FieldPointVectorContainerStatic } from "../point.js"
 import { vectorIteratorFactory } from "./factory.js"
 import { PrimitiveFieldPointVectorIteratorDynamic, PrimitiveFieldPointVectorIteratorStatic } from "./primitive.js"

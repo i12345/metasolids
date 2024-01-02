@@ -1,4 +1,4 @@
-import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
+import { BoundingBox, Vec2, Vec3 } from "playcanvas-physics-advanced";
 import { FieldsField } from "../../fields/fields/fields.js";
 import { Pi, TwoPi } from "../../utils/pi.js";
 import { TextureLocation, TextureSamplingContext } from "../../textures/texture.js";

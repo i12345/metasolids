@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { MultiObjectsDomainInternalPreservedGroupsKinds } from "../../fields/domains/multi-objects.js";
 import { ObjectsFilteredFusingSampleDomain } from "../../fields/domains/objects-filtered-fusing.js";
 import { VectorSampleFunction, VectorSamplingContext } from "../../fields/domains/vector.js";

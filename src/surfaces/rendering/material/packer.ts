@@ -1,4 +1,4 @@
-import { BasicMaterial, StandardMaterial, math } from "playcanvas-extended"
+import { BasicMaterial, StandardMaterial, math } from "playcanvas-physics-advanced"
 import { ColorChannelIndex, ColorChannels } from "./color-channels.js"
 import { IndicesArray } from "../../../utils/indices-array.js"
 

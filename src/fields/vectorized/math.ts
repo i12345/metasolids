@@ -1,4 +1,4 @@
-import { Mat4, Vec2, Vec3 } from "playcanvas-extended";
+import { Mat4, Vec2, Vec3 } from "playcanvas-physics-advanced";
 import { NumberTypedArray } from "../../utils/typed-array.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "./point.js";
 

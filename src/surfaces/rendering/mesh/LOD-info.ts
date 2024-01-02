@@ -1,4 +1,4 @@
-import { Application, Vec2, Vec3 } from "playcanvas-extended"
+import { Application, Vec2, Vec3 } from "playcanvas-physics-advanced"
 import { FieldPointRange, RANGE_MAX, RANGE_MIN, field_point_range_compute } from "../../../fields/index.js"
 import { MeshRendererIndividual, MeshRendererShared } from "./renderer.js"
 import { VolumeLocation } from "../../../volumes/index.js"

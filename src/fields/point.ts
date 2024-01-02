@@ -1,4 +1,4 @@
-import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
+import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-physics-advanced";
 import { mat4_from_mat3, trs } from "../utils/matrix.js";
 import { MultiObjectsGroup, MultiObjectsGrouped, MultiObjectsGroupedObjectsKey, MultiObjectsMapped, MultiObjectsTemplate, MultiObjectsTemplate_Leaf, PropertyPath, iterObjects } from "../paradigm/trees/index.js";
 import { Reflect_entries, Reflect_fromEntries, RemoveEmptyStructs } from "../utils/index.js";
@@ -1178,11 +1178,8 @@ export function field_point_pow<Point extends FieldPoint>(base: Point, exponent:
     else if (base instanceof Color)
         return <Point>new Color(base.r ** exponent, base.g ** exponent, base.b ** exponent, base.a ** exponent)
     else if (base instanceof Mat3) {
-        if (exponent === -1) {
-            const res = new Mat3()
-            mat4_from_mat3(base).invertTo3x3(res)
-            return <Point>res
-        }
+        if (exponent === -1)
+            return <Point> new Mat3().setFromMat4(mat4_from_mat3(base).invert())
         else if (exponent === 0)
             return <Point>new Mat3()
         else if ((exponent % 1) === 0) {

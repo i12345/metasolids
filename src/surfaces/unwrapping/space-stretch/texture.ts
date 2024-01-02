@@ -2,7 +2,7 @@ import { FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../../.
 import { NumberTypedArray, typedArrayClone } from "../../../utils/typed-array.js"
 import * as tf from "@tensorflow/tfjs"
 import { Texture, TextureLocation, TextureSamplingContext } from "../../../textures/index.js"
-import { Vec2 } from "playcanvas-extended"
+import { Vec2 } from "playcanvas-physics-advanced"
 import { ScalarN } from "../../../utils/tf-rank.js"
 import { MeshData } from "../../mesh-data.js"
 import { SurfaceUVUnwrapping } from "../uv/index.js"

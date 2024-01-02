@@ -1,4 +1,4 @@
-import { Vec3, Vec2, Vec4, Color, StandardMaterial, BasicMaterial } from "playcanvas-extended"
+import { Vec3, Vec2, Vec4, Color, StandardMaterial, BasicMaterial } from "playcanvas-physics-advanced"
 import { TextureSample } from "../../../../textures/texture.js"
 import { Cost_Space, RenderedBufferForSemanticWithImplementation } from "../implementation.js"
 import { MaterialSemanticImplementationStorageClass_Constant } from "../storage-classes/constant.js"

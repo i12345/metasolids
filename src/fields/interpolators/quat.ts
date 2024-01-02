@@ -1,4 +1,4 @@
-import { Quat } from "playcanvas-extended";
+import { Quat } from "playcanvas-physics-advanced";
 import { InterpolationManager } from "../interpolation.js";
 import { SplineInterpolationType } from "./spline.js";
 

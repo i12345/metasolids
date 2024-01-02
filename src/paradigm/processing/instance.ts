@@ -1,4 +1,4 @@
-import { Entity } from "playcanvas-extended"
+import { Entity } from "playcanvas-physics-advanced"
 import { MultiObjectsGroupsKindsTemplate_Leaf, MultiObjectsGroupsProcessingContext, MultiObjectsGroupsTemplate } from "../trees/index.js"
 import { mergeObjects } from "../../utils/index.js"
 import { Component } from "./component.js"

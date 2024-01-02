@@ -1,4 +1,4 @@
-import { Mat3, Vec2 } from "playcanvas-extended";
+import { Mat3, Vec2 } from "playcanvas-physics-advanced";
 import { MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsMapped, MultiObjectsTemplate } from "../paradigm/trees/index.js";
 import { FieldPoint, SampleDomain, SamplingContext, fields, tensor } from "../fields/index.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";

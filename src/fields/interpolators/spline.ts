@@ -1,4 +1,4 @@
-import { CURVE_LINEAR, CURVE_SPLINE } from "playcanvas-extended"
+import { CURVE_LINEAR, CURVE_SPLINE } from "playcanvas-physics-advanced"
 import { MultiObjectsGroupedObjectsKey, MultiObjectsIDs, MultiObjectsTemplate } from "../../paradigm/trees/index.js"
 import { IndicesTypedArray } from "../../utils/indices-array.js"
 import { NumberArrayLike, NumberTypedArray } from "../../utils/typed-array.js"

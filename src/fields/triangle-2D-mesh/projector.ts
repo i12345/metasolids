@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { FieldPointTensorTopologyProjectorFactory, FieldPointTensorTopologyProjector } from "../tensor/topology.js";
 import * as tf from "@tensorflow/tfjs"
 import { Triangles2DMesh } from "./mesh.js";

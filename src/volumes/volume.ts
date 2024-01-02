@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended";
+import { Vec3 } from "playcanvas-physics-advanced";
 import { SampleDomain, SamplingContext } from "../fields/index.js"
 import { FieldsField, ScalarField, Vec3Field } from "../fields/fields/index.js";
 import { FuseMode, fuseModes } from "../fields/vectorized/index.js";

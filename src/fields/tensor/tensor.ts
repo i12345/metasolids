@@ -6,7 +6,7 @@ import * as tf from '@tensorflow/tfjs'
 import { PropertyPath } from "../../paradigm/trees/path.js"
 import { extract } from "../../paradigm/trees/index.js"
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorStatic } from "../vectorized/point.js"
-import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended"
+import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-physics-advanced"
 import { Reflect_entries, Reflect_fromEntries } from "../../utils/reflect-entries.js"
 import { TensorShape } from "../../utils/tf-rank.js"
 

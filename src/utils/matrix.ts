@@ -1,4 +1,4 @@
-import { Mat3, Mat4, Quat } from "playcanvas-extended";
+import { Mat3, Mat4, Quat } from "playcanvas-physics-advanced";
 
 export function trs(m: Mat4) {
     return {

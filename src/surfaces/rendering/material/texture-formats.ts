@@ -8,7 +8,7 @@ import {
     PIXELFORMAT_BGRA8,
     PIXELFORMAT_R32F, PIXELFORMAT_RGB16F, PIXELFORMAT_RGBA16F, PIXELFORMAT_RGB32F, PIXELFORMAT_RGBA32F,
     PIXELFORMAT_DXT1, PIXELFORMAT_DXT3, PIXELFORMAT_DXT5, PIXELFORMAT_DEPTH
-} from "playcanvas-extended";
+} from "playcanvas-physics-advanced";
 import { ColorChannels } from "./color-channels.js";
 
 export enum FormatChannelQuality {

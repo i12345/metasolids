@@ -2,7 +2,7 @@ import { mockDOM } from "node-canvas-webgl"
 import jsdomSetup from "jsdom-global"
 import fs from 'node:fs'
 import { describe, it, beforeEach, afterEach } from "mocha"
-import { Application, Color, Entity, StandardMaterial } from "playcanvas-extended"
+import { Application, Color, Entity, StandardMaterial } from "playcanvas-physics-advanced"
 
 describe("playcanvas-node", () => {
     let jsdomCleanup: Function

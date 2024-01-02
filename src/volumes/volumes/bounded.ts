@@ -1,4 +1,4 @@
-import { BoundingBox } from "playcanvas-extended";
+import { BoundingBox } from "playcanvas-physics-advanced";
 import { VolumeLocation, VolumeSample, VolumeSamplingContext, Volume } from "../volume.js";
 
 export interface VolumeWithBoundingBox<

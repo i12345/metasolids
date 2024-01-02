@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended";
+import { Vec3 } from "playcanvas-physics-advanced";
 import { SamplingContext } from "../../domain.js";
 import { FieldPoint, field_point_add_inplace_weighted, field_point_multiply, field_point_subtract } from "../../point.js";
 import { Field } from "../../field.js";

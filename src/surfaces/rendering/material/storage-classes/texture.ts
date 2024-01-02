@@ -1,4 +1,4 @@
-import { Texture } from "playcanvas-extended";
+import { Texture } from "playcanvas-physics-advanced";
 import { Cost_Space_Texture, MaterialSemanticImplementationStorageClass, MaterialSemanticImplementationStorageClassInstanceIndividual, MaterialSemanticImplementationStorageClassInstanceShared, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { PackedRenderedBufferForSemanticWithRefCount, pack, renderPack } from "../packer.js";
 import { format_selector } from "../texture-formats.js";

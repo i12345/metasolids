@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs-node'
 import { describe, it, beforeEach, afterEach } from "mocha"
 import { FieldPointTensorSystem, FieldPointTensorSpace, FieldPointTensorVariable, FieldPointTensorExpressionConstant, FieldPointTensorStatementDiffusion, field_point_tensor_encode, FieldPointTensorTopologyProjectorFactoryIdentity, FieldPointTensorTopologyProjectorFactory, FieldPointTensorStatement, FieldPointTensorStatementParallel, scalarSpace, FieldPointTensorExpressionVariable, FieldPointTensorArithmeticOp, FieldPointTensorExpressionArithmetic, FieldPointTensorFactory, FieldPointTensorStatementPDE } from "../index.js"
 import { Triangle2DMeshTopologyProjectorFactory, Triangles2DMesh } from "../../triangle-2D-mesh/index.js"
-import { Vec2 } from "playcanvas-extended"
+import { Vec2 } from "playcanvas-physics-advanced"
 import { TensorShape } from "../../../utils/tf-rank.js"
 import { renderTensor } from "../../../utils/tf-img.js"
 import { assert } from "chai"

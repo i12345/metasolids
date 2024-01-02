@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended"
+import { Vec2 } from "playcanvas-physics-advanced"
 import { NumberArrayLike } from "../../utils/typed-array.js"
 
 export class Triangles2DMesh {

@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { ArithmeticSampleDomain } from "../../fields/domains/arithmetic.js";
 import { VectorSamplingContext } from "../../fields/domains/vector.js";
 import { ArithmeticPrimitiveFuseModeOp } from "../../fields/vectorized/fuse-modes/arithmetic.js";

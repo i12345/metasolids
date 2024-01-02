@@ -4,7 +4,7 @@ import { Texture, TextureLocation, TextureSample, TextureSamplingContext, Textur
 import { VolumeLocation } from "../../../volumes/volume.js"
 import { Material_Groups, Material_Groups_Template, Material_Groups_Textures_TexelTypes, Material_Groups_Textures_TexelTypes_Template } from "./groups.js"
 import { defaultField } from "../../../fields/fields/default.js";
-import { Color } from "playcanvas-extended";
+import { Color } from "playcanvas-physics-advanced";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { FieldPointVectorContainerStatic } from "../../../fields/vectorized/point.js";
 import { NumberTypedArray } from "../../../utils/typed-array.js";

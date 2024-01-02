@@ -1,4 +1,4 @@
-import { Ray, Vec3 } from "playcanvas-extended";
+import { Ray, Vec3 } from "playcanvas-physics-advanced";
 import { Surface, SurfaceInstance, SurfaceSample } from "./surface.js";
 import { TriangleCollision } from "../fields/triangle-2D-mesh/index.js";
 import { SurfaceProcessingContext } from "./processing.js";

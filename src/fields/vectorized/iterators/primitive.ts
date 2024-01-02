@@ -1,4 +1,4 @@
-import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended";
+import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-physics-advanced";
 import { IndicesTypedArray } from "../../../utils/indices-array.js";
 import { TypedArrayList } from "../../../utils/typed-array-list.js";
 import { FieldPoint, FieldPointMapped, FieldPointPrimitive } from "../../point.js";

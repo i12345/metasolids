@@ -1,4 +1,4 @@
-import { EventHandler } from "playcanvas-extended";
+import { EventHandler } from "playcanvas-physics-advanced";
 
 export class RefCount extends EventHandler {
     constructor(public refCount = 0) {

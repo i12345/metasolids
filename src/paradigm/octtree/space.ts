@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended"
+import { Vec3 } from "playcanvas-physics-advanced"
 import { LayerLocalIndex } from "./octtree.js"
 import { SubdivisionReferences } from "./subdivision.js"
 import { OctTreeAddress, OctTreeCell, octTreeSubcell } from "./address.js"

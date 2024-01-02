@@ -1,4 +1,4 @@
-import { Color } from "playcanvas-extended";
+import { Color } from "playcanvas-physics-advanced";
 import { FactoryProcessor } from "../../paradigm/processing/processors/factory.js";
 import { ConstantTextureFactory } from "./constant.js";
 

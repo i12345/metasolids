@@ -1,4 +1,4 @@
-import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended"
+import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-physics-advanced"
 import { MultiObjectsGroup, MultiObjectsGroupedObjectsKey } from "../paradigm/trees/multi-objects-groups.js"
 import { MultiObjectsTemplate, MultiObjectsMapped, MultiObjectsTemplate_Leaf, MultiObjectsIDs, objectValuePaths, MultiObjectsTemplateOrLeaf } from "../paradigm/trees/multi-objects.js"
 import { Reflect_entries, Reflect_fromEntries } from "../utils/reflect-entries.js"

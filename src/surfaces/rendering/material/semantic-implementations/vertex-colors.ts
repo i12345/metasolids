@@ -1,4 +1,4 @@
-import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-extended"
+import { Color, Vec3, Vec2, Vec4, StandardMaterial, BasicMaterial } from "playcanvas-physics-advanced"
 import { groups, MultiObjectsGroupsTemplate, MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
 import { RANGE_MIN, RANGE_MAX } from "../../../../fields/index.js"
 import { Texture, TextureSample } from "../../../../textures/texture.js"

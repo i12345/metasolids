@@ -3,7 +3,7 @@ import { Cost_Space, Cost_Space_VertexColors, MaterialSemanticImplementationStor
 import { PackedRenderedBufferForSemanticWithRefCount, pack, renderPack } from "../packer.js";
 import { colorChannelsString } from "../color-channels.js";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../../renderer.js";
-import { Mesh } from "playcanvas-extended";
+import { Mesh } from "playcanvas-physics-advanced";
 import { VolumeLocation } from "../../../../volumes/volume.js";
 import { MultiObjectsTemplate } from "../../../../paradigm/trees/index.js";
 

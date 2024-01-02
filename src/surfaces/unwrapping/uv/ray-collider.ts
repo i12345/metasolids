@@ -1,4 +1,4 @@
-import { Ray, Vec2 } from "playcanvas-extended";
+import { Ray, Vec2 } from "playcanvas-physics-advanced";
 import { SurfaceInstance, SurfaceSample } from "../../surface.js";
 import { SurfaceProcessingContextWithUVUnwrapping, SurfaceUVUnwrappingGroupKindsTemplate, SurfaceWithUVUnwrapping } from "./surface.js";
 import { MultiObjectsGroupsTemplate, groupKinds } from "../../../paradigm/trees/index.js";

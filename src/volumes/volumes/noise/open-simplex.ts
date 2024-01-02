@@ -1,4 +1,4 @@
-import { BoundingBox, Vec3 } from "playcanvas-extended";
+import { BoundingBox, Vec3 } from "playcanvas-physics-advanced";
 import { Field } from "../../../fields/field.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext, defaultVolumeLocationField, defaultVolumeSampleField } from "../../volume.js";
 import { openSimplex } from "../../../fields/domains/noise/open-simplex.js";

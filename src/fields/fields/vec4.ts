@@ -1,4 +1,4 @@
-import { Vec4 } from "playcanvas-extended";
+import { Vec4 } from "playcanvas-physics-advanced";
 import { Field } from "../field.js";
 import { Vec4InterpolationType } from "../interpolators/vec4.js";
 import { ScalarField } from "./scalar.js";

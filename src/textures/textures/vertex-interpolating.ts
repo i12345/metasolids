@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsIDsKey, MultiObjectsTemplate, WithMultiObjectsIDs } from "../../paradigm/trees/index.js";
 import { Field, FieldPoint, FieldPointMapped, FieldPointNumbers, Triangles2DMesh, Triangles2DMeshCollider, Triangles2DMeshInterpolator, field_point_new, tensor } from "../../fields/index.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext } from "../texture.js";

@@ -6,7 +6,7 @@ import { IndicesTypedArray, NumberTypedArray, onlyOne } from "../../../utils/ind
 import { Surface, SurfaceSample } from "../../surface.js";
 import { SurfaceIndividualTextureLocationsGroupKindsTemplate, SurfaceProcessingContextWithObjectsTexturesUsingSharedSampleTextureLocations, SurfaceSampleProcessingContextWithIndividualTextureLocations, SurfaceSampleWithIndividualTextureLocations } from "../types.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../../fields/vectorized/index.js";
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 
 // type A = {
 //     a: {

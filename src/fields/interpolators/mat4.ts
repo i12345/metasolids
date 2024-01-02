@@ -1,4 +1,4 @@
-import { Mat4, Quat, Vec3 } from "playcanvas-extended";
+import { Mat4, Quat, Vec3 } from "playcanvas-physics-advanced";
 import { FieldInterpolationKeypoint, FieldInterpolationType, FieldInterpolator, InterpolationKeypoint, InterpolationManager, Interpolator, VectorFieldInterpolationType, VectorInterpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint, FieldPointMappedObjectsGroupedRemoved } from "../point.js";
 import { Field } from "../index.js";

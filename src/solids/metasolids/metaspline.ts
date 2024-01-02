@@ -1,4 +1,4 @@
-import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-extended";
+import { BoundingBox, Mat4, Vec2, Vec3 } from "playcanvas-physics-advanced";
 import { MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf, MultiObjectsTemplate, extract, hasPath, intract } from "../../paradigm/trees/index.js";
 import { extraFields, ExtraFields, Field, FieldInterpolator, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, InterpolationManager, Interpolator, makeInterpolator, SampleDomain, SampleDomainLocationFieldKey, SamplingContext, FieldsPoint, MultiObjectsInfluencesGroupsDefault, field_point_new, VectorInterpolator, field_point_map, FieldPointPrimitive, field_point_identity, field_point_add_inplace_weighted, FieldPointMapped } from "../../fields/index.js";
 import { EncapsulatingDomainSamplingContext, EncapsulatingDomainSamplingContextParentContext, EncapsulatingDomainSamplingContextParentDomain, VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from '../../fields/domains/index.js'

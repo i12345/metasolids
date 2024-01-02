@@ -1,4 +1,4 @@
-import { Entity } from "playcanvas-extended"
+import { Entity } from "playcanvas-physics-advanced"
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../paradigm/trees/multi-objects-groups.js"
 import { ParallelizedProcessor } from "../paradigm/processing/processors/parallel.js"
 import { IterableParallelizer } from "../paradigm/processing/processors/parallelizer-iterable.js"

@@ -7,7 +7,7 @@
 // import { FieldPoint, FieldPointType, field_point_type_size } from '../fields/index.js';
 // import { FieldPointVectorContainerStatic, field_point_vectorized_new } from '../fields/vectorized/index.js';
 // import { vectorIterator } from '../fields/vectorized/iterators/factory.js';
-// import { Vec2 } from 'playcanvas-extended';
+// import { Vec2 } from 'playcanvas-physics-advanced';
 // import { NumberTypedArray } from '../utils/typed-array.js';
 
 // export function renderTexture<

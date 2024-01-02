@@ -1,4 +1,4 @@
-import { Ray } from "playcanvas-extended";
+import { Ray } from "playcanvas-physics-advanced";
 import { makeIntractor, groupKindObjectsGrouped, groupKinds, iterObjects, MultiObjectsGrouped, MultiObjectsGroupsMapped, MultiObjectsGroupsTemplate, MultiObjectsGroupsTemplate_Leaf, MultiObjectsMapped, MultiObjectsMappedAgainGrouped, MultiObjectsTemplate, MultiObjectsMappedAgainGroupTypes, MultiObjectsIDsKey, WithMultiObjectsIDs } from "../../../paradigm/trees/index.js";
 import { ExtraFields, FieldPoint, FieldsPointMapped } from "../../../fields/point.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext, TexturesTemplatedWithObjects } from "../../../textures/texture.js";

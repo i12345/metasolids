@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { FieldPointVectorContainerStatic, FieldPointVectorWithMultiObjects } from "../../fields/vectorized/point.js";
 import { MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../../utils/indices-array.js";

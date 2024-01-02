@@ -1,4 +1,4 @@
-import { BoundingBox, Vec2, Vec3 } from "playcanvas-extended";
+import { BoundingBox, Vec2, Vec3 } from "playcanvas-physics-advanced";
 import { change, ExtraFields, Field, FieldPoint, FieldsPoint, FieldsPointMapped, FieldsPointOptional, FieldsPoint_Omit_Leaf, fields_point_map, makeInterpolator, field_point_invalid, MultiObjectsInfluencesGroupsDefault, WithInfluence, WithInfluenceProcessingContext, MultiObjectsInfluencesGroupKindsTemplate } from "../../fields/index.js";
 import { SampleDomain, SampleDomainLocationFieldKey } from "../../fields/domain.js";
 import { Texture, TextureLocation, TextureSample, TextureSamplingContext } from "../../textures/texture.js";

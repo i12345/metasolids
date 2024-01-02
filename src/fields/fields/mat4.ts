@@ -1,4 +1,4 @@
-import { Mat4 } from "playcanvas-extended";
+import { Mat4 } from "playcanvas-physics-advanced";
 import { Field } from "../field.js";
 import { Mat4InterpolationType } from "../interpolators/mat4.js";
 import { trs } from "../../utils/matrix.js";

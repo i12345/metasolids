@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { VectorSampleDomain, VectorSamplingContext } from "../../fields/domains/vector.js";
 import { Field } from "../../fields/field.js";
 import { FieldPointVector, FieldPointVectorContainerStatic, FieldPointVectorIterator, FieldPointVectorStatic, IsDynamicVector, field_point_vector_multiObjs_count, field_point_vectorized_multi_objects_new, isDynamicVector } from "../../fields/vectorized/index.js";

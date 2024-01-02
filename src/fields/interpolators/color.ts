@@ -1,4 +1,4 @@
-import { Color } from "playcanvas-extended";
+import { Color } from "playcanvas-physics-advanced";
 import { InterpolationManager } from "../interpolation.js";
 import { SplineInterpolationType } from "./spline.js";
 

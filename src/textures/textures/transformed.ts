@@ -1,4 +1,4 @@
-import { Mat3, Mat4, Quat, Vec2, Vec3 } from "playcanvas-extended";
+import { Mat3, Mat4, Quat, Vec2, Vec3 } from "playcanvas-physics-advanced";
 import { TransformingSampleDomain } from "../../fields/domains/transforming.js";
 import { VectorSamplingContext } from "../../fields/domains/vector.js";
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../../fields/vectorized/index.js";

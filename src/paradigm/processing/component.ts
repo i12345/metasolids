@@ -1,7 +1,7 @@
-import * as pc from "playcanvas-extended";
+import * as pc from "playcanvas-physics-advanced";
 import { ComponentSystem } from "./component-system.js";
 import { Instance } from "./instance.js";
-import { Entity, GraphNode } from "playcanvas-extended";
+import { Entity, GraphNode } from "playcanvas-physics-advanced";
 import { GraphProcessor, GraphProcessorContext } from "./processors/graph.js";
 import { ProcessingPair } from "./processor.js";
 import { extract, pathExists } from "../trees/index.js";

@@ -1,4 +1,4 @@
-import { Vec2, Vec3, Vec4 } from "playcanvas-extended";
+import { Vec2, Vec3, Vec4 } from "playcanvas-physics-advanced";
 import { ScalarField } from "../../fields/scalar.js"
 import { SeedKey, SeededSampleDomain, SeededSamplingContext } from "../../domains/seeded.js";
 

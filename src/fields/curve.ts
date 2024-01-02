@@ -1,4 +1,4 @@
-import { Curve, CURVE_LINEAR, CURVE_SMOOTHSTEP, CURVE_SPLINE, CURVE_STEP } from "playcanvas-extended";
+import { Curve, CURVE_LINEAR, CURVE_SMOOTHSTEP, CURVE_SPLINE, CURVE_STEP } from "playcanvas-physics-advanced";
 
 export type CurveType =
     typeof CURVE_LINEAR |

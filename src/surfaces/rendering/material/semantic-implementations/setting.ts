@@ -1,4 +1,4 @@
-import { StandardMaterial } from "playcanvas-extended";
+import { StandardMaterial } from "playcanvas-physics-advanced";
 import { Cost, RenderedBufferForSemanticWithImplementation } from "../implementation.js";
 import { SurfaceRendererIndividual } from "../../renderer.js";
 import { MaterialSemanticImplementation_Immediate } from "./immediate.js";

@@ -1,4 +1,4 @@
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { FieldPointTensorEncodingConstant, FieldPointTensorEncodingVector, FieldPointTensorSystemFactory, FieldPointTensorSystem, FieldPointTensorSystemParameters, FieldPointTensorTopologyProjectorFactoryIdentity } from "../../fields/tensor/index.js";
 import { TextureTensorEncoding } from "../../textures/tensor-factory.js";
 import { FactoryMappings } from "../../paradigm/processing/processors/factory.js";

@@ -1,5 +1,5 @@
-import { AppBase, Entity } from "playcanvas-extended";
-import * as pc from "playcanvas-extended"
+import { AppBase, Entity } from "playcanvas-physics-advanced";
+import * as pc from "playcanvas-physics-advanced"
 import { Component, ComponentData } from "./component.js";
 import { Instance, Instancer, MultiInstancer } from "./instance.js";
 import { StorageService, DB, StoredDB } from "../../storage/index.js";

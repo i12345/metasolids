@@ -1,4 +1,4 @@
-import { Color, StandardMaterial, BasicMaterial, BLEND_NORMAL } from "playcanvas-extended"
+import { Color, StandardMaterial, BasicMaterial, BLEND_NORMAL } from "playcanvas-physics-advanced"
 import { MultiObjectsGroupsTemplateLeaf, MultiObjectsGroupsTemplate_Leaf } from "../../../paradigm/trees/index.js"
 import { FieldPointType } from "../../../fields/type.js"
 

@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended";
+import { Vec3 } from "playcanvas-physics-advanced";
 import { Field } from "../../fields/field.js";
 import { Volume, VolumeLocation, VolumeSample, VolumeSamplingContext, defaultVolumeSampleField } from "../volume.js";
 import { Cloneable, clone } from "../../utils/cloneable.js";

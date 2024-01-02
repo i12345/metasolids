@@ -7,7 +7,7 @@ import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext,
 import { FieldPointVector, FieldPointVectorContainerStatic } from "../fields/vectorized/point.js";
 import { NumberTypedArray } from "../utils/typed-array.js";
 import { SampleDomainLocationFieldKey } from "../fields/domain.js";
-import { Mat3, Vec2 } from "playcanvas-extended";
+import { Mat3, Vec2 } from "playcanvas-physics-advanced";
 import { VectorSampleFunction, VectorSamplingContext, makeVectorSamplingContext } from "../fields/domains/vector.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../paradigm/trees/multi-objects.js";
 import { IndicesTypedArray } from "../utils/indices-array.js";

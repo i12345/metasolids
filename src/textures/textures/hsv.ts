@@ -1,4 +1,4 @@
-import { Color, Vec2 } from "playcanvas-extended";
+import { Color, Vec2 } from "playcanvas-physics-advanced";
 import { VectorSamplingContext, makeVectorSamplingContext } from "../../fields/domains/vector.js";
 import { FieldPointVectorContainerStatic, FieldPointVector } from "../../fields/vectorized/point.js";
 import { MultiObjectsIDsKey, MultiObjectsTemplate } from "../../paradigm/trees/multi-objects.js";

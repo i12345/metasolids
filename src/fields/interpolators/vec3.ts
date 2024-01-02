@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended";
+import { Vec3 } from "playcanvas-physics-advanced";
 import { InterpolationManager } from "../interpolation.js";
 import { SplineInterpolationType } from "./spline.js";
 

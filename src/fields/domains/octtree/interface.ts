@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended";
+import { Vec3 } from "playcanvas-physics-advanced";
 import { FieldPoint } from "../../point.js";
 import { SampleDomain } from "../../domain.js";
 import { OctTree, OctTreeSpace } from "../../../paradigm/octtree/index.js";

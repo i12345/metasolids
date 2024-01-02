@@ -1,4 +1,4 @@
-import { Vec3 } from "playcanvas-extended";
+import { Vec3 } from "playcanvas-physics-advanced";
 import { Field } from "../field.js";
 import { Ratio3InterpolationType } from "../interpolators/ratio3.js";
 import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";

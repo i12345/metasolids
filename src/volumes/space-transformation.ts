@@ -1,4 +1,4 @@
-import { GraphNode, Mat4 } from "playcanvas-extended"
+import { GraphNode, Mat4 } from "playcanvas-physics-advanced"
 import { Cloneable, clone } from "../utils/cloneable.js"
 
 export interface SpaceTransformation {

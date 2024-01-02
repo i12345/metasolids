@@ -1,4 +1,4 @@
-import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-extended";
+import { Vec2, Vec3, Vec4, Quat, Mat3, Mat4, Color } from "playcanvas-physics-advanced";
 import { mat4_from_mat3 } from "../utils/matrix.js";
 import { FieldPoint, FieldPointPrimitive, FieldsPoint, Vector } from "./point.js";
 import { FieldPointType } from "./type.js";

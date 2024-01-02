@@ -1,4 +1,4 @@
-import { Color } from "playcanvas-extended";
+import { Color } from "playcanvas-physics-advanced";
 import { Field } from "../field.js";
 import { ColorRGBAInterpolationType } from "../interpolators/color.js";
 import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";

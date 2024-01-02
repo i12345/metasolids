@@ -1,5 +1,5 @@
 import { Tensor, Rank } from "@tensorflow/tfjs";
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 import { RemappedSampleDomain } from "../../fields/domains/remapped.js";
 import { VectorSamplingContext } from "../../fields/domains/vector.js";
 import { FieldPointMapped } from "../../fields/point.js";

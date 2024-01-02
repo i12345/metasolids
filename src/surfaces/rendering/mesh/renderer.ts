@@ -1,4 +1,4 @@
-import { Mesh, PRIMITIVE_TRIANGLES } from "playcanvas-extended";
+import { AppBase, Mesh, PRIMITIVE_TRIANGLES } from "playcanvas-physics-advanced";
 import { SurfaceRendererIndividual, SurfaceRendererShared } from "../renderer.js";
 import { LevelOfDetailInfoComputerShared, LevelOfDetailInfoComputerIndividual } from "./LOD-info.js";
 import { MeshDecimationIndividual, MeshDecimationShared } from "./decimation.js";
@@ -96,8 +96,8 @@ export class MeshRendererIndividual<
                 // but it will have to compute the shared mesh either way
 
                 if (currentlyShared)
-                    this._implementation = new Mesh()
-                else this._implementation ??= new Mesh()
+                    this._implementation = new Mesh(AppBase.getApplication()!.graphicsDevice)
+                else this._implementation ??= new Mesh(AppBase.getApplication()!.graphicsDevice)
                 this.computeBacking()
                 this.shared.implementation_cache.set(this.decimation.quality, this.implementation)
             }
@@ -113,7 +113,7 @@ export class MeshRendererIndividual<
                     currentlyShared.quality === this.decimation.quality)
                     this.shared.implementation_cache.delete(currentlyShared.quality)
                 else {
-                    this._implementation = new Mesh()
+                    this._implementation = new Mesh(AppBase.getApplication()!.graphicsDevice)
                     this.computeBacking()
                 }
             }

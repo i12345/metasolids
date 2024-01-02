@@ -1,4 +1,4 @@
-import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-extended"
+import { Color, Mat3, Mat4, Quat, Vec2, Vec3, Vec4 } from "playcanvas-physics-advanced"
 import { MultiObjectsTemplate, MultiObjectsIDs } from "../../../paradigm/trees/multi-objects.js"
 import { IndicesTypedArray } from "../../../utils/indices-array.js"
 import { FieldPoint, FieldPointPrimitive } from "../../point.js"

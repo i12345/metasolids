@@ -5,7 +5,7 @@ import { Texture, TextureLocation, TextureRenderContext, TextureSample, TextureS
 import { FieldsField } from "../../fields/fields/fields.js";
 import { FieldPointVectorContainerStatic } from "../../fields/vectorized/point.js";
 import { NumberTypedArray } from "../../utils/typed-array.js";
-import { Vec2 } from "playcanvas-extended";
+import { Vec2 } from "playcanvas-physics-advanced";
 
 export type ObjectsCombiningTexturesTemplated<
         Objects extends MultiObjectsTemplate = MultiObjectsTemplate,

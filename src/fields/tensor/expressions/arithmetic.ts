@@ -3,7 +3,7 @@ import * as tf from "@tensorflow/tfjs"
 import { FieldPointTensor } from "../tensor.js"
 import { FieldPointTensorExpression, FieldPointTensorExpressionContext } from "../expression.js"
 import { FieldPointType, field_point_type_isPrimitive } from "../../type.js"
-import { Mat3, Mat4, Quat, Vec3, Vec4 } from "playcanvas-extended"
+import { Mat3, Mat4, Quat, Vec3, Vec4 } from "playcanvas-physics-advanced"
 import { FieldPointTensorTopology } from "../topology.js"
 import { FieldPointTensorArithmeticOp, FieldPointTensorArithmetic_opFuncMap, FieldPointTensorArithmetic_unaryFuncList, field_point_tensor_arithmetic_op } from "../arithmetic.js"
 

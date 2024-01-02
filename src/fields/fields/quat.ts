@@ -1,4 +1,4 @@
-import { Quat } from "playcanvas-extended";
+import { Quat } from "playcanvas-physics-advanced";
 import { Field } from "../field.js";
 import { QuatInterpolationType } from "../interpolators/quat.js";
 import { FuseMode, PrimitiveFuseMode, fuseModes } from "../vectorized/index.js";

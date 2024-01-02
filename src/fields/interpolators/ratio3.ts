@@ -1,4 +1,4 @@
-import { CurveSet, Vec3 } from "playcanvas-extended";
+import { CurveSet, Vec3 } from "playcanvas-physics-advanced";
 import { applyCurveConfig, CurveConfig, defaultCurveConfig } from "../curve.js";
 import { FieldInterpolationKeypoint, FieldInterpolationType, InterpolationManager, Interpolator, makeInterpolator } from "../interpolation.js";
 import { FieldPoint } from "../point.js";

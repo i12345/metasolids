@@ -1,4 +1,4 @@
-import { Color, Vec2 } from "playcanvas-extended";
+import { Color, Vec2 } from "playcanvas-physics-advanced";
 import { ColorField } from "../../fields/fields/color.js";
 import { FieldPoint } from "../../fields/point.js";
 import { Texture, TextureLocation, TextureRenderContext, TextureSamplingContext } from "../texture.js";

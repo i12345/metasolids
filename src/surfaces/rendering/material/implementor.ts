@@ -8,7 +8,7 @@ import { field_point_equal, field_point_add_inplace, field_point_divide, field_p
 import { MultiObjectsSampleDomain, ConstantSampleDomain } from "../../../fields/domains/index.js"
 import { MaterialSemanticImplementation_Constant, MaterialSemanticImplementation_Immediate, MaterialSemanticImplementation_Multi, MaterialSemanticImplementation_None, MaterialSemanticImplementation_Setting, MaterialSemanticImplementation_Texture, MaterialSemanticImplementation_Texture_SideEffect, MaterialSemanticImplementation_VertexColors } from "./semantic-implementations/index.js";
 import { Material_Groups } from "./groups.js";
-import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial, Vec2 } from "playcanvas-extended";
+import { BasicMaterial, Color, DETAILMODE_ADD, DETAILMODE_MUL, StandardMaterial, Vec2 } from "playcanvas-physics-advanced";
 import { FormatChannelQuality } from "./texture-formats.js";
 import { SurfaceUVUnwrapping } from "../../unwrapping/uv/index.js";
 import { SurfaceTextureLocationsGroupKindsTemplate } from "../../texturing/index.js";

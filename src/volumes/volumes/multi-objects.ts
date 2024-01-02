@@ -1,4 +1,4 @@
-import { BoundingBox } from 'playcanvas-extended'
+import { BoundingBox } from 'playcanvas-physics-advanced'
 import { MultiObjectsTemplate, MultiObjectsGroupsTemplate, MultiObjectsGroupsMapped, groups, groupKinds, MultiObjectsGroupsProcessingContext } from "../../paradigm/trees/index.js"
 import { FieldPoint, MultiObjectsInfluencesGroupKindsTemplate, MultiObjectsInfluencesGroupKinds, Field, SampleDomain, SamplingContext } from '../../fields/index.js'
 import { Volume, VolumeLocation, VolumeSample, VolumeSampleKey, VolumeSamplingContext } from '../volume.js'
